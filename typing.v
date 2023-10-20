@@ -1,6 +1,6 @@
 From WR Require Import syntax.
-From Coq Require Import ssreflect Sets.Relations_2 Sets.Relations_3.
-From Hammer Require Import Tactics.
+From Coq Require Import ssreflect Sets.Relations_2 Sets.Relations_3 Sets.Relations_3_facts.
+From Hammer Require Import Tactics Hammer.
 
 Definition context := nat -> tm.
 
@@ -55,27 +55,12 @@ Inductive Par : tm -> tm -> Prop :=
 
 #[export]Hint Constructors Par : par.
 
-Definition MultiPar := Rplus _ Par.
-
-Definition MultiPar' := Rstar _ Par.
-
-Definition Join := coherent _ MultiPar'.
+Definition Join := coherent _ Par.
 
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
-Lemma MultiPar_refl (a : tm) : MultiPar a a.
-Proof. elim : a; hauto lq:on ctrs:Rplus use:Par_refl. Qed.
-
-Lemma MultiPar_star_plus_equiv a b : MultiPar a b <-> MultiPar' a b.
-Proof.
-  split.
-  induction 1; hauto lq:on ctrs:Rstar.
-  induction 1; hauto lq:on ctrs:Rplus use:MultiPar_refl.
-Qed.
-
-#[export]Hint Resolve MultiPar_star_plus_equiv : par.
-#[export]Hint Unfold Join MultiPar MultiPar' : par.
+#[export]Hint Unfold Join : par.
 
 Lemma P_AppAbs' a A a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
@@ -166,4 +151,28 @@ Proof.
       move => ? A1 A2 a3 a4 ? ? [*] *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on use:par_cong ctrs:Par inv:Par.
+Qed.
+
+Lemma pars_confluent : Confluent _ Par.
+Proof.
+  apply Strong_confluence.
+  apply par_confluent.
+Qed.
+
+Lemma Join_reflexive a :
+  Join a a.
+Proof. hauto l:on ctrs:Rstar. Qed.
+
+Lemma Join_symmetric a b :
+  Join a b -> Join b a.
+Proof. sfirstorder use:coherent_symmetric. Qed.
+
+Lemma Join_transitive a b c :
+  Join a b -> Join b c -> Join a c.
+Proof.
+  have := pars_confluent.
+  rewrite /Confluent /confluent /Join /coherent => h [z0 [? h0]] [z1 [h1 ?]].
+  move /(_ b _ _ h0 h1) in h.
+  case : h => z [*].
+  exists z. split; sfirstorder use:Rstar_transitive.
 Qed.
