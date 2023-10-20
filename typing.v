@@ -116,3 +116,54 @@ Proof.
   - hauto lq:on db:par use:par_morphing_lift.
   - move => *; apply : P_AppAbs'; eauto; by asimpl.
 Qed.
+
+Lemma par_cong a0 a1 b0 b1 (h : Par a0 a1) (h1 : Par b0 b1) :
+  Par (subst_tm (b0..) a0) (subst_tm (b1..) a1).
+Proof.
+  apply par_morphing; auto.
+  case; auto.
+  sfirstorder use:Par_refl.
+Qed.
+
+Derive Inversion Par_inv with (forall a b, Par a b).
+
+Lemma par_confluent : Strongly_confluent _ Par.
+Proof.
+  rewrite /Strongly_confluent.
+  move => a b b0 h.
+  move : b0.
+  elim : a b / h.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
+    elim /Par_inv; try congruence.
+    + qauto l:on ctrs:Par.
+    + move => ? a2 A a3 b3 b4 ? ?.
+      case => *; subst.
+      case /(_ _ ltac:(eassumption)) : ih1 => b [? ?].
+      case /(_ _ ltac:(eassumption)) : ih0 => a [? h2].
+      elim /Par_inv : h2; try congruence.
+      move => ? A0 A1 a2 a4 ? ?.
+      case => *; subst.
+      exists (subst_tm (b..) a4).
+      hauto lq:on ctrs:Par use:par_cong.
+  - move => a A a0 b0 b1 ? ih0 ? ih1 b2.
+    elim /Par_inv; try congruence.
+    + move => h a1 a2 b3 b4 ? ? [*]; subst.
+      case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 *].
+      case /(_ _ ltac:(eassumption)) : ih1 => b [*].
+      elim /Par_inv : h0; try congruence.
+      move => ? A0 A1 a3 a4 ? ? [*] *; subst.
+      exists (subst_tm (b..) a4).
+      hauto lq:on use:par_cong ctrs:Par.
+    + move => ? a1 A0 a2 b3 b4 ? ? [*] *; subst.
+      case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 h1].
+      case /(_ _ ltac:(eassumption)) : ih1 => b [*].
+      elim /Par_inv : h0; try congruence.
+      move => ? A1 A2 a3 a4 ? ? [*] *; subst.
+      exists (subst_tm (b..) a4).
+      hauto lq:on use:par_cong ctrs:Par inv:Par.
+Qed.
