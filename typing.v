@@ -1,5 +1,8 @@
 From WR Require Import syntax join.
-From Coq Require Import ssreflect.
+From Coq Require Import
+  Sets.Relations_2
+  ssreflect
+  Program.Basics.
 From Hammer Require Import Tactics.
 
 Definition context := nat -> tm.
@@ -21,7 +24,6 @@ Qed.
 #[export]Hint Unfold dep_ith : core.
 
 Tactic Notation "asimpldep" := repeat (progress (rewrite /dep_ith; asimpl)).
-
 
 Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
 | T_Var i :
@@ -64,3 +66,17 @@ with UWf (n : nat) (Γ : context) : tm -> Prop :=
 | U_Embed A :
   Wt n Γ A tUniv ->
   UWf n Γ A.
+
+Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
+  forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
+
+Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
+| InterpUniv_False : InterpUniv tFalse (const False)
+| InterpUniv_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
+  InterpUniv A PA ->
+  (forall a PB, PA a -> PF a PB -> InterpUniv (subst_tm (a..) B) PB) ->
+  InterpUniv (tPi A B) (ProdSpace PA PF)
+| InterpUniv_Step A0 A1 PA1 :
+  Par A0 A1 ->
+  InterpUniv A1 PA1 ->
+  InterpUniv A0 PA1.
