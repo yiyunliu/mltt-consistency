@@ -80,3 +80,53 @@ Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
   Par A0 A1 ->
   InterpUniv A1 PA1 ->
   InterpUniv A0 PA1.
+
+Lemma InterpUniv_NotVar i P : ~ InterpUniv (var_tm i) P.
+Proof.
+  move E : (var_tm i) => a0 h.
+  move : i E.
+  elim : a0 P / h; hauto inv:InterpUniv, Par.
+Qed.
+
+Lemma InterpUniv_NotAbs A a P : ~ InterpUniv (tAbs A a) P.
+Proof.
+  move E : (tAbs A a) => a0 h.
+  move : A a E.
+  elim : a0 P / h; hauto inv:InterpUniv, Par.
+Qed.
+
+Lemma InterpUniv_preservation A B P (h : InterpUniv A P) :
+  Par A B ->
+  InterpUniv B P.
+Proof.
+  move : B.
+  elim : A P / h; auto.
+  - hauto lq:on inv:Par ctrs:InterpUniv.
+  - move => A B PA PF hPA ihPA hPB ihPB T hT.
+    elim /Par_inv :  hT => //.
+    move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
+    apply InterpUniv_Fun.
+    sfirstorder.
+    move => a PB ha hPB0.
+    apply : ihPB; eauto.
+    sfirstorder use:par_cong, Par_refl.
+  - move => A B P h0 h1 ih1 C hC.
+    have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
+    hauto lq:on ctrs:InterpUniv.
+Qed.
+
+Lemma InterpUniv_deterministic A PA PB :
+  InterpUniv A PA ->
+  InterpUniv A PB ->
+  forall x, PA x <-> PB x.
+Proof.
+  move => h.
+  move : PB.
+  elim : A PA / h.
+  - suff : forall P, InterpUniv tFalse P -> P = (const False) by sauto lq:on rew:off.
+    move E : tFalse => a P h.
+    move : E.
+    elim : a P / h; sauto lq:on rew:off.
+  - admit.
+  - hauto l:on use:InterpUniv_preservation.
+Admitted.
