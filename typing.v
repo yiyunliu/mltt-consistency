@@ -127,6 +127,8 @@ Proof.
     move E : tFalse => a P h.
     move : E.
     elim : a P / h; sauto lq:on rew:off.
-  - admit.
+  - move => A B PA PF hPA ihPA hPB ihPB P hP.
+  (* Need inversion lemma *)
+    admit.
   - hauto l:on use:InterpUniv_preservation.
 Admitted.
