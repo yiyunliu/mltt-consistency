@@ -74,6 +74,7 @@ Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_False : InterpUniv tFalse (const False)
 | InterpUniv_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
   InterpUniv A PA ->
+  (forall a, PA a -> exists PB, PF a PB) ->
   (forall a PB, PA a -> PF a PB -> InterpUniv (subst_tm (a..) B) PB) ->
   InterpUniv (tPi A B) (ProdSpace PA PF)
 | InterpUniv_Step A0 A1 PA1 :
@@ -95,6 +96,26 @@ Proof.
   elim : a0 P / h; hauto inv:InterpUniv, Par.
 Qed.
 
+Lemma InterpUniv_Fun_inv A0 B0 P  (h : InterpUniv (tPi A0 B0) P) :
+  exists A1 B1, Rstar _ Par A0 A1 /\ Rstar _ Par B0 B1 /\ exists PA PF,
+      P = ProdSpace PA PF /\ InterpUniv A1 PA /\
+        (forall a PB, PA a -> PF a PB -> InterpUniv (subst_tm (a..) B1) PB) /\
+        (forall a, PA a -> exists PB, PF a PB).
+Proof.
+  move E : (tPi A0 B0) h => T h.
+  move : A0 B0 E.
+  elim : T P / h => //.
+  - hauto lq:on ctrs:InterpUniv, Rstar.
+  - move => A0 A1 PA1 h0 h1 ih A2 B2 ?; subst.
+    elim /Par_inv : h0 => //.
+    move => h2 A0 A3 B0 B1 h3 h4 [? ?] ?; subst.
+    move /(_ A3 B1 ltac:(done)) : ih.
+    intros (A1 & B3 & h5 & h6 & h7).
+    have [*] : Rstar _ Par A2 A1 /\ Rstar _ Par B2 B3
+      by hauto lq:on rew:off ctrs:Rstar use:Relations_2_facts.Rstar_transitive.
+    hauto lq:on rew:off ctrs:InterpUniv.
+Qed.
+
 Lemma InterpUniv_preservation A B P (h : InterpUniv A P) :
   Par A B ->
   InterpUniv B P.
@@ -102,11 +123,10 @@ Proof.
   move : B.
   elim : A P / h; auto.
   - hauto lq:on inv:Par ctrs:InterpUniv.
-  - move => A B PA PF hPA ihPA hPB ihPB T hT.
+  - move => A B PA PF hPA ihPA hPB hPB' ihPB T hT.
     elim /Par_inv :  hT => //.
     move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
-    apply InterpUniv_Fun.
-    sfirstorder.
+    apply InterpUniv_Fun; auto.
     move => a PB ha hPB0.
     apply : ihPB; eauto.
     sfirstorder use:par_cong, Par_refl.
@@ -114,6 +134,16 @@ Proof.
     have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpUniv.
 Qed.
+
+Lemma InterpUniv_preservation_star A B P (h : InterpUniv A P) :
+  Rstar _ Par A B ->
+  InterpUniv B P.
+Proof. induction 1; hauto l:on use:InterpUniv_preservation. Qed.
+
+Lemma InterpUniv_back_preservation_star A B P (h : InterpUniv B P) :
+  Rstar _ Par A B ->
+  InterpUniv A P.
+Proof. induction 1; hauto l:on ctrs:InterpUniv. Qed.
 
 Lemma InterpUniv_deterministic A PA PB :
   InterpUniv A PA ->
@@ -127,8 +157,31 @@ Proof.
     move E : tFalse => a P h.
     move : E.
     elim : a P / h; sauto lq:on rew:off.
-  - move => A B PA PF hPA ihPA hPB ihPB P hP.
-  (* Need inversion lemma *)
-    admit.
+  - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
+    move /InterpUniv_Fun_inv : hP.
+    intros (A1 & B1 & hP1 & hP2 & PA0 & PF0 & ? & hPA0 & hPBF0 & hPBF0'); subst.
+    move => a.
+    rewrite /ProdSpace.
+    have h0 : InterpUniv A PA0 by eauto using InterpUniv_back_preservation_star.
+    have h1 : forall a, Rstar tm Par (subst_tm (a..) B) (subst_tm (a..) B1) by sfirstorder use:par_subst_star.
+    have h2 : forall x, PA x <-> PA0 x by sfirstorder.
+    split.
+    + move => h3 a0 ha0.
+      case /(_ _ ha0) : hPBF0' => PB0 hPB0.
+      move /h2 in ha0.
+      exists PB0.
+      split; auto.
+      have ? : InterpUniv (subst_tm (a0..) B1) PB0 by sfirstorder.
+      have ? : InterpUniv (subst_tm (a0..) B) PB0 by sfirstorder use:InterpUniv_back_preservation_star.
+      qauto l:on.
+    + move => h3 a0 ha0.
+      have /h2 ha0' := ha0.
+      case /(_ _ ha0') : h3 => PB0 [hPB0 hPB0'].
+      case /(_ _ ha0) : hPB => PB1 hPB1.
+      move /(_ _ _ ha0 hPB1) in hPB'.
+      exists PB1; split; auto.
+      move /(_ a0 PB0 ha0' hPB0) in hPBF0.
+      have ? : InterpUniv (subst_tm (a0..) B) PB0 by sfirstorder use:InterpUniv_back_preservation_star.
+      qauto l:on.
   - hauto l:on use:InterpUniv_preservation.
-Admitted.
+Qed.
