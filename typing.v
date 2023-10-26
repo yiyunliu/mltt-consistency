@@ -237,6 +237,20 @@ Proof.
   qauto l:on use:par_subst_star, InterpUniv_back_preservation_star.
 Qed.
 
+Lemma InterpType_Fun_inv' A B P :
+  InterpType (tPi A B) P ->
+  exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
+    InterpType A PA /\
+    (forall a, PA a -> exists PB, PF a PB) /\
+    (forall a PB, PA a -> PF a PB -> InterpType (subst_tm (a..) B) PB) /\
+    P = ProdSpace PA PF.
+Proof.
+  move /InterpType_Fun_inv.
+  intros (A1 & B1 & hP1 & hP2 & PA & PF & ? & hPA & hPF & hPFTotal).
+  exists PA, PF; split; eauto;
+  qauto l:on use:par_subst_star, InterpType_back_preservation_star.
+Qed.
+
 Lemma InterpUniv_deterministic A PA PB :
   InterpUniv A PA ->
   InterpUniv A PB ->
@@ -253,4 +267,40 @@ Proof.
     move /InterpUniv_Fun_inv' : hP.
     qauto l:on unfold:ProdSpace.
   - hauto l:on use:InterpUniv_preservation.
+Qed.
+
+Lemma InterpType_Univ_inv P :
+  InterpType tUniv P ->
+  P = (fun A => exists PA, InterpUniv A PA).
+Proof.
+  move E : tUniv => a h.
+  move : E.
+  elim : a P / h; hauto lq:on rew:off ctrs:InterpUniv inv:Par.
+Qed.
+
+Lemma InterpType_deterministic A PA PB :
+  InterpType A PA ->
+  InterpType A PB ->
+  forall x, PA x <-> PB x.
+Proof.
+  move => h.
+  move : PB.
+  elim : A PA / h.
+  - suff : forall P, InterpType tFalse P -> P = (const False) by sauto lq:on rew:off.
+    move E : tFalse => a P h.
+    move : E.
+    elim : a P / h; sauto lq:on rew:off.
+  - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
+    move /InterpType_Fun_inv' : hP.
+    qauto l:on unfold:ProdSpace.
+  - hauto lq:on rew:off inv:InterpType use:InterpType_Univ_inv.
+  - hauto l:on use:InterpType_preservation.
+Qed.
+
+Lemma InterpUniv_subset_InterpType A PA :
+  InterpUniv A PA ->
+  InterpType A PA.
+Proof.
+  move => h.
+  elim : A PA / h; hauto l:on ctrs:InterpType.
 Qed.
