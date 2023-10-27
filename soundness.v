@@ -112,7 +112,17 @@ Proof.
     eauto using InterpType_deterministic.
   - hauto l:on.
   - hauto l:on.
-  - admit.
+  - rewrite /SemUWf.
+    move => // n Γ A B _ h0 _ h1 γ hγ.
+    move /(_ γ hγ) : h0. intros (PA & hPA).
+    exists (ProdSpace PA (fun a PB => InterpType (subst_tm (a .: γ) B) PB)).
+    simpl.
+    apply InterpType_Fun; eauto.
+    + move => a ha.
+      hauto l:on use:γ_ok_cons.
+    + move => a PB ha.
+      suff hγ_cons : γ_ok (S n) (A .: Γ) (a .: γ) by asimpl.
+      qauto use:γ_ok_cons.
   - rewrite /SemWt /SemUWf.
     move => n Γ A _ ih γ hγ.
     move : (ih γ hγ). intros (PA & hPA & hA).
