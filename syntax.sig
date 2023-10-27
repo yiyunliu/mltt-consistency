@@ -5,3 +5,7 @@ tApp : tm -> tm -> tm
 tPi : tm -> (tm -> tm) -> tm
 tFalse : tm
 tUniv : tm
+tOn : tm
+tOff : tm
+tIf : tm -> tm -> tm -> tm
+tSwitch : tm

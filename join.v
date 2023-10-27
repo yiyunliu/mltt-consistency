@@ -35,7 +35,33 @@ Inductive Par : tm -> tm -> Prop :=
   Par a (tAbs A a0) ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp a b0) (subst_tm (b1..) a0).
+  Par (tApp a b0) (subst_tm (b1..) a0)
+| P_On :
+  (* ------- *)
+  Par tOn tOn
+| P_Off :
+  (* ---------- *)
+  Par tOff tOff
+| P_If a0 a1 b0 b1 c0 c1:
+  Par a0 a1 ->
+  Par b0 b1 ->
+  Par c0 c1 ->
+  (* ---------- *)
+  Par (tIf a0 b0 c0) (tIf a1 b1 c1)
+| P_IfOn a b0 b1 c0 c1 :
+  Par a tOn ->
+  Par b0 b1 ->
+  Par c0 c1 ->
+  (* ---------- *)
+  Par (tIf a b0 c0) b1
+| P_IfOff a b0 b1 c0 c1 :
+  Par a tOff ->
+  Par b0 b1 ->
+  Par c0 c1 ->
+  (* ---------- *)
+  Par (tIf a b0 c0) c1
+| P_Switch :
+  Par tSwitch tSwitch.
 
 #[export]Hint Constructors Par : par.
 
@@ -149,6 +175,14 @@ Proof.
       move => ? A1 A2 a3 a4 ? ? [*] *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on use:par_cong ctrs:Par inv:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - move => a b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 b2.
+    elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
+  - move => a b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 b2.
+    elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
 Qed.
 
 Lemma pars_confluent : Confluent _ Par.
