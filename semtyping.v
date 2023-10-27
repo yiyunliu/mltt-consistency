@@ -3,7 +3,7 @@ From Coq Require Import
   Sets.Relations_2
   ssreflect
   Program.Basics.
-From Hammer Require Import Tactics Hammer.
+From Hammer Require Import Tactics.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
