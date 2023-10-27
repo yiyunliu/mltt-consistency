@@ -1,5 +1,5 @@
 From WR Require Import syntax join semtyping typing.
-From Coq Require Import ssreflect Sets.Relations_2 Sets.Relations_3.
+From Coq Require Import ssreflect Sets.Relations_2 Sets.Relations_3 Program.Basics.
 From Hammer Require Import Tactics.
 Require Import Psatz.
 
@@ -135,3 +135,18 @@ Proof.
     move /InterpType_Univ_inv : hPA => ?; subst.
     sfirstorder use:InterpUniv_subset_InterpType.
 Admitted.
+
+Lemma consistency a Γ : ~Wt 0 Γ a tFalse.
+Proof.
+  move => h.
+  apply soundness in h.
+  rewrite /SemWt in h.
+  move : (h var_tm).
+  case.
+  rewrite /γ_ok; lia.
+  asimpl.
+  move => PA [hPA ha].
+  have ? : InterpType tFalse (const False) by sfirstorder.
+  suff : forall x, PA x <-> (const False) x by firstorder.
+  eauto using InterpType_deterministic.
+Qed.
