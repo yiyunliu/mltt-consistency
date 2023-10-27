@@ -26,6 +26,39 @@ Proof.
     lia.
 Qed.
 
+Lemma γ_ok_renaming n Γ γ :
+  forall m Δ ξ,
+    (forall i, i < n -> ξ i < m) ->
+    (forall i, i < n -> ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)) ->
+    γ_ok m Δ γ ->
+    γ_ok n Γ (ξ >> γ).
+Proof.
+  move => m Δ ξ hscope h0 h1.
+  rewrite /γ_ok => i hi PA.
+  asimpl.
+  replace (subst_tm (ξ >> γ) (dep_ith Γ i)) with
+    (subst_tm γ (ren_tm ξ (dep_ith Γ i))); last by asimpl.
+  rewrite h0; auto.
+  apply h1.
+  firstorder.
+Qed.
+
+
+Lemma renaming_SemWt n Γ a A :
+  SemWt n Γ a A ->
+  forall m Δ ξ,
+    (forall i, i < n -> ξ i < m) ->
+    (forall i, i < n -> ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)) ->
+    SemWt m Δ (ren_tm ξ a) (ren_tm ξ A).
+Proof.
+  rewrite /SemWt.
+  move => h m Δ ξ hscope hwf γ hγ.
+  have hγ' : (γ_ok n Γ (ξ >> γ)) by eauto using γ_ok_renaming.
+  case /(_ _ hγ') : h => PA [hPA ha].
+  exists PA.
+  by asimpl.
+Qed.
+
 Lemma γ_ok_consU {n Γ γ a PA A} :
   InterpUniv (subst_tm γ A) PA ->
   PA a ->
@@ -41,9 +74,11 @@ Theorem soundness : forall n Γ,
 Proof.
   apply  Wt_mutual; eauto.
   - rewrite /SemWt.
-    move => n Γ i hi γ hγ.
+    move => n Γ i _ ih ? γ hγ.
+    move /(_ i ltac:(done)) in ih.
+    rewrite /SemUWf in ih.
     rewrite /γ_ok in hγ.
-    move /(_ i hi) in hγ.
+    best.
     admit.
   - hauto l:on.
   - rewrite /SemWt.

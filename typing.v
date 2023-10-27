@@ -23,6 +23,8 @@ Tactic Notation "asimpldep" := repeat (progress (rewrite /dep_ith; asimpl)).
 
 Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
 | T_Var i :
+  (* This mess is the wff condition *)
+  (forall j, j < n -> UWf (n - S j) (Nat.add (S j) >> Γ) (Γ j)) ->
   i < n ->
   (* ------ *)
   Wt n Γ (var_tm i) (dep_ith Γ i)
@@ -62,6 +64,9 @@ with UWf (n : nat) (Γ : context) : tm -> Prop :=
 | U_Embed A :
   Wt n Γ A tUniv ->
   UWf n Γ A.
+
+Definition Wff n Γ := forall j, j < n -> UWf (n - S j) (Nat.add (S j) >> Γ) (Γ j).
+
 
 Scheme Wt_ind' := Induction for Wt Sort Prop
   with UWf_ind' := Induction for UWf Sort Prop.
