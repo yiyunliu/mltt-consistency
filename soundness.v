@@ -43,18 +43,17 @@ Proof.
   firstorder.
 Qed.
 
-
-Lemma renaming_SemWt n Γ a A :
-  SemWt n Γ a A ->
+Lemma renaming_SemUWf n Γ A :
+  SemUWf n Γ A ->
   forall m Δ ξ,
     (forall i, i < n -> ξ i < m) ->
     (forall i, i < n -> ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)) ->
-    SemWt m Δ (ren_tm ξ a) (ren_tm ξ A).
+    SemUWf m Δ (ren_tm ξ A).
 Proof.
-  rewrite /SemWt.
+  rewrite /SemUWf.
   move => h m Δ ξ hscope hwf γ hγ.
   have hγ' : (γ_ok n Γ (ξ >> γ)) by eauto using γ_ok_renaming.
-  case /(_ _ hγ') : h => PA [hPA ha].
+  case /(_ _ hγ') : h => PA hPA.
   exists PA.
   by asimpl.
 Qed.
@@ -73,13 +72,21 @@ Theorem soundness : forall n Γ,
   (forall A (h : UWf n Γ A), SemUWf n Γ A).
 Proof.
   apply  Wt_mutual; eauto.
-  - rewrite /SemWt.
-    move => n Γ i _ ih ? γ hγ.
+  - move => n Γ i _ ih ? γ hγ.
     move /(_ i ltac:(done)) in ih.
-    rewrite /SemUWf in ih.
-    rewrite /γ_ok in hγ.
-    best.
-    admit.
+    suff ih' : SemUWf n Γ (dep_ith Γ i).
+    + case /(_ _ hγ) : ih' => PA hPA.
+      exists PA.
+      split; eauto.
+      simpl; apply hγ; auto.
+    + apply (renaming_SemUWf _ _ _ ih); first by lia.
+      move => i0 ?.
+      asimpldep.
+      simpl.
+      f_equal.
+      fext.
+      move => *.
+      asimpl; lia.
   - hauto l:on.
   - rewrite /SemWt.
     move => // n Γ A B _ h0 _ h1 γ hγ.
@@ -169,7 +176,7 @@ Proof.
     move : (ih γ hγ). intros (PA & hPA & hA).
     move /InterpType_Univ_inv : hPA => ?; subst.
     sfirstorder use:InterpUniv_subset_InterpType.
-Admitted.
+Qed.
 
 Lemma consistency a Γ : ~Wt 0 Γ a tFalse.
 Proof.
