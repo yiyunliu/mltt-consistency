@@ -52,6 +52,21 @@ Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
   Join A B ->
   (* ----------- *)
   Wt n Γ a B
+| T_On :
+  (* --------- *)
+  Wt n Γ tOn tSwitch
+| T_Off :
+  (* --------- *)
+  Wt n Γ tOff tSwitch
+| T_If a b c A :
+  Wt n Γ a tSwitch ->
+  Wt n Γ b A ->
+  Wt n Γ c A ->
+  (* ------------ *)
+  Wt n Γ (tIf a b c) A
+| T_Switch :
+  (* ----------- *)
+  Wt n Γ tSwitch tUniv
 with UWf (n : nat) (Γ : context) : tm -> Prop :=
 | U_Univ :
   UWf n Γ tUniv
@@ -63,10 +78,12 @@ with UWf (n : nat) (Γ : context) : tm -> Prop :=
   UWf n Γ (tPi A B)
 | U_Embed A :
   Wt n Γ A tUniv ->
-  UWf n Γ A.
+  UWf n Γ A
+| U_Switch :
+  (* ------------ *)
+  UWf n Γ tSwitch.
 
 Definition Wff n Γ := forall j, j < n -> UWf (n - S j) (Nat.add (S j) >> Γ) (Γ j).
-
 
 Scheme Wt_ind' := Induction for Wt Sort Prop
   with UWf_ind' := Induction for UWf Sort Prop.

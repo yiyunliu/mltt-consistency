@@ -8,6 +8,14 @@ From Hammer Require Import Tactics.
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
 
+Definition is_bool_val a :=
+  match a with
+  | tOn => true
+  | tOff => true
+  | _ => false
+  end.
+
+
 Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_False : InterpUniv tFalse (const False)
 | InterpUniv_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
@@ -18,7 +26,8 @@ Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_Step A0 A1 PA1 :
   Par A0 A1 ->
   InterpUniv A1 PA1 ->
-  InterpUniv A0 PA1.
+  InterpUniv A0 PA1
+| InterpUniv_Switch :
 
 Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
 | InterpType_False : InterpType tFalse (const False)
