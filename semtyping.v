@@ -242,3 +242,40 @@ Proof.
   move => h.
   elim : A PA / h; hauto l:on ctrs:InterpType.
 Qed.
+
+Lemma InterpUniv_back_clos A PA :
+  InterpUniv A PA ->
+  forall a b, Par a b ->
+         PA b -> PA a.
+Proof.
+  move => h.
+  elim : A PA / h.
+  - sfirstorder.
+  - move => A B PA PF hPA ihA hPFTot hPF ihPF a b hab.
+    rewrite /ProdSpace => hb.
+    move => a0 ha0.
+    move : (hb _ ha0). intros (PB & hPB & hPB').
+    exists PB; split; auto.
+    apply : ihPF; eauto.
+    hauto l:on ctrs:Par use:Par_refl.
+  - sfirstorder.
+Qed.
+
+Lemma InterpType_back_clos A PA :
+  InterpType A PA ->
+  forall a b, Par a b ->
+         PA b -> PA a.
+Proof.
+  move => h.
+  elim : A PA / h.
+  - sfirstorder.
+  - move => A B PA PF hPA ihA hPFTot hPF ihPF a b hab.
+    rewrite /ProdSpace => hb.
+    move => a0 ha0.
+    move : (hb _ ha0). intros (PB & hPB & hPB').
+    exists PB; split; auto.
+    apply : ihPF; eauto.
+    hauto l:on ctrs:Par use:Par_refl.
+  - qauto l:on ctrs:InterpUniv use:InterpUniv_back_clos.
+  - sfirstorder.
+Qed.

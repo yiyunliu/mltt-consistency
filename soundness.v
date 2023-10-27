@@ -78,7 +78,13 @@ Proof.
       move /(_ _ ltac:(qauto use:γ_ok_cons)) : hB. intros (PB & hPB & hPBa).
       exists PB; split; eauto.
       simpl.
-      admit.
+      apply : InterpType_back_clos; eauto.
+      apply : P_AppAbs'.
+      2 : {
+        apply Par_refl.
+      }
+      by asimpl.
+      apply Par_refl.
   - move => n Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
     move /(_ γ hγ) : ihf; intros (PPi & hPi & hf).
