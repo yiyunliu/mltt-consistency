@@ -94,20 +94,19 @@ Proof.
   sfirstorder use:Par_refl.
 Qed.
 
-Lemma par_cong_star a0 a1 b0 b1 (h : Rstar _ Par a0 a1) (h1 : Par b0 b1) :
-  Rstar _ Par (subst_tm (b0..) a0) (subst_tm (b1..) a1).
+Lemma par_subst a0 a1 (h : Par a0 a1) (ξ : fin -> tm) :
+  Par (subst_tm ξ a0) (subst_tm ξ a1).
+Proof. hauto l:on use:Par_refl, par_morphing. Qed.
+
+Lemma par_subst_star a0 a1 (h : Rstar _ Par a0 a1) (ξ : fin -> tm) :
+  Rstar _ Par (subst_tm ξ a0) (subst_tm ξ a1).
 Proof.
   induction h.
-  - apply Rstar_contains_R.
-    hauto l:on use:Par_refl, par_cong.
+  - apply Rstar_0.
   - apply : Rstar_transitive; eauto.
     apply Rstar_contains_R.
-    sfirstorder use:par_cong, Par_refl.
+    sfirstorder use:par_subst.
 Qed.
-
-Lemma par_subst_star a0 a1 b (h : Rstar _ Par a0 a1) :
-  Rstar _ Par (subst_tm (b..) a0) (subst_tm (b..) a1).
-Proof. sfirstorder use:par_cong_star, Par_refl. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 

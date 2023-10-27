@@ -62,3 +62,8 @@ with UWf (n : nat) (Γ : context) : tm -> Prop :=
 | U_Embed A :
   Wt n Γ A tUniv ->
   UWf n Γ A.
+
+Scheme Wt_ind' := Induction for Wt Sort Prop
+  with UWf_ind' := Induction for UWf Sort Prop.
+
+Combined Scheme Wt_mutual from Wt_ind', UWf_ind'.
