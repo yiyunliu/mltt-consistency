@@ -82,38 +82,33 @@ Proof.
   induction 1.
   - sfirstorder.
   - sauto lq:on.
-  - change (InterpUnivN 1) with (InterpExt 1 (InterpUnivN 0)).
-    sauto lq:on.
+  - sauto lq:on.
   - sauto lq:on.
   - sfirstorder.
 Qed.
 
-Lemma InterpUniv_NotVar i P : ~ InterpUniv (var_tm i) P.
+Lemma InterpExt_NotVar Interp n i P : ~InterpExt n Interp (var_tm i) P.
 Proof.
   move E : (var_tm i) => a0 h.
   move : i E.
-  elim : a0 P / h; hauto inv:InterpUniv, Par.
+  elim : a0 P / h; hauto inv:InterpExt, Par.
 Qed.
 
-Lemma InterpType_NotVar i P : ~ InterpType (var_tm i) P.
+Lemma InterpUnivN_NotVar n i P : ~ InterpUnivN n (var_tm i) P.
 Proof.
-  move E : (var_tm i) => a0 h.
-  move : i E.
-  elim : a0 P / h; hauto inv:InterpType, Par.
+  case : n; eauto using InterpExt_NotVar.
 Qed.
 
-Lemma InterpUniv_NotAbs A a P : ~ InterpUniv (tAbs A a) P.
+Lemma InterpExt_NotAbs Interp n A a P : ~ InterpExt n Interp (tAbs A a) P.
 Proof.
   move E : (tAbs A a) => a0 h.
   move : A a E.
   elim : a0 P / h; hauto inv:InterpUniv, Par.
 Qed.
 
-Lemma InterpType_NotAbs A a P : ~ InterpType (tAbs A a) P.
+Lemma InterpUnivN_NotAbs n A a P : ~ InterpUnivN n (tAbs A a) P.
 Proof.
-  move E : (tAbs A a) => a0 h.
-  move : A a E.
-  elim : a0 P / h; hauto inv:InterpType, Par.
+  case : n; eauto using InterpExt_NotAbs.
 Qed.
 
 Lemma InterpUniv_Fun_inv A0 B0 P  (h : InterpUniv (tPi A0 B0) P) :
