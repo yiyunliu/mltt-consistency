@@ -6,12 +6,12 @@ From Coq Require Import
   ssrbool
   Program.Basics.
 From Hammer Require Import Tactics.
+Require Import Psatz.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
 
-
-Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
+Inductive InterpExt n (Interp : tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_False : InterpExt n Interp tFalse (const False)
 | InterpExt_Switch : InterpExt n Interp tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v)
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
@@ -20,19 +20,18 @@ Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -
   (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
   InterpExt n Interp (tPi A B) (ProdSpace PA PF)
 | InterpExt_Univ m :
+  (* This is a join *)
   m < n ->
-  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
+  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp A PA)
 | InterpExt_Step A A0 PA :
   Par A A0 ->
   InterpExt n Interp A0 PA ->
   InterpExt n Interp A PA.
 
-(* (n : nat) -> fin n -> (tm -> Prop) -> Prop*)
-
-Fixpoint InterpUnivN (n : nat) : nat -> tm -> (tm -> Prop) -> Prop :=
+Fixpoint InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop :=
   match n with
-  | 0 => fun m => InterpExt 0 (fun _ _ _ => False)
-  | S n => fun m => InterpExt n (InterpUnivN n)
+  | 0 => InterpExt 0 (fun _ _ => False)
+  | S n => InterpExt (S n) (InterpUnivN n)
   end.
 
 Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
@@ -49,16 +48,18 @@ Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_Switch :
   InterpUniv tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v).
 
-(* Lemma InterpUniv0_InterpUniv : forall A PA, InterpUnivN 0 A PA -> InterpUniv A PA. *)
-(* Proof. *)
-(*   move => A PA /= h. *)
-(*   elim : A PA / h. *)
-(*   - sfirstorder. *)
-(*   - sfirstorder. *)
-(*   - hauto l:on ctrs:InterpUniv. *)
-(*   - *)
+(* Some basic unit tests *)
+Example InterpUniv0_InterpUniv : forall A PA, InterpUnivN 0 A PA -> InterpUniv A PA.
+Proof.
+  move => A PA /= h.
+  elim : A PA / h; sauto lq:on ctrs:InterpUniv.
+Qed.
 
-
+Example InterpUniv_InterpUniv0 : forall A PA, InterpUniv A PA -> InterpUnivN 0 A PA.
+Proof.
+  move => A PA h.
+  elim : A PA / h; sauto lq:on.
+Qed.
 
 Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
 | InterpType_False : InterpType tFalse (const False)
@@ -68,13 +69,24 @@ Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
   (forall a PB, PA a -> PF a PB -> InterpType (subst_tm (a..) B) PB) ->
   InterpType (tPi A B) (ProdSpace PA PF)
 | InterpType_Univ :
-  InterpType tUniv (fun A => exists PA, InterpUniv A PA)
+  InterpType (tUniv 0) (fun A => exists PA, InterpUnivN 0 A PA)
 | InterpType_Step A0 A1 PA1 :
   Par A0 A1 ->
   InterpType A1 PA1 ->
   InterpType A0 PA1
 | InterpType_Switch :
   InterpType tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v).
+
+Example InterpUniv1_InterpType : forall A PA, InterpType A PA -> InterpUnivN 1 A PA.
+Proof.
+  induction 1.
+  - sfirstorder.
+  - sauto lq:on.
+  - change (InterpUnivN 1) with (InterpExt 1 (InterpUnivN 0)).
+    sauto lq:on.
+  - sauto lq:on.
+  - sfirstorder.
+Qed.
 
 Lemma InterpUniv_NotVar i P : ~ InterpUniv (var_tm i) P.
 Proof.
