@@ -7,11 +7,12 @@ From Coq Require Import
   Program.Basics.
 From Hammer Require Import Tactics.
 Require Import Psatz.
+From Equations Require Import Equations.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
 
-Inductive InterpExt n (Interp : tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
+Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_False : InterpExt n Interp tFalse (const False)
 | InterpExt_Switch : InterpExt n Interp tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v)
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
@@ -20,19 +21,21 @@ Inductive InterpExt n (Interp : tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop)
   (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
   InterpExt n Interp (tPi A B) (ProdSpace PA PF)
 | InterpExt_Univ m :
-  (* This is a join *)
   m < n ->
-  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp A PA)
+  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
 | InterpExt_Step A A0 PA :
   Par A A0 ->
   InterpExt n Interp A0 PA ->
   InterpExt n Interp A PA.
 
-Fixpoint InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop :=
-  match n with
-  | 0 => InterpExt 0 (fun _ _ => False)
-  | S n => InterpExt (S n) (InterpUnivN n)
-  end.
+Lemma InterpExt_Univ' n Interp m PF :
+  PF = (fun A => exists PA, Interp m A PA) ->
+  m < n ->
+  InterpExt n Interp (tUniv m) PF.
+Proof. hauto lq:on ctrs:InterpExt. Qed.
+
+Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
+  InterpUnivN n := InterpExt n (fun m A PA => forall (h : m < n), InterpUnivN m A PA).
 
 Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_False : InterpUniv tFalse (const False)
@@ -52,13 +55,13 @@ Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 Example InterpUniv0_InterpUniv : forall A PA, InterpUnivN 0 A PA -> InterpUniv A PA.
 Proof.
   move => A PA /= h.
-  elim : A PA / h; sauto lq:on ctrs:InterpUniv.
+  elim : A PA / h; sauto rew:db:InterpUnivN lq:on ctrs:InterpUniv.
 Qed.
 
 Example InterpUniv_InterpUniv0 : forall A PA, InterpUniv A PA -> InterpUnivN 0 A PA.
 Proof.
   move => A PA h.
-  elim : A PA / h; sauto lq:on.
+  elim : A PA / h; sauto rew:db:InterpUnivN lq:on.
 Qed.
 
 Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
@@ -69,7 +72,7 @@ Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
   (forall a PB, PA a -> PF a PB -> InterpType (subst_tm (a..) B) PB) ->
   InterpType (tPi A B) (ProdSpace PA PF)
 | InterpType_Univ :
-  InterpType (tUniv 0) (fun A => exists PA, InterpUnivN 0 A PA)
+  InterpType (tUniv 0) (fun A => exists PA, 0 < 1 -> InterpUnivN 0 A PA)
 | InterpType_Step A0 A1 PA1 :
   Par A0 A1 ->
   InterpType A1 PA1 ->
@@ -81,10 +84,12 @@ Example InterpUniv1_InterpType : forall A PA, InterpType A PA -> InterpUnivN 1 A
 Proof.
   induction 1.
   - sfirstorder.
-  - sauto lq:on.
-  - sauto lq:on.
-  - sauto lq:on.
-  - sfirstorder.
+  - sauto rew:db:InterpUnivN lq:on.
+  - simp InterpUnivN.
+    apply InterpExt_Univ'; last lia.
+    by simp InterpUnivN.
+  - sauto rew:db:InterpUnivN lq:on.
+  - sfirstorder rew:db:InterpUnivN.
 Qed.
 
 Lemma InterpExt_NotVar Interp n i P : ~InterpExt n Interp (var_tm i) P.
@@ -96,7 +101,7 @@ Qed.
 
 Lemma InterpUnivN_NotVar n i P : ~ InterpUnivN n (var_tm i) P.
 Proof.
-  case : n; eauto using InterpExt_NotVar.
+  hauto l:on rew:db:InterpUnivN use:InterpExt_NotVar.
 Qed.
 
 Lemma InterpExt_NotAbs Interp n A a P : ~ InterpExt n Interp (tAbs A a) P.
@@ -108,7 +113,7 @@ Qed.
 
 Lemma InterpUnivN_NotAbs n A a P : ~ InterpUnivN n (tAbs A a) P.
 Proof.
-  case : n; eauto using InterpExt_NotAbs.
+  hauto l:on rew:db:InterpUnivN use:InterpExt_NotAbs.
 Qed.
 
 Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
@@ -121,7 +126,7 @@ Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
   elim : T P / h => //.
-  - hauto l:on ctrs:InterpUniv.
+  - hauto l:on.
   - move => *; subst.
     hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
 Qed.
@@ -150,7 +155,7 @@ Qed.
 Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
   Par A B ->
   InterpUnivN n B P.
-Proof. case : n h; sfirstorder use: InterpExt_preservation. Qed.
+Proof. hauto l:on rew:db:InterpUnivN use: InterpExt_preservation. Qed.
 
 Lemma InterpExt_back_preservation_star i I A B P (h : InterpExt i I B P) :
   Rstar _ Par A B ->
@@ -165,12 +170,12 @@ Proof. induction 1; hauto l:on use:InterpExt_preservation. Qed.
 Lemma InterpUnivN_preservation_star n A B P (h : InterpUnivN n A P) :
   Rstar _ Par A B ->
   InterpUnivN n B P.
-Proof. case : n h; sfirstorder use:InterpExt_preservation_star. Qed.
+Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_preservation_star. Qed.
 
 Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
   Rstar _ Par A B ->
   InterpUnivN n A P.
-Proof. case : n h; sfirstorder use:InterpExt_back_preservation_star. Qed.
+Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
 Lemma InterpExt_Switch_inv n I P :
   InterpExt n I tSwitch P ->
@@ -192,7 +197,7 @@ Qed.
 
 Lemma InterpExt_Univ_inv n I P m :
   InterpExt n I (tUniv m) P ->
-  P = (fun A => exists PA, I A PA) /\ m < n.
+  P = (fun A => exists PA, I m A PA) /\ m < n.
 Proof.
   move E : (tUniv m) => A h.
   move : E.
@@ -202,7 +207,7 @@ Qed.
 Lemma InterpUnivN_Switch_inv n P :
   InterpUnivN n tSwitch P ->
   P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
-Proof. case : n; sfirstorder use:InterpExt_Switch_inv. Qed.
+Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Switch_inv. Qed.
 
 Lemma InterpExt_deterministic n I A PA PB :
   InterpExt n I A PA ->
@@ -225,7 +230,10 @@ Lemma InterpUnivN_deterministic n A PA PB :
   InterpUnivN n A PA ->
   InterpUnivN n A PB ->
   forall x, PA x <-> PB x.
-Proof. case : n => /=; eauto using InterpExt_deterministic. Qed.
+Proof.
+  simp InterpUnivN.
+  eauto using InterpExt_deterministic.
+Qed.
 
 Lemma InterpExt_mono_I n (I0 I1 : tm -> (tm -> Prop) -> Prop) :
   (forall A PA, I0 A PA -> I1 A PA) ->
