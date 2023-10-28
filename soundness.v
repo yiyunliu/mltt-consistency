@@ -50,8 +50,7 @@ Lemma renaming_SemUWf n Γ A :
     (forall i, i < n -> ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)) ->
     SemUWf m Δ (ren_tm ξ A).
 Proof.
-  rewrite /SemUWf.
-  move => h m Δ ξ hscope hwf γ hγ.
+  rewrite /SemUWf => h m Δ ξ hscope hwf γ hγ.
   have hγ' : (γ_ok n Γ (ξ >> γ)) by eauto using γ_ok_renaming.
   case /(_ _ hγ') : h => PA hPA.
   exists PA.
@@ -145,8 +144,7 @@ Proof.
     have hPB0'' := hPF _ PB0 hPA0b hPB0.
     asimpl in hPB0''.
     qauto l:on use:InterpType_deterministic.
-  - rewrite /SemWt /SemUWf /Join /coherent.
-    move => n Γ a A B _ hA _ hB [C [? ?]] γ hγ.
+  - rewrite /SemWt /SemUWf /Join /coherent => n Γ a A B _ hA _ hB [C [? ?]] γ hγ.
     move : (hA γ hγ) => [PA [hPA hPAa]].
     move : (hB γ hγ) => [PB hPB].
     exists PB.
@@ -209,4 +207,36 @@ Proof.
   have ? : InterpType tFalse (const False) by sfirstorder.
   suff : forall x, PA x <-> (const False) x by firstorder.
   eauto using InterpType_deterministic.
+Qed.
+
+Example univ_fun := (tAbs tSwitch (tIf (var_tm var_zero) tSwitch (tPi tSwitch tSwitch))).
+
+Example large_elim_example Γ : Wt 0 Γ tOn (tApp univ_fun tOn).
+Proof.
+  apply T_Conv with (A := tSwitch).
+  sfirstorder use:T_On.
+  apply U_Embed.
+  change (tUniv) with (subst_tm (tOn..) tUniv).
+  apply T_App with (A := tSwitch).
+  apply T_Abs; eauto.
+  apply U_Switch.
+  apply T_If.
+  apply T_Var.
+  case; last by lia.
+  asimpl.
+  simpl.
+  sfirstorder.
+  asimpl.
+  lia.
+  sfirstorder.
+  sauto lq:on.
+  sfirstorder.
+  exists tSwitch.
+  split.
+  eauto with sets.
+  rewrite /univ_fun.
+  apply : Rstar_n.
+  apply : P_AppAbs; sfirstorder use:Par_refl.
+  apply Rstar_contains_R => /=.
+  hauto lq:on ctrs:Par use:Par_refl.
 Qed.
