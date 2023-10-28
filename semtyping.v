@@ -111,137 +111,69 @@ Proof.
   case : n; eauto using InterpExt_NotAbs.
 Qed.
 
-Lemma InterpUniv_Fun_inv A0 B0 P  (h : InterpUniv (tPi A0 B0) P) :
-  exists A1 B1, Rstar _ Par A0 A1 /\ Rstar _ Par B0 B1 /\ exists PA PF,
-      P = ProdSpace PA PF /\ InterpUniv A1 PA /\
-        (forall a PB, PA a -> PF a PB -> InterpUniv (subst_tm (a..) B1) PB) /\
-        (forall a, PA a -> exists PB, PF a PB).
+Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
+  exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
+    InterpExt n Interp A PA /\
+    (forall a, PA a -> exists PB, PF a PB) /\
+    (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) /\
+    P = ProdSpace PA PF.
 Proof.
-  move E : (tPi A0 B0) h => T h.
-  move : A0 B0 E.
+  move E : (tPi A B) h => T h.
+  move : A B E.
   elim : T P / h => //.
-  - hauto lq:on ctrs:InterpUniv, Rstar.
-  - move => A0 A1 PA1 h0 h1 ih A2 B2 ?; subst.
-    elim /Par_inv : h0 => //.
-    move => h2 A0 A3 B0 B1 h3 h4 [? ?] ?; subst.
-    move /(_ A3 B1 ltac:(done)) : ih.
-    intros (A1 & B3 & h5 & h6 & h7).
-    have [*] : Rstar _ Par A2 A1 /\ Rstar _ Par B2 B3
-      by hauto lq:on rew:off ctrs:Rstar use:Relations_2_facts.Rstar_transitive.
-    hauto lq:on rew:off ctrs:InterpUniv.
+  - hauto l:on ctrs:InterpUniv.
+  - move => *; subst.
+    hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
 Qed.
 
-Lemma InterpType_Fun_inv A0 B0 P  (h : InterpType (tPi A0 B0) P) :
-  exists A1 B1, Rstar _ Par A0 A1 /\ Rstar _ Par B0 B1 /\ exists PA PF,
-      P = ProdSpace PA PF /\ InterpType A1 PA /\
-        (forall a PB, PA a -> PF a PB -> InterpType (subst_tm (a..) B1) PB) /\
-        (forall a, PA a -> exists PB, PF a PB).
-Proof.
-  move E : (tPi A0 B0) h => T h.
-  move : A0 B0 E.
-  elim : T P / h => //.
-  - hauto lq:on ctrs:InterpType, Rstar.
-  - move => A0 A1 PA1 h0 h1 ih A2 B2 ?; subst.
-    elim /Par_inv : h0 => //.
-    move => h2 A0 A3 B0 B1 h3 h4 [? ?] ?; subst.
-    move /(_ A3 B1 ltac:(done)) : ih.
-    intros (A1 & B3 & h5 & h6 & h7).
-    have [*] : Rstar _ Par A2 A1 /\ Rstar _ Par B2 B3
-      by hauto lq:on rew:off ctrs:Rstar use:Relations_2_facts.Rstar_transitive.
-    hauto lq:on rew:off ctrs:InterpType.
-Qed.
-
-Lemma InterpUniv_preservation A B P (h : InterpUniv A P) :
+Lemma InterpExt_preservation n I A B P (h : InterpExt n I A P) :
   Par A B ->
-  InterpUniv B P.
+  InterpExt n I B P.
 Proof.
   move : B.
   elim : A P / h; auto.
-  - hauto lq:on inv:Par ctrs:InterpUniv.
+  - hauto lq:on inv:Par ctrs:InterpExt.
+  - hauto lq:on inv:Par ctrs:InterpExt.
   - move => A B PA PF hPA ihPA hPB hPB' ihPB T hT.
     elim /Par_inv :  hT => //.
     move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
-    apply InterpUniv_Fun; auto.
+    apply InterpExt_Fun; auto.
     move => a PB ha hPB0.
     apply : ihPB; eauto.
     sfirstorder use:par_cong, Par_refl.
+  - hauto lq:on inv:Par ctrs:InterpExt.
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
-    hauto lq:on ctrs:InterpUniv.
-  - hauto lq:on inv:Par ctrs:InterpUniv.
+    hauto lq:on ctrs:InterpExt.
 Qed.
 
-Lemma InterpType_preservation A B P (h : InterpType A P) :
+Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
   Par A B ->
-  InterpType B P.
-Proof.
-  move : B.
-  elim : A P / h; auto.
-  - hauto lq:on inv:Par ctrs:InterpType.
-  - move => A B PA PF hPA ihPA hPB hPB' ihPB T hT.
-    elim /Par_inv :  hT => //.
-    move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
-    apply InterpType_Fun; auto.
-    move => a PB ha hPB0.
-    apply : ihPB; eauto.
-    sfirstorder use:par_cong, Par_refl.
-  - hauto lq:on inv:Par ctrs:InterpType.
-  - move => A B P h0 h1 ih1 C hC.
-    have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
-    hauto lq:on ctrs:InterpType.
-  - hauto lq:on inv:Par ctrs:InterpType.
-Qed.
+  InterpUnivN n B P.
+Proof. case : n h; sfirstorder use: InterpExt_preservation. Qed.
 
-Lemma InterpUniv_preservation_star A B P (h : InterpUniv A P) :
+Lemma InterpExt_back_preservation_star i I A B P (h : InterpExt i I B P) :
   Rstar _ Par A B ->
-  InterpUniv B P.
-Proof. induction 1; hauto l:on use:InterpUniv_preservation. Qed.
+  InterpExt i I A P.
+Proof. induction 1; hauto l:on ctrs:InterpExt. Qed.
 
-Lemma InterpType_preservation_star A B P (h : InterpType A P) :
+Lemma InterpExt_preservation_star n I A B P (h : InterpExt n I A P) :
   Rstar _ Par A B ->
-  InterpType B P.
-Proof. induction 1; hauto l:on use:InterpType_preservation. Qed.
+  InterpExt n I B P.
+Proof. induction 1; hauto l:on use:InterpExt_preservation. Qed.
 
-Lemma InterpUniv_back_preservation_star A B P (h : InterpUniv B P) :
+Lemma InterpUnivN_preservation_star n A B P (h : InterpUnivN n A P) :
   Rstar _ Par A B ->
-  InterpUniv A P.
-Proof. induction 1; hauto l:on ctrs:InterpUniv. Qed.
+  InterpUnivN n B P.
+Proof. case : n h; sfirstorder use:InterpExt_preservation_star. Qed.
 
-Lemma InterpType_back_preservation_star A B P (h : InterpType B P) :
+Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
   Rstar _ Par A B ->
-  InterpType A P.
-Proof. induction 1; hauto l:on ctrs:InterpType. Qed.
+  InterpUnivN n A P.
+Proof. case : n h; sfirstorder use:InterpExt_back_preservation_star. Qed.
 
-Lemma InterpUniv_Fun_inv' A B P :
-  InterpUniv (tPi A B) P ->
-  exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
-    InterpUniv A PA /\
-    (forall a, PA a -> exists PB, PF a PB) /\
-    (forall a PB, PA a -> PF a PB -> InterpUniv (subst_tm (a..) B) PB) /\
-    P = ProdSpace PA PF.
-Proof.
-  move /InterpUniv_Fun_inv.
-  intros (A1 & B1 & hP1 & hP2 & PA & PF & ? & hPA & hPF & hPFTotal).
-  exists PA, PF; split; eauto;
-  qauto l:on use:par_subst_star, InterpUniv_back_preservation_star.
-Qed.
-
-Lemma InterpType_Fun_inv' A B P :
-  InterpType (tPi A B) P ->
-  exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
-    InterpType A PA /\
-    (forall a, PA a -> exists PB, PF a PB) /\
-    (forall a PB, PA a -> PF a PB -> InterpType (subst_tm (a..) B) PB) /\
-    P = ProdSpace PA PF.
-Proof.
-  move /InterpType_Fun_inv.
-  intros (A1 & B1 & hP1 & hP2 & PA & PF & ? & hPA & hPF & hPFTotal).
-  exists PA, PF; split; eauto;
-  qauto l:on use:par_subst_star, InterpType_back_preservation_star.
-Qed.
-
-Lemma InterpUniv_Switch_inv P :
-  InterpUniv tSwitch P ->
+Lemma InterpExt_Switch_inv n I P :
+  InterpExt n I tSwitch P ->
   P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
 Proof.
   move E : tSwitch => A h.
@@ -249,70 +181,98 @@ Proof.
   elim : A P / h; hauto lq:on inv:Par.
 Qed.
 
-Lemma InterpType_Switch_inv P :
-  InterpType tSwitch P ->
-  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
+Lemma InterpExt_False_inv n I P :
+  InterpExt n I tFalse P ->
+  P = (const False).
 Proof.
-  move E : tSwitch => A h.
+  move E : tFalse => A h.
   move : E.
   elim : A P / h; hauto lq:on inv:Par.
 Qed.
 
-Lemma InterpUniv_deterministic A PA PB :
-  InterpUniv A PA ->
-  InterpUniv A PB ->
-  forall x, PA x <-> PB x.
+Lemma InterpExt_Univ_inv n I P m :
+  InterpExt n I (tUniv m) P ->
+  P = (fun A => exists PA, I A PA) /\ m < n.
 Proof.
-  move => h.
-  move : PB.
-  elim : A PA / h.
-  - suff : forall P, InterpUniv tFalse P -> P = (const False) by sauto lq:on rew:off.
-    move E : tFalse => a P h.
-    move : E.
-    elim : a P / h; sauto lq:on rew:off.
-  - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
-    move /InterpUniv_Fun_inv' : hP.
-    qauto l:on unfold:ProdSpace.
-  - hauto l:on use:InterpUniv_preservation.
-  - hauto lq:on inv:InterpUniv use:InterpUniv_Switch_inv.
-Qed.
-
-
-Lemma InterpType_Univ_inv P :
-  InterpType tUniv P ->
-  P = (fun A => exists PA, InterpUniv A PA).
-Proof.
-  move E : tUniv => a h.
+  move E : (tUniv m) => A h.
   move : E.
-  elim : a P / h; hauto lq:on rew:off ctrs:InterpUniv inv:Par.
+  elim : A P / h; hauto lq:on inv:Par.
 Qed.
 
-Lemma InterpType_deterministic A PA PB :
-  InterpType A PA ->
-  InterpType A PB ->
+Lemma InterpUnivN_Switch_inv n P :
+  InterpUnivN n tSwitch P ->
+  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
+Proof. case : n; sfirstorder use:InterpExt_Switch_inv. Qed.
+
+Lemma InterpExt_deterministic n I A PA PB :
+  InterpExt n I A PA ->
+  InterpExt n I A PB ->
   forall x, PA x <-> PB x.
 Proof.
   move => h.
   move : PB.
   elim : A PA / h.
-  - suff : forall P, InterpType tFalse P -> P = (const False) by sauto lq:on rew:off.
-    move E : tFalse => a P h.
-    move : E.
-    elim : a P / h; sauto lq:on rew:off.
+  - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_False_inv.
+  - hauto lq:on inv:InterpExt use:InterpExt_Switch_inv.
   - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
-    move /InterpType_Fun_inv' : hP.
+    move /InterpExt_Fun_inv : hP.
     qauto l:on unfold:ProdSpace.
-  - hauto lq:on rew:off inv:InterpType use:InterpType_Univ_inv.
-  - hauto l:on use:InterpType_preservation.
-  - hauto lq:on inv:InterpType use:InterpType_Switch_inv.
+  - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
+  - hauto l:on use:InterpExt_preservation.
 Qed.
 
-Lemma InterpUniv_subset_InterpType A PA :
-  InterpUniv A PA ->
-  InterpType A PA.
+Lemma InterpUnivN_deterministic n A PA PB :
+  InterpUnivN n A PA ->
+  InterpUnivN n A PB ->
+  forall x, PA x <-> PB x.
+Proof. case : n => /=; eauto using InterpExt_deterministic. Qed.
+
+Lemma InterpExt_mono_I n (I0 I1 : tm -> (tm -> Prop) -> Prop) :
+  (forall A PA, I0 A PA -> I1 A PA) ->
+  forall A PA, InterpExt n I0 A PA ->
+          exists PB, InterpExt n I1 A PB /\ forall a, PA a -> PB a.
 Proof.
-  move => h.
-  elim : A PA / h; hauto l:on ctrs:InterpType.
+  move => h A PA h0.
+  elim : A PA / h0.
+  - hauto l:on.
+  - hauto l:on.
+  - move => A B PA PF hPA.
+    (* ih *)
+    intros (PA0 & ih0 & ih1).
+    move => PFTot PFOut ihPF.
+    exists (ProdSpace PA0 (InterpExt n I1)).
+  - move => m hm.
+  - hauto lq:on ctrs:InterpExt.
+
+Lemma InterpExt_mono n I :
+  forall A PA, InterpExt n I A PA ->
+          InterpExt (S n) (InterpExt n I) A PA.
+Proof.
+  move => A PA h0.
+  elim : A PA /h0.
+  - sfirstorder.
+  - sfirstorder.
+  - hauto l:on ctrs:InterpExt.
+  - move => m hm.
+    have h : InterpExt (S n) (InterpExt n I) (tUniv m)
+               (fun A => exists PA, InterpExt n I A PA) by sauto lq:on.
+
+Lemma InterpUnivN_cumulative n A PA :
+
+Lemma InterpUnivN_cumulative n A PA :
+  InterpUnivN n A PA ->
+  exists PB, InterpUnivN (S n) A PB /\ forall x, PA x -> PB x.
+Proof.
+  elim : n.
+  - simpl => h.
+    elim : A PA /h.
+    + hauto l:on.
+    + hauto l:on.
+    + sauto l:on.
+
+  move => m hm ih A PA /ih hPA {ih}.
+  simpl.
+
 Qed.
 
 Lemma InterpUniv_back_clos A PA :
