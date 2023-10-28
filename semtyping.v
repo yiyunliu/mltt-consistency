@@ -4,7 +4,8 @@ From Coq Require Import
   Sets.Relations_2_facts
   ssreflect
   ssrbool
-  Program.Basics.
+  Program.Basics
+  Logic.PropExtensionality.
 From Hammer Require Import Tactics.
 Require Import Psatz.
 From Equations Require Import Equations.
@@ -235,62 +236,66 @@ Proof.
   eauto using InterpExt_deterministic.
 Qed.
 
-Lemma InterpExt_mono_I n (I0 I1 : tm -> (tm -> Prop) -> Prop) :
-  (forall A PA, I0 A PA -> I1 A PA) ->
-  forall A PA, InterpExt n I0 A PA ->
-          exists PB, InterpExt n I1 A PB /\ forall a, PA a -> PB a.
+Lemma InterpExt_Lift n m I A PA :
+  n < m ->
+  InterpExt n I A PA ->
+  InterpExt m I A PA.
 Proof.
-  move => h A PA h0.
-  elim : A PA / h0.
-  - hauto l:on.
-  - hauto l:on.
-  - move => A B PA PF hPA.
-    (* ih *)
-    intros (PA0 & ih0 & ih1).
-    move => PFTot PFOut ihPF.
-    exists (ProdSpace PA0 (InterpExt n I1)).
-  - move => m hm.
-  - hauto lq:on ctrs:InterpExt.
+  move => h h0.
+  elim : A PA /h0; sauto l:on ctrs:InterpExt.
+Qed.
 
-Lemma InterpExt_mono n I :
-  forall A PA, InterpExt n I A PA ->
-          InterpExt (S n) (InterpExt n I) A PA.
+Lemma InterpExt_lt_redundant n I A PA
+  (h : InterpExt n I A PA):
+  InterpExt n (fun m A PA => forall (h : m < n), I m A PA) A PA.
 Proof.
-  move => A PA h0.
-  elim : A PA /h0.
-  - sfirstorder.
-  - sfirstorder.
+  elim : A PA / h.
+  - hauto l:on.
+  - hauto l:on.
   - hauto l:on ctrs:InterpExt.
-  - move => m hm.
-    have h : InterpExt (S n) (InterpExt n I) (tUniv m)
-               (fun A => exists PA, InterpExt n I A PA) by sauto lq:on.
-
-Lemma InterpUnivN_cumulative n A PA :
-
-Lemma InterpUnivN_cumulative n A PA :
-  InterpUnivN n A PA ->
-  exists PB, InterpUnivN (S n) A PB /\ forall x, PA x -> PB x.
-Proof.
-  elim : n.
-  - simpl => h.
-    elim : A PA /h.
-    + hauto l:on.
-    + hauto l:on.
-    + sauto l:on.
-
-  move => m hm ih A PA /ih hPA {ih}.
-  simpl.
-
+  - move => m ?.
+    apply InterpExt_Univ' => //.
+    fext.
+    sfirstorder use:propositional_extensionality.
+  - hauto lq:on ctrs:InterpExt.
 Qed.
 
-Lemma InterpUniv_back_clos A PA :
-  InterpUniv A PA ->
+Lemma InterpExt_lt_redundant2 n (I :fin -> tm -> (tm -> Prop) -> Prop ) A PA
+  (h : InterpExt n (fun m A PA => forall (h : m < n), I m A PA) A PA) :
+  InterpExt n I A PA.
+Proof.
+  elim : A PA / h.
+  - hauto l:on.
+  - hauto l:on.
+  - hauto l:on ctrs:InterpExt.
+  - move => m ?.
+    apply InterpExt_Univ' => //.
+    fext.
+    sfirstorder use:propositional_extensionality.
+  - hauto lq:on ctrs:InterpExt.
+Qed.
+
+Lemma InterpUnivN_cumulative n A PA :
+  InterpUnivN n A PA -> forall m, n < m ->
+  InterpUnivN m A PA.
+Proof.
+  move => h k hk.
+  simp InterpUnivN in *.
+  apply InterpExt_lt_redundant.
+  apply InterpExt_lt_redundant2 in h.
+  sfirstorder use:InterpExt_Lift.
+Qed.
+
+Lemma InterpExt_back_clos n (I : nat -> tm -> (tm -> Prop) -> Prop) A PA
+  (hI : forall m, m < n -> forall a b, Par a b -> forall PA, I m b PA -> I m a PA ):
+  InterpExt n I A PA ->
   forall a b, Par a b ->
          PA b -> PA a.
 Proof.
   move => h.
   elim : A PA / h.
   - sfirstorder.
+  - hauto lq:on ctrs:Rstar use:Rstar_transitive.
   - move => A B PA PF hPA ihA hPFTot hPF ihPF a b hab.
     rewrite /ProdSpace => hb.
     move => a0 ha0.
@@ -298,35 +303,17 @@ Proof.
     exists PB; split; auto.
     apply : ihPF; eauto.
     hauto l:on ctrs:Par use:Par_refl.
+  - hauto lq:on.
   - sfirstorder.
-  - hauto lq:on ctrs:Rstar use:Rstar_transitive.
 Qed.
 
-Lemma InterpType_back_clos A PA :
-  InterpType A PA ->
-  forall a b, Par a b ->
-         PA b -> PA a.
+Lemma InterpUnivN_back_clos n A PA :
+    InterpUnivN n A PA ->
+    forall a b, Par a b ->
+           PA b -> PA a.
 Proof.
-  move => h.
-  elim : A PA / h.
-  - sfirstorder.
-  - move => A B PA PF hPA ihA hPFTot hPF ihPF a b hab.
-    rewrite /ProdSpace => hb.
-    move => a0 ha0.
-    move : (hb _ ha0). intros (PB & hPB & hPB').
-    exists PB; split; auto.
-    apply : ihPF; eauto.
-    hauto l:on ctrs:Par use:Par_refl.
-  - qauto l:on ctrs:InterpUniv use:InterpUniv_back_clos.
-  - sfirstorder.
-  - hauto lq:on ctrs:Rstar use:Rstar_transitive.
-Qed.
-
-Lemma InterpType_back_clos_star A PA :
-  InterpType A PA ->
-  forall a b, Rstar _ Par a b ->
-         PA b -> PA a.
-Proof.
-  move => h a b R.
-  elim : a b /R; [done | sfirstorder use:InterpType_back_clos].
+  elim /Wf_nat.lt_wf_ind : n => n ih.
+  simp InterpUnivN.
+  apply InterpExt_back_clos.
+  hfcrush.
 Qed.
