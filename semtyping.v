@@ -10,6 +10,28 @@ From Hammer Require Import Tactics.
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
 
+
+Inductive InterpExt (Interp : tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
+| InterpExt_False : InterpExt Interp tFalse (const False)
+| InterpExt_Switch : InterpExt Interp tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v)
+| InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
+  InterpExt Interp A PA ->
+  (forall a, PA a -> exists PB, PF a PB) ->
+  (forall a PB, PA a -> PF a PB -> InterpExt Interp (subst_tm (a..) B) PB) ->
+  InterpExt Interp (tPi A B) (ProdSpace PA PF)
+| InterpExt_Univ :
+  InterpExt Interp tUniv (fun A => exists PA, Interp A PA)
+| InterpExt_Step A A0 PA :
+  Par A A0 ->
+  InterpExt Interp A0 PA ->
+  InterpExt Interp A PA.
+
+Fixpoint InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop :=
+  match n with
+  | 0 => InterpExt (fun _ _ => False)
+  | S n => InterpExt (InterpExt (InterpUnivN n))
+  end.
+
 Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_False : InterpUniv tFalse (const False)
 | InterpUniv_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
@@ -23,6 +45,17 @@ Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
   InterpUniv A0 PA1
 | InterpUniv_Switch :
   InterpUniv tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v).
+
+(* Lemma InterpUniv0_InterpUniv : forall A PA, InterpUnivN 0 A PA -> InterpUniv A PA. *)
+(* Proof. *)
+(*   move => A PA /= h. *)
+(*   elim : A PA / h. *)
+(*   - sfirstorder. *)
+(*   - sfirstorder. *)
+(*   - hauto l:on ctrs:InterpUniv. *)
+(*   - *)
+
+
 
 Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
 | InterpType_False : InterpType tFalse (const False)
