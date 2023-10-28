@@ -17,9 +17,9 @@ Inductive Par : tm -> tm -> Prop :=
 | P_Var i :
   (* ------- *)
   Par (var_tm i) (var_tm i)
-| P_Univ :
+| P_Univ n :
   (* -------- *)
-  Par tUniv tUniv
+  Par (tUniv n) (tUniv n)
 | P_False :
   (* -------- *)
   Par tFalse tFalse
