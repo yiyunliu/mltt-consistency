@@ -6,6 +6,13 @@ From Coq Require Import
   Sets.Relations_3_facts.
 From Hammer Require Import Tactics.
 
+Definition is_bool_val a :=
+  match a with
+  | tOn => true
+  | tOff => true
+  | _ => false
+  end.
+
 Inductive Par : tm -> tm -> Prop :=
 | P_Var i :
   (* ------- *)
@@ -69,6 +76,34 @@ Definition Join := coherent _ Par.
 
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
+
+Lemma P_IfOn_star a b c :
+  Rstar _ Par a tOn ->
+  Rstar _ Par (tIf a b c) b.
+  move E : tOn => v h.
+  move : E.
+  elim : a v / h.
+  - hauto lq:on ctrs:Par use:Par_refl, Rstar_contains_R unfold:contains.
+  - move => a a0 a1 h0 h1 h2 ?; subst.
+    move /(_ eq_refl) in h2.
+    apply : Rstar_transitive; eauto.
+    apply Rstar_contains_R.
+    hauto lq:on ctrs:Par use:Par_refl.
+Qed.
+
+Lemma P_IfOff_star a b c :
+  Rstar _ Par a tOff ->
+  Rstar _ Par (tIf a b c) c.
+  move E : tOff => v h.
+  move : E.
+  elim : a v / h.
+  - hauto lq:on ctrs:Par use:Par_refl, Rstar_contains_R unfold:contains.
+  - move => a a0 a1 h0 h1 h2 ?; subst.
+    move /(_ eq_refl) in h2.
+    apply : Rstar_transitive; eauto.
+    apply Rstar_contains_R.
+    hauto lq:on ctrs:Par use:Par_refl.
+Qed.
 
 #[export]Hint Unfold Join : par.
 

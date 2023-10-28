@@ -1,5 +1,5 @@
 From WR Require Import syntax join semtyping typing.
-From Coq Require Import ssreflect Sets.Relations_2 Sets.Relations_3 Program.Basics.
+From Coq Require Import ssreflect ssrbool Sets.Relations_2 Sets.Relations_2_facts Sets.Relations_3 Program.Basics.
 From Hammer Require Import Tactics.
 Require Import Psatz.
 
@@ -160,6 +160,23 @@ Proof.
     eauto using InterpType_deterministic.
   - hauto l:on.
   - hauto l:on.
+  - rewrite /SemWt => n Γ a b c A _ ha _ hb _ hc γ hγ.
+    case : (ha _ hγ) => PS [/InterpType_Switch_inv ? ha']; subst.
+    case : (hb _ hγ) => PA [hPA hb'].
+    case : (hc _ hγ) => PB [hPB hc'].
+    exists PA; split; auto.
+    simpl.
+    case : ha' => v [hred hv].
+    case : v hred hv => // ha0 _.
+    + apply InterpType_back_clos_star with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
+      eauto using P_IfOn_star with sets.
+    + apply InterpType_back_clos_star with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
+      eauto using P_IfOff_star with sets.
+      suff : forall x, PA x <-> PB x by hauto l:on.
+      eauto using InterpType_deterministic.
+  - hauto l:on.
+  - hauto l:on.
+  - hauto l:on.
   - rewrite /SemUWf.
     move => // n Γ A B _ h0 _ h1 γ hγ.
     move /(_ γ hγ) : h0. intros (PA & hPA).
@@ -176,6 +193,7 @@ Proof.
     move : (ih γ hγ). intros (PA & hPA & hA).
     move /InterpType_Univ_inv : hPA => ?; subst.
     sfirstorder use:InterpUniv_subset_InterpType.
+  - hauto l:on.
 Qed.
 
 Lemma consistency a Γ : ~Wt 0 Γ a tFalse.

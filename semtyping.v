@@ -10,13 +10,6 @@ From Hammer Require Import Tactics.
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
 
-Definition is_bool_val a :=
-  match a with
-  | tOn => true
-  | tOff => true
-  | _ => false
-  end.
-
 Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_False : InterpUniv tFalse (const False)
 | InterpUniv_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
@@ -316,4 +309,13 @@ Proof.
   - qauto l:on ctrs:InterpUniv use:InterpUniv_back_clos.
   - sfirstorder.
   - hauto lq:on ctrs:Rstar use:Rstar_transitive.
+Qed.
+
+Lemma InterpType_back_clos_star A PA :
+  InterpType A PA ->
+  forall a b, Rstar _ Par a b ->
+         PA b -> PA a.
+Proof.
+  move => h a b R.
+  elim : a b /R; [done | sfirstorder use:InterpType_back_clos].
 Qed.
