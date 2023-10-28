@@ -38,61 +38,6 @@ Proof. hauto lq:on ctrs:InterpExt. Qed.
 Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
   InterpUnivN n := InterpExt n (fun m A PA => forall (h : m < n), InterpUnivN m A PA).
 
-Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
-| InterpUniv_False : InterpUniv tFalse (const False)
-| InterpUniv_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
-  InterpUniv A PA ->
-  (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PA a -> PF a PB -> InterpUniv (subst_tm (a..) B) PB) ->
-  InterpUniv (tPi A B) (ProdSpace PA PF)
-| InterpUniv_Step A0 A1 PA1 :
-  Par A0 A1 ->
-  InterpUniv A1 PA1 ->
-  InterpUniv A0 PA1
-| InterpUniv_Switch :
-  InterpUniv tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v).
-
-(* Some basic unit tests *)
-Example InterpUniv0_InterpUniv : forall A PA, InterpUnivN 0 A PA -> InterpUniv A PA.
-Proof.
-  move => A PA /= h.
-  elim : A PA / h; sauto rew:db:InterpUnivN lq:on ctrs:InterpUniv.
-Qed.
-
-Example InterpUniv_InterpUniv0 : forall A PA, InterpUniv A PA -> InterpUnivN 0 A PA.
-Proof.
-  move => A PA h.
-  elim : A PA / h; sauto rew:db:InterpUnivN lq:on.
-Qed.
-
-Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
-| InterpType_False : InterpType tFalse (const False)
-| InterpType_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
-  InterpType A PA ->
-  (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PA a -> PF a PB -> InterpType (subst_tm (a..) B) PB) ->
-  InterpType (tPi A B) (ProdSpace PA PF)
-| InterpType_Univ :
-  InterpType (tUniv 0) (fun A => exists PA, 0 < 1 -> InterpUnivN 0 A PA)
-| InterpType_Step A0 A1 PA1 :
-  Par A0 A1 ->
-  InterpType A1 PA1 ->
-  InterpType A0 PA1
-| InterpType_Switch :
-  InterpType tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v).
-
-Example InterpUniv1_InterpType : forall A PA, InterpType A PA -> InterpUnivN 1 A PA.
-Proof.
-  induction 1.
-  - sfirstorder.
-  - sauto rew:db:InterpUnivN lq:on.
-  - simp InterpUnivN.
-    apply InterpExt_Univ'; last lia.
-    by simp InterpUnivN.
-  - sauto rew:db:InterpUnivN lq:on.
-  - sfirstorder rew:db:InterpUnivN.
-Qed.
-
 Lemma InterpExt_NotVar Interp n i P : ~InterpExt n Interp (var_tm i) P.
 Proof.
   move E : (var_tm i) => a0 h.
@@ -109,7 +54,7 @@ Lemma InterpExt_NotAbs Interp n A a P : ~ InterpExt n Interp (tAbs A a) P.
 Proof.
   move E : (tAbs A a) => a0 h.
   move : A a E.
-  elim : a0 P / h; hauto inv:InterpUniv, Par.
+  elim : a0 P / h; hauto inv:Par.
 Qed.
 
 Lemma InterpUnivN_NotAbs n A a P : ~ InterpUnivN n (tAbs A a) P.
