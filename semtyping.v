@@ -1,7 +1,9 @@
 From WR Require Import syntax join.
 From Coq Require Import
   Sets.Relations_2
+  Sets.Relations_2_facts
   ssreflect
+  ssrbool
   Program.Basics.
 From Hammer Require Import Tactics.
 
@@ -15,7 +17,6 @@ Definition is_bool_val a :=
   | _ => false
   end.
 
-
 Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
 | InterpUniv_False : InterpUniv tFalse (const False)
 | InterpUniv_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
@@ -28,6 +29,7 @@ Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
   InterpUniv A1 PA1 ->
   InterpUniv A0 PA1
 | InterpUniv_Switch :
+  InterpUniv tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v).
 
 Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
 | InterpType_False : InterpType tFalse (const False)
@@ -41,7 +43,9 @@ Inductive InterpType : tm -> (tm -> Prop) -> Prop :=
 | InterpType_Step A0 A1 PA1 :
   Par A0 A1 ->
   InterpType A1 PA1 ->
-  InterpType A0 PA1.
+  InterpType A0 PA1
+| InterpType_Switch :
+  InterpType tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v).
 
 Lemma InterpUniv_NotVar i P : ~ InterpUniv (var_tm i) P.
 Proof.
@@ -128,6 +132,7 @@ Proof.
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpUniv.
+  - hauto lq:on inv:Par ctrs:InterpUniv.
 Qed.
 
 Lemma InterpType_preservation A B P (h : InterpType A P) :
@@ -148,6 +153,7 @@ Proof.
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpType.
+  - hauto lq:on inv:Par ctrs:InterpType.
 Qed.
 
 Lemma InterpUniv_preservation_star A B P (h : InterpUniv A P) :
@@ -198,6 +204,24 @@ Proof.
   qauto l:on use:par_subst_star, InterpType_back_preservation_star.
 Qed.
 
+Lemma InterpUniv_Switch_inv P :
+  InterpUniv tSwitch P ->
+  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
+Proof.
+  move E : tSwitch => A h.
+  move : E.
+  elim : A P / h; hauto lq:on inv:Par.
+Qed.
+
+Lemma InterpType_Switch_inv P :
+  InterpType tSwitch P ->
+  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
+Proof.
+  move E : tSwitch => A h.
+  move : E.
+  elim : A P / h; hauto lq:on inv:Par.
+Qed.
+
 Lemma InterpUniv_deterministic A PA PB :
   InterpUniv A PA ->
   InterpUniv A PB ->
@@ -214,7 +238,9 @@ Proof.
     move /InterpUniv_Fun_inv' : hP.
     qauto l:on unfold:ProdSpace.
   - hauto l:on use:InterpUniv_preservation.
+  - hauto lq:on inv:InterpUniv use:InterpUniv_Switch_inv.
 Qed.
+
 
 Lemma InterpType_Univ_inv P :
   InterpType tUniv P ->
@@ -242,6 +268,7 @@ Proof.
     qauto l:on unfold:ProdSpace.
   - hauto lq:on rew:off inv:InterpType use:InterpType_Univ_inv.
   - hauto l:on use:InterpType_preservation.
+  - hauto lq:on inv:InterpType use:InterpType_Switch_inv.
 Qed.
 
 Lemma InterpUniv_subset_InterpType A PA :
@@ -268,6 +295,7 @@ Proof.
     apply : ihPF; eauto.
     hauto l:on ctrs:Par use:Par_refl.
   - sfirstorder.
+  - hauto lq:on ctrs:Rstar use:Rstar_transitive.
 Qed.
 
 Lemma InterpType_back_clos A PA :
@@ -287,4 +315,5 @@ Proof.
     hauto l:on ctrs:Par use:Par_refl.
   - qauto l:on ctrs:InterpUniv use:InterpUniv_back_clos.
   - sfirstorder.
+  - hauto lq:on ctrs:Rstar use:Rstar_transitive.
 Qed.
