@@ -11,25 +11,28 @@ Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
 
 
-Inductive InterpExt (Interp : tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
-| InterpExt_False : InterpExt Interp tFalse (const False)
-| InterpExt_Switch : InterpExt Interp tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v)
+Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
+| InterpExt_False : InterpExt n Interp tFalse (const False)
+| InterpExt_Switch : InterpExt n Interp tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v)
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
-  InterpExt Interp A PA ->
+  InterpExt n Interp A PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PA a -> PF a PB -> InterpExt Interp (subst_tm (a..) B) PB) ->
-  InterpExt Interp (tPi A B) (ProdSpace PA PF)
-| InterpExt_Univ :
-  InterpExt Interp tUniv (fun A => exists PA, Interp A PA)
+  (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
+  InterpExt n Interp (tPi A B) (ProdSpace PA PF)
+| InterpExt_Univ m :
+  m < n ->
+  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
 | InterpExt_Step A A0 PA :
   Par A A0 ->
-  InterpExt Interp A0 PA ->
-  InterpExt Interp A PA.
+  InterpExt n Interp A0 PA ->
+  InterpExt n Interp A PA.
 
-Fixpoint InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop :=
+(* (n : nat) -> fin n -> (tm -> Prop) -> Prop*)
+
+Fixpoint InterpUnivN (n : nat) : nat -> tm -> (tm -> Prop) -> Prop :=
   match n with
-  | 0 => InterpExt (fun _ _ => False)
-  | S n => InterpExt (InterpExt (InterpUnivN n))
+  | 0 => fun m => InterpExt 0 (fun _ _ _ => False)
+  | S n => fun m => InterpExt n (InterpUnivN n)
   end.
 
 Inductive InterpUniv : tm -> (tm -> Prop) -> Prop :=
