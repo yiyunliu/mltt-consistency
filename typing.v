@@ -22,9 +22,10 @@ Qed.
 Tactic Notation "asimpldep" := repeat (progress ((try (rewrite dep_ith_ren_tm));rewrite /dep_ith; asimpl)).
 
 Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
-| T_Var i :
+| T_Var i (UAssn : fin -> nat) :
   (* This mess is the wff condition *)
-  (forall j, j < n -> exists i, Wt (n - S j) (Nat.add (S j) >> Γ) (Γ j) (tUniv i)) ->
+  (* Need to skolemize the existential because otherwise the IH is unusable *)
+  (forall j, j < n -> Wt (n - S j) (Nat.add (S j) >> Γ) (Γ j) (tUniv (UAssn i))) ->
   i < n ->
   (* ------ *)
   Wt n Γ (var_tm i) (dep_ith Γ i)
@@ -72,7 +73,3 @@ Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
   i < j ->
   (* ------------ *)
   Wt n Γ (tUniv i) (tUniv j).
-
-Definition Wff n Γ := forall j, j < n -> exists i, Wt (n - S j) (Nat.add (S j) >> Γ) (Γ j) (tUniv i).
-
-Scheme Wt_ind' := Induction for Wt Sort Prop.

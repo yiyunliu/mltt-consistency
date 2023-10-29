@@ -158,9 +158,11 @@ Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Switch_inv. Qed.
 Lemma InterpExt_deterministic n I A PA PB :
   InterpExt n I A PA ->
   InterpExt n I A PB ->
-  forall x, PA x <-> PB x.
+  PA = PB.
 Proof.
   move => h.
+  suff ? : InterpExt n I A PB -> forall x, PA x <-> PB x.
+  move => *; fext. sfirstorder use:propositional_extensionality.
   move : PB.
   elim : A PA / h.
   - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_False_inv.
@@ -175,7 +177,7 @@ Qed.
 Lemma InterpUnivN_deterministic n A PA PB :
   InterpUnivN n A PA ->
   InterpUnivN n A PB ->
-  forall x, PA x <-> PB x.
+  PA = PB.
 Proof.
   simp InterpUnivN.
   eauto using InterpExt_deterministic.
@@ -229,6 +231,22 @@ Proof.
   apply InterpExt_lt_redundant.
   apply InterpExt_lt_redundant2 in h.
   sfirstorder use:InterpExt_Lift.
+Qed.
+
+Lemma InterpUnivN_deterministic' n m A PA PB :
+  InterpUnivN n A PA ->
+  InterpUnivN m A PB ->
+  PA = PB.
+Proof.
+  move => h0 h1.
+  move : (Coq.Arith.Compare_dec.lt_eq_lt_dec m n).
+  case; first case.
+  - hauto l:on use:InterpUnivN_cumulative, InterpUnivN_deterministic.
+  - move => *; subst.
+    sfirstorder use:InterpUnivN_deterministic.
+  - move => ?.
+    symmetry.
+    hauto l:on use:InterpUnivN_cumulative, InterpUnivN_deterministic.
 Qed.
 
 Lemma InterpExt_back_clos n (I : nat -> tm -> (tm -> Prop) -> Prop) A PA

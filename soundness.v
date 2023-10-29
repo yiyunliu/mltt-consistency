@@ -2,14 +2,13 @@ From WR Require Import syntax join semtyping typing.
 From Coq Require Import ssreflect ssrbool Sets.Relations_2 Sets.Relations_2_facts Sets.Relations_3 Program.Basics.
 From Hammer Require Import Tactics.
 Require Import Psatz.
+From Equations Require Import Equations.
 
+Definition γ_ok n Γ γ := forall i, i < n -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
+Definition SemWt n Γ a A := forall γ, γ_ok n Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
 
-Definition γ_ok n Γ γ := forall i, i < n -> forall PA, InterpType (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
-Definition SemWt n Γ a A := forall γ, γ_ok n Γ γ -> exists PA, InterpType (subst_tm γ A) PA /\ PA (subst_tm γ a).
-Definition SemUWf n Γ A := forall γ, γ_ok n Γ γ -> exists PA, InterpType (subst_tm γ A) PA.
-
-Lemma γ_ok_cons {n Γ γ a PA A} :
-  InterpType (subst_tm γ A) PA ->
+Lemma γ_ok_cons {n i Γ γ a PA A} :
+  InterpUnivN i (subst_tm γ A) PA ->
   PA a ->
   γ_ok n Γ γ ->
   γ_ok (S n) (A .: Γ) (a .: γ).
@@ -17,9 +16,9 @@ Proof.
   move => h0 h1 h2.
   case => [_ | m ? PA0].
   - asimpldep.
-    move => PA0 hPA0.
-    have := InterpType_deterministic _ _ _ h0 hPA0.
-    firstorder.
+    move => j PA0 hPA0.
+    suff : PA = PA0 by congruence.
+    hauto l:on use:InterpUnivN_deterministic'.
   - rewrite dep_ith_ren_tm.
     asimpl.
     apply h2.
@@ -43,35 +42,33 @@ Proof.
   firstorder.
 Qed.
 
-Lemma renaming_SemUWf n Γ A :
-  SemUWf n Γ A ->
+Lemma renaming_SemWt n Γ a A :
+  SemWt n Γ a A ->
   forall m Δ ξ,
     (forall i, i < n -> ξ i < m) ->
     (forall i, i < n -> ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)) ->
-    SemUWf m Δ (ren_tm ξ A).
+    SemWt m Δ (ren_tm ξ a) (ren_tm ξ A).
 Proof.
-  rewrite /SemUWf => h m Δ ξ hscope hwf γ hγ.
+  rewrite /SemWt => h m Δ ξ hscope hwf γ hγ.
   have hγ' : (γ_ok n Γ (ξ >> γ)) by eauto using γ_ok_renaming.
   case /(_ _ hγ') : h => PA hPA.
   exists PA.
   by asimpl.
 Qed.
 
-Lemma γ_ok_consU {n Γ γ a PA A} :
-  InterpUniv (subst_tm γ A) PA ->
+Lemma γ_ok_consU {n i Γ γ a PA A} :
+  InterpUnivN i (subst_tm γ A) PA ->
   PA a ->
   γ_ok n Γ γ ->
   γ_ok (S n) (A .: Γ) (a .: γ).
 Proof.
-  hauto q:on use:γ_ok_cons, InterpUniv_subset_InterpType.
+  hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
 Qed.
 
-Theorem soundness : forall n Γ,
-  (forall a A (h : Wt n Γ a A), SemWt n Γ a A) /\
-  (forall A (h : UWf n Γ A), SemUWf n Γ A).
+Theorem soundness n Γ a A (h : Wt n Γ a A) : SemWt n Γ a A.
 Proof.
-  apply  Wt_mutual; eauto.
-  - move => n Γ i _ ih ? γ hγ.
+  elim : n Γ a A / h.
+  - move => n Γ i ih h1 γ hγ.
     move /(_ i ltac:(done)) in ih.
     suff ih' : SemUWf n Γ (dep_ith Γ i).
     + case /(_ _ hγ) : ih' => PA hPA.
