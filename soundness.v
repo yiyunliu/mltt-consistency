@@ -68,14 +68,17 @@ Qed.
 Theorem soundness n Γ a A (h : Wt n Γ a A) : SemWt n Γ a A.
 Proof.
   elim : n Γ a A / h.
-  - move => n Γ i ih h1 γ hγ.
+  - move => n Γ i F h ih ? γ hγ.
     move /(_ i ltac:(done)) in ih.
-    suff ih' : SemUWf n Γ (dep_ith Γ i).
-    + case /(_ _ hγ) : ih' => PA hPA.
-      exists PA.
-      split; eauto.
-      simpl; apply hγ; auto.
-    + apply (renaming_SemUWf _ _ _ ih); first by lia.
+    suff ih' : SemWt n Γ (dep_ith Γ i) (tUniv (F i)).
+    + case /(_ _ hγ) : ih' => j [PA [hPA hi]].
+      simpl in hPA.
+      simp InterpUnivN in hPA.
+      move /InterpExt_Univ_inv : hPA => [? h0]; subst.
+      move : hi; intros (PA & hi).
+      move /(_ h0) in hi.
+      exists (F i), PA; sfirstorder.
+    + apply (renaming_SemWt _ _ _ _ ih); first by lia.
       move => i0 ?.
       asimpldep.
       simpl.
@@ -83,10 +86,16 @@ Proof.
       fext.
       move => *.
       asimpl; lia.
-  - hauto l:on.
+  - move => n Γ i γ hγ.
+    exists (S i), (fun A => exists PA, InterpUnivN i A PA); split; last by hauto l:on.
+    simpl.
+    (* simp InterpUnivN. simpl. *)
+    (* apply InterpExt_lt_redundant. *)
+  (* InterpUnivN inv? *)
+    admit.
   - rewrite /SemWt.
-    move => // n Γ A B _ h0 _ h1 γ hγ.
-    move /(_ γ hγ) : h0; intros (P_Univ & hP_Univ & hP_Univ').
+    move => // n Γ i A B _ h0 _ h1 γ hγ.
+    move /(_ γ hγ) : h0; intros (m & P_Univ & hP_Univ & hP_Univ').
     move /InterpType_Univ_inv : hP_Univ => ?; subst.
     move : hP_Univ'; intros (PA & hPA).
     exists (fun A => exists PA, InterpUniv A PA); simpl; split; first by apply InterpType_Univ.
