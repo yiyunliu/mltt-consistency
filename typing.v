@@ -19,25 +19,26 @@ Qed.
 
 #[export]Hint Unfold dep_ith : core.
 
-Tactic Notation "asimpldep" := repeat (progress (rewrite /dep_ith; asimpl)).
+Tactic Notation "asimpldep" := repeat (progress ((try (rewrite dep_ith_ren_tm));rewrite /dep_ith; asimpl)).
 
 Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
 | T_Var i :
   (* This mess is the wff condition *)
-  (forall j, j < n -> UWf (n - S j) (Nat.add (S j) >> Γ) (Γ j)) ->
+  (forall j, j < n -> exists i, Wt (n - S j) (Nat.add (S j) >> Γ) (Γ j) (tUniv i)) ->
   i < n ->
   (* ------ *)
   Wt n Γ (var_tm i) (dep_ith Γ i)
-| T_False :
+| T_False i :
   (* -------- *)
-  Wt n Γ tFalse tUniv
-| T_Pi A B :
-  Wt n Γ A tUniv ->
-  Wt (S n) (A .: Γ) B tUniv ->
+  Wt n Γ tFalse (tUniv i)
+| T_Pi i A B :
+  Wt n Γ A (tUniv i) ->
+  Wt (S n) (A .: Γ) B (tUniv i) ->
   (* --------------------- *)
-  Wt n Γ (tPi A B) tUniv
-| T_Abs A a B :
-  UWf n Γ A ->
+  Wt n Γ (tPi A B) (tUniv i)
+| T_Abs A a B i j :
+  Wt n Γ A (tUniv i) ->
+  Wt n Γ (tPi A B) (tUniv j) ->
   Wt (S n) (A .: Γ) a B ->
   (* -------------------- *)
   Wt n Γ (tAbs A a) (tPi A B)
@@ -46,9 +47,9 @@ Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
   Wt n Γ b A ->
   (* -------------------- *)
   Wt n Γ (tApp a b) (subst_tm (b..) B)
-| T_Conv a A B :
+| T_Conv a A B i :
   Wt n Γ a A ->
-  UWf n Γ B ->
+  Wt n Γ B (tUniv i) ->
   Join A B ->
   (* ----------- *)
   Wt n Γ a B
@@ -64,28 +65,14 @@ Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
   Wt n Γ c A ->
   (* ------------ *)
   Wt n Γ (tIf a b c) A
-| T_Switch :
+| T_Switch i :
   (* ----------- *)
-  Wt n Γ tSwitch tUniv
-with UWf (n : nat) (Γ : context) : tm -> Prop :=
-| U_Univ :
-  UWf n Γ tUniv
-| U_False :
-  UWf n Γ tFalse
-| U_Pi A B :
-  UWf n Γ A ->
-  UWf (S n) (A .: Γ) B ->
-  UWf n Γ (tPi A B)
-| U_Embed A :
-  Wt n Γ A tUniv ->
-  UWf n Γ A
-| U_Switch :
+  Wt n Γ tSwitch (tUniv i)
+| T_Univ i j :
+  i < j ->
   (* ------------ *)
-  UWf n Γ tSwitch.
+  Wt n Γ (tUniv i) (tUniv j).
 
-Definition Wff n Γ := forall j, j < n -> UWf (n - S j) (Nat.add (S j) >> Γ) (Γ j).
+Definition Wff n Γ := forall j, j < n -> exists i, Wt (n - S j) (Nat.add (S j) >> Γ) (Γ j) (tUniv i).
 
-Scheme Wt_ind' := Induction for Wt Sort Prop
-  with UWf_ind' := Induction for UWf Sort Prop.
-
-Combined Scheme Wt_mutual from Wt_ind', UWf_ind'.
+Scheme Wt_ind' := Induction for Wt Sort Prop.
