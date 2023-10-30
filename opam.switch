@@ -1,0 +1,27 @@
+opam-version: "2.0"
+compiler: ["ocaml-base-compiler.4.14.1"]
+roots: [
+  "coq.8.17.1"
+  "coq-equations.1.3+8.17"
+  "coq-hammer-tactics.1.3.2+8.17"
+  "ocaml-base-compiler.4.14.1"
+]
+installed: [
+  "base-bigarray.base"
+  "base-threads.base"
+  "base-unix.base"
+  "conf-gmp.4"
+  "coq.8.17.1"
+  "coq-core.8.17.1"
+  "coq-equations.1.3+8.17"
+  "coq-hammer-tactics.1.3.2+8.17"
+  "coq-stdlib.8.17.1"
+  "coqide-server.8.17.1"
+  "dune.3.11.1"
+  "ocaml.4.14.1"
+  "ocaml-base-compiler.4.14.1"
+  "ocaml-config.2"
+  "ocaml-options-vanilla.1"
+  "ocamlfind.1.9.6"
+  "zarith.1.13"
+]

@@ -48,7 +48,5 @@ time-of-build-pretty.log
 CoqSrc.mk
 CoqSrc.mk.conf
 _CoqProject
-syntax.v
-
 
 *~
