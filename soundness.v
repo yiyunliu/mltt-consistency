@@ -135,7 +135,7 @@ Proof.
       move /(_ b PB0 hPAb hPB0) in hPF.
       rewrite -InterpUnivN_nolt in hPF.
       asimpl in hPF.
-      have ? : PB0 = PB by best use:InterpUnivN_deterministic'.
+      have ? : PB0 = PB by hauto l:on use:InterpUnivN_deterministic'.
       subst.
       exists PB; split; eauto.
       apply : InterpUnivN_back_clos; eauto.
@@ -147,70 +147,66 @@ Proof.
       apply Par_refl.
   - move => n Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
-    move /(_ γ hγ) : ihf; intros (PPi & hPi & hf).
-    move /(_ γ hγ) : ihb; intros (PA & hPA & hb).
+    move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
+    move /(_ γ hγ) : ihb; intros (j & PA & hPA & hb).
     simpl in hPi.
-    move /InterpType_Fun_inv' : hPi;
+    rewrite InterpUnivN_nolt in hPi.
+    move /InterpExt_Fun_inv : hPi;
       intros (PA0 & PF & hPA0 & hPFTot & hPF & ?); subst.
-    have ? : forall x, PA x <-> PA0 x by eauto using InterpType_deterministic.
-    have hPA0b : PA0 (subst_tm γ b) by sfirstorder.
+    rewrite -InterpUnivN_nolt in hPA0.
+    have ? : PA0 = PA by eauto using InterpUnivN_deterministic'.
+    subst.
+    have hPA0b : PA (subst_tm γ b) by sfirstorder.
     move /(_ _ hPA0b) : hPFTot; intros (PB & hPB).
     have hPB' := hPF _ PB hPA0b hPB.
+    rewrite -InterpUnivN_nolt in hPB'.
     rewrite /ProdSpace in hf.
     asimpl in *.
-    exists PB; split; first done.
+    exists i, PB; split; first done.
     move /(_ _ hPA0b) : hf; intros (PB0 & hPB0 & hPB0').
     have hPB0'' := hPF _ PB0 hPA0b hPB0.
     asimpl in hPB0''.
-    qauto l:on use:InterpType_deterministic.
-  - rewrite /SemWt /SemUWf /Join /coherent => n Γ a A B _ hA _ hB [C [? ?]] γ hγ.
-    move : (hA γ hγ) => [PA [hPA hPAa]].
-    move : (hB γ hγ) => [PB hPB].
-    exists PB.
+    rewrite -InterpUnivN_nolt in hPB0''.
+    suff : PB = PB0 by congruence.
+    sfirstorder use:InterpUnivN_deterministic'.
+  - rewrite /SemWt /Join /coherent => n Γ a A B i _ hA _ hB [C [? ?]] γ hγ.
+    case : (hA γ hγ) => j [PA [hPA hPAa]].
+    case : (hB γ hγ) => k [PB [hPB hPB']].
+    simpl in hPB.
+    case /InterpUnivN_Univ_inv' : hPB => ? ?. subst.
+    case : hPB' =>  PA0 hPA0.
+    exists i, PA0.
     split; auto.
     have [*] : Rstar _ Par (subst_tm γ A) (subst_tm γ C) /\
                  Rstar _ Par (subst_tm γ B) (subst_tm γ C)
       by sfirstorder use:par_subst_star.
-    have ? :InterpType (subst_tm γ C) PB by sfirstorder use:InterpType_preservation_star.
-    have ? :InterpType (subst_tm γ A) PB by sfirstorder use:InterpType_back_preservation_star.
-    suff : forall x, PA x <-> PB x by sfirstorder.
-    eauto using InterpType_deterministic.
+    have ? :InterpUnivN i (subst_tm γ C) PA0 by sfirstorder use:InterpUnivN_preservation_star.
+    have ? :InterpUnivN i (subst_tm γ A) PA0 by sfirstorder use:InterpUnivN_back_preservation_star.
+    suff : PA = PA0 by congruence.
+    eauto using InterpUnivN_deterministic'.
   - hauto l:on.
   - hauto l:on.
   - rewrite /SemWt => n Γ a b c A _ ha _ hb _ hc γ hγ.
-    case : (ha _ hγ) => PS [/InterpType_Switch_inv ? ha']; subst.
-    case : (hb _ hγ) => PA [hPA hb'].
-    case : (hc _ hγ) => PB [hPB hc'].
-    exists PA; split; auto.
+    case /(_ γ hγ) : ha => i [? [/InterpUnivN_Switch_inv ? ha']]; subst.
+    case /(_ γ hγ) : hb => j [PA [hPA hb']].
+    case /(_ γ hγ) : hc => k [PB [hPB hc']].
+    have ? : PA = PB by hauto lq:on rew:off use:InterpUnivN_deterministic'.
+    subst.
+    exists j, PB; split; auto.
     simpl.
     case : ha' => v [hred hv].
     case : v hred hv => // ha0 _.
-    + apply InterpType_back_clos_star with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
+    + apply (InterpUnivN_back_clos_star j) with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
       eauto using P_IfOn_star with sets.
-    + apply InterpType_back_clos_star with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
+    + apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
       eauto using P_IfOff_star with sets.
-      suff : forall x, PA x <-> PB x by hauto l:on.
-      eauto using InterpType_deterministic.
-  - hauto l:on.
-  - hauto l:on.
-  - hauto l:on.
-  - rewrite /SemUWf.
-    move => // n Γ A B _ h0 _ h1 γ hγ.
-    move /(_ γ hγ) : h0. intros (PA & hPA).
-    exists (ProdSpace PA (fun a PB => InterpType (subst_tm (a .: γ) B) PB)).
+  - rewrite /SemWt => n Γ i γ hγ.
     simpl.
-    apply InterpType_Fun; eauto.
-    + move => a ha.
-      hauto l:on use:γ_ok_cons.
-    + move => a PB ha.
-      suff hγ_cons : γ_ok (S n) (A .: Γ) (a .: γ) by asimpl.
-      qauto use:γ_ok_cons.
-  - rewrite /SemWt /SemUWf.
-    move => n Γ A _ ih γ hγ.
-    move : (ih γ hγ). intros (PA & hPA & hA).
-    move /InterpType_Univ_inv : hPA => ?; subst.
-    sfirstorder use:InterpUniv_subset_InterpType.
-  - hauto l:on.
+    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
+    hauto l:on use:InterpUnivN_Univ_inv.
+  - move => n Γ i j ? γ hγ /=.
+    exists (S j), (fun A => exists PA, InterpUnivN j A PA).
+    sfirstorder use:InterpUnivN_Univ_inv.
 Qed.
 
 Lemma consistency a Γ : ~Wt 0 Γ a tFalse.
@@ -222,40 +218,8 @@ Proof.
   case.
   rewrite /γ_ok; lia.
   asimpl.
-  move => PA [hPA ha].
-  have ? : InterpType tFalse (const False) by sfirstorder.
-  suff : forall x, PA x <-> (const False) x by firstorder.
-  eauto using InterpType_deterministic.
-Qed.
-
-Example univ_fun := (tAbs tSwitch (tIf (var_tm var_zero) tSwitch (tPi tSwitch tSwitch))).
-
-Example large_elim_example Γ : Wt 0 Γ tOn (tApp univ_fun tOn).
-Proof.
-  apply T_Conv with (A := tSwitch).
-  sfirstorder use:T_On.
-  apply U_Embed.
-  change (tUniv) with (subst_tm (tOn..) tUniv).
-  apply T_App with (A := tSwitch).
-  apply T_Abs; eauto.
-  apply U_Switch.
-  apply T_If.
-  apply T_Var.
-  case; last by lia.
-  asimpl.
-  simpl.
-  sfirstorder.
-  asimpl.
-  lia.
-  sfirstorder.
-  sauto lq:on.
-  sfirstorder.
-  exists tSwitch.
-  split.
-  eauto with sets.
-  rewrite /univ_fun.
-  apply : Rstar_n.
-  apply : P_AppAbs; sfirstorder use:Par_refl.
-  apply Rstar_contains_R => /=.
-  hauto lq:on ctrs:Par use:Par_refl.
+  move => i [PA [hPA ha]].
+  simp InterpUniv in hPA.
+  apply InterpExt_False_inv in hPA; subst.
+  apply ha.
 Qed.

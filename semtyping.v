@@ -292,6 +292,15 @@ Proof.
   hfcrush.
 Qed.
 
+Lemma InterpUnivN_back_clos_star n A PA :
+    InterpUnivN n A PA ->
+    forall a b, Rstar _ Par a b ->
+           PA b -> PA a.
+Proof.
+  move => h a b.
+  induction 1; sfirstorder use:InterpUnivN_back_clos.
+Qed.
+
 Lemma InterpUnivN_Univ_inv i j :
   j < i ->
   InterpUnivN i (tUniv j) (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA).
