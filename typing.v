@@ -25,7 +25,7 @@ Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
 | T_Var i (UAssn : fin -> nat) :
   (* This mess is the wff condition *)
   (* Need to skolemize the existential because otherwise the IH is unusable *)
-  (forall j, j < n -> Wt (n - S j) (Nat.add (S j) >> Γ) (Γ j) (tUniv (UAssn i))) ->
+  (forall j, j < n -> Wt (n - S j) (Nat.add (S j) >> Γ) (Γ j) (tUniv (UAssn j))) ->
   i < n ->
   (* ------ *)
   Wt n Γ (var_tm i) (dep_ith Γ i)
