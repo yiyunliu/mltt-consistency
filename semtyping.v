@@ -237,11 +237,7 @@ Lemma InterpUnivN_cumulative n A PA :
   InterpUnivN n A PA -> forall m, n < m ->
   InterpUnivN m A PA.
 Proof.
-  move => h k hk.
-  simp InterpUnivN in *.
-  apply InterpExt_lt_redundant.
-  apply InterpExt_lt_redundant2 in h.
-  sfirstorder use:InterpExt_Lift.
+  hauto l:on rew:db:InterpUniv use:InterpExt_Lift.
 Qed.
 
 Lemma InterpUnivN_deterministic' n m A PA PB :
@@ -287,9 +283,9 @@ Lemma InterpUnivN_back_clos n A PA :
            PA b -> PA a.
 Proof.
   elim /Wf_nat.lt_wf_ind : n => n ih.
-  simp InterpUnivN.
+  simp InterpUniv.
   apply InterpExt_back_clos.
-  hfcrush.
+  ecrush.
 Qed.
 
 Lemma InterpUnivN_back_clos_star n A PA :
@@ -306,17 +302,14 @@ Lemma InterpUnivN_Univ_inv i j :
   InterpUnivN i (tUniv j) (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA).
 Proof.
   move => hji.
-  simp InterpUnivN.
+  simp InterpUniv.
   apply InterpExt_Univ' => [|//].
-  fext.
-  move => A.
-  apply propositional_extensionality.
-  qauto l:on rew:db:InterpUnivN.
+  by simp InterpUniv.
 Qed.
 
 Lemma InterpUnivN_Univ_inv' i j P :
   InterpUnivN i (tUniv j) P ->
   P = (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA) /\ j < i.
 Proof.
-  hauto q:on rew:db:InterpUnivN use:InterpExt_Univ_inv, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
+  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
 Qed.
