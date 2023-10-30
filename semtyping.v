@@ -222,6 +222,17 @@ Proof.
   - hauto lq:on ctrs:InterpExt.
 Qed.
 
+Lemma InterpUnivN_nolt n :
+  InterpUnivN n = InterpExt n InterpUnivN.
+Proof.
+  simp InterpUnivN.
+  fext => A P.
+  apply propositional_extensionality.
+  hauto l:on use:InterpExt_lt_redundant, InterpExt_lt_redundant2.
+Qed.
+
+#[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
+
 Lemma InterpUnivN_cumulative n A PA :
   InterpUnivN n A PA -> forall m, n < m ->
   InterpUnivN m A PA.
@@ -279,4 +290,24 @@ Proof.
   simp InterpUnivN.
   apply InterpExt_back_clos.
   hfcrush.
+Qed.
+
+Lemma InterpUnivN_Univ_inv i j :
+  j < i ->
+  InterpUnivN i (tUniv j) (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA).
+Proof.
+  move => hji.
+  simp InterpUnivN.
+  apply InterpExt_Univ' => [|//].
+  fext.
+  move => A.
+  apply propositional_extensionality.
+  qauto l:on rew:db:InterpUnivN.
+Qed.
+
+Lemma InterpUnivN_Univ_inv' i j P :
+  InterpUnivN i (tUniv j) P ->
+  P = (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA) /\ j < i.
+Proof.
+  hauto q:on rew:db:InterpUnivN use:InterpExt_Univ_inv, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
 Qed.

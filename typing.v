@@ -37,9 +37,9 @@ Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
   Wt (S n) (A .: Γ) B (tUniv i) ->
   (* --------------------- *)
   Wt n Γ (tPi A B) (tUniv i)
-| T_Abs A a B i j :
-  Wt n Γ A (tUniv i) ->
-  Wt n Γ (tPi A B) (tUniv j) ->
+| T_Abs A a B i :
+  (* Wt n Γ A (tUniv i) -> *)
+  Wt n Γ (tPi A B) (tUniv i) ->
   Wt (S n) (A .: Γ) a B ->
   (* -------------------- *)
   Wt n Γ (tAbs A a) (tPi A B)

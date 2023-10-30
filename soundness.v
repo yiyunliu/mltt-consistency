@@ -87,45 +87,58 @@ Proof.
       move => *.
       asimpl; lia.
   - move => n Γ i γ hγ.
-    exists (S i), (fun A => exists PA, InterpUnivN i A PA); split; last by hauto l:on.
-    simpl.
-    (* simp InterpUnivN. simpl. *)
-    (* apply InterpExt_lt_redundant. *)
-  (* InterpUnivN inv? *)
-    admit.
+    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
+    hauto l:on use:InterpUnivN_Univ_inv.
   - rewrite /SemWt.
-    move => // n Γ i A B _ h0 _ h1 γ hγ.
+    move => // n Γ i A B _h0 h0 _h1 h1 γ hγ.
     move /(_ γ hγ) : h0; intros (m & P_Univ & hP_Univ & hP_Univ').
-    move /InterpType_Univ_inv : hP_Univ => ?; subst.
-    move : hP_Univ'; intros (PA & hPA).
-    exists (fun A => exists PA, InterpUniv A PA); simpl; split; first by apply InterpType_Univ.
-    exists (ProdSpace PA (fun a PB => InterpUniv (subst_tm (a .: γ) B) PB)).
-    apply InterpUniv_Fun; eauto.
+    move /InterpUnivN_Univ_inv' : hP_Univ => [*]; subst.
+    case : hP_Univ' => PA hPA.
+    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
+    split; first by eauto using InterpUnivN_Univ_inv.
+    exists (ProdSpace PA (fun a PB => InterpUnivN i (subst_tm (a .: γ) B) PB)).
+    simp InterpUniv.
+    simpl.
+    apply InterpExt_Fun.
+    + simp InterpUniv in hPA.
     + move => a ha.
       move /(_ _ ltac:(qauto use:γ_ok_consU)) in h1.
-      move : h1; intros (? & hPB & h).
-      move /InterpType_Univ_inv : hPB => ?; subst.
-      firstorder.
+      move : h1; intros (x & PB & hPB & h).
+      move /InterpUnivN_Univ_inv' : hPB => [*]; subst.
+      hauto lq:on rew:db:InterpUniv.
     + move => a PB ha.
       suff hγ_cons : γ_ok (S n) (A .: Γ) (a .: γ) by asimpl.
       qauto use:γ_ok_consU.
-  - rewrite /SemUWf /SemWt.
-    move => n Γ A a B _ hA _ hB.
+  - rewrite /SemWt.
+    move => n Γ A a B i _ hB _ ha.
     move => γ hγ.
-    move /(_ γ hγ) : hA; intros (PA & hPA).
-    exists (ProdSpace PA (fun a PB => InterpType (subst_tm (a .: γ) B) PB)).
+    move /(_ γ hγ) : hB; intros (l & PPi & hPPi & hPi).
+    move /InterpUnivN_Univ_inv' : hPPi => [*]; subst.
+    case  : hPi => /= PPi hPPi.
+    simp InterpUniv in hPPi.
+    move /InterpExt_Fun_inv : hPPi. intros (PA & PF & hPA & hTot & hPF & ?); subst.
+    exists i, (ProdSpace PA (fun a PB => InterpUnivN i (subst_tm (a .: γ) B) PB)).
     split.
-    + simpl.
-      apply InterpType_Fun; first done.
-      * move => *.
-        qauto l:on ctrs:InterpType use:γ_ok_cons.
+    + simpl; simp InterpUniv.
+      apply InterpExt_Fun; first by [].
+      * move => a0 ha0.
+        case /(_ a0 ha0) : hTot => PB hPB.
+        move /(_ a0 PB ha0 hPB) in hPF.
+        exists PB.
+        by asimpl in hPF.
       * move => *.
         by asimpl.
     + rewrite /ProdSpace => b hPAb.
-      move /(_ _ ltac:(qauto use:γ_ok_cons)) : hB. intros (PB & hPB & hPBa).
+      move /(_ (b .: γ) ltac:(hauto l:on use:γ_ok_cons rew:db:InterpUniv)) : ha.
+      intros (j & PB & hPB & hPBa).
+      case /(_ b hPAb) : hTot => PB0 hPB0.
+      move /(_ b PB0 hPAb hPB0) in hPF.
+      rewrite -InterpUnivN_nolt in hPF.
+      asimpl in hPF.
+      have ? : PB0 = PB by best use:InterpUnivN_deterministic'.
+      subst.
       exists PB; split; eauto.
-      simpl.
-      apply : InterpType_back_clos; eauto.
+      apply : InterpUnivN_back_clos; eauto.
       apply : P_AppAbs'.
       2 : {
         apply Par_refl.
