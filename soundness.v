@@ -65,11 +65,15 @@ Proof.
   hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
 Qed.
 
-Theorem soundness n Γ a A (h : Wt n Γ a A) : SemWt n Γ a A.
+Theorem soundness n Γ :
+  (forall a A, Wt n Γ a A -> SemWt n Γ a A) /\
+  (Wff n Γ -> forall i, i < n -> exists F, SemWt (n - S i) (Nat.add (S i) >> Γ) (Γ i) (tUniv (F i))).
 Proof.
-  elim : n Γ a A / h.
-  - move => n Γ i F h ih ? γ hγ.
+  move : n Γ.
+  apply wt_mutual.
+  - move => n Γ i h ih ? γ hγ.
     move /(_ i ltac:(done)) in ih.
+    case : ih => F ih.
     suff ih' : SemWt n Γ (dep_ith Γ i) (tUniv (F i)).
     + case /(_ _ hγ) : ih' => j [PA [hPA hi]].
       simpl in hPA.
@@ -206,6 +210,7 @@ Proof.
   - move => n Γ i j ? γ hγ /=.
     exists (S j), (fun A => exists PA, InterpUnivN j A PA).
     sfirstorder use:InterpUnivN_Univ_inv.
+  - hauto l:on.
 Qed.
 
 Lemma consistency a Γ : ~Wt 0 Γ a tFalse.
