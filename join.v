@@ -6,6 +6,8 @@ From Coq Require Import
   Sets.Relations_3_facts.
 From Hammer Require Import Tactics.
 
+Definition
+
 Definition is_bool_val a :=
   match a with
   | tOn => true

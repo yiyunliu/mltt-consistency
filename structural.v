@@ -15,13 +15,11 @@ Proof.
   case => [_ | i ?].
   - split; [sfirstorder | by asimpldep].
   - split.
-    + asimpl.
-      suff : ξ i < m; sfirstorder.
+    + asimpl; suff : ξ i < m; sfirstorder.
     + repeat rewrite dep_ith_ren_tm.
       rewrite /good_renaming in h.
       case /(_ i ltac:(sfirstorder)) : h => h h'.
-      rewrite -h'.
-      by asimpl.
+      rewrite -h'; by asimpl.
 Qed.
 
 Lemma T_App' n Γ a A B0 B b :
