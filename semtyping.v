@@ -7,7 +7,6 @@ From Coq Require Import
   Program.Basics
   Logic.PropExtensionality.
 From Hammer Require Import Tactics.
-Require Import Psatz.
 From Equations Require Import Equations.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=

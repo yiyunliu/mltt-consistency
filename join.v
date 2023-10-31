@@ -125,6 +125,16 @@ Lemma par_renaming a b (ξ : fin -> fin) :
   apply : P_AppAbs'; eauto. by asimpl.
 Qed.
 
+Lemma pars_renaming a b (ξ : fin -> fin) :
+  Rstar _ Par a b ->
+  Rstar _ Par (ren_tm ξ a) (ren_tm ξ b).
+Proof. induction 1; hauto lq:on ctrs:Rstar use:par_renaming. Qed.
+
+Lemma join_renaming a b (ξ : fin -> fin) :
+  Join a b ->
+  Join (ren_tm ξ a) (ren_tm ξ b).
+Proof. hauto lq:on rew:off unfold:Join, coherent use:pars_renaming. Qed.
+
 Lemma par_morphing_lift (ξ0 ξ1 : fin -> tm)
   (h : forall i, Par (ξ0 i) (ξ1 i)) :
   forall i, Par (up_tm_tm ξ0 i) (up_tm_tm ξ1 i).
