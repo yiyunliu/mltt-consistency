@@ -186,7 +186,12 @@ Qed.
 Lemma good_renaming_truncate n m Γ :
   good_renaming (Nat.add n) m (Nat.add n >> Γ) (n + m) Γ .
 Proof.
-Admitted.
+  rewrite /good_renaming.
+  split.
+  - lia.
+  - asimpldep.
+    f_equal. fext => *; asimpl; lia.
+Qed.
 
 Lemma good_renaming_truncate' n m Γ :
   n <= m ->
