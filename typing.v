@@ -17,6 +17,12 @@ Proof.
     f_equal.
 Qed.
 
+Lemma dep_ith_ren_tm0 (Γ : context) (A : tm) :
+  dep_ith (A .: Γ) 0 = ren_tm shift A.
+Proof.
+  by rewrite /dep_ith; asimpl.
+Qed.
+
 #[export]Hint Unfold dep_ith : core.
 
 Tactic Notation "asimpldep" := repeat (progress ((try (rewrite dep_ith_ren_tm));rewrite /dep_ith; asimpl)).

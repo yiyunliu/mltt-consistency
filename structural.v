@@ -49,6 +49,50 @@ Qed.
 
 #[export]Hint Resolve wff_nil wff_cons : wff.
 
+Lemma Wt_Wff n Γ a A (h : Wt n Γ a A) : Wff n Γ.
+Proof. elim : Γ a A / h => //. Qed.
+
+#[export]Hint Resolve Wt_Wff : wff.
+
+Lemma Wt_Univ n Γ a A i
+  (h : Wt n Γ a A) :
+  exists j, Wt n Γ (tUniv i) (tUniv j).
+Proof.
+  exists (S i).
+  qauto l:on use:Wt_Wff ctrs:Wt.
+Qed.
+
+Lemma Wt_Pi_inv n Γ A B U (h : Wt n Γ (tPi A B) U) :
+  exists i, Wt n Γ A (tUniv i) /\
+         Wt (S n) (A .: Γ) B (tUniv i) /\
+         Join (tUniv i) U /\
+         exists i, Wt n Γ U (tUniv i).
+Proof.
+  move E : (tPi A B) h => T h.
+  move : A B E.
+  elim : n Γ T U / h => //.
+  - hauto l:on use:Wt_Univ.
+  - hauto lq:on rew:off use:Join_transitive.
+Qed.
+
+Lemma Wt_Pi_Univ_inv n Γ A B i (h : Wt n Γ (tPi A B) (tUniv i)) :
+  Wt n Γ A (tUniv i) /\
+  Wt (S n) (A .: Γ) B (tUniv i).
+Proof. hauto lq:on use:Wt_Pi_inv, join_univ_inj. Qed.
+
+Lemma Wt_Abs_inv n Γ A a T (h : Wt n Γ (tAbs A a) T) :
+  exists B i, Wt n Γ (tPi A B) (tUniv i) /\
+         Wt (S n) (A .: Γ) a B /\
+         Join (tPi A B) T /\
+         exists i, (Wt n Γ T (tUniv i)).
+Proof.
+  move E : (tAbs A a) h => a0 h.
+  move : A a E.
+  elim : n Γ a0 T / h => //.
+  - hauto lq:on use:Join_reflexive.
+  - hauto lq:on rew:off use:Join_transitive.
+Qed.
+
 Lemma renaming_Syn n Γ a A (h : Wt n Γ a A) : forall m Δ ξ,
     good_renaming ξ n Γ m Δ ->
     Wff m Δ ->
@@ -60,11 +104,6 @@ Proof.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - qauto l:on ctrs:Wt use:join_renaming.
 Qed.
-
-Lemma Wt_Wff n Γ a A (h : Wt n Γ a A) : Wff n Γ.
-Proof. elim : Γ a A / h => //. Qed.
-
-#[export]Hint Resolve Wt_Wff : wff.
 
 Lemma weakening_Syn n Γ a A B i
   (h0 : Wt n Γ B (tUniv i))
@@ -135,6 +174,41 @@ Lemma preservation a b (h : Par a b) : forall n Γ A,
 Proof.
   elim : a b /h => //.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 n Γ A /Wt_Pi_inv.
-    eapply T_Conv with (A := tUniv i) (i := i); eauto.
-    suff : (S n) (A0, Γ) B0 (tUniv i)
+    intros (i & hA0 & hAB0 & hAJoin & j & hA).
+    have ? : Wff n Γ by eauto with wff.
+    apply T_Conv with (A := tUniv i) (i := j) => //.
+    apply T_Pi; first by eauto.
+    apply ih1.
+    replace B0 with (subst_tm ids B0); last by asimpl.
+    change (tUniv i) with (subst_tm ids (tUniv i)).
+    apply morphing_Syn with (n := S n) (Γ := A0 .: Γ); eauto with wff.
+    (* Pull out as a lemma *)
+    case => [_ | k /Arith_prebase.lt_S_n ?].
+    + rewrite dep_ith_ren_tm0.
+      asimpl.
+      apply T_Conv with (A := ren_tm shift A1) (i := i); eauto.
+      * apply T_Var'; [by asimpldep | eauto with wff | lia].
+      * apply :  weakening_Syn'; eauto; by asimpl.
+      * sfirstorder use:Par_join, join_renaming, Join_symmetric.
+    + asimpl.
+      rewrite dep_ith_ren_tm.
+      change (var_tm (S k)) with (ren_tm shift (var_tm k)).
+      hauto lq:on ctrs:Wt use:weakening_Syn.
+  - move => A0 A1 a0 a1 h0 ih0 h1 ih1 n Γ A /Wt_Abs_inv.
+    intros (B & i & hPi & ha0 & hJoin & j & hA).
+    case /Wt_Pi_Univ_inv : hPi => hA0 hB.
+    apply T_Conv with (A := tPi A1 B) (i := j) => //.
+    apply T_Abs with (i := i).
+    + apply T_Pi; eauto.
+      (* reuse the factored out lemma *)
+      admit.
+    + apply ih1.
+      (* reuse the factored out lemma *)
+      admit.
+    + suff : Join (tPi A1 B) (tPi A0 B) by hauto l:on use:Join_transitive.
+      apply Join_symmetric.
+      apply Par_join.
+      hauto lq:on ctrs:Par use:Par_refl.
+  - admit.
+  -
 Admitted.
