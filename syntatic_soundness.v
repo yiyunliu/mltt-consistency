@@ -317,15 +317,7 @@ Definition is_value (a : tm) :=
   | var_tm _ => false
   end.
 
-Inductive head :=
-| hPi
-| hAbs
-| hSwitch
-| hOn
-| hOff
-| hFalse
-| hUniv
-| hVar.
+Inductive head := hPi | hAbs | hSwitch | hOn | hOff | hFalse | hUniv | hVar.
 
 Definition tm_to_head (a : tm) :=
   match a with
