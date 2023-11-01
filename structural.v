@@ -1,4 +1,4 @@
-From WR Require Import syntax join typing inversion.
+From WR Require Import syntax join typing.
 From Coq Require Import ssreflect.
 From Hammer Require Import Tactics.
 Require Import Psatz.
@@ -169,6 +169,33 @@ Proof.
   - hauto q:on ctrs:Wt use:join_subst_star.
 Qed.
 
+Lemma preservation_helper n A0 A1 i Γ a A :
+  Wt (S n) (A0, Γ) a A ->
+  Wt n Γ A0 (tUniv i) ->
+  Wt n Γ A1 (tUniv i) ->
+  Join A0 A1 ->
+  Wt (S n) (A1, Γ) a A.
+Proof.
+  move => h0 h1 h2 h3.
+  replace a with (subst_tm ids a); last by asimpl.
+  replace A with (subst_tm ids A); last by asimpl.
+  apply morphing_Syn with (n := S n) (Γ := A0 .: Γ).
+  - done.
+  - case => [_ | k /Arith_prebase.lt_S_n ?].
+    + rewrite dep_ith_ren_tm0; asimpl.
+      apply T_Conv with (A := ren_tm shift A1) (i := i).
+      * apply T_Var; hauto l:on db:wff.
+      * change (tUniv i) with (ren_tm shift (tUniv i)).
+        apply weakening_Syn with (i := i) => //.
+      * hauto lq:on use:Join_symmetric, join_renaming.
+    + rewrite dep_ith_ren_tm.
+      asimpl.
+      change (var_tm (S k)) with (ren_tm shift (var_tm k)).
+      apply weakening_Syn with (i := i) => //.
+      apply T_Var; hauto lq:on db:wff.
+  - eauto with wff.
+Qed.
+
 Lemma preservation a b (h : Par a b) : forall n Γ A,
     Wt n Γ a A -> Wt n Γ b A.
 Proof.
@@ -177,34 +204,14 @@ Proof.
     intros (i & hA0 & hAB0 & hAJoin & j & hA).
     have ? : Wff n Γ by eauto with wff.
     apply T_Conv with (A := tUniv i) (i := j) => //.
-    apply T_Pi; first by eauto.
-    apply ih1.
-    replace B0 with (subst_tm ids B0); last by asimpl.
-    change (tUniv i) with (subst_tm ids (tUniv i)).
-    apply morphing_Syn with (n := S n) (Γ := A0 .: Γ); eauto with wff.
-    (* Pull out as a lemma *)
-    case => [_ | k /Arith_prebase.lt_S_n ?].
-    + rewrite dep_ith_ren_tm0.
-      asimpl.
-      apply T_Conv with (A := ren_tm shift A1) (i := i); eauto.
-      * apply T_Var'; [by asimpldep | eauto with wff | lia].
-      * apply :  weakening_Syn'; eauto; by asimpl.
-      * sfirstorder use:Par_join, join_renaming, Join_symmetric.
-    + asimpl.
-      rewrite dep_ith_ren_tm.
-      change (var_tm (S k)) with (ren_tm shift (var_tm k)).
-      hauto lq:on ctrs:Wt use:weakening_Syn.
+    qauto l:on ctrs:Wt use:preservation_helper, Par_join.
   - move => A0 A1 a0 a1 h0 ih0 h1 ih1 n Γ A /Wt_Abs_inv.
     intros (B & i & hPi & ha0 & hJoin & j & hA).
     case /Wt_Pi_Univ_inv : hPi => hA0 hB.
     apply T_Conv with (A := tPi A1 B) (i := j) => //.
     apply T_Abs with (i := i).
-    + apply T_Pi; eauto.
-      (* reuse the factored out lemma *)
-      admit.
-    + apply ih1.
-      (* reuse the factored out lemma *)
-      admit.
+    + qauto l:on ctrs:Wt use:preservation_helper, Par_join.
+    + qauto l:on ctrs:Wt use:preservation_helper, Par_join.
     + suff : Join (tPi A1 B) (tPi A0 B) by hauto l:on use:Join_transitive.
       apply Join_symmetric.
       apply Par_join.
