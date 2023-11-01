@@ -1,4 +1,4 @@
-From WR Require Import syntax join semtyping typing.
+From WR Require Import syntax join semtyping typing common.
 From Coq Require Import ssreflect ssrbool Sets.Relations_2 Sets.Relations_2_facts Sets.Relations_3 Program.Basics.
 From Hammer Require Import Tactics.
 Require Import Psatz.
@@ -27,29 +27,28 @@ Qed.
 
 Lemma γ_ok_renaming n Γ γ :
   forall m Δ ξ,
-    (forall i, i < n -> ξ i < m) ->
-    (forall i, i < n -> ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)) ->
+    good_renaming ξ n Γ m Δ ->
     γ_ok m Δ γ ->
     γ_ok n Γ (ξ >> γ).
 Proof.
-  move => m Δ ξ hscope h0 h1.
+  move => m Δ ξ hscope h1.
   rewrite /γ_ok => i hi PA.
   asimpl.
   replace (subst_tm (ξ >> γ) (dep_ith Γ i)) with
     (subst_tm γ (ren_tm ξ (dep_ith Γ i))); last by asimpl.
+  rewrite /good_renaming in hscope.
+  case /(_ i hi) : hscope => ? h0.
   rewrite h0; auto.
-  apply h1.
-  firstorder.
+  by apply h1.
 Qed.
 
 Lemma renaming_SemWt n Γ a A :
   SemWt n Γ a A ->
   forall m Δ ξ,
-    (forall i, i < n -> ξ i < m) ->
-    (forall i, i < n -> ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)) ->
+    good_renaming ξ n Γ m Δ ->
     SemWt m Δ (ren_tm ξ a) (ren_tm ξ A).
 Proof.
-  rewrite /SemWt => h m Δ ξ hscope hwf γ hγ.
+  rewrite /SemWt => h m Δ ξ hξ γ hγ.
   have hγ' : (γ_ok n Γ (ξ >> γ)) by eauto using γ_ok_renaming.
   case /(_ _ hγ') : h => PA hPA.
   exists PA.
@@ -81,14 +80,7 @@ Proof.
       move /InterpExt_Univ_inv : hPA => [? h0]; subst.
       move : hi; intros (PA & hi).
       exists (F i), PA; sfirstorder.
-    + apply (renaming_SemWt _ _ _ _ ih); first by lia.
-      move => i0 ?.
-      asimpldep.
-      simpl.
-      f_equal.
-      fext.
-      move => *.
-      asimpl; lia.
+    + qauto l:on use:good_renaming_truncate', renaming_SemWt.
   - move => n Γ i γ hγ.
     exists (S i), (fun A => exists PA, InterpUnivN i A PA).
     hauto l:on use:InterpUnivN_Univ_inv.

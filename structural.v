@@ -1,12 +1,9 @@
-From WR Require Import syntax join typing.
+From WR Require Import syntax join typing common.
 From Coq Require Import ssreflect Sets.Relations_2 ssrbool.
 From Hammer Require Import Tactics.
 Require Coq.Init.Datatypes.
 Require Import Psatz.
 Module O := Coq.Init.Datatypes.
-
-Definition good_renaming ξ n Γ m Δ :=
-  (forall i, i < n -> ξ i < m /\ ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)).
 
 Lemma good_renaming_up ξ n Γ m Δ A :
   good_renaming ξ n Γ m Δ ->
@@ -183,25 +180,6 @@ Proof.
   - rewrite dep_ith_ren_tm.
     asimpl.
     eauto using T_Var with wff.
-Qed.
-
-Lemma good_renaming_truncate n m Γ :
-  good_renaming (Nat.add n) m (Nat.add n >> Γ) (n + m) Γ .
-Proof.
-  rewrite /good_renaming.
-  split.
-  - lia.
-  - asimpldep.
-    f_equal. fext => *; asimpl; lia.
-Qed.
-
-Lemma good_renaming_truncate' n m Γ :
-  n <= m ->
-  good_renaming (Nat.add n) (m - n) (Nat.add n >> Γ) m Γ.
-Proof.
-  move => h.
-  replace m with (n + (m - n)) at 2; last by lia.
-  apply good_renaming_truncate.
 Qed.
 
 Lemma Wt_regularity n Γ a A
