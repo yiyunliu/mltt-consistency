@@ -231,10 +231,25 @@ Proof.
   - hauto lq:on rew:off use:Join_transitive.
 Qed.
 
-Lemma preservation_helper n A0 A1 i Γ a A :
+
+Lemma Wt_If_inv n Γ a b c T (h : Wt n Γ (tIf a b c) T) :
+  exists A, Wt n Γ a tSwitch /\
+         Wt n Γ b A /\
+         Wt n Γ c A /\
+         Join A T /\
+         exists i, Wt n Γ T (tUniv i).
+Proof.
+  move E : (tIf a b c) h => a0 h.
+  move : a b c E.
+  elim : n Γ a0 T / h => //.
+  - hauto lq:on rew:off use:Join_transitive.
+  - qauto l:on use:Join_reflexive, Wt_regularity.
+Qed.
+
+Lemma preservation_helper n A0 A1 i j Γ a A :
   Wt (S n) (A0, Γ) a A ->
   Wt n Γ A0 (tUniv i) ->
-  Wt n Γ A1 (tUniv i) ->
+  Wt n Γ A1 (tUniv j) ->
   Join A0 A1 ->
   Wt (S n) (A1, Γ) a A.
 Proof.
@@ -248,17 +263,17 @@ Proof.
       apply T_Conv with (A := ren_tm shift A1) (i := i).
       * apply T_Var; hauto l:on db:wff.
       * change (tUniv i) with (ren_tm shift (tUniv i)).
-        apply weakening_Syn with (i := i) => //.
+        apply weakening_Syn with (i := j) => //.
       * hauto lq:on use:Join_symmetric, join_renaming.
     + rewrite dep_ith_ren_tm.
       asimpl.
       change (var_tm (S k)) with (ren_tm shift (var_tm k)).
-      apply weakening_Syn with (i := i) => //.
+      apply weakening_Syn with (i := j) => //.
       apply T_Var; hauto lq:on db:wff.
   - eauto with wff.
 Qed.
 
-Lemma preservation a b (h : Par a b) : forall n Γ A,
+Lemma subject_reduction a b (h : Par a b) : forall n Γ A,
     Wt n Γ a A -> Wt n Γ b A.
 Proof.
   elim : a b /h => //.
@@ -287,5 +302,23 @@ Proof.
     apply Par_join.
     apply par_morphing; last by apply Par_refl.
     hauto q:on ctrs:Par inv:nat simp:asimpl.
-  -
-Admitted.
+  - move => a A a0 b0 b1 haa0 iha hbb0 ihb n Γ A0 /Wt_App_inv.
+    intros (A1 & B & ha & hb0 & hJoin & i & hA0).
+    have /iha /Wt_Abs_inv := ha; intros (B0 & k & hPi & ha0 & hJoin' & j & hPi').
+    case /join_pi_inj : hJoin' => *.
+    case /Wt_Pi_Univ_inv : hPi => *.
+    move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
+    move /ihb in hb0.
+    eapply T_Conv with (A := subst_tm (b1..) B0); eauto.
+    + apply : subst_Syn; eauto.
+      eapply T_Conv with (A := A1); eauto.
+      qauto l:on use:Join_symmetric.
+    + apply : Join_transitive; eauto.
+      apply Join_symmetric.
+      apply join_morphing.
+      * by apply Join_symmetric.
+      * case; [by asimpl | sfirstorder use:Par_refl].
+  - hauto lq:on use:Wt_If_inv ctrs:Wt.
+  - qauto l:on use:Wt_If_inv ctrs:Wt.
+  - qauto l:on use:Wt_If_inv ctrs:Wt.
+Qed.

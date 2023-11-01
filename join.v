@@ -192,19 +192,36 @@ Lemma par_subst a0 a1 (h : Par a0 a1) (ξ : fin -> tm) :
   Par (subst_tm ξ a0) (subst_tm ξ a1).
 Proof. hauto l:on use:Par_refl, par_morphing. Qed.
 
-Lemma par_subst_star a0 a1 (h : Rstar _ Par a0 a1) (ξ : fin -> tm) :
-  Rstar _ Par (subst_tm ξ a0) (subst_tm ξ a1).
+Lemma par_morphing_star a0 a1 (h : Rstar _ Par a0 a1) (ξ0 ξ1 : fin -> tm) :
+  (forall i, Par (ξ0 i) (ξ1 i)) ->
+  Rstar _ Par (subst_tm ξ0 a0) (subst_tm ξ1 a1).
 Proof.
   induction h.
-  - apply Rstar_0.
-  - apply : Rstar_transitive; eauto.
+  - move => h. apply Rstar_contains_R. eauto using par_morphing, Par_refl.
+  - move => h0.
+    apply : Rstar_transitive; eauto.
     apply Rstar_contains_R.
-    sfirstorder use:par_subst.
+    sfirstorder use:par_morphing, Par_refl.
 Qed.
+
+Lemma Par_join a b :
+  Par a b -> Join a b.
+Proof. sfirstorder use:Rstar_contains_R unfold:Join. Qed.
+
+Lemma join_morphing a0 a1 (h : Join a0 a1) (ξ0 ξ1 : fin -> tm) :
+  (forall i, Par (ξ0 i) (ξ1 i)) ->
+  Join (subst_tm ξ0 a0) (subst_tm ξ1 a1).
+Proof.
+  hauto l:on unfold:Join,coherent use:par_morphing_star, Par_refl, Par_join.
+Qed.
+
+Lemma par_subst_star a0 a1 (h : Rstar _ Par a0 a1) (ξ : fin -> tm) :
+  Rstar _ Par (subst_tm ξ a0) (subst_tm ξ a1).
+Proof. hauto l:on use:par_morphing_star, Par_refl. Qed.
 
 Lemma join_subst_star a0 a1 (h : Join a0 a1) (ξ : fin -> tm) :
   Join (subst_tm ξ a0) (subst_tm ξ a1).
-Proof. hauto lq:on use:par_subst_star unfold:Join, coherent. Qed.
+Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 
@@ -280,7 +297,3 @@ Proof.
   case : h => z [*].
   exists z. split; sfirstorder use:Rstar_transitive.
 Qed.
-
-Lemma Par_join a b :
-  Par a b -> Join a b.
-Proof. sfirstorder use:Rstar_contains_R unfold:Join. Qed.
