@@ -169,6 +169,63 @@ Proof.
   - hauto q:on ctrs:Wt use:join_subst_star.
 Qed.
 
+Lemma subst_Syn n Γ A a b B
+  (h0 : Wt (S n) (A .: Γ) b B)
+  (h1 : Wt n Γ a A) :
+  Wt n Γ (subst_tm (a..) b) (subst_tm (a..) B).
+Proof.
+  apply : morphing_Syn; eauto with wff.
+  case => [_ | i /Arith_prebase.lt_S_n ?].
+  - rewrite dep_ith_ren_tm0.
+    by asimpl.
+  - rewrite dep_ith_ren_tm.
+    asimpl.
+    eauto using T_Var with wff.
+Qed.
+
+Lemma good_renaming_truncate n m Γ :
+  good_renaming (Nat.add n) m (Nat.add n >> Γ) (n + m) Γ .
+Proof.
+Admitted.
+
+Lemma good_renaming_truncate' n m Γ :
+  n <= m ->
+  good_renaming (Nat.add n) (m - n) (Nat.add n >> Γ) m Γ.
+Proof.
+  move => h.
+  replace m with (n + (m - n)) at 2; last by lia.
+  apply good_renaming_truncate.
+Qed.
+
+Lemma Wt_regularity n Γ a A
+  (h : Wt n Γ a A) :
+  exists i, Wt n Γ A (tUniv i).
+Proof.
+  elim:n Γ a A/h; try qauto ctrs:Wt depth:2.
+  - inversion 1; qauto l:on use:good_renaming_truncate', renaming_Syn.
+  - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
+Qed.
+
+Lemma Wt_App_inv n Γ b a T (h : Wt n Γ (tApp b a) T) :
+  exists A B, Wt n Γ b (tPi A B) /\
+         Wt n Γ a A /\
+         Join (subst_tm (a..) B) T /\
+         exists i, Wt n Γ T (tUniv i).
+Proof.
+  move E : (tApp b a) h => ba h.
+  move : b a E.
+  elim : n Γ ba T /h => //.
+  - move => n Γ a A B b h0 _ h1 _ ? ? [] *; subst.
+    exists A, B; repeat split => //.
+    + apply join_subst_star. apply Join_reflexive.
+    + move /Wt_regularity : h0.
+      move => [i /Wt_Pi_Univ_inv] [hA hB].
+      exists i.
+      change (tUniv i) with (subst_tm (b..) (tUniv i)).
+      apply : subst_Syn; eauto.
+  - hauto lq:on rew:off use:Join_transitive.
+Qed.
+
 Lemma preservation_helper n A0 A1 i Γ a A :
   Wt (S n) (A0, Γ) a A ->
   Wt n Γ A0 (tUniv i) ->
@@ -216,6 +273,14 @@ Proof.
       apply Join_symmetric.
       apply Par_join.
       hauto lq:on ctrs:Par use:Par_refl.
-  - admit.
+  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 n Γ A /Wt_App_inv.
+    intros (A0 & B & hPi & hb0 & hJoin & i & hA).
+    eapply T_Conv with (A := subst_tm (b1..) B); eauto.
+    apply : T_App; eauto.
+    apply : Join_transitive; eauto.
+    apply Join_symmetric.
+    apply Par_join.
+    apply par_morphing; last by apply Par_refl.
+    hauto q:on ctrs:Par inv:nat simp:asimpl.
   -
 Admitted.
