@@ -280,3 +280,7 @@ Proof.
   case : h => z [*].
   exists z. split; sfirstorder use:Rstar_transitive.
 Qed.
+
+Lemma Par_join a b :
+  Par a b -> Join a b.
+Proof. sfirstorder use:Rstar_contains_R unfold:Join. Qed.

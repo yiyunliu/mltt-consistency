@@ -134,4 +134,7 @@ Lemma preservation a b (h : Par a b) : forall n Γ A,
     Wt n Γ a A -> Wt n Γ b A.
 Proof.
   elim : a b /h => //.
+  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 n Γ A /Wt_Pi_inv.
+    eapply T_Conv with (A := tUniv i) (i := i); eauto.
+    suff : (S n) (A0, Γ) B0 (tUniv i)
 Admitted.
