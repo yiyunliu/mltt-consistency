@@ -1,7 +1,9 @@
 From WR Require Import syntax join typing.
-From Coq Require Import ssreflect.
+From Coq Require Import ssreflect Sets.Relations_2 ssrbool.
 From Hammer Require Import Tactics.
+Require Coq.Init.Datatypes.
 Require Import Psatz.
+Module O := Coq.Init.Datatypes.
 
 Definition good_renaming ξ n Γ m Δ :=
   (forall i, i < n -> ξ i < m /\ ren_tm ξ (dep_ith Γ i) = dep_ith Δ (ξ i)).
@@ -321,4 +323,125 @@ Proof.
   - hauto lq:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
+Qed.
+
+Definition is_value (a : tm) :=
+  match a with
+  | tPi A B => true
+  | tAbs A a => true
+  | tSwitch => true
+  | tOn => true
+  | tOff => true
+  | tFalse => true
+  | tIf a b c => false
+  | tApp a b => false
+  | tUniv _ => true
+  | var_tm _ => false
+  end.
+
+Inductive head :=
+| hPi
+| hAbs
+| hSwitch
+| hOn
+| hOff
+| hFalse
+| hUniv
+| hVar.
+
+Definition tm_to_head (a : tm) :=
+  match a with
+  | tPi A B => O.Some hPi
+  | tAbs A a => O.Some hAbs
+  | tSwitch => O.Some hSwitch
+  | tOn => O.Some hOn
+  | tOff => O.Some hOff
+  | tFalse => O.Some hFalse
+  | tIf a b c => O.None
+  | tApp a b => O.None
+  | tUniv _ => O.Some hUniv
+  | var_tm _ => O.Some hVar
+  end.
+
+Lemma par_head a b (h : Par a b) :
+  forall hd, tm_to_head a = O.Some hd ->
+        tm_to_head b = O.Some hd.
+Proof. induction h => //. Qed.
+
+Lemma par_head_star a b (h : Rstar _ Par a b) :
+  forall hd, tm_to_head a = O.Some hd ->
+        tm_to_head b = O.Some hd.
+Proof. induction h; eauto using par_head. Qed.
+
+Lemma join_consistent a b (h : Join a b) :
+  forall hd hd1, tm_to_head a = O.Some hd ->
+            tm_to_head b = O.Some hd1 ->
+            hd = hd1.
+Proof. qblast use:par_head_star. Qed.
+
+Lemma Wt_Univ_winv n Γ i U :
+  Wt n Γ (tUniv i) U ->
+  exists j, Join (tUniv j) U.
+Proof.
+  move E : (tUniv i) => U0 h.
+  move : i E.
+  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+Qed.
+
+Lemma Wt_False_winv n Γ U :
+  Wt n Γ tFalse U ->
+  exists j, Join (tUniv j) U.
+Proof.
+  move E : tFalse => U0 h.
+  move : E.
+  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+Qed.
+
+Lemma Wt_On_Off_winv n Γ a A (h : Wt n Γ a A) :
+  is_bool_val a -> Join tSwitch A.
+Proof. induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive. Qed.
+
+Lemma Wt_Switch_winv n Γ A :
+  Wt n Γ tSwitch A ->
+  exists i, Join (tUniv i) A.
+Proof.
+  move E : tSwitch => a h. move : E.
+  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+Qed.
+
+Lemma wt_pi_canon Γ a A B :
+  Wt 0 Γ a (tPi A B) ->
+  is_value a ->
+  exists A a0, a = tAbs A a0.
+Proof.
+  case : a => //.
+  - hauto lq:on.
+  - qauto l:on use:Wt_Pi_inv, join_consistent.
+  - qauto l:on use:Wt_False_winv, join_consistent.
+  - qauto l:on use:Wt_Univ_winv, join_consistent.
+  - qauto l:on use:Wt_On_Off_winv, join_consistent.
+  - qauto l:on use:Wt_On_Off_winv, join_consistent.
+  - qauto l:on use:Wt_Switch_winv, join_consistent.
+Qed.
+
+Lemma wt_switch_canon Γ a :
+  Wt 0 Γ a tSwitch ->
+  is_value a ->
+  is_bool_val a.
+Proof.
+  case : a => //.
+  - qauto l:on use:Wt_Abs_inv, join_consistent.
+  - qauto l:on use:Wt_Pi_inv, join_consistent.
+  - qauto l:on use:Wt_False_winv, join_consistent.
+  - qauto l:on use:Wt_Univ_winv, join_consistent.
+  - qauto l:on use:Wt_Switch_winv, join_consistent.
+Qed.
+
+Lemma wt_progress Γ a A (h :Wt 0 Γ a A) : is_value a \/ exists a0, Par a a0.
+Proof.
+  move E : 0 h => n h.
+  move : E.
+  elim: n Γ a A/h; try hauto q:on depth:2.
+  - hauto lq:on rew:off ctrs:Par use:wt_pi_canon, Par_refl.
+  - hauto lq:on rew:off use:wt_switch_canon, Par_refl.
 Qed.
