@@ -129,3 +129,9 @@ Proof.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - hauto q:on ctrs:Wt use:join_subst_star.
 Qed.
+
+Lemma preservation a b (h : Par a b) : forall n Γ A,
+    Wt n Γ a A -> Wt n Γ b A.
+Proof.
+  elim : a b /h => //.
+Admitted.
