@@ -6,8 +6,6 @@ From Coq Require Import
   Sets.Relations_3_facts.
 From Hammer Require Import Tactics.
 
-Definition
-
 Definition is_bool_val a :=
   match a with
   | tOn => true
@@ -75,6 +73,29 @@ Inductive Par : tm -> tm -> Prop :=
 #[export]Hint Constructors Par : par.
 
 Definition Join := coherent _ Par.
+
+Lemma pars_pi_inv A B C (h : Rstar _ Par (tPi A B) C) :
+  exists A0 B0, C = tPi A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
+Proof.
+  move E : (tPi A B) h => T h.
+  move : A B E.
+  elim : T C / h; hecrush inv:Par ctrs:Rstar, Par.
+Qed.
+
+Lemma join_pi_inj A B A0 B0 (h : Join (tPi A B) (tPi A0 B0)) :
+  Join A A0 /\ Join B B0.
+Proof. hauto q:on use:pars_pi_inv unfold:Join, coherent. Qed.
+
+Lemma pars_univ_inv i A (h : Rstar _ Par (tUniv i) A) :
+  A = tUniv i.
+Proof.
+  move E : (tUniv i) h => A0 h.
+  move : E.
+  elim : A0 A / h; hauto lq:on rew:off ctrs:Rstar, Par inv:Par.
+Qed.
+
+Lemma join_univ_inj i j (h : Join (tUniv i) (tUniv j)) : i = j.
+Proof. hauto lq:on rew:off inv:Rstar use:pars_univ_inv unfold:Join, coherent. Qed.
 
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
@@ -180,6 +201,10 @@ Proof.
     apply Rstar_contains_R.
     sfirstorder use:par_subst.
 Qed.
+
+Lemma join_subst_star a0 a1 (h : Join a0 a1) (ξ : fin -> tm) :
+  Join (subst_tm ξ a0) (subst_tm ξ a1).
+Proof. hauto lq:on use:par_subst_star unfold:Join, coherent. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 

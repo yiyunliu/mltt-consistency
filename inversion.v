@@ -13,3 +13,8 @@ Proof.
   - hauto l:on.
   - hauto lq:on rew:off use:Join_transitive.
 Qed.
+
+Lemma Wt_Pi_Univ_inv n Γ A B i (h : Wt n Γ (tPi A B) (tUniv i)) :
+  Wt n Γ A (tUniv i) /\
+  Wt (S n) (A .: Γ) B (tUniv i).
+Proof. hauto lq:on use:Wt_Pi_inv, join_univ_inj. Qed.
