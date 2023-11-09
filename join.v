@@ -39,7 +39,6 @@ Inductive Par : tm -> tm -> Prop :=
   (* --------------------- *)
   Par (tPi ℓ A0 B0) (tPi ℓ A1 B1)
 | P_Abs ℓ A0 A1 a0 a1 :
-  Par A0 A1 ->
   Par a0 a1 ->
   (* -------------------- *)
   Par (tAbs ℓ A0 a0) (tAbs ℓ A1 a1)
@@ -356,6 +355,22 @@ Proof.
     elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
 Qed.
+
+Lemma simulation n Ξ ℓ a b a' :
+  IEq n Ξ ℓ a b ->
+  Par a a' ->
+  exists b', Par b b' /\ IEq n Ξ ℓ a' b'.
+Proof.
+  move => h.
+  move : a'.
+  elim : n Ξ ℓ a b / h; try qauto ctrs:IEq, Par inv:Par.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - move => n Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 a'.
+    elim /Par_inv => //.
+    +
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+Admitted.
 
 Lemma pars_confluent : Confluent _ Par.
 Proof.
