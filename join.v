@@ -4,7 +4,10 @@ From Coq Require Import
   Sets.Relations_2
   Sets.Relations_3
   Sets.Relations_3_facts.
-From Hammer Require Import Tactics.
+
+Module Type join_sig
+  (Import grade : grade_sig)
+  (Import syntax : syntax_sig grade).
 
 Definition is_bool_val a :=
   match a with
@@ -23,26 +26,26 @@ Inductive Par : tm -> tm -> Prop :=
 | P_False :
   (* -------- *)
   Par tFalse tFalse
-| P_Pi A0 A1 B0 B1 :
+| P_Pi ℓ A0 A1 B0 B1 :
   Par A0 A1 ->
   Par B0 B1 ->
   (* --------------------- *)
-  Par (tPi A0 B0) (tPi A1 B1)
-| P_Abs A0 A1 a0 a1 :
+  Par (tPi ℓ A0 B0) (tPi ℓ A1 B1)
+| P_Abs ℓ A0 A1 a0 a1 :
   Par A0 A1 ->
   Par a0 a1 ->
   (* -------------------- *)
-  Par (tAbs A0 a0) (tAbs A1 a1)
-| P_App a0 a1 b0 b1 :
+  Par (tAbs ℓ A0 a0) (tAbs ℓ A1 a1)
+| P_App a0 a1 ℓ b0 b1 :
   Par a0 a1 ->
   Par b0 b1 ->
   (* ------------------------- *)
-  Par (tApp a0 b0) (tApp a1 b1)
-| P_AppAbs a A a0 b0 b1 :
-  Par a (tAbs A a0) ->
+  Par (tApp a0 ℓ b0) (tApp a1 ℓ b1)
+| P_AppAbs a ℓ A a0 b0 b1 :
+  Par a (tAbs ℓ A a0) ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp a b0) (subst_tm (b1..) a0)
+  Par (tApp a ℓ b0) (subst_tm (b1..) a0)
 | P_On :
   (* ------- *)
   Par tOn tOn
@@ -74,15 +77,15 @@ Inductive Par : tm -> tm -> Prop :=
 
 Definition Join := coherent _ Par.
 
-Lemma pars_pi_inv A B C (h : Rstar _ Par (tPi A B) C) :
-  exists A0 B0, C = tPi A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
+Lemma pars_pi_inv ℓ A B C (h : Rstar _ Par (tPi ℓ A B) C) :
+  exists A0 B0, C = tPi ℓ A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
 Proof.
-  move E : (tPi A B) h => T h.
+  move E : (tPi ℓ A B) h => T h.
   move : A B E.
   elim : T C / h; hecrush inv:Par ctrs:Rstar, Par.
 Qed.
 
-Lemma join_pi_inj A B A0 B0 (h : Join (tPi A B) (tPi A0 B0)) :
+Lemma join_pi_inj ℓ A B A0 B0 (h : Join (tPi ℓ A B) (tPi ℓ A0 B0)) :
   Join A A0 /\ Join B B0.
 Proof. hauto q:on use:pars_pi_inv unfold:Join, coherent. Qed.
 
@@ -130,12 +133,12 @@ Qed.
 
 #[export]Hint Unfold Join : par.
 
-Lemma P_AppAbs' a A a0 b0 b b1 :
+Lemma P_AppAbs' a ℓ A a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
-  Par a (tAbs A a0) ->
+  Par a (tAbs ℓ A a0) ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp a b0) b.
+  Par (tApp a ℓ b0) b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
 Lemma par_renaming a b (ξ : fin -> fin) :
@@ -236,32 +239,32 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
-  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
-    elim /Par_inv; try congruence.
+  - move => a0 a1 ℓ b0 b1 h0 ih0 h1 ih1 b2.
+    elim /Par_inv => //.
     + qauto l:on ctrs:Par.
-    + move => ? a2 A a3 b3 b4 ? ?.
+    + move => ? a2 ℓ0 A a3 b3 b4 ? ?.
       case => *; subst.
       case /(_ _ ltac:(eassumption)) : ih1 => b [? ?].
       case /(_ _ ltac:(eassumption)) : ih0 => a [? h2].
-      elim /Par_inv : h2; try congruence.
-      move => ? A0 A1 a2 a4 ? ?.
+      elim /Par_inv : h2 => //.
+      move => ? ℓ0 A0 A1 a2 a4 ? ?.
       case => *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on ctrs:Par use:par_cong.
-  - move => a A a0 b0 b1 ? ih0 ? ih1 b2.
-    elim /Par_inv; try congruence.
-    + move => h a1 a2 b3 b4 ? ? [*]; subst.
+  - move => a ℓ A a0 b0 b1 ? ih0 ? ih1 b2.
+    elim /Par_inv => //.
+    + move => h a1 a2 ℓ0 b3 b4 ? ? [*]; subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 *].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
       elim /Par_inv : h0; try congruence.
-      move => ? A0 A1 a3 a4 ? ? [*] *; subst.
+      move => ? ℓ0 A0 A1 a3 a4 ? ? [*] *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on use:par_cong ctrs:Par.
-    + move => ? a1 A0 a2 b3 b4 ? ? [*] *; subst.
+    + move => ? a1 ℓ0 A0 a2 b3 b4 ? ? [*] *; subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 h1].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
       elim /Par_inv : h0; try congruence.
-      move => ? A1 A2 a3 a4 ? ? [*] *; subst.
+      move => ? ℓ0 A1 A2 a3 a4 ? ? [*] *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on use:par_cong ctrs:Par inv:Par.
   - hauto lq:on inv:Par ctrs:Par.
@@ -297,3 +300,5 @@ Proof.
   case : h => z [*].
   exists z. split; sfirstorder use:Rstar_transitive.
 Qed.
+
+End join_sig.

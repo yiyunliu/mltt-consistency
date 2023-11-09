@@ -5,7 +5,10 @@ use Path::Tiny;
 
 my $prelude = <<'END_PRELUDE';
 From mathcomp Require Export ssreflect.order.
+From Hammer Require Export Tactics.
 From WR Require Export unscoped.
+
+#[export]Set Bullet Behavior "Strict Subproofs".
 
 Module Type grade_sig.
 Parameter grade : latticeType tt.

@@ -1,5 +1,8 @@
 From mathcomp Require Export ssreflect.order.
+From Hammer Require Export Tactics.
 From WR Require Export unscoped.
+
+#[export]Set Bullet Behavior "Strict Subproofs".
 
 Module Type grade_sig.
 Parameter grade : latticeType tt.
@@ -11,12 +14,13 @@ Module Type syntax_sig
 
 
 
+
 Section tm.
 Inductive tm  : Type :=
   | var_tm : ( fin ) -> tm 
-  | tAbs : ( tm   ) -> ( tm   ) -> tm 
-  | tApp : ( tm   ) -> ( tm   ) -> tm 
-  | tPi : ( tm   ) -> ( tm   ) -> tm 
+  | tAbs : ( grade   ) -> ( tm   ) -> ( tm   ) -> tm 
+  | tApp : ( tm   ) -> ( grade   ) -> ( tm   ) -> tm 
+  | tPi : ( grade   ) -> ( tm   ) -> ( tm   ) -> tm 
   | tFalse : tm 
   | tUniv : ( nat   ) -> tm 
   | tOn : tm 
@@ -24,13 +28,13 @@ Inductive tm  : Type :=
   | tIf : ( tm   ) -> ( tm   ) -> ( tm   ) -> tm 
   | tSwitch : tm .
 
-Lemma congr_tAbs  { s0 : tm   } { s1 : tm   } { t0 : tm   } { t1 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) : tAbs  s0 s1 = tAbs  t0 t1 .
+Lemma congr_tAbs  { s0 : grade   } { s1 : tm   } { s2 : tm   } { t0 : grade   } { t1 : tm   } { t2 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) : tAbs  s0 s1 s2 = tAbs  t0 t1 t2 .
 Proof. congruence. Qed.
 
-Lemma congr_tApp  { s0 : tm   } { s1 : tm   } { t0 : tm   } { t1 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) : tApp  s0 s1 = tApp  t0 t1 .
+Lemma congr_tApp  { s0 : tm   } { s1 : grade   } { s2 : tm   } { t0 : tm   } { t1 : grade   } { t2 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) : tApp  s0 s1 s2 = tApp  t0 t1 t2 .
 Proof. congruence. Qed.
 
-Lemma congr_tPi  { s0 : tm   } { s1 : tm   } { t0 : tm   } { t1 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) : tPi  s0 s1 = tPi  t0 t1 .
+Lemma congr_tPi  { s0 : grade   } { s1 : tm   } { s2 : tm   } { t0 : grade   } { t1 : tm   } { t2 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) : tPi  s0 s1 s2 = tPi  t0 t1 t2 .
 Proof. congruence. Qed.
 
 Lemma congr_tFalse  : tFalse  = tFalse  .
@@ -57,9 +61,9 @@ Definition upRen_tm_tm   (xi : ( fin ) -> fin) : ( fin ) -> fin :=
 Fixpoint ren_tm   (xitm : ( fin ) -> fin) (s : tm ) : tm  :=
     match s return tm  with
     | var_tm  s => (var_tm ) (xitm s)
-    | tAbs  s0 s1 => tAbs  ((ren_tm xitm) s0) ((ren_tm (upRen_tm_tm xitm)) s1)
-    | tApp  s0 s1 => tApp  ((ren_tm xitm) s0) ((ren_tm xitm) s1)
-    | tPi  s0 s1 => tPi  ((ren_tm xitm) s0) ((ren_tm (upRen_tm_tm xitm)) s1)
+    | tAbs  s0 s1 s2 => tAbs  ((fun x => x) s0) ((ren_tm xitm) s1) ((ren_tm (upRen_tm_tm xitm)) s2)
+    | tApp  s0 s1 s2 => tApp  ((ren_tm xitm) s0) ((fun x => x) s1) ((ren_tm xitm) s2)
+    | tPi  s0 s1 s2 => tPi  ((fun x => x) s0) ((ren_tm xitm) s1) ((ren_tm (upRen_tm_tm xitm)) s2)
     | tFalse   => tFalse 
     | tUniv  s0 => tUniv  ((fun x => x) s0)
     | tOn   => tOn 
@@ -74,9 +78,9 @@ Definition up_tm_tm   (sigma : ( fin ) -> tm ) : ( fin ) -> tm  :=
 Fixpoint subst_tm   (sigmatm : ( fin ) -> tm ) (s : tm ) : tm  :=
     match s return tm  with
     | var_tm  s => sigmatm s
-    | tAbs  s0 s1 => tAbs  ((subst_tm sigmatm) s0) ((subst_tm (up_tm_tm sigmatm)) s1)
-    | tApp  s0 s1 => tApp  ((subst_tm sigmatm) s0) ((subst_tm sigmatm) s1)
-    | tPi  s0 s1 => tPi  ((subst_tm sigmatm) s0) ((subst_tm (up_tm_tm sigmatm)) s1)
+    | tAbs  s0 s1 s2 => tAbs  ((fun x => x) s0) ((subst_tm sigmatm) s1) ((subst_tm (up_tm_tm sigmatm)) s2)
+    | tApp  s0 s1 s2 => tApp  ((subst_tm sigmatm) s0) ((fun x => x) s1) ((subst_tm sigmatm) s2)
+    | tPi  s0 s1 s2 => tPi  ((fun x => x) s0) ((subst_tm sigmatm) s1) ((subst_tm (up_tm_tm sigmatm)) s2)
     | tFalse   => tFalse 
     | tUniv  s0 => tUniv  ((fun x => x) s0)
     | tOn   => tOn 
@@ -94,9 +98,9 @@ Definition upId_tm_tm  (sigma : ( fin ) -> tm ) (Eq : forall x, sigma x = (var_t
 Fixpoint idSubst_tm  (sigmatm : ( fin ) -> tm ) (Eqtm : forall x, sigmatm x = (var_tm ) x) (s : tm ) : subst_tm sigmatm s = s :=
     match s return subst_tm sigmatm s = s with
     | var_tm  s => Eqtm s
-    | tAbs  s0 s1 => congr_tAbs ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm (up_tm_tm sigmatm) (upId_tm_tm (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm sigmatm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm (up_tm_tm sigmatm) (upId_tm_tm (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm (up_tm_tm sigmatm) (upId_tm_tm (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((idSubst_tm sigmatm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((idSubst_tm sigmatm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm (up_tm_tm sigmatm) (upId_tm_tm (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
@@ -114,9 +118,9 @@ Definition upExtRen_tm_tm   (xi : ( fin ) -> fin) (zeta : ( fin ) -> fin) (Eq : 
 Fixpoint extRen_tm   (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (Eqtm : forall x, xitm x = zetatm x) (s : tm ) : ren_tm xitm s = ren_tm zetatm s :=
     match s return ren_tm xitm s = ren_tm zetatm s with
     | var_tm  s => (ap) (var_tm ) (Eqtm s)
-    | tAbs  s0 s1 => congr_tAbs ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upExtRen_tm_tm (_) (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm xitm zetatm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upExtRen_tm_tm (_) (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upExtRen_tm_tm (_) (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((extRen_tm xitm zetatm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((extRen_tm xitm zetatm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upExtRen_tm_tm (_) (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
@@ -134,9 +138,9 @@ Definition upExt_tm_tm   (sigma : ( fin ) -> tm ) (tau : ( fin ) -> tm ) (Eq : f
 Fixpoint ext_tm   (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm ) (Eqtm : forall x, sigmatm x = tautm x) (s : tm ) : subst_tm sigmatm s = subst_tm tautm s :=
     match s return subst_tm sigmatm s = subst_tm tautm s with
     | var_tm  s => Eqtm s
-    | tAbs  s0 s1 => congr_tAbs ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (upExt_tm_tm (_) (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm sigmatm tautm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (upExt_tm_tm (_) (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (upExt_tm_tm (_) (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((ext_tm sigmatm tautm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((ext_tm sigmatm tautm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (upExt_tm_tm (_) (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
@@ -151,9 +155,9 @@ Definition up_ren_ren_tm_tm    (xi : ( fin ) -> fin) (tau : ( fin ) -> fin) (the
 Fixpoint compRenRen_tm    (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (rhotm : ( fin ) -> fin) (Eqtm : forall x, ((funcomp) zetatm xitm) x = rhotm x) (s : tm ) : ren_tm zetatm (ren_tm xitm s) = ren_tm rhotm s :=
     match s return ren_tm zetatm (ren_tm xitm s) = ren_tm rhotm s with
     | var_tm  s => (ap) (var_tm ) (Eqtm s)
-    | tAbs  s0 s1 => congr_tAbs ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upRen_tm_tm rhotm) (up_ren_ren (_) (_) (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upRen_tm_tm rhotm) (up_ren_ren (_) (_) (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upRen_tm_tm rhotm) (up_ren_ren (_) (_) (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((compRenRen_tm xitm zetatm rhotm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upRen_tm_tm rhotm) (up_ren_ren (_) (_) (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
@@ -171,9 +175,9 @@ Definition up_ren_subst_tm_tm    (xi : ( fin ) -> fin) (tau : ( fin ) -> tm ) (t
 Fixpoint compRenSubst_tm    (xitm : ( fin ) -> fin) (tautm : ( fin ) -> tm ) (thetatm : ( fin ) -> tm ) (Eqtm : forall x, ((funcomp) tautm xitm) x = thetatm x) (s : tm ) : subst_tm tautm (ren_tm xitm s) = subst_tm thetatm s :=
     match s return subst_tm tautm (ren_tm xitm s) = subst_tm thetatm s with
     | var_tm  s => Eqtm s
-    | tAbs  s0 s1 => congr_tAbs ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm (upRen_tm_tm xitm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_ren_subst_tm_tm (_) (_) (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm (upRen_tm_tm xitm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_ren_subst_tm_tm (_) (_) (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm (upRen_tm_tm xitm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_ren_subst_tm_tm (_) (_) (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((compRenSubst_tm xitm tautm thetatm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm (upRen_tm_tm xitm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_ren_subst_tm_tm (_) (_) (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
@@ -191,9 +195,9 @@ Definition up_subst_ren_tm_tm    (sigma : ( fin ) -> tm ) (zetatm : ( fin ) -> f
 Fixpoint compSubstRen_tm    (sigmatm : ( fin ) -> tm ) (zetatm : ( fin ) -> fin) (thetatm : ( fin ) -> tm ) (Eqtm : forall x, ((funcomp) (ren_tm zetatm) sigmatm) x = thetatm x) (s : tm ) : ren_tm zetatm (subst_tm sigmatm s) = subst_tm thetatm s :=
     match s return ren_tm zetatm (subst_tm sigmatm s) = subst_tm thetatm s with
     | var_tm  s => Eqtm s
-    | tAbs  s0 s1 => congr_tAbs ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm (up_tm_tm sigmatm) (upRen_tm_tm zetatm) (up_tm_tm thetatm) (up_subst_ren_tm_tm (_) (_) (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm (up_tm_tm sigmatm) (upRen_tm_tm zetatm) (up_tm_tm thetatm) (up_subst_ren_tm_tm (_) (_) (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm (up_tm_tm sigmatm) (upRen_tm_tm zetatm) (up_tm_tm thetatm) (up_subst_ren_tm_tm (_) (_) (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm (up_tm_tm sigmatm) (upRen_tm_tm zetatm) (up_tm_tm thetatm) (up_subst_ren_tm_tm (_) (_) (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
@@ -211,9 +215,9 @@ Definition up_subst_subst_tm_tm    (sigma : ( fin ) -> tm ) (tautm : ( fin ) -> 
 Fixpoint compSubstSubst_tm    (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm ) (thetatm : ( fin ) -> tm ) (Eqtm : forall x, ((funcomp) (subst_tm tautm) sigmatm) x = thetatm x) (s : tm ) : subst_tm tautm (subst_tm sigmatm s) = subst_tm thetatm s :=
     match s return subst_tm tautm (subst_tm sigmatm s) = subst_tm thetatm s with
     | var_tm  s => Eqtm s
-    | tAbs  s0 s1 => congr_tAbs ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_subst_subst_tm_tm (_) (_) (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_subst_subst_tm_tm (_) (_) (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_subst_subst_tm_tm (_) (_) (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_subst_subst_tm_tm (_) (_) (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
@@ -231,9 +235,9 @@ Definition rinstInst_up_tm_tm   (xi : ( fin ) -> fin) (sigma : ( fin ) -> tm ) (
 Fixpoint rinst_inst_tm   (xitm : ( fin ) -> fin) (sigmatm : ( fin ) -> tm ) (Eqtm : forall x, ((funcomp) (var_tm ) xitm) x = sigmatm x) (s : tm ) : ren_tm xitm s = subst_tm sigmatm s :=
     match s return ren_tm xitm s = subst_tm sigmatm s with
     | var_tm  s => Eqtm s
-    | tAbs  s0 s1 => congr_tAbs ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm (upRen_tm_tm xitm) (up_tm_tm sigmatm) (rinstInst_up_tm_tm (_) (_) Eqtm)) s1)
-    | tApp  s0 s1 => congr_tApp ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1)
-    | tPi  s0 s1 => congr_tPi ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm (upRen_tm_tm xitm) (up_tm_tm sigmatm) (rinstInst_up_tm_tm (_) (_) Eqtm)) s1)
+    | tAbs  s0 s1 s2 => congr_tAbs ((fun x => (eq_refl) x) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm (upRen_tm_tm xitm) (up_tm_tm sigmatm) (rinstInst_up_tm_tm (_) (_) Eqtm)) s2)
+    | tApp  s0 s1 s2 => congr_tApp ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((fun x => (eq_refl) x) s1) ((rinst_inst_tm xitm sigmatm Eqtm) s2)
+    | tPi  s0 s1 s2 => congr_tPi ((fun x => (eq_refl) x) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm (upRen_tm_tm xitm) (up_tm_tm sigmatm) (rinstInst_up_tm_tm (_) (_) Eqtm)) s2)
     | tFalse   => congr_tFalse 
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tOn   => congr_tOn 
