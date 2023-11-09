@@ -1,4 +1,12 @@
-Require Export unscoped.
+From mathcomp Require Export ssreflect.order.
+From WR Require Export unscoped.
+
+Module Type grade_sig.
+Parameter grade : latticeType tt.
+End grade_sig.
+
+Module Type syntax_sig
+  (Import grade : grade_sig).
 
 
 
@@ -341,3 +349,4 @@ Ltac substify := auto_unfold; try repeat (erewrite rinstInst_tm).
 
 Ltac renamify := auto_unfold; try repeat (erewrite <- rinstInst_tm).
 
+End syntax_sig.
