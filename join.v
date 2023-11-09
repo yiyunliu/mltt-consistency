@@ -1,9 +1,14 @@
+From mathcomp Require Import ssrnat.
 From WR Require Import syntax.
 From Coq Require Import
   ssreflect
+  ssrbool
   Sets.Relations_2
   Sets.Relations_3
   Sets.Relations_3_facts.
+
+Local Open Scope order_scope.
+Local Open Scope bool_scope.
 
 Module Type join_sig
   (Import grade : grade_sig)
@@ -15,6 +20,8 @@ Definition is_bool_val a :=
   | tOff => true
   | _ => false
   end.
+
+Definition econtext := fin -> grade.
 
 Inductive Par : tm -> tm -> Prop :=
 | P_Var i :
@@ -75,7 +82,80 @@ Inductive Par : tm -> tm -> Prop :=
 
 #[export]Hint Constructors Par : par.
 
+Inductive IEq (n : nat) (Ξ : econtext) (ℓ : grade) : tm -> tm -> Prop :=
+| I_Var i :
+  i < n ->
+  Ξ i <= ℓ ->
+  (* ------- *)
+  IEq n Ξ ℓ (var_tm i) (var_tm i)
+| I_Univ i :
+  (* -------- *)
+  IEq n Ξ ℓ (tUniv i) (tUniv i)
+| I_False :
+  (* -------- *)
+  IEq n Ξ ℓ tFalse tFalse
+| I_Pi ℓ0 A0 A1 B0 B1 :
+  IEq n Ξ ℓ A0 A1 ->
+  IEq (S n) (ℓ0 .: Ξ) ℓ B0 B1 ->
+  (* --------------------- *)
+  IEq n Ξ ℓ (tPi ℓ0 A0 B0) (tPi ℓ0 A1 B1)
+| I_Abs ℓ0 A0 A1 a0 a1 :
+  IEq (S n) (ℓ0 .: Ξ) ℓ a0 a1 ->
+  (* -------------------- *)
+  IEq n Ξ ℓ (tAbs ℓ0 A0 a0) (tAbs ℓ0 A1 a1)
+| I_App a0 a1 ℓ0 b0 b1 :
+  IEq n Ξ ℓ a0 a1 ->
+  GIEq n Ξ ℓ ℓ0 b0 b1 ->
+  (* ------------------------- *)
+  IEq n Ξ ℓ (tApp a0 ℓ0 b0) (tApp a1 ℓ0 b1)
+| I_On :
+  (* ------- *)
+  IEq n Ξ ℓ tOn tOn
+| I_Off :
+  (* ---------- *)
+  IEq n Ξ ℓ tOff tOff
+| I_If a0 a1 b0 b1 c0 c1:
+  IEq n Ξ ℓ a0 a1 ->
+  IEq n Ξ ℓ b0 b1 ->
+  IEq n Ξ ℓ c0 c1 ->
+  (* ---------- *)
+  IEq n Ξ ℓ (tIf a0 b0 c0) (tIf a1 b1 c1)
+| I_Switch :
+  IEq n Ξ ℓ tSwitch tSwitch
+with GIEq (n : nat) (Ξ : econtext) (ℓ : grade) : grade -> tm -> tm -> Prop :=
+| GI_Dist ℓ0 A B :
+  ℓ0 <= ℓ ->
+  IEq n Ξ ℓ A B ->
+  (* -------------- *)
+  GIEq n Ξ ℓ ℓ0 A B
+| GI_InDist ℓ0 A B :
+  ~~ (ℓ0 <= ℓ) ->
+  (* -------------- *)
+  GIEq n Ξ ℓ ℓ0 A B.
+
+#[export]Hint Constructors IEq GIEq : indist.
+
 Definition Join := coherent _ Par.
+
+Scheme IEq_ind' := Induction for IEq Sort Prop
+    with GIEq_ind' := Induction for GIEq Sort Prop.
+
+Combined Scheme IEq_mutual from IEq_ind', GIEq_ind'.
+
+
+Lemma ieq_sym_mutual : forall n Ξ ℓ,
+  (forall A B, IEq n Ξ ℓ A B -> IEq n Ξ ℓ B A) /\
+  (forall ℓ0 A B, GIEq n Ξ ℓ ℓ0 A B -> GIEq n Ξ ℓ ℓ0 B A).
+Proof.
+  apply IEq_mutual; eauto with indist.
+Qed.
+
+Lemma ieq_trans_mutual : forall n Ξ ℓ,
+  (forall A B, IEq n Ξ ℓ A B -> forall C, IEq n Ξ ℓ B C -> IEq n Ξ ℓ A C) /\
+  (forall ℓ0 A B, GIEq n Ξ ℓ ℓ0 A B -> forall C, GIEq n Ξ ℓ ℓ0 B C -> GIEq n Ξ ℓ ℓ0 A C).
+Proof.
+  apply IEq_mutual; hauto lq:on ctrs:IEq, GIEq inv:IEq,GIEq.
+Qed.
 
 Lemma pars_pi_inv ℓ A B C (h : Rstar _ Par (tPi ℓ A B) C) :
   exists A0 B0, C = tPi ℓ A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
