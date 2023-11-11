@@ -466,6 +466,20 @@ Proof.
   by apply ieq_sym_mutual.
 Qed.
 
+Definition Indist Ξ ℓ a b :=
+  exists a0 b0 , Rstar _ Par a a0 /\ Rstar _ Par b b0 /\ IEq Ξ ℓ a0 b0.
+
+Lemma Indist_transitive Ξ ℓ a b c
+  (h0 : Indist Ξ ℓ a b)
+  (h1 : Indist Ξ ℓ b c) :
+  Indist Ξ ℓ a c.
+Proof.
+  rewrite /Indist in h0 h1 *.
+  move : h0; intros (a0 & b0 & ha & hb & ha0b0).
+  move : h1; intros (b0' & c0 & hb' & hc & hb0c0).
+  have [b1 [hb0 hb0']] : exists b1, Rstar tm Par b0' b1 /\ Rstar tm Par b0 b1 by sfirstorder use:pars_confluent.
+
+
 Lemma Join_reflexive a :
   Join a a.
 Proof. hauto l:on ctrs:Rstar. Qed.
