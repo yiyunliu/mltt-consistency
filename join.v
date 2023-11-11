@@ -1,4 +1,5 @@
 From mathcomp Require Import ssrnat.
+From Coq Require Import Logic.StrictProp.
 From WR Require Import syntax.
 From Coq Require Import
   ssreflect
@@ -81,56 +82,55 @@ Inductive Par : tm -> tm -> Prop :=
 
 #[export]Hint Constructors Par : par.
 
-Inductive IEq (n : nat) (Ξ : econtext) (ℓ : grade) : tm -> tm -> Prop :=
+Inductive IEq (Ξ : econtext) (ℓ : grade) : tm -> tm -> Prop :=
 | I_Var i :
-  i < n ->
   Ξ i <= ℓ ->
   (* ------- *)
-  IEq n Ξ ℓ (var_tm i) (var_tm i)
+  IEq Ξ ℓ (var_tm i) (var_tm i)
 | I_Univ i :
   (* -------- *)
-  IEq n Ξ ℓ (tUniv i) (tUniv i)
+  IEq Ξ ℓ (tUniv i) (tUniv i)
 | I_False :
   (* -------- *)
-  IEq n Ξ ℓ tFalse tFalse
+  IEq Ξ ℓ tFalse tFalse
 | I_Pi ℓ0 A0 A1 B0 B1 :
-  IEq n Ξ ℓ A0 A1 ->
-  IEq (S n) (ℓ0 .: Ξ) ℓ B0 B1 ->
+  IEq Ξ ℓ A0 A1 ->
+  IEq (ℓ0 .: Ξ) ℓ B0 B1 ->
   (* --------------------- *)
-  IEq n Ξ ℓ (tPi ℓ0 A0 B0) (tPi ℓ0 A1 B1)
+  IEq Ξ ℓ (tPi ℓ0 A0 B0) (tPi ℓ0 A1 B1)
 | I_Abs ℓ0 A0 A1 a0 a1 :
-  IEq (S n) (ℓ0 .: Ξ) ℓ a0 a1 ->
+  IEq (ℓ0 .: Ξ) ℓ a0 a1 ->
   (* -------------------- *)
-  IEq n Ξ ℓ (tAbs ℓ0 A0 a0) (tAbs ℓ0 A1 a1)
+  IEq Ξ ℓ (tAbs ℓ0 A0 a0) (tAbs ℓ0 A1 a1)
 | I_App a0 a1 ℓ0 b0 b1 :
-  IEq n Ξ ℓ a0 a1 ->
-  GIEq n Ξ ℓ ℓ0 b0 b1 ->
+  IEq Ξ ℓ a0 a1 ->
+  GIEq Ξ ℓ ℓ0 b0 b1 ->
   (* ------------------------- *)
-  IEq n Ξ ℓ (tApp a0 ℓ0 b0) (tApp a1 ℓ0 b1)
+  IEq Ξ ℓ (tApp a0 ℓ0 b0) (tApp a1 ℓ0 b1)
 | I_On :
   (* ------- *)
-  IEq n Ξ ℓ tOn tOn
+  IEq Ξ ℓ tOn tOn
 | I_Off :
   (* ---------- *)
-  IEq n Ξ ℓ tOff tOff
+  IEq Ξ ℓ tOff tOff
 | I_If a0 a1 b0 b1 c0 c1:
-  IEq n Ξ ℓ a0 a1 ->
-  IEq n Ξ ℓ b0 b1 ->
-  IEq n Ξ ℓ c0 c1 ->
+  IEq Ξ ℓ a0 a1 ->
+  IEq Ξ ℓ b0 b1 ->
+  IEq Ξ ℓ c0 c1 ->
   (* ---------- *)
-  IEq n Ξ ℓ (tIf a0 b0 c0) (tIf a1 b1 c1)
+  IEq Ξ ℓ (tIf a0 b0 c0) (tIf a1 b1 c1)
 | I_Switch :
-  IEq n Ξ ℓ tSwitch tSwitch
-with GIEq (n : nat) (Ξ : econtext) (ℓ : grade) : grade -> tm -> tm -> Prop :=
+  IEq Ξ ℓ tSwitch tSwitch
+with GIEq (Ξ : econtext) (ℓ : grade) : grade -> tm -> tm -> Prop :=
 | GI_Dist ℓ0 A B :
   ℓ0 <= ℓ ->
-  IEq n Ξ ℓ A B ->
+  IEq Ξ ℓ A B ->
   (* -------------- *)
-  GIEq n Ξ ℓ ℓ0 A B
+  GIEq Ξ ℓ ℓ0 A B
 | GI_InDist ℓ0 A B :
   ~~ (ℓ0 <= ℓ) ->
   (* -------------- *)
-  GIEq n Ξ ℓ ℓ0 A B.
+  GIEq Ξ ℓ ℓ0 A B.
 
 #[export]Hint Constructors IEq GIEq : indist.
 
@@ -142,16 +142,16 @@ Scheme IEq_ind' := Induction for IEq Sort Prop
 Combined Scheme IEq_mutual from IEq_ind', GIEq_ind'.
 
 
-Lemma ieq_sym_mutual : forall n Ξ ℓ,
-  (forall A B, IEq n Ξ ℓ A B -> IEq n Ξ ℓ B A) /\
-  (forall ℓ0 A B, GIEq n Ξ ℓ ℓ0 A B -> GIEq n Ξ ℓ ℓ0 B A).
+Lemma ieq_sym_mutual : forall Ξ ℓ,
+  (forall A B, IEq Ξ ℓ A B -> IEq Ξ ℓ B A) /\
+  (forall ℓ0 A B, GIEq Ξ ℓ ℓ0 A B -> GIEq Ξ ℓ ℓ0 B A).
 Proof.
   apply IEq_mutual; eauto with indist.
 Qed.
 
-Lemma ieq_trans_mutual : forall n Ξ ℓ,
-  (forall A B, IEq n Ξ ℓ A B -> forall C, IEq n Ξ ℓ B C -> IEq n Ξ ℓ A C) /\
-  (forall ℓ0 A B, GIEq n Ξ ℓ ℓ0 A B -> forall C, GIEq n Ξ ℓ ℓ0 B C -> GIEq n Ξ ℓ ℓ0 A C).
+Lemma ieq_trans_mutual : forall Ξ ℓ,
+  (forall A B, IEq Ξ ℓ A B -> forall C, IEq Ξ ℓ B C -> IEq Ξ ℓ A C) /\
+  (forall ℓ0 A B, GIEq Ξ ℓ ℓ0 A B -> forall C, GIEq Ξ ℓ ℓ0 B C -> GIEq Ξ ℓ ℓ0 A C).
 Proof.
   apply IEq_mutual; hauto lq:on ctrs:IEq, GIEq inv:IEq,GIEq.
 Qed.
@@ -307,7 +307,7 @@ Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 
-Derive Inversion IEq_inv with (forall n Ξ ℓ a b, IEq n Ξ ℓ a b).
+Derive Inversion IEq_inv with (forall Ξ ℓ a b, IEq Ξ ℓ a b).
 
 Lemma par_confluent : Strongly_confluent _ Par.
 Proof.
@@ -358,18 +358,66 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
 Qed.
 
-Lemma simulation : forall n Ξ ℓ,
-    (forall a b, IEq n Ξ ℓ a b ->
+Definition ieq_weakening_helper : forall ℓ ξ (Ξ Δ : fin -> grade),
+    (forall i, Ξ i = Δ (ξ i)) ->
+    (forall i, (ℓ .: Ξ) i = (ℓ .: Δ) ((upRen_tm_tm ξ) i)).
+Proof. qauto l:on inv:nat. Qed.
+
+Lemma ieq_weakening_mutual : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall ξ Δ, (forall i, Ξ i = Δ (ξ i)) ->
+            IEq Δ ℓ (ren_tm ξ a) (ren_tm ξ b)) /\
+    (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+            forall ξ Δ, (forall i, Ξ i = Δ (ξ i)) ->
+            GIEq Δ ℓ ℓ0 (ren_tm ξ a) (ren_tm ξ b)).
+Proof. apply IEq_mutual; hauto l:on ctrs:IEq,GIEq use:ieq_weakening_helper. Qed.
+
+Lemma gieq_refl n Ξ ℓ : GIEq Ξ ℓ (Ξ n) (var_tm n) (var_tm n).
+Proof.
+  case E : ((Ξ n) <= ℓ);hauto lq:on ctrs:GIEq, IEq.
+Qed.
+
+Lemma ieq_morphing_helper ℓ ℓ0 ξ0 ξ1 Ξ Δ :
+  (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+  (forall i, GIEq (ℓ0 .: Δ) ℓ ((ℓ0 .: Ξ) i) (up_tm_tm ξ0 i) (up_tm_tm ξ1 i)).
+Proof.
+  move => h.
+  case.
+  - apply (gieq_refl 0 (ℓ0 .: Δ) ℓ).
+  - sfirstorder use:ieq_weakening_mutual.
+Qed.
+
+Lemma ieq_morphing_mutual : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b)) /\
+    (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            GIEq Δ ℓ ℓ0 (subst_tm ξ0 a) (subst_tm ξ1 b)).
+Proof.
+  apply IEq_mutual; try qauto ctrs:IEq,GIEq.
+  - hauto inv:GIEq ctrs:IEq,GIEq lqb:on.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+Qed.
+
+Lemma ieq_morphing Ξ ℓ a b : IEq Ξ ℓ a b ->
+            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b).
+Proof. hauto l:on use:ieq_morphing_mutual. Qed.
+
+Lemma simulation : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
             forall a', Par a a' ->
-            exists b', Par b b' /\ IEq n Ξ ℓ a' b') /\
-    (forall ℓ0 a b, GIEq n Ξ ℓ ℓ0 a b ->
+            exists b', Par b b' /\ IEq Ξ ℓ a' b') /\
+    (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
             forall a', Par a a' ->
-            exists b', Par b b' /\ GIEq n Ξ ℓ ℓ0 a' b').
+            exists b', Par b b' /\ GIEq Ξ ℓ ℓ0 a' b').
 Proof.
   apply IEq_mutual; try qauto ctrs:IEq, Par, GIEq inv:Par.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
-  - move => n Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 a'.
+  - move => Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 a'.
     elim /Par_inv => //.
     + hauto lq:on ctrs:Par, IEq.
     + move => hp ? ? A a2 ? b2 h2 h3 [*]; subst.
@@ -379,28 +427,14 @@ Proof.
       exists (subst_tm (b3..) a5).
       split.
       * hauto q:on ctrs:Par.
-      * admit.
+      * apply ieq_morphing with (Ξ := ℓ0 .: Ξ); eauto.
+        case; first by asimpl.
+        move => n.
+        asimpl.
+        apply gieq_refl.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
   - hauto l:on ctrs:Par use:Par_refl.
-Admitted.
-
-Lemma simulation n Ξ ℓ a b a' :
-  IEq n Ξ ℓ a b ->
-  Par a a' ->
-  exists b', Par b b' /\ IEq n Ξ ℓ a' b'.
-Proof.
-  move => h.
-  move : a'.
-  elim : n Ξ ℓ a b / h; try qauto ctrs:IEq, Par inv:Par.
-  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
-  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
-  - move => n Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 a'.
-    elim /Par_inv => // [h2 | h2].
-    + move => ? a3 ? ? b3 ha0 hb0 [] *; subst.
-      case /ih0 : ha0 => a2  [h3 h4].
-
-  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
-Admitted.
+Qed.
 
 Lemma pars_confluent : Confluent _ Par.
 Proof.
