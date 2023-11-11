@@ -436,10 +436,34 @@ Proof.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
 
+Lemma simulation_star Ξ ℓ a b a' (h : IEq Ξ ℓ a b) (h0 : Rstar _ Par a a') :
+    exists b', Rstar _ Par b b' /\ IEq Ξ ℓ a' b'.
+Proof.
+  move : b h.
+  elim : a a' / h0.
+  - sfirstorder.
+  - move => a a0 a1 ha ha0 ih b hab.
+    suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:Rstar.
+Qed.
+
 Lemma pars_confluent : Confluent _ Par.
 Proof.
   apply Strong_confluence.
   apply par_confluent.
+Qed.
+
+Lemma pars_ieq_confluent Ξ ℓ a b a0 b0
+  (h : IEq Ξ ℓ a b)
+  (ha : Rstar _ Par a a0)
+  (hb : Rstar _ Par b b0) :
+  exists a1 b1, Rstar _ Par a0 a1 /\ Rstar _ Par b0 b1 /\ IEq Ξ ℓ a1 b1.
+Proof.
+  have [b0' [hb' hab]] := simulation_star Ξ ℓ a b a0 h ha.
+  have [b1 [hb0 hb0']] : exists b1, Rstar tm Par b0' b1 /\ Rstar tm Par b0 b1 by sfirstorder use:pars_confluent.
+  apply ieq_sym_mutual in hab.
+  have [a1 [ha0 hab']] := simulation_star Ξ ℓ b0' a0 b1 hab hb0.
+  exists a1, b1; repeat split => //.
+  by apply ieq_sym_mutual.
 Qed.
 
 Lemma Join_reflexive a :
