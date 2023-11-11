@@ -307,6 +307,8 @@ Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 
+Derive Inversion IEq_inv with (forall n Ξ ℓ a b, IEq n Ξ ℓ a b).
+
 Lemma par_confluent : Strongly_confluent _ Par.
 Proof.
   rewrite /Strongly_confluent.
@@ -356,6 +358,32 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
 Qed.
 
+Lemma simulation : forall n Ξ ℓ,
+    (forall a b, IEq n Ξ ℓ a b ->
+            forall a', Par a a' ->
+            exists b', Par b b' /\ IEq n Ξ ℓ a' b') /\
+    (forall ℓ0 a b, GIEq n Ξ ℓ ℓ0 a b ->
+            forall a', Par a a' ->
+            exists b', Par b b' /\ GIEq n Ξ ℓ ℓ0 a' b').
+Proof.
+  apply IEq_mutual; try qauto ctrs:IEq, Par, GIEq inv:Par.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - move => n Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 a'.
+    elim /Par_inv => //.
+    + hauto lq:on ctrs:Par, IEq.
+    + move => hp ? ? A a2 ? b2 h2 h3 [*]; subst.
+      case /ih1 : h3 => b3 [h30 h31].
+      case /ih0 : h2 => a3 [h40].
+      elim /IEq_inv => // ? ? A0 A1 a4 a5 h5 [] *; subst.
+      exists (subst_tm (b3..) a5).
+      split.
+      * hauto q:on ctrs:Par.
+      * admit.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - hauto l:on ctrs:Par use:Par_refl.
+Admitted.
+
 Lemma simulation n Ξ ℓ a b a' :
   IEq n Ξ ℓ a b ->
   Par a a' ->
@@ -367,8 +395,10 @@ Proof.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
   - move => n Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 a'.
-    elim /Par_inv => //.
-    +
+    elim /Par_inv => // [h2 | h2].
+    + move => ? a3 ? ? b3 ha0 hb0 [] *; subst.
+      case /ih0 : ha0 => a2  [h3 h4].
+
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
 Admitted.
 
