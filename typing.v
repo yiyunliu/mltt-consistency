@@ -1,104 +1,108 @@
 From WR Require Import syntax join.
 From Coq Require Import ssreflect.
 
-Definition context := nat -> tm.
+Definition context := list tm.
 
-Definition dep_ith (Γ : context) (x : fin) :=
-  ren_tm (Nat.add (S x)) (Γ x).
+Fixpoint dep_ith (Γ : context) : nat -> option tm :=
+  match Γ with
+  | nil => fun i => None
+  | A::Γ => fun i => option_map (ren_tm shift)
+            match i with
+            | 0 => Some A
+            | S i => dep_ith Γ i
+            end
+  end.
 
 Lemma dep_ith_ren_tm (Γ : context) (A : tm) (x : fin) :
-  dep_ith (A .: Γ) (S x) = ren_tm shift (dep_ith Γ x).
+  dep_ith (A :: Γ) (S x) = option_map (ren_tm shift) (dep_ith Γ x).
+Proof. done. Qed.
+
+Lemma dep_ith_shift_n (Γ : context) i :
+  dep_ith Γ i = option_map (ren_tm (Nat.add (S i))) (nth_error Γ i).
 Proof.
-  case : x => [|x].
-  - rewrite /dep_ith; asimpl.
-    reflexivity.
-  - rewrite /dep_ith.
-    asimpl.
-    f_equal.
+  elim : Γ i.
+  - destruct i; reflexivity.
+  - move => a l ih [|i] //.
+    simpl.
+    rewrite ih.
+    destruct (nth_error l i) => /=; by asimpl.
 Qed.
 
 Lemma dep_ith_ren_tm0 (Γ : context) (A : tm) :
-  dep_ith (A .: Γ) 0 = ren_tm shift A.
-Proof.
-  by rewrite /dep_ith; asimpl.
-Qed.
+  dep_ith (A :: Γ) 0 = Some (ren_tm shift A).
+Proof. reflexivity. Qed.
 
-#[export]Hint Unfold dep_ith : core.
-
-Tactic Notation "asimpldep" := repeat (progress ((try (rewrite dep_ith_ren_tm));rewrite /dep_ith; asimpl)).
-
-Inductive Wt (n : nat) (Γ : context) : tm -> tm -> Prop :=
-| T_Var i :
-  Wff n Γ ->
-  i < n ->
+(* #[export]Hint Unfold dep_ith : core. *)
+Inductive Wt (Γ : context) : tm -> tm -> Prop :=
+| T_Var i A :
+  Wff Γ ->
+  dep_ith Γ i = Some A ->
   (* ------ *)
-  Wt n Γ (var_tm i) (dep_ith Γ i)
+  Wt Γ (var_tm i) A
 
 | T_False i :
-  Wff n Γ ->
+  Wff Γ ->
   (* -------- *)
-  Wt n Γ tFalse (tUniv i)
+  Wt Γ tFalse (tUniv i)
 
 | T_Pi i A B :
-  Wt n Γ A (tUniv i) ->
-  Wt (S n) (A .: Γ) B (tUniv i) ->
+  Wt Γ A (tUniv i) ->
+  Wt (A :: Γ) B (tUniv i) ->
   (* --------------------- *)
-  Wt n Γ (tPi A B) (tUniv i)
+  Wt Γ (tPi A B) (tUniv i)
 
 | T_Abs A a B i :
-  Wt n Γ (tPi A B) (tUniv i) ->
-  Wt (S n) (A .: Γ) a B ->
+  Wt Γ (tPi A B) (tUniv i) ->
+  Wt (A :: Γ) a B ->
   (* -------------------- *)
-  Wt n Γ (tAbs A a) (tPi A B)
+  Wt Γ (tAbs A a) (tPi A B)
 
 | T_App a A B b :
-  Wt n Γ a (tPi A B) ->
-  Wt n Γ b A ->
+  Wt Γ a (tPi A B) ->
+  Wt Γ b A ->
   (* -------------------- *)
-  Wt n Γ (tApp a b) (subst_tm (b..) B)
+  Wt Γ (tApp a b) (subst_tm (b..) B)
 
 | T_Conv a A B i :
-  Wt n Γ a A ->
-  Wt n Γ B (tUniv i) ->
+  Wt Γ a A ->
+  Wt Γ B (tUniv i) ->
   Join A B ->
   (* ----------- *)
-  Wt n Γ a B
+  Wt Γ a B
 
 | T_On :
-  Wff n Γ ->
+  Wff Γ ->
   (* --------- *)
-  Wt n Γ tOn tSwitch
+  Wt Γ tOn tSwitch
 
 | T_Off :
-  Wff n Γ ->
+  Wff Γ ->
   (* --------- *)
-  Wt n Γ tOff tSwitch
+  Wt Γ tOff tSwitch
 
 | T_If a b c A :
-  Wt n Γ a tSwitch ->
-  Wt n Γ b A ->
-  Wt n Γ c A ->
+  Wt Γ a tSwitch ->
+  Wt Γ b A ->
+  Wt Γ c A ->
   (* ------------ *)
-  Wt n Γ (tIf a b c) A
+  Wt Γ (tIf a b c) A
 
 | T_Switch i :
-  Wff n Γ ->
+  Wff Γ ->
   (* ----------- *)
-  Wt n Γ tSwitch (tUniv i)
+  Wt Γ tSwitch (tUniv i)
 
 | T_Univ i j :
-  Wff n Γ ->
+  Wff Γ ->
   i < j ->
   (* ------------ *)
-  Wt n Γ (tUniv i) (tUniv j)
+  Wt Γ (tUniv i) (tUniv j)
 
-with Wff (n : nat) (Γ : context) : Prop :=
-(* The arithmetic is needed because of the types in the context are scoped differently *)
-(* Need to skolemize the existential as F because otherwise the IH is unusable *)
+with Wff (Γ : context) : Prop :=
 | Wff_intro F :
-  (forall i, i < n -> Wt (n - S i) (Nat.add (S i) >> Γ) (Γ i) (tUniv (F i))) ->
+  (forall i A, nth_error Γ i = Some A -> Wt (skipn (S i) Γ) A (tUniv (F i))) ->
   (* ---------------------------------------------------------------- *)
-  Wff n Γ.
+  Wff Γ.
 
 Scheme wt_ind := Induction for Wt Sort Prop
     with wff_ind := Induction for Wff Sort Prop.

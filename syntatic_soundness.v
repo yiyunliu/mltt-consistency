@@ -5,97 +5,98 @@ Require Coq.Init.Datatypes.
 Require Import Psatz.
 Module O := Coq.Init.Datatypes.
 
-Lemma good_renaming_up ξ n Γ m Δ A :
-  good_renaming ξ n Γ m Δ ->
-  good_renaming (upRen_tm_tm ξ) (S n) (A .: Γ) (S m) (ren_tm ξ A .: Δ).
+Lemma good_renaming_up ξ Γ Δ A :
+  good_renaming ξ Γ Δ ->
+  good_renaming (upRen_tm_tm ξ)  (A :: Γ) (ren_tm ξ A :: Δ).
 Proof.
   move => h.
-  rewrite /good_renaming.
-  case => [_ | i ?].
-  - split; [sfirstorder | by asimpldep].
-  - split.
-    + asimpl; suff : ξ i < m; sfirstorder.
-    + repeat rewrite dep_ith_ren_tm.
-      rewrite /good_renaming in h.
-      case /(_ i ltac:(sfirstorder)) : h => h h'.
-      rewrite -h'; by asimpl.
+  rewrite /good_renaming => i A0 h0 /=.
+  case : i h0 => /=.
+  - case => ?; subst. asimpl. reflexivity.
+  - move => i h0.
+    destruct (dep_ith Γ i) eqn:eq => //.
+    apply h in eq.
+    rewrite eq.
+    hauto q:on solve:(by asimpl).
 Qed.
 
-Lemma T_App' n Γ a A B0 B b :
+Lemma T_App' Γ a A B0 B b :
   B0 = (subst_tm (b..) B) ->
-  Wt n Γ a (tPi A B) ->
-  Wt n Γ b A ->
+  Wt Γ a (tPi A B) ->
+  Wt Γ b A ->
   (* -------------------- *)
-  Wt n Γ (tApp a b) B0.
+  Wt Γ (tApp a b) B0.
 Proof. qauto ctrs:Wt. Qed.
 
-Lemma wff_nil Γ :
-  Wff 0 Γ.
-Proof. apply Wff_intro with (F := fun x => x); lia. Qed.
+Lemma wff_nil :
+  Wff nil.
+Proof.
+  apply Wff_intro with (F := fun x => x) => //.
+  hauto q:on inv:nat.
+Qed.
 
-Lemma wff_cons m Γ A i
-  (h0 : Wt m Γ A (tUniv i))
-  (h1 : Wff m Γ) :
-  Wff (S m) (A .: Γ).
+Lemma wff_cons Γ A i
+  (h0 : Wt Γ A (tUniv i))
+  (h1 : Wff Γ) :
+  Wff (A :: Γ).
 Proof.
   inversion h1 as [F h].
   apply Wff_intro with (F := i .: F).
-  case => [_ | p /Arith_prebase.lt_S_n hp ].
-  + replace (S m - 1) with m; last by lia.
-    by asimpl.
+  case => [? | p A0 ].
+  + case => ? /=; subst => //.
   + sfirstorder ctrs:Wff.
 Qed.
 
 #[export]Hint Resolve wff_nil wff_cons : wff.
 
-Lemma Wt_Wff n Γ a A (h : Wt n Γ a A) : Wff n Γ.
+Lemma Wt_Wff Γ a A (h : Wt Γ a A) : Wff Γ.
 Proof. elim : Γ a A / h => //. Qed.
 
 #[export]Hint Resolve Wt_Wff : wff.
 
-Lemma Wt_Univ n Γ a A i
-  (h : Wt n Γ a A) :
-  exists j, Wt n Γ (tUniv i) (tUniv j).
+Lemma Wt_Univ Γ a A i
+  (h : Wt Γ a A) :
+  exists j, Wt Γ (tUniv i) (tUniv j).
 Proof.
   exists (S i).
   qauto l:on use:Wt_Wff ctrs:Wt.
 Qed.
 
-Lemma Wt_Pi_inv n Γ A B U (h : Wt n Γ (tPi A B) U) :
-  exists i, Wt n Γ A (tUniv i) /\
-         Wt (S n) (A .: Γ) B (tUniv i) /\
+Lemma Wt_Pi_inv Γ A B U (h : Wt Γ (tPi A B) U) :
+  exists i, Wt Γ A (tUniv i) /\
+         Wt (A :: Γ) B (tUniv i) /\
          Join (tUniv i) U /\
-         exists i, Wt n Γ U (tUniv i).
+         exists i, Wt Γ U (tUniv i).
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
-  elim : n Γ T U / h => //.
+  elim :  Γ T U / h => //.
   - hauto l:on use:Wt_Univ.
   - hauto lq:on rew:off use:Join_transitive.
 Qed.
 
-Lemma Wt_Pi_Univ_inv n Γ A B i (h : Wt n Γ (tPi A B) (tUniv i)) :
-  Wt n Γ A (tUniv i) /\
-  Wt (S n) (A .: Γ) B (tUniv i).
+Lemma Wt_Pi_Univ_inv Γ A B i (h : Wt Γ (tPi A B) (tUniv i)) :
+  Wt Γ A (tUniv i) /\
+  Wt (A :: Γ) B (tUniv i).
 Proof. hauto lq:on use:Wt_Pi_inv, join_univ_inj. Qed.
 
-Lemma Wt_Abs_inv n Γ A a T (h : Wt n Γ (tAbs A a) T) :
-  exists B i, Wt n Γ (tPi A B) (tUniv i) /\
-         Wt (S n) (A .: Γ) a B /\
+Lemma Wt_Abs_inv Γ A a T (h : Wt Γ (tAbs A a) T) :
+  exists B i, Wt Γ (tPi A B) (tUniv i) /\
+         Wt (A :: Γ) a B /\
          Join (tPi A B) T /\
-         exists i, (Wt n Γ T (tUniv i)).
+         exists i, (Wt Γ T (tUniv i)).
 Proof.
   move E : (tAbs A a) h => a0 h.
   move : A a E.
-  elim : n Γ a0 T / h => //.
+  elim : Γ a0 T / h => //.
   - hauto lq:on use:Join_reflexive.
   - hauto lq:on rew:off use:Join_transitive.
 Qed.
 
-Lemma renaming_Syn n Γ a A (h : Wt n Γ a A) : forall m Δ ξ,
-    good_renaming ξ n Γ m Δ ->
-    Wff m Δ ->
-    Wt m Δ (ren_tm ξ a) (ren_tm ξ A).
+Lemma renaming_Syn Γ a A (h : Wt Γ a A) : forall Δ ξ,
+    good_renaming ξ Γ Δ ->
+    Wff Δ ->
+    Wt Δ (ren_tm ξ a) (ren_tm ξ A).
 Proof.
   elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_renaming.
   - hauto lq:on ctrs:Wt use:good_renaming_up db:wff.
@@ -104,21 +105,22 @@ Proof.
   - qauto l:on ctrs:Wt use:join_renaming.
 Qed.
 
-Lemma weakening_Syn n Γ a A B i
-  (h0 : Wt n Γ B (tUniv i))
-  (h1 : Wt n Γ a A) :
-  Wt (S n) (B .: Γ) (ren_tm shift a) (ren_tm shift A).
+Lemma weakening_Syn Γ a A B i
+  (h0 : Wt Γ B (tUniv i))
+  (h1 : Wt Γ a A) :
+  Wt (B :: Γ) (ren_tm shift a) (ren_tm shift A).
 Proof.
-  apply renaming_Syn with (n := n) (Γ := Γ); eauto.
-  - split; [ rewrite /shift; lia | by rewrite dep_ith_ren_tm].
-  - hauto lq:on db:wff.
+  apply : renaming_Syn; eauto with wff.
+  case : Γ h0 h1 => /= //.
+  move => a0 l h1 h2.
+  case; hauto q:on solve:(by asimpl).
 Qed.
 
-Lemma weakening_Syn' n Γ a A A0 B i
+Lemma weakening_Syn' Γ a A A0 B i
   (he : A0 = ren_tm shift A)
-  (h0 : Wt n Γ B (tUniv i))
-  (h1 : Wt n Γ a A) :
-  Wt (S n) (B .: Γ) (ren_tm shift a) A0.
+  (h0 : Wt Γ B (tUniv i))
+  (h1 : Wt Γ a A) :
+  Wt (B :: Γ) (ren_tm shift a) A0.
 Proof. sfirstorder use:weakening_Syn. Qed.
 
 Definition good_morphing ρ n Γ m Δ :=

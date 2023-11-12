@@ -13,9 +13,6 @@ Definition apc {X Y} {f g : X -> Y} {x y : X} (p : f = g) (q : x = y) : f x = g 
 
 (** ** Primitives of the Sigma Calculus. *)
 
-Definition None := 0.
-Definition Some := S.
-
 Notation fin := nat.
 Definition shift  := S.
 
