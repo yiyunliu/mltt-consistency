@@ -4,88 +4,86 @@ From Hammer Require Import Tactics.
 Require Import Psatz.
 From Equations Require Import Equations.
 
-Definition γ_ok n Γ γ := forall i, i < n -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
-Definition SemWt n Γ a A := forall γ, γ_ok n Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
+Definition γ_ok Γ γ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
+Definition SemWt Γ a A := forall γ, γ_ok Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
 
-Lemma γ_ok_cons {n i Γ γ a PA A} :
+Lemma γ_ok_cons {i Γ γ a PA A} :
   InterpUnivN i (subst_tm γ A) PA ->
   PA a ->
-  γ_ok n Γ γ ->
-  γ_ok (S n) (A .: Γ) (a .: γ).
+  γ_ok Γ γ ->
+  γ_ok (A :: Γ) (a .: γ).
 Proof.
   move => h0 h1 h2.
-  case => [_ | m ? PA0].
-  - asimpldep.
-    move => j PA0 hPA0.
+  case => /= [_ | m ? PA0].
+  - move => j PA0 hPA0.
+    asimpl in hPA0.
     suff : PA = PA0 by congruence.
     hauto l:on use:InterpUnivN_deterministic'.
-  - rewrite dep_ith_ren_tm.
-    asimpl.
+  - asimpl.
     apply h2.
     lia.
 Qed.
 
-Lemma γ_ok_renaming n Γ γ :
-  forall m Δ ξ,
-    good_renaming ξ n Γ m Δ ->
-    γ_ok m Δ γ ->
-    γ_ok n Γ (ξ >> γ).
+Lemma γ_ok_renaming Γ γ :
+  forall Δ ξ,
+    good_renaming ξ Γ Δ ->
+    γ_ok Δ γ ->
+    γ_ok Γ (ξ >> γ).
 Proof.
-  move => m Δ ξ hscope h1.
-  rewrite /γ_ok => i hi PA.
-  asimpl.
+  move => Δ ξ hscope h1.
+  rewrite /γ_ok => i hi j PA.
   replace (subst_tm (ξ >> γ) (dep_ith Γ i)) with
     (subst_tm γ (ren_tm ξ (dep_ith Γ i))); last by asimpl.
   rewrite /good_renaming in hscope.
   case /(_ i hi) : hscope => ? h0.
-  rewrite h0; auto.
+  rewrite -h0; auto.
   by apply h1.
 Qed.
 
-Lemma renaming_SemWt n Γ a A :
-  SemWt n Γ a A ->
-  forall m Δ ξ,
-    good_renaming ξ n Γ m Δ ->
-    SemWt m Δ (ren_tm ξ a) (ren_tm ξ A).
+Lemma renaming_SemWt Γ a A :
+  SemWt Γ a A ->
+  forall Δ ξ,
+    good_renaming ξ Γ Δ ->
+    SemWt Δ (ren_tm ξ a) (ren_tm ξ A).
 Proof.
-  rewrite /SemWt => h m Δ ξ hξ γ hγ.
-  have hγ' : (γ_ok n Γ (ξ >> γ)) by eauto using γ_ok_renaming.
+  rewrite /SemWt => h Δ ξ hξ γ hγ.
+  have hγ' : (γ_ok Γ (ξ >> γ)) by eauto using γ_ok_renaming.
   case /(_ _ hγ') : h => PA hPA.
   exists PA.
   by asimpl.
 Qed.
 
-Lemma γ_ok_consU {n i Γ γ a PA A} :
+Lemma γ_ok_consU {i Γ γ a PA A} :
   InterpUnivN i (subst_tm γ A) PA ->
   PA a ->
-  γ_ok n Γ γ ->
-  γ_ok (S n) (A .: Γ) (a .: γ).
+  γ_ok Γ γ ->
+  γ_ok (A :: Γ) (a .: γ).
 Proof.
   hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
 Qed.
 
-Theorem soundness n Γ :
-  (forall a A, Wt n Γ a A -> SemWt n Γ a A) /\
-  (Wff n Γ -> forall i, i < n -> exists F, SemWt (n - S i) (Nat.add (S i) >> Γ) (Γ i) (tUniv (F i))).
+Theorem soundness Γ :
+  (forall a A, Wt Γ a A -> SemWt Γ a A) /\
+  (Wff Γ -> forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i))).
 Proof.
-  move : n Γ.
+  move : Γ.
   apply wt_mutual.
-  - move => n Γ i h ih ? γ hγ.
+  - move => Γ i h ih ? γ hγ.
     move /(_ i ltac:(done)) in ih.
     case : ih => F ih.
-    suff ih' : SemWt n Γ (dep_ith Γ i) (tUniv (F i)).
+    suff ih' : SemWt Γ (dep_ith Γ i) (tUniv (F i)).
     + case /(_ _ hγ) : ih' => j [PA [hPA hi]].
       simpl in hPA.
       simp InterpUniv in hPA.
       move /InterpExt_Univ_inv : hPA => [? h0]; subst.
       move : hi; intros (PA & hi).
       exists (F i), PA; sfirstorder.
-    + qauto l:on use:good_renaming_truncate', renaming_SemWt.
-  - move => n Γ i γ hγ.
+    + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
+  - move => Γ i γ hγ.
     exists (S i), (fun A => exists PA, InterpUnivN i A PA).
     hauto l:on use:InterpUnivN_Univ_inv.
   - rewrite /SemWt.
-    move => // n Γ i A B _h0 h0 _h1 h1 γ hγ.
+    move => // Γ i A B _h0 h0 _h1 h1 γ hγ.
     move /(_ γ hγ) : h0; intros (m & P_Univ & hP_Univ & hP_Univ').
     move /InterpUnivN_Univ_inv' : hP_Univ => [*]; subst.
     case : hP_Univ' => PA hPA.
@@ -102,10 +100,10 @@ Proof.
       move /InterpUnivN_Univ_inv' : hPB => [*]; subst.
       hauto lq:on rew:db:InterpUniv.
     + move => a PB ha.
-      suff hγ_cons : γ_ok (S n) (A .: Γ) (a .: γ) by asimpl.
+      suff hγ_cons : γ_ok (A :: Γ) (a .: γ) by asimpl.
       qauto use:γ_ok_consU.
   - rewrite /SemWt.
-    move => n Γ A a B i _ hB _ ha.
+    move => Γ A a B i _ hB _ ha.
     move => γ hγ.
     move /(_ γ hγ) : hB; intros (l & PPi & hPPi & hPi).
     move /InterpUnivN_Univ_inv' : hPPi => [*]; subst.
@@ -140,7 +138,7 @@ Proof.
       }
       by asimpl.
       apply Par_refl.
-  - move => n Γ f A B b _ ihf _ ihb γ hγ.
+  - move => Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
     move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
     move /(_ γ hγ) : ihb; intros (j & PA & hPA & hb).
@@ -164,7 +162,7 @@ Proof.
     rewrite -InterpUnivN_nolt in hPB0''.
     suff : PB = PB0 by congruence.
     sfirstorder use:InterpUnivN_deterministic'.
-  - rewrite /SemWt /Join /coherent => n Γ a A B i _ hA _ hB [C [? ?]] γ hγ.
+  - rewrite /SemWt /Join /coherent => Γ a A B i _ hA _ hB [C [? ?]] γ hγ.
     case : (hA γ hγ) => j [PA [hPA hPAa]].
     case : (hB γ hγ) => k [PB [hPB hPB']].
     simpl in hPB.
@@ -181,7 +179,7 @@ Proof.
     eauto using InterpUnivN_deterministic'.
   - hauto l:on.
   - hauto l:on.
-  - rewrite /SemWt => n Γ a b c A _ ha _ hb _ hc γ hγ.
+  - rewrite /SemWt => Γ a b c A _ ha _ hb _ hc γ hγ.
     case /(_ γ hγ) : ha => i [? [/InterpUnivN_Switch_inv ? ha']]; subst.
     case /(_ γ hγ) : hb => j [PA [hPA hb']].
     case /(_ γ hγ) : hc => k [PB [hPB hc']].
@@ -195,24 +193,24 @@ Proof.
       eauto using P_IfOn_star with sets.
     + apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
       eauto using P_IfOff_star with sets.
-  - rewrite /SemWt => n Γ i γ hγ.
+  - rewrite /SemWt => Γ i γ hγ.
     simpl.
     exists (S i), (fun A => exists PA, InterpUnivN i A PA).
     hauto l:on use:InterpUnivN_Univ_inv.
-  - move => n Γ i j ? γ hγ /=.
+  - move => Γ i j ? γ hγ /=.
     exists (S j), (fun A => exists PA, InterpUnivN j A PA).
     sfirstorder use:InterpUnivN_Univ_inv.
   - hauto l:on.
 Qed.
 
-Lemma consistency a Γ : ~Wt 0 Γ a tFalse.
+Lemma consistency a : ~Wt nil a tFalse.
 Proof.
   move => h.
   apply soundness in h.
   rewrite /SemWt in h.
   move : (h var_tm).
   case.
-  rewrite /γ_ok; lia.
+  rewrite /γ_ok; sauto lq:on.
   asimpl.
   move => i [PA [hPA ha]].
   simp InterpUniv in hPA.
