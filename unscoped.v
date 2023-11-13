@@ -14,7 +14,7 @@ Definition apc {X Y} {f g : X -> Y} {x y : X} (p : f = g) (q : x = y) : f x = g 
 (** ** Primitives of the Sigma Calculus. *)
 
 Notation fin := nat.
-Definition shift  := S.
+Notation shift := S (only parsing).
 
 Definition var_zero := 0.
 
@@ -187,8 +187,6 @@ Ltac fsimplc :=
 (** Simplification in both the goal and the context *)
 Tactic Notation "fsimpl" "in" "*" :=
   fsimpl; fsimplc.
-
-Notation "s , sigma" := (scons s sigma) (at level 60, format "s ,  sigma", right associativity) : subst_scope.
 
 Notation "s '..'" := (scons s ids) (at level 1, format "s ..") : subst_scope.
 #[export]Instance idsRen : Var nat nat := id.

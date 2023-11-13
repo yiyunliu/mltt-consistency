@@ -1,44 +1,12 @@
-From WR Require Import syntax join.
-From Coq Require Import ssreflect.
-
-Definition context := list tm.
-
-Fixpoint dep_ith (Γ : context) : nat -> option tm :=
-  match Γ with
-  | nil => fun i => None
-  | A::Γ => fun i => option_map (ren_tm shift)
-            match i with
-            | 0 => Some A
-            | S i => dep_ith Γ i
-            end
-  end.
-
-Lemma dep_ith_ren_tm (Γ : context) (A : tm) (x : fin) :
-  dep_ith (A :: Γ) (S x) = option_map (ren_tm shift) (dep_ith Γ x).
-Proof. done. Qed.
-
-Lemma dep_ith_shift_n (Γ : context) i :
-  dep_ith Γ i = option_map (ren_tm (Nat.add (S i))) (nth_error Γ i).
-Proof.
-  elim : Γ i.
-  - destruct i; reflexivity.
-  - move => a l ih [|i] //.
-    simpl.
-    rewrite ih.
-    destruct (nth_error l i) => /=; by asimpl.
-Qed.
-
-Lemma dep_ith_ren_tm0 (Γ : context) (A : tm) :
-  dep_ith (A :: Γ) 0 = Some (ren_tm shift A).
-Proof. reflexivity. Qed.
+From WR Require Import syntax join common.
 
 (* #[export]Hint Unfold dep_ith : core. *)
 Inductive Wt (Γ : context) : tm -> tm -> Prop :=
-| T_Var i A :
+| T_Var i :
   Wff Γ ->
-  dep_ith Γ i = Some A ->
+  i < length Γ ->
   (* ------ *)
-  Wt Γ (var_tm i) A
+  Wt Γ (var_tm i) (dep_ith Γ i)
 
 | T_False i :
   Wff Γ ->
@@ -100,7 +68,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 
 with Wff (Γ : context) : Prop :=
 | Wff_intro F :
-  (forall i A, nth_error Γ i = Some A -> Wt (skipn (S i) Γ) A (tUniv (F i))) ->
+  (forall i, i < length Γ -> Wt (skipn (S i) Γ) (ith Γ i) (tUniv (F i))) ->
   (* ---------------------------------------------------------------- *)
   Wff Γ.
 

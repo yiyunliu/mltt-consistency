@@ -3,21 +3,21 @@ From Coq Require Import ssreflect Sets.Relations_2 ssrbool.
 From Hammer Require Import Tactics.
 Require Coq.Init.Datatypes.
 Require Import Psatz.
-Module O := Coq.Init.Datatypes.
 
 Lemma good_renaming_up ξ Γ Δ A :
   good_renaming ξ Γ Δ ->
   good_renaming (upRen_tm_tm ξ)  (A :: Γ) (ren_tm ξ A :: Δ).
 Proof.
   move => h.
-  rewrite /good_renaming => i A0 h0 /=.
-  case : i h0 => /=.
-  - case => ?; subst. asimpl. reflexivity.
-  - move => i h0.
-    destruct (dep_ith Γ i) eqn:eq => //.
-    apply h in eq.
-    rewrite eq.
-    hauto q:on solve:(by asimpl).
+  rewrite /good_renaming.
+  case => /= [ ?| i /Arith_prebase.lt_S_n h0].
+  - asimpl;
+    sfirstorder.
+  - split.
+    + asimpl; sfirstorder.
+    + case /h : h0 => h0 h1 /=.
+      rewrite h1.
+      by asimpl.
 Qed.
 
 Lemma T_App' Γ a A B0 B b :
@@ -31,8 +31,8 @@ Proof. qauto ctrs:Wt. Qed.
 Lemma wff_nil :
   Wff nil.
 Proof.
-  apply Wff_intro with (F := fun x => x) => //.
-  hauto q:on inv:nat.
+  apply Wff_intro with (F := fun x => x) => /= //.
+  lia.
 Qed.
 
 Lemma wff_cons Γ A i
@@ -42,9 +42,8 @@ Lemma wff_cons Γ A i
 Proof.
   inversion h1 as [F h].
   apply Wff_intro with (F := i .: F).
-  case => [? | p A0 ].
-  + case => ? /=; subst => //.
-  + sfirstorder ctrs:Wff.
+  case => [? | p /Arith_prebase.lt_S_n ? ];
+         sfirstorder ctrs:Wff.
 Qed.
 
 #[export]Hint Resolve wff_nil wff_cons : wff.
@@ -111,9 +110,7 @@ Lemma weakening_Syn Γ a A B i
   Wt (B :: Γ) (ren_tm shift a) (ren_tm shift A).
 Proof.
   apply : renaming_Syn; eauto with wff.
-  case : Γ h0 h1 => /= //.
-  move => a0 l h1 h2.
-  case; hauto q:on solve:(by asimpl).
+  sfirstorder unfold:good_renaming.
 Qed.
 
 Lemma weakening_Syn' Γ a A A0 B i
