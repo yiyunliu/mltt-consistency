@@ -6,7 +6,7 @@ Require Import Psatz.
 Module O := Coq.Init.Datatypes.
 
 Definition good_renaming {n m} (ξ : nat -> nat) (Γ : context n) (Δ : context m) :=
-  (forall i (p : i < n), exists (p0 : ξ i < m), ren_tm ξ (dep_ith Γ (squash p)) = dep_ith Δ (squash p0)).
+  (forall i, i < n -> ξ i < m /\ (forall (p : i < n) (p0 : ξ i < m), ren_tm ξ (dep_ith Γ (squash p)) = dep_ith Δ (squash p0))).
 
 Lemma good_renaming_up n m (ξ : nat -> nat) (Γ : context n) (Δ : context m) A :
   good_renaming ξ Γ Δ ->
