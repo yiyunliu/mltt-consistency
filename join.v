@@ -7,8 +7,8 @@ From Coq Require Import
   Sets.Relations_3_facts.
 From Hammer Require Import Tactics.
 
+
 Local Open Scope bool_scope.
-Local Open Scope order_scope.
 
 Module Type join_sig
   (Import grade : grade_sig)
@@ -86,7 +86,7 @@ Inductive Par : tm -> tm -> Prop :=
 Inductive IEq (Ξ : econtext) (ℓ : grade) : tm -> tm -> Prop :=
 | I_Var i :
   i < length Ξ ->
-  eith Ξ i <= ℓ ->
+  (eith Ξ i <= ℓ)%O ->
   (* ------- *)
   IEq Ξ ℓ (var_tm i) (var_tm i)
 | I_Univ i :
@@ -125,12 +125,12 @@ Inductive IEq (Ξ : econtext) (ℓ : grade) : tm -> tm -> Prop :=
   IEq Ξ ℓ tSwitch tSwitch
 with GIEq (Ξ : econtext) (ℓ : grade) : grade -> tm -> tm -> Prop :=
 | GI_Dist ℓ0 A B :
-  ℓ0 <= ℓ ->
+  (ℓ0 <= ℓ)%O ->
   IEq Ξ ℓ A B ->
   (* -------------- *)
   GIEq Ξ ℓ ℓ0 A B
 | GI_InDist ℓ0 A B :
-  ~~ (ℓ0 <= ℓ) ->
+  (~~ (ℓ0 <= ℓ))%O ->
   (* -------------- *)
   GIEq Ξ ℓ ℓ0 A B.
 
@@ -309,6 +309,9 @@ Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 
+Derive Inversion IEq_inv with (forall Ξ ℓ a b, IEq Ξ ℓ a b).
+
+
 Lemma par_confluent : Strongly_confluent _ Par.
 Proof.
   rewrite /Strongly_confluent.
@@ -382,58 +385,76 @@ Proof.
   exists z. split; sfirstorder use:Rstar_transitive.
 Qed.
 
-Definition ieq_good_renaming : forall ℓ ξ (Ξ Δ : econtext)
+Definition ieq_good_renaming ξ (Ξ Δ : econtext) :=
+    (forall i, i < length Ξ -> eith Ξ i = eith Δ (ξ i)) /\
+    (forall i, i < length Ξ -> ξ i < length Δ).
+
+Lemma ieq_good_renaming_iff ξ (Ξ Δ : econtext) :
+  ieq_good_renaming ξ Ξ Δ <->
+    (forall i, i < length Ξ -> ξ i < length Δ /\ eith Ξ i = eith Δ (ξ i)).
+Proof.
+  sfirstorder.
+Qed.
 
 Definition ieq_weakening_helper : forall ℓ ξ (Ξ Δ : econtext),
-    (forall i, eith Ξ i = eith Δ (ξ i)) ->
-    (forall i, eith (ℓ :: Ξ) i = eith (ℓ :: Δ) ((upRen_tm_tm ξ) i)) /\
-    (forall i, i < length Ξ -> ξ i < length Δ).
-Proof. best l:on inv:nat. Qed.
+    ieq_good_renaming ξ Ξ Δ ->
+    ieq_good_renaming (upRen_tm_tm ξ) (ℓ :: Ξ) (ℓ :: Δ).
+Proof.
+  move => *.
+  apply ieq_good_renaming_iff.
+  case => /= [|i /Arith_prebase.lt_S_n].
+  - sfirstorder.
+  - move => *. asimpl.
+    sfirstorder.
+Qed.
 
 Lemma ieq_weakening_mutual : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
-            forall ξ Δ, (forall i, eith Ξ i = eith Δ (ξ i)) ->
+            forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
             IEq Δ ℓ (ren_tm ξ a) (ren_tm ξ b)) /\
     (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
-            forall ξ Δ, (forall i, eith Ξ i = eith Δ (ξ i)) ->
+            forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
             GIEq Δ ℓ ℓ0 (ren_tm ξ a) (ren_tm ξ b)).
-Proof. apply IEq_mutual; try qauto use:IEq,GIEq.
-       intros Ξ ℓ i i0 i1 ξ Δ H.
-       simpl.
-       apply I_Var.
-apply IEq_mutual; best use:ieq_weakening_helper. Qed.
-
-Lemma gieq_refl n Ξ ℓ : GIEq Ξ ℓ (Ξ n) (var_tm n) (var_tm n).
 Proof.
-  case E : ((Ξ n) <= ℓ);hauto lq:on ctrs:GIEq, IEq.
+  apply IEq_mutual; qauto l: on ctrs:IEq,GIEq use:ieq_weakening_helper.
 Qed.
 
-Lemma ieq_morphing_helper ℓ ℓ0 ξ0 ξ1 Ξ Δ :
-  (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
-  (forall i, GIEq (ℓ0 .: Δ) ℓ ((ℓ0 .: Ξ) i) (up_tm_tm ξ0 i) (up_tm_tm ξ1 i)).
+Lemma gieq_refl n Ξ ℓ :
+  n < length Ξ ->
+  GIEq Ξ ℓ (eith Ξ n) (var_tm n) (var_tm n).
 Proof.
-  move => h.
-  case.
-  - apply (gieq_refl 0 (ℓ0 .: Δ) ℓ).
-  - sfirstorder use:ieq_weakening_mutual.
+  case E : ((eith Ξ n) <= ℓ)%O; hauto lq:on ctrs:GIEq, IEq.
+Qed.
+
+Definition ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ :=
+  forall i, i < length Ξ -> GIEq Δ ℓ (eith Ξ i) (ξ0 i) (ξ1 i).
+
+Lemma ieq_morphing_helper ℓ ℓ0 ξ0 ξ1 Ξ Δ :
+  ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
+  ieq_good_morphing ℓ (up_tm_tm ξ0) (up_tm_tm ξ1) (ℓ0 :: Ξ) (ℓ0 :: Δ).
+Proof.
+  rewrite /ieq_good_morphing => h.
+  case => /= [_ | i /Arith_prebase.lt_S_n ?]; asimpl.
+  - apply (gieq_refl 0 (ℓ0 :: Δ) ℓ); sfirstorder.
+  - hauto l:on use:ieq_weakening_mutual.
 Qed.
 
 Lemma ieq_morphing_mutual : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
-            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            forall ξ0 ξ1 Δ, ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
             IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b)) /\
     (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
-            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            forall ξ0 ξ1 Δ, ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
             GIEq Δ ℓ ℓ0 (subst_tm ξ0 a) (subst_tm ξ1 b)).
 Proof.
   apply IEq_mutual; try qauto ctrs:IEq,GIEq.
-  - hauto inv:GIEq ctrs:IEq,GIEq lqb:on.
+  - hauto lq: on inv: GIEq lqb:on unfold:ieq_good_morphing.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
 Qed.
 
 Lemma ieq_morphing Ξ ℓ a b : IEq Ξ ℓ a b ->
-            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            forall ξ0 ξ1 Δ, ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
             IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b).
 Proof. hauto l:on use:ieq_morphing_mutual. Qed.
 
@@ -458,11 +479,10 @@ Proof.
       exists (subst_tm (b3..) a5).
       split.
       * hauto q:on ctrs:Par.
-      * apply ieq_morphing with (Ξ := ℓ0 .: Ξ); eauto.
-        case; first by asimpl.
-        move => n.
+      * apply ieq_morphing with (Ξ := ℓ0 :: Ξ); eauto.
+        case => /= [|n /Arith_prebase.lt_S_n ?]; first by asimpl.
         asimpl.
-        apply gieq_refl.
+        by apply gieq_refl.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
