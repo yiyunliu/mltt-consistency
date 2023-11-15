@@ -2,7 +2,10 @@ From WR Require Import syntax.
 From Coq Require Import ssreflect List.
 Require Import Psatz.
 From Hammer Require Import Tactics.
-Import ListNotations.
+
+Module Type common_sig
+  (Import grade : grade_sig)
+  (Import syntax : syntax_sig grade).
 
 Definition context := list tm.
 
@@ -60,3 +63,5 @@ Proof.
   - asimpl. f_equal.
     fext => ?; asimpl; lia.
 Qed.
+
+End common_sig.

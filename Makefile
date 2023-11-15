@@ -12,9 +12,10 @@ vos:  CoqSrc.mk
 %.vos:  %.v CoqSrc.mk
 	@$(MAKE) -f CoqSrc.mk $*.vos
 
-syntax.v : syntax.sig
+syntax.v : syntax.sig gen_syntax.pl
 	as2-exe -i syntax.sig -p UCoq > syntax.v
-	perl -i -pe 's/^(Hint|Instance)/#[export]$1/' syntax.v
+	perl gen_syntax.pl
+
 
 _CoqProject : syntax.v *.v
 	{ echo "-R . $(LIBNAME) " ; ls *.v ; } > _CoqProject

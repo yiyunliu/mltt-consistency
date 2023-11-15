@@ -1,10 +1,20 @@
 From WR Require Import syntax.
 From Coq Require Import
   ssreflect
+  ssrbool
   Sets.Relations_2
   Sets.Relations_3
   Sets.Relations_3_facts.
 From Hammer Require Import Tactics.
+
+Local Open Scope bool_scope.
+Local Open Scope order_scope.
+
+Module Type join_sig
+  (Import grade : grade_sig)
+  (Import syntax : syntax_sig grade).
+
+Notation eith Ξ i := (nth i Ξ el).
 
 Definition is_bool_val a :=
   match a with
@@ -12,6 +22,8 @@ Definition is_bool_val a :=
   | tOff => true
   | _ => false
   end.
+
+Definition econtext := list grade.
 
 Inductive Par : tm -> tm -> Prop :=
 | P_Var i :
@@ -23,26 +35,25 @@ Inductive Par : tm -> tm -> Prop :=
 | P_False :
   (* -------- *)
   Par tFalse tFalse
-| P_Pi A0 A1 B0 B1 :
+| P_Pi ℓ A0 A1 B0 B1 :
   Par A0 A1 ->
   Par B0 B1 ->
   (* --------------------- *)
-  Par (tPi A0 B0) (tPi A1 B1)
-| P_Abs A0 A1 a0 a1 :
-  Par A0 A1 ->
+  Par (tPi ℓ A0 B0) (tPi ℓ A1 B1)
+| P_Abs ℓ A0 A1 a0 a1 :
   Par a0 a1 ->
   (* -------------------- *)
-  Par (tAbs A0 a0) (tAbs A1 a1)
-| P_App a0 a1 b0 b1 :
+  Par (tAbs ℓ A0 a0) (tAbs ℓ A1 a1)
+| P_App a0 a1 ℓ b0 b1 :
   Par a0 a1 ->
   Par b0 b1 ->
   (* ------------------------- *)
-  Par (tApp a0 b0) (tApp a1 b1)
-| P_AppAbs a A a0 b0 b1 :
-  Par a (tAbs A a0) ->
+  Par (tApp a0 ℓ b0) (tApp a1 ℓ b1)
+| P_AppAbs a ℓ A a0 b0 b1 :
+  Par a (tAbs ℓ A a0) ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp a b0) (subst_tm (b1..) a0)
+  Par (tApp a ℓ b0) (subst_tm (b1..) a0)
 | P_On :
   (* ------- *)
   Par tOn tOn
@@ -72,17 +83,90 @@ Inductive Par : tm -> tm -> Prop :=
 
 #[export]Hint Constructors Par : par.
 
+Inductive IEq (Ξ : econtext) (ℓ : grade) : tm -> tm -> Prop :=
+| I_Var i :
+  i < length Ξ ->
+  eith Ξ i <= ℓ ->
+  (* ------- *)
+  IEq Ξ ℓ (var_tm i) (var_tm i)
+| I_Univ i :
+  (* -------- *)
+  IEq Ξ ℓ (tUniv i) (tUniv i)
+| I_False :
+  (* -------- *)
+  IEq Ξ ℓ tFalse tFalse
+| I_Pi ℓ0 A0 A1 B0 B1 :
+  IEq Ξ ℓ A0 A1 ->
+  IEq (ℓ0 :: Ξ) ℓ B0 B1 ->
+  (* --------------------- *)
+  IEq Ξ ℓ (tPi ℓ0 A0 B0) (tPi ℓ0 A1 B1)
+| I_Abs ℓ0 A0 A1 a0 a1 :
+  IEq (ℓ0 :: Ξ) ℓ a0 a1 ->
+  (* -------------------- *)
+  IEq Ξ ℓ (tAbs ℓ0 A0 a0) (tAbs ℓ0 A1 a1)
+| I_App a0 a1 ℓ0 b0 b1 :
+  IEq Ξ ℓ a0 a1 ->
+  GIEq Ξ ℓ ℓ0 b0 b1 ->
+  (* ------------------------- *)
+  IEq Ξ ℓ (tApp a0 ℓ0 b0) (tApp a1 ℓ0 b1)
+| I_On :
+  (* ------- *)
+  IEq Ξ ℓ tOn tOn
+| I_Off :
+  (* ---------- *)
+  IEq Ξ ℓ tOff tOff
+| I_If a0 a1 b0 b1 c0 c1:
+  IEq Ξ ℓ a0 a1 ->
+  IEq Ξ ℓ b0 b1 ->
+  IEq Ξ ℓ c0 c1 ->
+  (* ---------- *)
+  IEq Ξ ℓ (tIf a0 b0 c0) (tIf a1 b1 c1)
+| I_Switch :
+  IEq Ξ ℓ tSwitch tSwitch
+with GIEq (Ξ : econtext) (ℓ : grade) : grade -> tm -> tm -> Prop :=
+| GI_Dist ℓ0 A B :
+  ℓ0 <= ℓ ->
+  IEq Ξ ℓ A B ->
+  (* -------------- *)
+  GIEq Ξ ℓ ℓ0 A B
+| GI_InDist ℓ0 A B :
+  ~~ (ℓ0 <= ℓ) ->
+  (* -------------- *)
+  GIEq Ξ ℓ ℓ0 A B.
+
+#[export]Hint Constructors IEq GIEq : indist.
+
 Definition Join := coherent _ Par.
 
-Lemma pars_pi_inv A B C (h : Rstar _ Par (tPi A B) C) :
-  exists A0 B0, C = tPi A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
+Scheme IEq_ind' := Induction for IEq Sort Prop
+    with GIEq_ind' := Induction for GIEq Sort Prop.
+
+Combined Scheme IEq_mutual from IEq_ind', GIEq_ind'.
+
+Lemma ieq_sym_mutual : forall Ξ ℓ,
+  (forall A B, IEq Ξ ℓ A B -> IEq Ξ ℓ B A) /\
+  (forall ℓ0 A B, GIEq Ξ ℓ ℓ0 A B -> GIEq Ξ ℓ ℓ0 B A).
 Proof.
-  move E : (tPi A B) h => T h.
+  apply IEq_mutual; eauto with indist.
+Qed.
+
+Lemma ieq_trans_mutual : forall Ξ ℓ,
+  (forall A B, IEq Ξ ℓ A B -> forall C, IEq Ξ ℓ B C -> IEq Ξ ℓ A C) /\
+  (forall ℓ0 A B, GIEq Ξ ℓ ℓ0 A B -> forall C, GIEq Ξ ℓ ℓ0 B C -> GIEq Ξ ℓ ℓ0 A C).
+Proof.
+  apply IEq_mutual; hauto lq:on ctrs:IEq, GIEq inv:IEq,GIEq.
+Qed.
+
+
+Lemma pars_pi_inv ℓ A B C (h : Rstar _ Par (tPi ℓ A B) C) :
+  exists A0 B0, C = tPi ℓ A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
+Proof.
+  move E : (tPi ℓ A B) h => T h.
   move : A B E.
   elim : T C / h; hecrush inv:Par ctrs:Rstar, Par.
 Qed.
 
-Lemma join_pi_inj A B A0 B0 (h : Join (tPi A B) (tPi A0 B0)) :
+Lemma join_pi_inj ℓ A B A0 B0 (h : Join (tPi ℓ A B) (tPi ℓ A0 B0)) :
   Join A A0 /\ Join B B0.
 Proof. hauto q:on use:pars_pi_inv unfold:Join, coherent. Qed.
 
@@ -130,12 +214,12 @@ Qed.
 
 #[export]Hint Unfold Join : par.
 
-Lemma P_AppAbs' a A a0 b0 b b1 :
+Lemma P_AppAbs' a ℓ A a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
-  Par a (tAbs A a0) ->
+  Par a (tAbs ℓ A a0) ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp a b0) b.
+  Par (tApp a ℓ b0) b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
 Lemma par_renaming a b (ξ : fin -> fin) :
@@ -236,32 +320,32 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
-  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
-    elim /Par_inv; try congruence.
+  - move => a0 a1 ℓ b0 b1 h0 ih0 h1 ih1 b2.
+    elim /Par_inv => //.
     + qauto l:on ctrs:Par.
-    + move => ? a2 A a3 b3 b4 ? ?.
+    + move => ? a2 ℓ0 A a3 b3 b4 ? ?.
       case => *; subst.
       case /(_ _ ltac:(eassumption)) : ih1 => b [? ?].
       case /(_ _ ltac:(eassumption)) : ih0 => a [? h2].
-      elim /Par_inv : h2; try congruence.
-      move => ? A0 A1 a2 a4 ? ?.
+      elim /Par_inv : h2 => //.
+      move => ? ℓ0 A0 A1 a2 a4 ? ?.
       case => *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on ctrs:Par use:par_cong.
-  - move => a A a0 b0 b1 ? ih0 ? ih1 b2.
-    elim /Par_inv; try congruence.
-    + move => h a1 a2 b3 b4 ? ? [*]; subst.
+  - move => a ℓ A a0 b0 b1 ? ih0 ? ih1 b2.
+    elim /Par_inv => //.
+    + move => h a1 a2 ℓ0 b3 b4 ? ? [*]; subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 *].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
       elim /Par_inv : h0; try congruence.
-      move => ? A0 A1 a3 a4 ? ? [*] *; subst.
+      move => ? ℓ0 A0 A1 a3 a4 ? ? [*] *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on use:par_cong ctrs:Par.
-    + move => ? a1 A0 a2 b3 b4 ? ? [*] *; subst.
+    + move => ? a1 ℓ0 A0 a2 b3 b4 ? ? [*] *; subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 h1].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
       elim /Par_inv : h0; try congruence.
-      move => ? A1 A2 a3 a4 ? ? [*] *; subst.
+      move => ? ℓ0 A1 A2 a3 a4 ? ? [*] *; subst.
       exists (subst_tm (b..) a4).
       hauto lq:on use:par_cong ctrs:Par inv:Par.
   - hauto lq:on inv:Par ctrs:Par.
@@ -296,4 +380,99 @@ Proof.
   move /(_ b _ _ h0 h1) in h.
   case : h => z [*].
   exists z. split; sfirstorder use:Rstar_transitive.
+Qed.
+
+Definition ieq_good_renaming : forall ℓ ξ (Ξ Δ : econtext)
+
+Definition ieq_weakening_helper : forall ℓ ξ (Ξ Δ : econtext),
+    (forall i, eith Ξ i = eith Δ (ξ i)) ->
+    (forall i, eith (ℓ :: Ξ) i = eith (ℓ :: Δ) ((upRen_tm_tm ξ) i)) /\
+    (forall i, i < length Ξ -> ξ i < length Δ).
+Proof. best l:on inv:nat. Qed.
+
+Lemma ieq_weakening_mutual : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall ξ Δ, (forall i, eith Ξ i = eith Δ (ξ i)) ->
+            IEq Δ ℓ (ren_tm ξ a) (ren_tm ξ b)) /\
+    (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+            forall ξ Δ, (forall i, eith Ξ i = eith Δ (ξ i)) ->
+            GIEq Δ ℓ ℓ0 (ren_tm ξ a) (ren_tm ξ b)).
+Proof. apply IEq_mutual; try qauto use:IEq,GIEq.
+       intros Ξ ℓ i i0 i1 ξ Δ H.
+       simpl.
+       apply I_Var.
+apply IEq_mutual; best use:ieq_weakening_helper. Qed.
+
+Lemma gieq_refl n Ξ ℓ : GIEq Ξ ℓ (Ξ n) (var_tm n) (var_tm n).
+Proof.
+  case E : ((Ξ n) <= ℓ);hauto lq:on ctrs:GIEq, IEq.
+Qed.
+
+Lemma ieq_morphing_helper ℓ ℓ0 ξ0 ξ1 Ξ Δ :
+  (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+  (forall i, GIEq (ℓ0 .: Δ) ℓ ((ℓ0 .: Ξ) i) (up_tm_tm ξ0 i) (up_tm_tm ξ1 i)).
+Proof.
+  move => h.
+  case.
+  - apply (gieq_refl 0 (ℓ0 .: Δ) ℓ).
+  - sfirstorder use:ieq_weakening_mutual.
+Qed.
+
+Lemma ieq_morphing_mutual : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b)) /\
+    (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            GIEq Δ ℓ ℓ0 (subst_tm ξ0 a) (subst_tm ξ1 b)).
+Proof.
+  apply IEq_mutual; try qauto ctrs:IEq,GIEq.
+  - hauto inv:GIEq ctrs:IEq,GIEq lqb:on.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+Qed.
+
+Lemma ieq_morphing Ξ ℓ a b : IEq Ξ ℓ a b ->
+            forall ξ0 ξ1 Δ, (forall i, GIEq Δ ℓ (Ξ i) (ξ0 i) (ξ1 i)) ->
+            IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b).
+Proof. hauto l:on use:ieq_morphing_mutual. Qed.
+
+Lemma simulation : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall a', Par a a' ->
+            exists b', Par b b' /\ IEq Ξ ℓ a' b') /\
+    (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+            forall a', Par a a' ->
+            exists b', Par b b' /\ GIEq Ξ ℓ ℓ0 a' b').
+Proof.
+  apply IEq_mutual; try qauto ctrs:IEq, Par, GIEq inv:Par.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - move => Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 a'.
+    elim /Par_inv => //.
+    + hauto lq:on ctrs:Par, IEq.
+    + move => hp ? ? A a2 ? b2 h2 h3 [*]; subst.
+      case /ih1 : h3 => b3 [h30 h31].
+      case /ih0 : h2 => a3 [h40].
+      elim /IEq_inv => // ? ? A0 A1 a4 a5 h5 [] *; subst.
+      exists (subst_tm (b3..) a5).
+      split.
+      * hauto q:on ctrs:Par.
+      * apply ieq_morphing with (Ξ := ℓ0 .: Ξ); eauto.
+        case; first by asimpl.
+        move => n.
+        asimpl.
+        apply gieq_refl.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - hauto l:on ctrs:Par use:Par_refl.
+Qed.
+
+Lemma simulation_star Ξ ℓ a b a' (h : IEq Ξ ℓ a b) (h0 : Rstar _ Par a a') :
+    exists b', Rstar _ Par b b' /\ IEq Ξ ℓ a' b'.
+Proof.
+  move : b h.
+  elim : a a' / h0.
+  - sfirstorder.
+  - move => a a0 a1 ha ha0 ih b hab.
+    suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:Rstar.
 Qed.

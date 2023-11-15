@@ -1,6 +1,5 @@
 From WR Require Import syntax join common.
 
-(* #[export]Hint Unfold dep_ith : core. *)
 Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 | T_Var i :
   Wff Γ ->
