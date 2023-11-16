@@ -5,7 +5,8 @@ From Coq Require Import
   Sets.Relations_2
   Sets.Relations_3
   Sets.Relations_3_facts.
-From Hammer Require Import Tactics.
+From Hammer Require Import Tactics Reflect.
+Import Order.Theory.
 
 
 Local Open Scope bool_scope.
@@ -156,6 +157,9 @@ Lemma ieq_trans_mutual : forall Ξ ℓ,
 Proof.
   apply IEq_mutual; hauto lq:on ctrs:IEq, GIEq inv:IEq,GIEq.
 Qed.
+
+Lemma ieq_trans : forall Ξ ℓ A B C, IEq Ξ ℓ A B -> IEq Ξ ℓ B C -> IEq Ξ ℓ A C.
+Proof. sfirstorder use:ieq_trans_mutual. Qed.
 
 
 Lemma pars_pi_inv ℓ A B C (h : Rstar _ Par (tPi ℓ A B) C) :
@@ -310,6 +314,8 @@ Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed.
 Derive Inversion Par_inv with (forall a b, Par a b).
 
 Derive Inversion IEq_inv with (forall Ξ ℓ a b, IEq Ξ ℓ a b).
+
+Derive Inversion GIEq_inv with (forall Ξ ℓ ℓ0 a b, GIEq Ξ ℓ ℓ0 a b).
 
 
 Lemma par_confluent : Strongly_confluent _ Par.
@@ -495,4 +501,74 @@ Proof.
   - sfirstorder.
   - move => a a0 a1 ha ha0 ih b hab.
     suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:Rstar.
+Qed.
+
+Lemma ieq_downgrade_mutual Ξ ℓ :
+  (forall a b, IEq Ξ ℓ a b ->
+          forall ℓ0 c , (ℓ0 <= ℓ)%O ->
+                   IEq Ξ ℓ0 a c ->
+                   IEq Ξ ℓ0 a b) /\
+  (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+          forall ℓ1 c, (ℓ1 <= ℓ)%O ->
+                  GIEq Ξ ℓ1 ℓ0 a c ->
+                  GIEq Ξ ℓ1 ℓ0 a b).
+Proof.
+  move : Ξ ℓ.
+  apply IEq_mutual; try qauto l:on inv:IEq,GIEq ctrs:IEq,GIEq.
+  - hauto lq:on inv:IEq,GIEq ctrs:IEq,GIEq.
+  - move => Ξ ℓ ℓ0 A B h ℓ1 c hℓ hc.
+    case E : (ℓ0 <= ℓ1)%O.
+    + suff : (ℓ0 <= ℓ)%O by hauto lqb:on.
+      hauto l:on use:Order.le_trans.
+    + hauto lq:on ctrs:GIEq.
+Qed.
+
+Lemma ieq_downgrade_mutual' : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall ℓ0 c , IEq Ξ ℓ0 a c ->
+                     IEq Ξ (ℓ `&` ℓ0)%O a b) /\
+      (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+                 forall ℓ1 c, GIEq Ξ ℓ1 ℓ0 a c ->
+                         GIEq Ξ (ℓ `&` ℓ1)%O ℓ0 a b).
+Proof.
+  apply IEq_mutual; try qauto l:on inv:IEq,GIEq ctrs:IEq,GIEq.
+  (* Can be compressed if I can figure out how to make ssreflect
+  lemmas usable by automation *)
+  - move => Ξ ℓ i hi hℓ ℓ0 c h.
+    inversion h; subst.
+    constructor => //.
+    rewrite lexI.
+    sfirstorder brefl:on.
+  - move => Ξ ℓ ℓ0 A B ? h ih ℓ1 C.
+    elim /GIEq_inv => hc ℓ2 A0 B0 h2 h3 *; subst.
+    + apply ih in h3.
+      apply GI_Dist => //.
+      rewrite lexI.
+      sfirstorder brefl:on.
+    + apply GI_InDist.
+      move : h2.
+      apply contraNN.
+      rewrite lexI.
+      sfirstorder b:on.
+  - move => Ξ ℓ ℓ0 A B h ℓ1 C h2.
+    apply GI_InDist.
+    move : h.
+    apply contraNN.
+    rewrite lexI.
+    sfirstorder b:on.
+Qed.
+
+Lemma ieq_trans_heterogeneous Ξ ℓ ℓ0 a b c :
+  IEq Ξ ℓ a b ->
+  IEq Ξ ℓ0 b c ->
+  IEq Ξ (ℓ `&` ℓ0)%O a c.
+Proof.
+  move => h0 h1.
+  apply ieq_trans with (B := b).
+  - apply ieq_sym_mutual.
+    apply ieq_sym_mutual in h0.
+    eapply ieq_downgrade_mutual'; eauto.
+  - apply ieq_sym_mutual in h0.
+    rewrite meetC.
+    eapply ieq_downgrade_mutual'; eauto.
 Qed.
