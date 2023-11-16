@@ -493,7 +493,7 @@ Proof.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
 
-Lemma simulation_star Ξ ℓ a b a' (h : IEq Ξ ℓ a b) (h0 : Rstar _ Par a a') :
+Lemma simulation_star{ Ξ ℓ a b a'} (h : IEq Ξ ℓ a b) (h0 : Rstar _ Par a a') :
     exists b', Rstar _ Par b b' /\ IEq Ξ ℓ a' b'.
 Proof.
   move : b h.
@@ -503,27 +503,7 @@ Proof.
     suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:Rstar.
 Qed.
 
-Lemma ieq_downgrade_mutual Ξ ℓ :
-  (forall a b, IEq Ξ ℓ a b ->
-          forall ℓ0 c , (ℓ0 <= ℓ)%O ->
-                   IEq Ξ ℓ0 a c ->
-                   IEq Ξ ℓ0 a b) /\
-  (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
-          forall ℓ1 c, (ℓ1 <= ℓ)%O ->
-                  GIEq Ξ ℓ1 ℓ0 a c ->
-                  GIEq Ξ ℓ1 ℓ0 a b).
-Proof.
-  move : Ξ ℓ.
-  apply IEq_mutual; try qauto l:on inv:IEq,GIEq ctrs:IEq,GIEq.
-  - hauto lq:on inv:IEq,GIEq ctrs:IEq,GIEq.
-  - move => Ξ ℓ ℓ0 A B h ℓ1 c hℓ hc.
-    case E : (ℓ0 <= ℓ1)%O.
-    + suff : (ℓ0 <= ℓ)%O by hauto lqb:on.
-      hauto l:on use:Order.le_trans.
-    + hauto lq:on ctrs:GIEq.
-Qed.
-
-Lemma ieq_downgrade_mutual' : forall Ξ ℓ,
+Lemma ieq_downgrade_mutual : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
             forall ℓ0 c , IEq Ξ ℓ0 a c ->
                      IEq Ξ (ℓ `&` ℓ0)%O a b) /\
@@ -567,8 +547,30 @@ Proof.
   apply ieq_trans with (B := b).
   - apply ieq_sym_mutual.
     apply ieq_sym_mutual in h0.
-    eapply ieq_downgrade_mutual'; eauto.
+    eapply ieq_downgrade_mutual; eauto.
   - apply ieq_sym_mutual in h0.
     rewrite meetC.
-    eapply ieq_downgrade_mutual'; eauto.
+    eapply ieq_downgrade_mutual; eauto.
+Qed.
+
+Definition icoherent Ξ a b := exists c d ℓ, Rstar _ Par a c /\ Rstar _ Par b d /\ IEq Ξ ℓ c d.
+
+Lemma icoherent_PER Ξ : PER tm (icoherent Ξ).
+  constructor.
+  - intros a b (c & d & ℓ & h).
+    exists d, c, ℓ.
+    sfirstorder use:ieq_sym_mutual.
+  - intros a b c
+      (a0 & b0 & ℓ0 & (h00 & h01 & h02))
+      (b0' & c0 & ℓ1 & (h10 & h11 & h12)).
+    have := pars_confluent _ _ _ h01 h10.
+    intros (b1 & h20 & h21).
+    apply ieq_sym_mutual in h02.
+    have := simulation_star h02 h20.
+    intros (a1 & h30 & h31).
+    apply ieq_sym_mutual in h31.
+    have := simulation_star h12 h21.
+    intros (c1 & h40 & h41).
+    exists a1, c1, (ℓ0 `&` ℓ1)%O.
+    sfirstorder use:Rstar_transitive, ieq_trans_heterogeneous.
 Qed.
