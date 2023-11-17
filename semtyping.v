@@ -1,4 +1,4 @@
-From WR Require Import syntax join.
+From WR Require Import syntax common join.
 From Coq Require Import
   Sets.Relations_2
   Sets.Relations_2_facts
@@ -9,7 +9,14 @@ From Coq Require Import
 From Hammer Require Import Tactics.
 From Equations Require Import Equations.
 
-Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
+
+Module Type semtyping_sig
+  (Import grade : grade_sig)
+  (Import syntax : syntax_sig grade)
+  (Import common : common_sig grade syntax)
+  (Import join : join_sig grade syntax common).
+
+Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (grade -> tm -> Prop) -> Prop) (b : tm) :=
   forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
 
 Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=

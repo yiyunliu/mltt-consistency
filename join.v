@@ -150,7 +150,6 @@ Qed.
 Lemma ieq_trans : forall Ξ ℓ A B C, IEq Ξ ℓ A B -> IEq Ξ ℓ B C -> IEq Ξ ℓ A C.
 Proof. sfirstorder use:ieq_trans_mutual. Qed.
 
-
 Lemma pars_pi_inv ℓ A B C (h : Rstar _ Par (tPi ℓ A B) C) :
   exists A0 B0, C = tPi ℓ A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
 Proof.
