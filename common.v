@@ -1,5 +1,5 @@
 From WR Require Import syntax.
-From Coq Require Import ssreflect List.
+From Coq Require Import ssreflect ssrbool List.
 Require Import Psatz.
 From Hammer Require Import Tactics.
 
@@ -37,8 +37,8 @@ Lemma dep_ith_ren_tm0 (Γ : context) (A : tm) :
   dep_ith (A :: Γ) 0 = ren_tm shift A.
 Proof. done. Qed.
 
-Definition good_renaming ξ Γ Δ :=
-  forall i, i < length Γ -> ξ i < length Δ /\ dep_ith Δ (ξ i) = ren_tm ξ (dep_ith Γ i).
+Definition good_renaming ξ Γ Ξ Δ Ξ' :=
+  forall i, i < length Γ -> ξ i < length Δ /\ dep_ith Δ (ξ i) = ren_tm ξ (dep_ith Γ i) /\ (eith Ξ' (ξ i) <= eith Ξ i)%O.
 
 Lemma dep_ith_shift Γ i :
   dep_ith Γ i = ren_tm (Nat.add (S i)) (ith Γ i).
@@ -53,26 +53,37 @@ Proof.
       by asimpl.
 Qed.
 
-Lemma ith_skipn n i (Γ : context) :
-  ith (skipn n Γ) i = ith Γ (n + i).
-  move : n i.
-  elim : Γ.
+Lemma list_ith_skipn {A : Type} (a : A)
+  n i (Γ : list A) :
+  nth i (skipn n Γ) a = nth (n + i) Γ a.
+Proof.
+  elim : Γ n i.
   - hauto lq:on inv:nat.
-  - move => A Γ ih n i.
-    case : i; qauto l:on inv:nat.
+  - qauto l:on inv:nat.
 Qed.
 
-Lemma good_renaming_truncate n Γ :
-  good_renaming (Nat.add n) (skipn n Γ) Γ .
+Lemma ith_skipn n i (Γ : context) :
+  ith (skipn n Γ) i = ith Γ (n + i).
+Proof. sfirstorder use:list_ith_skipn.  Qed.
+
+Lemma eith_skipn n i (Γ : econtext) :
+  eith (skipn n Γ) i = eith Γ (n + i).
+Proof. sfirstorder use:list_ith_skipn. Qed.
+
+Lemma good_renaming_truncate n Γ Ξ :
+  good_renaming (Nat.add n) (skipn n Γ) (skipn n Ξ) Γ Ξ.
 Proof.
   rewrite /good_renaming => i h /=.
   repeat rewrite dep_ith_shift.
-  rewrite ith_skipn.
+  repeat rewrite ith_skipn eith_skipn.
   split.
   - rewrite skipn_length in h.
     lia.
-  - asimpl. f_equal.
-    fext => ?; asimpl; lia.
+  - split.
+    + asimpl.
+      f_equal.
+      fext => ?; asimpl; lia.
+    + apply Order.le_refl.
 Qed.
 
 End common_sig.
