@@ -126,7 +126,7 @@ with GIEq (Ξ : econtext) (ℓ : grade) : grade -> tm -> tm -> Prop :=
 
 #[export]Hint Constructors IEq GIEq : indist.
 
-Definition Join := coherent _ Par.
+Definition icoherent Ξ a b := exists c d ℓ, Rstar _ Par a c /\ Rstar _ Par b d /\ IEq Ξ ℓ c d.
 
 Scheme IEq_ind' := Induction for IEq Sort Prop
     with GIEq_ind' := Induction for GIEq Sort Prop.
@@ -159,9 +159,17 @@ Proof.
   elim : T C / h; hecrush inv:Par ctrs:Rstar, Par.
 Qed.
 
-Lemma join_pi_inj ℓ A B A0 B0 (h : Join (tPi ℓ A B) (tPi ℓ A0 B0)) :
-  Join A A0 /\ Join B B0.
-Proof. hauto q:on use:pars_pi_inv unfold:Join, coherent. Qed.
+Lemma ieq_pi_inj Ξ ℓ ℓ0 A B A0 B0 :
+  IEq Ξ ℓ (tPi ℓ0 A B) (tPi ℓ0 A0 B0) ->
+  IEq Ξ ℓ A A0 /\ IEq (ℓ0 :: Ξ) ℓ B B0.
+Proof. qauto l:on inv:IEq. Qed.
+
+Lemma icoherent_pi_inj Ξ
+  ℓ A B A0 B0 (h : icoherent Ξ (tPi ℓ A B) (tPi ℓ A0 B0)) :
+  icoherent Ξ A A0 /\ icoherent (ℓ :: Ξ) B B0.
+Proof. move : h; intros (c & d & ℓ0 & h).
+       sauto lq:on ctrs:- use:ieq_pi_inj, pars_pi_inv unfold:icoherent.
+Qed.
 
 Lemma pars_univ_inv i A (h : Rstar _ Par (tUniv i) A) :
   A = tUniv i.
@@ -171,8 +179,8 @@ Proof.
   elim : A0 A / h; hauto lq:on rew:off ctrs:Rstar, Par inv:Par.
 Qed.
 
-Lemma join_univ_inj i j (h : Join (tUniv i) (tUniv j)) : i = j.
-Proof. hauto lq:on rew:off inv:Rstar use:pars_univ_inv unfold:Join, coherent. Qed.
+Lemma icoherent_univ_inj Ξ i j (h : icoherent Ξ (tUniv i) (tUniv j)) : i = j.
+Proof. hauto lq:on rew:off inv:Rstar, IEq use:pars_univ_inv unfold:icoherent. Qed.
 
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
@@ -205,7 +213,7 @@ Lemma P_IfOff_star a b c :
     hauto lq:on ctrs:Par use:Par_refl.
 Qed.
 
-#[export]Hint Unfold Join : par.
+#[export]Hint Unfold icoherent : par.
 
 Lemma P_AppAbs' a ℓ A a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
@@ -229,11 +237,6 @@ Lemma pars_renaming a b (ξ : fin -> fin) :
   Rstar _ Par a b ->
   Rstar _ Par (ren_tm ξ a) (ren_tm ξ b).
 Proof. induction 1; hauto lq:on ctrs:Rstar use:par_renaming. Qed.
-
-Lemma join_renaming a b (ξ : fin -> fin) :
-  Join a b ->
-  Join (ren_tm ξ a) (ren_tm ξ b).
-Proof. hauto lq:on rew:off unfold:Join, coherent use:pars_renaming. Qed.
 
 Lemma par_morphing_lift (ξ0 ξ1 : fin -> tm)
   (h : forall i, Par (ξ0 i) (ξ1 i)) :
@@ -281,24 +284,9 @@ Proof.
     sfirstorder use:par_morphing, Par_refl.
 Qed.
 
-Lemma Par_join a b :
-  Par a b -> Join a b.
-Proof. sfirstorder use:Rstar_contains_R unfold:Join. Qed.
-
-Lemma join_morphing a0 a1 (h : Join a0 a1) (ξ0 ξ1 : fin -> tm) :
-  (forall i, Par (ξ0 i) (ξ1 i)) ->
-  Join (subst_tm ξ0 a0) (subst_tm ξ1 a1).
-Proof.
-  hauto l:on unfold:Join,coherent use:par_morphing_star, Par_refl, Par_join.
-Qed.
-
 Lemma par_subst_star a0 a1 (h : Rstar _ Par a0 a1) (ξ : fin -> tm) :
   Rstar _ Par (subst_tm ξ a0) (subst_tm ξ a1).
 Proof. hauto l:on use:par_morphing_star, Par_refl. Qed.
-
-Lemma join_subst_star a0 a1 (h : Join a0 a1) (ξ : fin -> tm) :
-  Join (subst_tm ξ a0) (subst_tm ξ a1).
-Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 
@@ -362,31 +350,13 @@ Proof.
   apply par_confluent.
 Qed.
 
-Lemma Join_reflexive a :
-  Join a a.
-Proof. hauto l:on ctrs:Rstar. Qed.
-
-Lemma Join_symmetric a b :
-  Join a b -> Join b a.
-Proof. sfirstorder use:coherent_symmetric. Qed.
-
-Lemma Join_transitive a b c :
-  Join a b -> Join b c -> Join a c.
-Proof.
-  have := pars_confluent.
-  rewrite /Confluent /confluent /Join /coherent => h [z0 [? h0]] [z1 [h1 ?]].
-  move /(_ b _ _ h0 h1) in h.
-  case : h => z [*].
-  exists z. split; sfirstorder use:Rstar_transitive.
-Qed.
-
 Definition ieq_good_renaming ξ (Ξ Δ : econtext) :=
-    (forall i, i < length Ξ -> eith Ξ i = eith Δ (ξ i)) /\
+    (forall i, i < length Ξ -> (eith Δ (ξ i) <= eith Ξ i)%O) /\
     (forall i, i < length Ξ -> ξ i < length Δ).
 
 Lemma ieq_good_renaming_iff ξ (Ξ Δ : econtext) :
   ieq_good_renaming ξ Ξ Δ <->
-    (forall i, i < length Ξ -> ξ i < length Δ /\ eith Ξ i = eith Δ (ξ i)).
+    (forall i, i < length Ξ -> ξ i < length Δ /\ (eith Δ (ξ i) <= eith Ξ i)%O).
 Proof.
   sfirstorder.
 Qed.
@@ -403,6 +373,7 @@ Proof.
     sfirstorder.
 Qed.
 
+
 Lemma ieq_weakening_mutual : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
             forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
@@ -411,7 +382,9 @@ Lemma ieq_weakening_mutual : forall Ξ ℓ,
             forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
             GIEq Δ ℓ ℓ0 (ren_tm ξ a) (ren_tm ξ b)).
 Proof.
-  apply IEq_mutual; qauto l: on ctrs:IEq,GIEq use:ieq_weakening_helper.
+  apply IEq_mutual; try qauto l: on ctrs:IEq,GIEq use:ieq_weakening_helper.
+  move => *; constructor; first by sfirstorder.
+  apply : le_trans; hauto lq:on.
 Qed.
 
 Lemma gieq_refl n Ξ ℓ :
@@ -452,6 +425,13 @@ Lemma ieq_morphing Ξ ℓ a b : IEq Ξ ℓ a b ->
             forall ξ0 ξ1 Δ, ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
             IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b).
 Proof. hauto l:on use:ieq_morphing_mutual. Qed.
+
+Lemma icoherent_renaming Ξ Δ a b (ξ : fin -> fin) :
+  ieq_good_renaming ξ Ξ Δ ->
+  icoherent Ξ a b ->
+  icoherent Δ (ren_tm ξ a) (ren_tm ξ b).
+Proof.
+  hauto lq:on unfold:icoherent use:pars_renaming, ieq_weakening_mutual. Qed.
 
 Lemma simulation : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
@@ -542,8 +522,6 @@ Proof.
     eapply ieq_downgrade_mutual; eauto.
 Qed.
 
-Definition icoherent Ξ a b := exists c d ℓ, Rstar _ Par a c /\ Rstar _ Par b d /\ IEq Ξ ℓ c d.
-
 Lemma icoherent_PER Ξ : PER tm (icoherent Ξ).
   constructor.
   - intros a b (c & d & ℓ & h).
@@ -563,5 +541,47 @@ Lemma icoherent_PER Ξ : PER tm (icoherent Ξ).
     exists a1, c1, (ℓ0 `&` ℓ1)%O.
     sfirstorder use:Rstar_transitive, ieq_trans_heterogeneous.
 Qed.
+
+Lemma ieq_wg Ξ ℓ a b :
+  IEq Ξ ℓ a b -> IEq Ξ ℓ a a.
+Proof. hauto lq:on use:ieq_trans,ieq_sym_mutual. Qed.
+
+Lemma Par_icoherent Ξ ℓ a a0 b :
+  Par a b ->
+  IEq Ξ ℓ a a0 ->
+  icoherent Ξ a b.
+Proof.
+  sauto lq:on use:ieq_wg, simulation, Rstar_contains_R unfold:icoherent.
+Qed.
+
+(* Lemma join_morphing Ξ Δ a0 a1 (h : icoherent Ξ a0 a1) (ξ : fin -> tm) : *)
+(*   (forall i ℓ, (eith Δ (ξ i)) IEq ℓ (ξ i) (ξ i) -> ) -> *)
+(*   Join (subst_tm ξ0 a0) (subst_tm ξ1 a1). *)
+(* Proof. *)
+(*   hauto l:on unfold:Join,coherent use:par_morphing_star, Par_refl, Par_join. *)
+(* Qed. *)
+
+
+(* Lemma join_subst_star a0 a1 (h : Join a0 a1) (ξ : fin -> tm) : *)
+(*   Join (subst_tm ξ a0) (subst_tm ξ a1). *)
+(* Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed. *)
+
+(* Lemma Join_reflexive a : *)
+(*   Join a a. *)
+(* Proof. hauto l:on ctrs:Rstar. Qed. *)
+
+(* Lemma Join_symmetric a b : *)
+(*   Join a b -> Join b a. *)
+(* Proof. sfirstorder use:coherent_symmetric. Qed. *)
+
+(* Lemma Join_transitive a b c : *)
+(*   Join a b -> Join b c -> Join a c. *)
+(* Proof. *)
+(*   have := pars_confluent. *)
+(*   rewrite /Confluent /confluent /Join /coherent => h [z0 [? h0]] [z1 [h1 ?]]. *)
+(*   move /(_ b _ _ h0 h1) in h. *)
+(*   case : h => z [*]. *)
+(*   exists z. split; sfirstorder use:Rstar_transitive. *)
+(* Qed. *)
 
 End join_sig.

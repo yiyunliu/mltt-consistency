@@ -1,12 +1,19 @@
 From WR Require Import syntax join typing common.
-From Coq Require Import ssreflect Sets.Relations_2 ssrbool.
+From Coq Require Import ssreflect Sets.Relations_2 ssrbool Relations.Relation_Operators.
 From Hammer Require Import Tactics.
 Require Coq.Init.Datatypes.
 Require Import Psatz.
 
-Lemma good_renaming_up ξ Γ Δ A :
-  good_renaming ξ Γ Δ ->
-  good_renaming (upRen_tm_tm ξ)  (A :: Γ) (ren_tm ξ A :: Δ).
+Module syntactic_soundness
+  (Import grade : grade_sig)
+  (Import syntax : syntax_sig grade)
+  (Import common : common_sig grade syntax)
+  (Import join : join_sig grade syntax common)
+  (Import typing : typing_sig grade syntax common join).
+
+Lemma good_renaming_up ξ Γ Ξ Δ Ξ' ℓ A :
+  good_renaming ξ Γ Ξ Δ Ξ' ->
+  good_renaming (upRen_tm_tm ξ) (A :: Γ) (ℓ :: Ξ) (ren_tm ξ A :: Δ) (ℓ :: Ξ').
 Proof.
   move => h.
   rewrite /good_renaming.
@@ -15,69 +22,88 @@ Proof.
     sfirstorder.
   - split.
     + asimpl; sfirstorder.
-    + case /h : h0 => h0 h1 /=.
-      rewrite h1.
+    + case /h : h0 => h0 [h1 h2] /=.
+      rewrite h1 h2.
       by asimpl.
 Qed.
 
-Lemma T_App' Γ a A B0 B b :
+Lemma T_App' Γ Ξ ℓ a ℓ0 A B0 B b :
   B0 = (subst_tm (b..) B) ->
-  Wt Γ a (tPi A B) ->
-  Wt Γ b A ->
+  Wt Γ Ξ ℓ a (tPi ℓ0 A B) ->
+  Wt Γ Ξ ℓ0 b A ->
   (* -------------------- *)
-  Wt Γ (tApp a b) B0.
+  Wt Γ Ξ ℓ (tApp a ℓ0 b) B0.
 Proof. qauto ctrs:Wt. Qed.
 
 Lemma wff_nil :
-  Wff nil.
+  Wff nil nil.
 Proof.
-  apply Wff_intro with (F := fun x => x) => /= //.
+  apply Wff_intro with (F := fun x => x) (G := fun x => el) => /= //.
   lia.
 Qed.
 
-Lemma wff_cons Γ A i
-  (h0 : Wt Γ A (tUniv i))
-  (h1 : Wff Γ) :
-  Wff (A :: Γ).
+Lemma wff_cons Γ Ξ ℓ A i
+  (h0 : Wt Γ Ξ ℓ A (tUniv i))
+  (h1 : Wff Γ Ξ) :
+  Wff (A :: Γ) (ℓ :: Ξ).
 Proof.
-  inversion h1 as [F h].
-  apply Wff_intro with (F := i .: F).
+  inversion h1 as [F G ? h].
+  apply Wff_intro with (F := i .: F) (G := ℓ .: G);
+    first by scongruence.
   case => [? | p /Arith_prebase.lt_S_n ? ];
          sfirstorder ctrs:Wff.
 Qed.
 
 #[export]Hint Resolve wff_nil wff_cons : wff.
 
-Lemma Wt_Wff Γ a A (h : Wt Γ a A) : Wff Γ.
-Proof. elim : Γ a A / h => //. Qed.
+Lemma Wt_Wff Γ Ξ ℓ a A (h : Wt Γ Ξ ℓ a A) : Wff Γ Ξ.
+Proof. elim : Γ Ξ ℓ a A / h => //. Qed.
 
 #[export]Hint Resolve Wt_Wff : wff.
 
-Lemma Wt_Univ Γ a A i
-  (h : Wt Γ a A) :
-  exists j, Wt Γ (tUniv i) (tUniv j).
+Lemma Wt_Univ Γ Ξ ℓ ℓ0 a A i
+  (h : Wt Γ Ξ ℓ a A) :
+  exists j, Wt Γ Ξ ℓ0 (tUniv i) (tUniv j).
 Proof.
   exists (S i).
   qauto l:on use:Wt_Wff ctrs:Wt.
 Qed.
 
-Lemma Wt_Pi_inv Γ A B U (h : Wt Γ (tPi A B) U) :
-  exists i, Wt Γ A (tUniv i) /\
-         Wt (A :: Γ) B (tUniv i) /\
-         Join (tUniv i) U /\
-         exists i, Wt Γ U (tUniv i).
+Definition icoherentR Ξ := clos_refl _ (icoherent Ξ).
+
+Lemma icoherent_transitive {Ξ a b c} :
+  icoherent Ξ a b -> icoherent Ξ b c -> icoherent Ξ a c.
+Proof. qauto l:on inv:PER use:icoherent_PER unfold:Transitive. Qed.
+
+Lemma icoherentR_transitive {Ξ a b c} :
+  icoherentR Ξ a b -> icoherent Ξ b c -> icoherentR Ξ a c.
 Proof.
-  move E : (tPi A B) h => T h.
-  move : A B E.
-  elim :  Γ T U / h => //.
-  - hauto l:on use:Wt_Univ.
-  - hauto lq:on rew:off use:Join_transitive.
+  hauto ctrs:clos_refl l:on use:icoherent_transitive inv:clos_refl.
 Qed.
 
-Lemma Wt_Pi_Univ_inv Γ A B i (h : Wt Γ (tPi A B) (tUniv i)) :
-  Wt Γ A (tUniv i) /\
-  Wt (A :: Γ) B (tUniv i).
-Proof. hauto lq:on use:Wt_Pi_inv, join_univ_inj. Qed.
+Lemma Wt_Pi_inv Γ Ξ ℓ ℓ0 A B U (h : Wt Γ Ξ ℓ (tPi ℓ0 A B) U) :
+  exists i, Wt Γ Ξ ℓ A (tUniv i) /\
+         Wt (A :: Γ) (ℓ0 :: Ξ) ℓ B (tUniv i) /\
+         icoherentR Ξ (tUniv i) U /\
+         exists ℓ0 i, Wt Γ Ξ ℓ0 U (tUniv i).
+Proof.
+  move E : (tPi ℓ0 A B) h => T h.
+  move : ℓ0 A B E.
+  elim :  Γ Ξ ℓ T U / h => //.
+  - hauto l:on use:Wt_Univ.
+  - move => Γ Ξ ℓ ℓ1 a T0 T1 i h0 ih0  *; subst.
+    specialize ih0 with (1 := eq_refl).
+    case : ih0 => *.
+    hauto l:on use:icoherentR_transitive.
+Qed.
+
+Lemma icoherentR_univ_inj Ξ i j (h : icoherentR Ξ (tUniv i) (tUniv j)) : i = j.
+Proof. hauto lq:on inv:clos_refl unfold:icoherentR use:icoherent_univ_inj . Qed.
+
+Lemma Wt_Pi_Univ_inv Γ Ξ ℓ ℓ0 A B i (h : Wt Γ Ξ ℓ (tPi ℓ0 A B) (tUniv i)) :
+  Wt Γ Ξ ℓ A (tUniv i) /\
+  Wt (A :: Γ) (ℓ0 :: Ξ) ℓ B (tUniv i).
+Proof. hauto lq:on rew:off use:Wt_Pi_inv, icoherentR_univ_inj. Qed.
 
 Lemma Wt_Abs_inv Γ A a T (h : Wt Γ (tAbs A a) T) :
   exists B i, Wt Γ (tPi A B) (tUniv i) /\
