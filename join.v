@@ -1,4 +1,4 @@
-From WR Require Import syntax.
+From WR Require Import common syntax.
 From Coq Require Import
   ssreflect
   ssrbool
@@ -8,23 +8,12 @@ From Coq Require Import
 From Hammer Require Import Tactics Reflect.
 Import Order.Theory.
 
-
 Local Open Scope bool_scope.
 
 Module Type join_sig
   (Import grade : grade_sig)
-  (Import syntax : syntax_sig grade).
-
-Notation eith Ξ i := (nth i Ξ el).
-
-Definition is_bool_val a :=
-  match a with
-  | tOn => true
-  | tOff => true
-  | _ => false
-  end.
-
-Definition econtext := list grade.
+  (Import syntax : syntax_sig grade)
+  (Import common : common_sig grade syntax).
 
 Inductive Par : tm -> tm -> Prop :=
 | P_Var i :
@@ -574,3 +563,5 @@ Lemma icoherent_PER Ξ : PER tm (icoherent Ξ).
     exists a1, c1, (ℓ0 `&` ℓ1)%O.
     sfirstorder use:Rstar_transitive, ieq_trans_heterogeneous.
 Qed.
+
+End join_sig.

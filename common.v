@@ -7,7 +7,18 @@ Module Type common_sig
   (Import grade : grade_sig)
   (Import syntax : syntax_sig grade).
 
+Notation eith Ξ i := (nth i Ξ el).
+
+Definition is_bool_val a :=
+  match a with
+  | tOn => true
+  | tOff => true
+  | _ => false
+  end.
+
 Definition context := list tm.
+
+Definition econtext := list grade.
 
 Fixpoint dep_ith Γ i :=
   match Γ , i with
