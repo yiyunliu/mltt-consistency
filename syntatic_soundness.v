@@ -1,6 +1,6 @@
 From WR Require Import syntax join typing common.
 From Coq Require Import ssreflect Sets.Relations_2 ssrbool Relations.Relation_Operators.
-From Hammer Require Import Tactics.
+From Hammer Require Import Tactics Hammer.
 Require Coq.Init.Datatypes.
 Require Import Psatz.
 
@@ -91,10 +91,7 @@ Proof.
   move : ℓ0 A B E.
   elim :  Γ Ξ ℓ T U / h => //.
   - hauto l:on use:Wt_Univ.
-  - move => Γ Ξ ℓ ℓ1 a T0 T1 i h0 ih0  *; subst.
-    specialize ih0 with (1 := eq_refl).
-    case : ih0 => *.
-    hauto l:on use:icoherentR_transitive.
+  - hauto l:on use:@icoherentR_transitive.
 Qed.
 
 Lemma icoherentR_univ_inj Ξ i j (h : icoherentR Ξ (tUniv i) (tUniv j)) : i = j.
@@ -105,17 +102,18 @@ Lemma Wt_Pi_Univ_inv Γ Ξ ℓ ℓ0 A B i (h : Wt Γ Ξ ℓ (tPi ℓ0 A B) (tUni
   Wt (A :: Γ) (ℓ0 :: Ξ) ℓ B (tUniv i).
 Proof. hauto lq:on rew:off use:Wt_Pi_inv, icoherentR_univ_inj. Qed.
 
-Lemma Wt_Abs_inv Γ A a T (h : Wt Γ (tAbs A a) T) :
-  exists B i, Wt Γ (tPi A B) (tUniv i) /\
-         Wt (A :: Γ) a B /\
-         Join (tPi A B) T /\
-         exists i, (Wt Γ T (tUniv i)).
+Lemma Wt_Abs_inv Γ Ξ ℓ ℓ0 A a T (h : Wt Γ Ξ ℓ (tAbs ℓ0 A a) T) :
+  exists ℓ1 B i, Wt Γ Ξ ℓ1 (tPi ℓ0 A B) (tUniv i) /\
+         Wt (A :: Γ) (ℓ0 :: Ξ) ℓ a B /\
+         icoherentR Ξ (tPi ℓ0 A B) T /\
+         exists ℓ2 i, (Wt Γ Ξ ℓ2 T (tUniv i)).
 Proof.
-  move E : (tAbs A a) h => a0 h.
-  move : A a E.
-  elim : Γ a0 T / h => //.
-  - hauto lq:on use:Join_reflexive.
-  - hauto lq:on rew:off use:Join_transitive.
+  move E : (tAbs ℓ0 A a) h => a0 h.
+  move : ℓ0 A a E.
+  elim : Γ Ξ ℓ a0 T / h => //.
+  - hauto lq:on ctrs:clos_refl.
+  (* Coq hammer doesn't like implicit arguments *)
+  - hauto lq: on drew: off use:@icoherentR_transitive.
 Qed.
 
 Lemma renaming_Syn Γ a A (h : Wt Γ a A) : forall Δ ξ,
