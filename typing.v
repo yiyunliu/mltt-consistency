@@ -1,78 +1,70 @@
 From WR Require Import syntax join common.
 
-(* #[export]Hint Unfold dep_ith : core. *)
+Reserved Notation "'⊢' Γ" (at level 10, no associativity).
+Reserved Notation "Γ '⊢' a '∈' A" (at level 70, no associativity).
 Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 | T_Var i :
-  Wff Γ ->
+  ⊢ Γ ->
   i < length Γ ->
   (* ------ *)
-  Wt Γ (var_tm i) (dep_ith Γ i)
+  Γ ⊢ var_tm i ∈ dep_ith Γ i
 
 | T_False i :
-  Wff Γ ->
+  ⊢ Γ ->
   (* -------- *)
-  Wt Γ tFalse (tUniv i)
+  Γ ⊢ tFalse ∈ tUniv i
 
 | T_Pi i A B :
-  Wt Γ A (tUniv i) ->
-  Wt (A :: Γ) B (tUniv i) ->
+  Γ ⊢ A ∈ tUniv i ->
+  A :: Γ ⊢ B ∈ tUniv i ->
   (* --------------------- *)
-  Wt Γ (tPi A B) (tUniv i)
+  Γ ⊢ tPi A B ∈ tUniv i
 
 | T_Abs A a B i :
-  Wt Γ (tPi A B) (tUniv i) ->
-  Wt (A :: Γ) a B ->
+  Γ ⊢ tPi A B ∈ tUniv i ->
+  A :: Γ ⊢ a ∈ B ->
   (* -------------------- *)
   Wt Γ (tAbs A a) (tPi A B)
 
 | T_App a A B b :
-  Wt Γ a (tPi A B) ->
-  Wt Γ b A ->
+  Γ ⊢ a ∈ tPi A B ->
+  Γ ⊢ b ∈ A ->
   (* -------------------- *)
-  Wt Γ (tApp a b) (subst_tm (b..) B)
+  Γ ⊢ tApp a b ∈ subst_tm (b..) B
 
 | T_Conv a A B i :
-  Wt Γ a A ->
-  Wt Γ B (tUniv i) ->
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ B ∈ tUniv i ->
   Join A B ->
   (* ----------- *)
-  Wt Γ a B
+  Γ ⊢ a ∈ B
 
 | T_On :
-  Wff Γ ->
+  ⊢ Γ ->
   (* --------- *)
-  Wt Γ tOn tSwitch
+  Γ ⊢ tOn ∈ tSwitch
 
 | T_Off :
-  Wff Γ ->
+  ⊢ Γ ->
   (* --------- *)
-  Wt Γ tOff tSwitch
+  Γ ⊢ tOff ∈ tSwitch
 
 | T_If a b c A :
-  Wt Γ a tSwitch ->
-  Wt Γ b A ->
-  Wt Γ c A ->
+  Γ ⊢ a ∈ tSwitch ->
+  Γ ⊢ b ∈ A ->
+  Γ ⊢ c ∈ A ->
   (* ------------ *)
-  Wt Γ (tIf a b c) A
+  Γ ⊢ tIf a b c ∈ A
 
 | T_Switch i :
-  Wff Γ ->
+  ⊢ Γ ->
   (* ----------- *)
-  Wt Γ tSwitch (tUniv i)
+  Γ ⊢ tSwitch ∈ tUniv i
 
 | T_Univ i j :
-  Wff Γ ->
+  ⊢ Γ ->
   i < j ->
   (* ------------ *)
-  Wt Γ (tUniv i) (tUniv j)
-
-with Wff (Γ : context) : Prop :=
-| Wff_intro F :
-  (forall i, i < length Γ -> Wt (skipn (S i) Γ) (ith Γ i) (tUniv (F i))) ->
-  (* ---------------------------------------------------------------- *)
-  Wff Γ.
-
-Scheme wt_ind := Induction for Wt Sort Prop
-    with wff_ind := Induction for Wff Sort Prop.
-
-Combined Scheme wt_mutual from wt_ind, wff_ind.
+  Γ ⊢ tUniv i ∈ tUniv j
+where "'⊢' Γ" := (exists F, forall i, i < length Γ -> Wt (skipn (S i) Γ) (ith Γ i) (tUniv (F i)))
+and "Γ '⊢' a '∈' A" := (Wt Γ a A).
