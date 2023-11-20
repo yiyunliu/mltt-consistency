@@ -178,18 +178,19 @@ Lemma T_Var' Γ ℓ i A :
   Wt Γ ℓ (var_tm i) A.
 Proof. qauto ctrs:Wt. Qed.
 
-Lemma good_morphing_up ρ k Γ Δ A
+Lemma good_morphing_up ρ k Γ Δ ℓ0 ℓ1 A
   (h : good_morphing ρ Γ Δ) :
   Wff Δ ->
-  Wt Δ (subst_tm ρ A) (tUniv k) ->
-  good_morphing (up_tm_tm ρ) (A :: Γ) (subst_tm ρ A :: Δ).
+  Wt Δ ℓ1 (subst_tm ρ A) (tUniv k) ->
+  good_morphing (up_tm_tm ρ) ((ℓ0, A) :: Γ) ((ℓ0, subst_tm ρ A) :: Δ).
 Proof.
   rewrite /good_morphing => h1 h2.
   case => [_ | i /Arith_prebase.lt_S_n ?].
   - apply T_Var' => /=.
     + by asimpl.
     + eauto with wff.
-    + asimpl. lia.
+    + asimpl; lia.
+    + apply Order.le_refl.
   - simpl.
     apply : weakening_Syn'; cycle 2.
     rewrite /good_morphing in h.
@@ -198,12 +199,35 @@ Proof.
     + sfirstorder.
 Qed.
 
-Lemma morphing_Syn Γ a A (h : Wt Γ a A) : forall Δ ρ,
+Lemma typing_ieq Γ ℓ a A (h : Wt Γ ℓ a A) :
+  forall ℓ0, (ℓ <= ℓ0)%O -> IEq (unzip1 Γ) ℓ0 a a.
+Proof.
+  elim : Γ ℓ a A / h; try qauto ctrs:GIEq, IEq.
+  - move => Γ ℓ i hΓ hi hℓ ℓ0 hℓ0.
+    apply I_Var => //.
+    + by rewrite size_map.
+    + move : hℓ hℓ0.
+      apply Order.le_trans.
+  - move => Γ ℓ ℓ0 a A B b _ ha _ hb.
+    constructor; first by sfirstorder.
+    case E : (ℓ0 <= ℓ1)%O; hauto lq:on ctrs:GIEq.
+Qed.
+
+Lemma typing_gieq Γ ℓ a A (h : Wt Γ ℓ a A) :
+  forall ℓ0, GIEq (unzip1 Γ) ℓ0 ℓ a a.
+Proof.
+  move => ℓ0.
+  move /typing_ieq in h.
+  case E : (ℓ <= ℓ0)%O; hauto lq:on ctrs:GIEq.
+Qed.
+
+Lemma morphing_Syn Γ ℓ a A (h : Wt Γ ℓ a A) : forall Δ ρ,
     good_morphing ρ Γ Δ ->
     Wff Δ ->
-    Wt Δ (subst_tm ρ a) (subst_tm ρ A).
+    Wt Δ ℓ (subst_tm ρ a) (subst_tm ρ A).
 Proof.
-  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_morphing.
+  elim : Γ ℓ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_morphing.
+  - sfirstorder use:subsumption.
   - move => *.
     apply T_Pi; eauto.
     hauto q:on use:good_morphing_up db:wff.
@@ -211,7 +235,12 @@ Proof.
     apply : T_Abs; eauto.
     hauto q:on use:good_morphing_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
-  - hauto q:on ctrs:Wt use:join_subst_star.
+  - move => Γ ℓ ℓ1 a A B i h0 ih0 h1 ih1 hAB Δ ρ hρ.
+    suff : icoherent (unzip1 Δ) (subst_tm ρ A) (subst_tm ρ B) by
+      hauto q:on ctrs:Wt.
+    apply icoherent_morphing with (Ξ := unzip1 Γ) => //.
+    rewrite size_map.
+    sfirstorder use:typing_gieq unfold:good_morphing.
 Qed.
 
 Lemma subst_Syn Γ A a b B
