@@ -243,10 +243,10 @@ Proof.
     sfirstorder use:typing_gieq unfold:good_morphing.
 Qed.
 
-Lemma subst_Syn Γ A a b B
-  (h0 : Wt (A :: Γ) b B)
-  (h1 : Wt Γ a A) :
-  Wt Γ (subst_tm (a..) b) (subst_tm (a..) B).
+Lemma subst_Syn Γ A ℓ0 a ℓ b B
+  (h0 : Wt ((ℓ0, A) :: Γ) ℓ b B)
+  (h1 : Wt Γ ℓ0 a A) :
+  Wt Γ ℓ (subst_tm (a..) b) (subst_tm (a..) B).
 Proof.
   apply : morphing_Syn; eauto with wff.
   case => [_ | i /Arith_prebase.lt_S_n ?] /=.
@@ -254,11 +254,11 @@ Proof.
   - asimpl; eauto using T_Var with wff.
 Qed.
 
-Lemma Wt_regularity Γ a A
-  (h : Wt Γ a A) :
-  exists i, Wt Γ A (tUniv i).
+Lemma Wt_regularity Γ ℓ a A
+  (h : Wt Γ ℓ a A) :
+  exists i ℓ0, Wt Γ ℓ0 A (tUniv i).
 Proof.
-  elim: Γ a A/h; try qauto ctrs:Wt depth:2.
+  elim: Γ ℓ a A/h; try qauto ctrs:Wt,nat depth:3.
   - inversion 1.
     hauto l:on use:dep_ith_shift,good_renaming_truncate, renaming_Syn.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
