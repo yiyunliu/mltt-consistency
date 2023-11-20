@@ -42,13 +42,13 @@ Proof.
   lia.
 Qed.
 
-Lemma wff_cons Γ Ξ ℓ A i
-  (h0 : Wt Γ Ξ ℓ A (tUniv i))
+Lemma wff_cons Γ Ξ ℓ ℓ0 A i
+  (h0 : Wt Γ Ξ ℓ0 A (tUniv i))
   (h1 : Wff Γ Ξ) :
   Wff (A :: Γ) (ℓ :: Ξ).
 Proof.
   inversion h1 as [F G ? h].
-  apply Wff_intro with (F := i .: F) (G := ℓ .: G);
+  apply Wff_intro with (F := i .: F) (G := ℓ0 .: G);
     first by scongruence.
   case => [? | p /Arith_prebase.lt_S_n ? ];
          sfirstorder ctrs:Wff.
@@ -116,32 +116,47 @@ Proof.
   - hauto lq: on drew: off use:@icoherentR_transitive.
 Qed.
 
-Lemma renaming_Syn Γ a A (h : Wt Γ a A) : forall Δ ξ,
-    good_renaming ξ Γ Δ ->
-    Wff Δ ->
-    Wt Δ (ren_tm ξ a) (ren_tm ξ A).
+Lemma renaming_ieq_renaming ξ Γ Ξ Δ Ξ' :
+  Wff Γ Ξ ->
+  Wff Δ Ξ' ->
+  good_renaming ξ Γ Ξ Δ Ξ' ->
+  ieq_good_renaming ξ Ξ Ξ'.
+Proof. hauto l:on inv:Wff unfold:good_renaming,ieq_good_renaming. Qed.
+
+Lemma renaming_ieq_renaming' ξ Γ Ξ Δ Ξ' ℓ a A :
+  Wt Γ Ξ ℓ a A ->
+  Wff Δ Ξ' ->
+  good_renaming ξ Γ Ξ Δ Ξ' ->
+  ieq_good_renaming ξ Ξ Ξ'.
+Proof. eauto using renaming_ieq_renaming with wff. Qed.
+
+Lemma renaming_Syn Γ Ξ ℓ a A (h : Wt Γ Ξ ℓ a A) : forall Δ Ξ' ξ,
+    good_renaming ξ Γ Ξ Δ Ξ' ->
+    Wff Δ Ξ' ->
+    Wt Δ Ξ' ℓ (ren_tm ξ a) (ren_tm ξ A).
 Proof.
-  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_renaming.
-  - hauto lq:on ctrs:Wt use:good_renaming_up db:wff.
+  elim : Γ Ξ ℓ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_renaming.
+  - hauto lq:on ctrs:Wff, Wt use:good_renaming_up db:wff.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
-  - qauto l:on ctrs:Wt use:join_renaming.
+  - qauto l:on ctrs:Wt use:icoherent_renaming, renaming_ieq_renaming'.
+  - hauto lq:on rew:off unfold:good_renaming ctrs:Wt.
 Qed.
 
-Lemma weakening_Syn Γ a A B i
-  (h0 : Wt Γ B (tUniv i))
-  (h1 : Wt Γ a A) :
-  Wt (B :: Γ) (ren_tm shift a) (ren_tm shift A).
+Lemma weakening_Syn Γ Ξ ℓ ℓ0 ℓ1 a A B i
+  (h0 : Wt Γ Ξ ℓ0 B (tUniv i))
+  (h1 : Wt Γ Ξ ℓ a A) :
+  Wt (B :: Γ) (ℓ1 :: Ξ) ℓ (ren_tm shift a) (ren_tm shift A).
 Proof.
   apply : renaming_Syn; eauto with wff.
   sfirstorder unfold:good_renaming.
 Qed.
 
-Lemma weakening_Syn' Γ a A A0 B i
-  (he : A0 = ren_tm shift A)
-  (h0 : Wt Γ B (tUniv i))
-  (h1 : Wt Γ a A) :
-  Wt (B :: Γ) (ren_tm shift a) A0.
+Lemma weakening_Syn' Γ Ξ ℓ ℓ0 ℓ1 a A A0 B i
+  (h2 : A0 = (ren_tm shift A))
+  (h0 : Wt Γ Ξ ℓ0 B (tUniv i))
+  (h1 : Wt Γ Ξ ℓ a A) :
+  Wt (B :: Γ) (ℓ1 :: Ξ) ℓ (ren_tm shift a) A0.
 Proof. sfirstorder use:weakening_Syn. Qed.
 
 Definition good_morphing ρ Γ Δ :=
