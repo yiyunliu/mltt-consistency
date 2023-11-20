@@ -75,7 +75,7 @@ Inductive Par : tm -> tm -> Prop :=
 
 Inductive IEq (Ξ : econtext) (ℓ : grade) : tm -> tm -> Prop :=
 | I_Var i :
-  i < length Ξ ->
+  i < size Ξ ->
   (eith Ξ i <= ℓ)%O ->
   (* ------- *)
   IEq Ξ ℓ (var_tm i) (var_tm i)
@@ -350,12 +350,12 @@ Proof.
 Qed.
 
 Definition ieq_good_renaming ξ (Ξ Δ : econtext) :=
-    (forall i, i < length Ξ -> (eith Δ (ξ i) <= eith Ξ i)%O) /\
-    (forall i, i < length Ξ -> ξ i < length Δ).
+    (forall i, i < size Ξ -> (eith Δ (ξ i) <= eith Ξ i)%O) /\
+    (forall i, i < size Ξ -> ξ i < size Δ).
 
 Lemma ieq_good_renaming_iff ξ (Ξ Δ : econtext) :
   ieq_good_renaming ξ Ξ Δ <->
-    (forall i, i < length Ξ -> ξ i < length Δ /\ (eith Δ (ξ i) <= eith Ξ i)%O).
+    (forall i, i < size Ξ -> ξ i < size Δ /\ (eith Δ (ξ i) <= eith Ξ i)%O).
 Proof.
   sfirstorder.
 Qed.
@@ -387,14 +387,14 @@ Proof.
 Qed.
 
 Lemma gieq_refl n Ξ ℓ :
-  n < length Ξ ->
+  n < size Ξ ->
   GIEq Ξ ℓ (eith Ξ n) (var_tm n) (var_tm n).
 Proof.
   case E : ((eith Ξ n) <= ℓ)%O; hauto lq:on ctrs:GIEq, IEq.
 Qed.
 
 Definition ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ :=
-  forall i, i < length Ξ -> GIEq Δ ℓ (eith Ξ i) (ξ0 i) (ξ1 i).
+  forall i, i < size Ξ -> GIEq Δ ℓ (eith Ξ i) (ξ0 i) (ξ1 i).
 
 Lemma ieq_morphing_helper ℓ ℓ0 ξ0 ξ1 Ξ Δ :
   ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
