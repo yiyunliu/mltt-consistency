@@ -598,34 +598,4 @@ Proof.
   apply ieq_morphing with (Ξ := Ξ) => //.
 Qed.
 
-(* Lemma join_morphing Ξ Δ a0 a1 (h : icoherent Ξ a0 a1) (ξ : fin -> tm) : *)
-(*   (forall i ℓ, (eith Δ (ξ i)) IEq ℓ (ξ i) (ξ i) -> ) -> *)
-(*   Join (subst_tm ξ0 a0) (subst_tm ξ1 a1). *)
-(* Proof. *)
-(*   hauto l:on unfold:Join,coherent use:par_morphing_star, Par_refl, Par_join. *)
-(* Qed. *)
-
-
-(* Lemma join_subst_star a0 a1 (h : Join a0 a1) (ξ : fin -> tm) : *)
-(*   Join (subst_tm ξ a0) (subst_tm ξ a1). *)
-(* Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed. *)
-
-(* Lemma Join_reflexive a : *)
-(*   Join a a. *)
-(* Proof. hauto l:on ctrs:Rstar. Qed. *)
-
-(* Lemma Join_symmetric a b : *)
-(*   Join a b -> Join b a. *)
-(* Proof. sfirstorder use:coherent_symmetric. Qed. *)
-
-(* Lemma Join_transitive a b c : *)
-(*   Join a b -> Join b c -> Join a c. *)
-(* Proof. *)
-(*   have := pars_confluent. *)
-(*   rewrite /Confluent /confluent /Join /coherent => h [z0 [? h0]] [z1 [h1 ?]]. *)
-(*   move /(_ b _ _ h0 h1) in h. *)
-(*   case : h => z [*]. *)
-(*   exists z. split; sfirstorder use:Rstar_transitive. *)
-(* Qed. *)
-
 End join_sig.
