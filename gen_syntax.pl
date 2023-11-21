@@ -11,7 +11,8 @@ From WR Require Export unscoped.
 #[export]Set Bullet Behavior "Strict Subproofs".
 
 Module Type grade_sig.
-Parameter grade : latticeType tt.
+Parameter display : unit.
+Parameter grade : latticeType display.
 Parameter el : grade.
 End grade_sig.
 
