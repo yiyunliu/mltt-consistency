@@ -72,7 +72,7 @@ Lemma icoherent_transitive {Ξ a b c} :
   icoherent Ξ a b -> icoherent Ξ b c -> icoherent Ξ a c.
 Proof. qauto l:on inv:PER use:icoherent_PER unfold:Transitive. Qed.
 
-Lemma icoherentR_transitive {Ξ a b c} :
+Lemma icoherentR_transitive Ξ a b c :
   icoherentR Ξ a b -> icoherent Ξ b c -> icoherentR Ξ a c.
 Proof.
   hauto ctrs:clos_refl l:on use:icoherent_transitive inv:clos_refl.
@@ -82,6 +82,12 @@ Lemma icoherentR_transitive' {Ξ a b c} :
   icoherent Ξ a b -> icoherentR Ξ b c -> icoherent Ξ a c.
 Proof.
   hauto lq:on inv:clos_refl use:icoherent_transitive.
+Qed.
+
+Lemma icoherentR_transitive'' {Ξ a b c} :
+  icoherentR Ξ a b -> icoherentR Ξ b c -> icoherentR Ξ a c.
+Proof.
+  hauto ctrs:clos_refl l:on use:icoherent_transitive inv:clos_refl.
 Qed.
 
 Lemma Wt_Pi_inv Γ ℓ ℓ0 A B U (h : Wt Γ ℓ (tPi ℓ0 A B) U) :
@@ -337,6 +343,30 @@ Lemma Par_icoherent' Γ ℓ a A b :
   icoherent (unzip1 Γ) a b.
 Proof. hauto lq:on use:typing_ieq, Par_icoherent. Qed.
 
+Lemma icoherentR_to_icoherent Γ ℓ A B T
+  (h : Wt Γ ℓ A T) :
+  icoherentR (unzip1 Γ) A B ->
+  icoherent (unzip1 Γ) A B.
+Proof.
+  hauto l:on inv:clos_refl use:typing_ieq.
+Qed.
+
+Lemma icoherentR_to_icoherent' Γ ℓ A B T
+  (h : Wt Γ ℓ B T) :
+  icoherentR (unzip1 Γ) A B ->
+  icoherent (unzip1 Γ) A B.
+Proof.
+  hauto l:on inv:clos_refl use:typing_ieq, icoherent_symmetric.
+Qed.
+
+Lemma T_Conv' Γ ℓ ℓ1 a A B i :
+  Wt Γ ℓ a A ->
+  Wt Γ ℓ1 B (tUniv i) ->
+  icoherentR (unzip1 Γ) A B ->
+  (* ----------- *)
+  Wt Γ ℓ a B.
+Proof. hauto lq:on inv:clos_refl ctrs:Wt. Qed.
+
 Lemma subject_reduction a b (h : Par a b) : forall Γ ℓ A,
     Wt Γ ℓ a A -> Wt Γ ℓ b A.
 Proof.
@@ -374,50 +404,60 @@ Proof.
   - move => a ℓ0 A a0 b0 b1 haa0 iha hbb0 ihb Γ ℓ A0 /Wt_App_inv.
     intros (A1 & B & ha & hb0 & hJoin & ℓ1 & i & hA0).
     have /iha /Wt_Abs_inv := ha; intros (ℓ3 & B0 & k & hPi & ha0 & hJoin' & ℓ2 & j & hPi').
-    case /icoherent_pi_inj : hJoin' => *.
+    have hJoin'' : icoherent (unzip1 Γ) (tPi ℓ0 A B0) (tPi ℓ0 A1 B) by
+      sfirstorder use:icoherentR_to_icoherent.
+    case /icoherent_pi_inj : (hJoin'') => *.
     case /Wt_Pi_Univ_inv : hPi => *.
-    move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
+    move /Wt_regularity : ha => [i0 [ℓ4 /Wt_Pi_Univ_inv]] [hA1 hB].
     move /ihb in hb0.
-    eapply T_Conv with (A := subst_tm (b1..) B0); eauto.
+    eapply T_Conv' with (A := subst_tm (b1..) B0); eauto.
     + apply : subst_Syn; eauto.
       eapply T_Conv with (A := A1); eauto.
-      qauto l:on use:Join_symmetric.
-    + apply : Join_transitive; eauto.
-      apply Join_symmetric.
-      apply join_morphing.
-      * by apply Join_symmetric.
-      * case; [by asimpl | sfirstorder use:Par_refl].
-  - hauto lq:on use:Wt_If_inv ctrs:Wt.
-  - qauto l:on use:Wt_If_inv ctrs:Wt.
-  - qauto l:on use:Wt_If_inv ctrs:Wt.
+      qauto l:on use:icoherent_symmetric.
+    + apply icoherentR_transitive with (b := subst_tm (b0..) B).
+      apply r_step.
+      apply icoherent_symmetric.
+      apply : icoherent_morphing2.
+      * hauto l:on use:typing_ieq, icoherent_symmetric.
+      * case;[by asimpl | sfirstorder use:Par_refl].
+      * move => ? /=.
+        case => /=; first by
+          sfirstorder use:typing_gieq.
+        rewrite size_map => * /=.
+        apply : typing_gieq; eauto.
+        apply T_Var; eauto with wff. lia.
+      * apply : icoherentR_to_icoherent'; eauto.
+  - qauto l:on use:Wt_If_inv, T_Conv' ctrs:Wt.
+  - qauto l:on use:Wt_If_inv, T_Conv' ctrs:Wt.
+  - qauto l:on use:Wt_If_inv, T_Conv' ctrs:Wt.
 Qed.
 
 Definition is_value (a : tm) :=
   match a with
-  | tPi A B => true
-  | tAbs A a => true
+  | tPi ℓ A B => true
+  | tAbs ℓ A a => true
   | tSwitch => true
   | tOn => true
   | tOff => true
   | tFalse => true
   | tIf a b c => false
-  | tApp a b => false
+  | tApp a ℓ b => false
   | tUniv _ => true
   | var_tm _ => false
   end.
 
-Inductive head := hPi | hAbs | hSwitch | hOn | hOff | hFalse | hUniv | hVar.
+Inductive head := hPi (ℓ : grade) | hAbs (ℓ : grade) | hSwitch | hOn | hOff | hFalse | hUniv | hVar.
 
 Definition tm_to_head (a : tm) :=
   match a with
-  | tPi A B => Some hPi
-  | tAbs A a => Some hAbs
+  | tPi ℓ A B => Some (hPi ℓ)
+  | tAbs ℓ A a => Some (hAbs ℓ)
   | tSwitch => Some hSwitch
   | tOn => Some hOn
   | tOff => Some hOff
   | tFalse => Some hFalse
   | tIf a b c => None
-  | tApp a b => None
+  | tApp a ℓ b => None
   | tUniv _ => Some hUniv
   | var_tm _ => Some hVar
   end.
@@ -432,75 +472,91 @@ Lemma par_head_star a b (h : Rstar _ Par a b) :
         tm_to_head b = Some hd.
 Proof. induction h; eauto using par_head. Qed.
 
-Lemma join_consistent a b (h : Join a b) :
+Lemma ieq_head_star Ξ ℓ a b (h : IEq Ξ ℓ a b) :
+  forall hd, tm_to_head a = Some hd ->
+        tm_to_head b = Some hd.
+Proof. induction h => //. Qed.
+
+Lemma icoherent_consistent Ξ a b (h : icoherent Ξ a b) :
   forall hd hd1, tm_to_head a = Some hd ->
             tm_to_head b = Some hd1 ->
             hd = hd1.
-Proof. qblast use:par_head_star. Qed.
+Proof. rewrite /icoherent in h.
+       hecrush use:par_head_star, ieq_head_star. Qed.
 
-Lemma Wt_Univ_winv Γ i U :
-  Wt Γ (tUniv i) U ->
-  exists j, Join (tUniv j) U.
+Lemma icoherentR_consistent Ξ a b (h : icoherentR Ξ a b) :
+  forall hd hd1, tm_to_head a = Some hd ->
+            tm_to_head b = Some hd1 ->
+            hd = hd1.
+Proof. hauto l:on inv:clos_refl use:icoherent_consistent. Qed.
+
+Local Ltac winv := qauto l:on ctrs:Wt, clos_refl use:icoherentR_transitive.
+
+Lemma Wt_Univ_winv Γ ℓ i U :
+  Wt Γ ℓ (tUniv i) U ->
+  exists j, icoherentR (unzip1 Γ) (tUniv j) U.
 Proof.
   move E : (tUniv i) => U0 h.
   move : i E.
-  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+  induction h => //; winv.
 Qed.
 
-Lemma Wt_False_winv Γ U :
-  Wt Γ tFalse U ->
-  exists j, Join (tUniv j) U.
+Lemma Wt_False_winv Γ ℓ U :
+  Wt Γ ℓ tFalse U ->
+  exists j, icoherentR (unzip1 Γ) (tUniv j) U.
 Proof.
   move E : tFalse => U0 h.
   move : E.
-  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+  induction h => //; winv.
 Qed.
 
-Lemma Wt_On_Off_winv Γ a A (h : Wt Γ a A) :
-  is_bool_val a -> Join tSwitch A.
-Proof. induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive. Qed.
+Lemma Wt_On_Off_winv Γ ℓ a A (h : Wt Γ ℓ a A) :
+  is_bool_val a -> icoherentR (unzip1 Γ) tSwitch A.
+Proof. induction h => //; winv. Qed.
 
-Lemma Wt_Switch_winv Γ A :
-  Wt Γ tSwitch A ->
-  exists i, Join (tUniv i) A.
+Lemma Wt_Switch_winv Γ ℓ A :
+  Wt Γ ℓ tSwitch A ->
+  exists i, icoherentR (unzip1 Γ) (tUniv i) A.
 Proof.
   move E : tSwitch => a h. move : E.
-  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+  induction h => //; winv.
 Qed.
 
-Lemma wt_pi_canon a A B :
-  Wt nil a (tPi A B) ->
+Lemma wt_pi_canon ℓ a ℓ0 A B :
+  Wt nil ℓ a (tPi ℓ0 A B) ->
   is_value a ->
-  exists A a0, a = tAbs A a0.
+  exists A a0, a = tAbs ℓ0 A a0.
 Proof.
   case : a => //.
-  - hauto lq:on.
-  - qauto l:on use:Wt_Pi_inv, join_consistent.
-  - qauto l:on use:Wt_False_winv, join_consistent.
-  - qauto l:on use:Wt_Univ_winv, join_consistent.
-  - qauto l:on use:Wt_On_Off_winv, join_consistent.
-  - qauto l:on use:Wt_On_Off_winv, join_consistent.
-  - qauto l:on use:Wt_Switch_winv, join_consistent.
+  - hauto lq:on rew:off use:Wt_Abs_inv, icoherentR_consistent.
+  - qauto l:on use:Wt_Pi_inv, icoherentR_consistent.
+  - qauto l:on use:Wt_False_winv, icoherentR_consistent.
+  - qauto l:on use:Wt_Univ_winv, icoherentR_consistent.
+  - qauto l:on use:Wt_On_Off_winv, icoherentR_consistent.
+  - qauto l:on use:Wt_On_Off_winv, icoherentR_consistent.
+  - qauto l:on use:Wt_Switch_winv, icoherentR_consistent.
 Qed.
 
-Lemma wt_switch_canon a :
-  Wt nil a tSwitch ->
+Lemma wt_switch_canon ℓ a :
+  Wt nil ℓ a tSwitch ->
   is_value a ->
   is_bool_val a.
 Proof.
   case : a => //.
-  - qauto l:on use:Wt_Abs_inv, join_consistent.
-  - qauto l:on use:Wt_Pi_inv, join_consistent.
-  - qauto l:on use:Wt_False_winv, join_consistent.
-  - qauto l:on use:Wt_Univ_winv, join_consistent.
-  - qauto l:on use:Wt_Switch_winv, join_consistent.
+  - qauto l:on use:Wt_Abs_inv, icoherentR_consistent.
+  - qauto l:on use:Wt_Pi_inv, icoherentR_consistent.
+  - qauto l:on use:Wt_False_winv, icoherentR_consistent.
+  - qauto l:on use:Wt_Univ_winv, icoherentR_consistent.
+  - qauto l:on use:Wt_Switch_winv, icoherentR_consistent.
 Qed.
 
-Lemma wt_progress a A (h :Wt nil a A) : is_value a \/ exists a0, Par a a0.
+Lemma wt_progress ℓ a A (h :Wt nil ℓ a A) : is_value a \/ exists a0, Par a a0.
 Proof.
   move E : nil h => Γ h.
   move : E.
-  elim: Γ a A/h; try hauto q:on depth:2.
+  elim: Γ ℓ a A/h; try hauto q:on depth:2.
   - hauto lq:on rew:off ctrs:Par use:wt_pi_canon, Par_refl.
   - hauto lq:on rew:off use:wt_switch_canon, Par_refl.
 Qed.
+
+End syntactic_soundness.

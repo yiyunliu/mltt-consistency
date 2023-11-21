@@ -579,6 +579,25 @@ Proof.
   - suff : ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ;
     sfirstorder use:ieq_morphing.
 Qed.
+
+Lemma icoherent_morphing2 Ξ Δ a0 a1 ξ0 ξ1
+  (h : icoherent Ξ a0 a1) :
+  (forall i, Par (ξ0 i) (ξ1 i)) ->
+  (forall ℓ, ieq_good_morphing ℓ ξ1 ξ1 Ξ Δ) ->
+  icoherent Δ (subst_tm ξ0 a0) (subst_tm ξ1 a1).
+Proof.
+  move => hξ0ξ1 hhξ0ξ1'.
+  move : h.
+  rewrite /icoherent.
+  intros (c & d & ℓ & h0 & h1 & h2).
+  have ? : Rstar _ Par (subst_tm ξ0 a0) (subst_tm ξ1 c) by
+    sfirstorder use:par_morphing_star.
+  have ? : Rstar _ Par (subst_tm ξ1 a1) (subst_tm ξ1 d) by
+    sfirstorder use:Par_refl, par_morphing_star.
+  exists (subst_tm ξ1 c), (subst_tm ξ1 d), ℓ. repeat split => //.
+  apply ieq_morphing with (Ξ := Ξ) => //.
+Qed.
+
 (* Lemma join_morphing Ξ Δ a0 a1 (h : icoherent Ξ a0 a1) (ξ : fin -> tm) : *)
 (*   (forall i ℓ, (eith Δ (ξ i)) IEq ℓ (ξ i) (ξ i) -> ) -> *)
 (*   Join (subst_tm ξ0 a0) (subst_tm ξ1 a1). *)
