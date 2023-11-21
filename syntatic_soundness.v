@@ -1,6 +1,6 @@
 From WR Require Import typing.
 From Coq Require Import ssreflect Sets.Relations_2 ssrbool Relations.Relation_Operators.
-From Hammer Require Import Tactics Hammer.
+From Hammer Require Import Tactics.
 
 Module syntactic_soundness
   (Import grade : grade_sig)
@@ -76,6 +76,12 @@ Lemma icoherentR_transitive {Ξ a b c} :
   icoherentR Ξ a b -> icoherent Ξ b c -> icoherentR Ξ a c.
 Proof.
   hauto ctrs:clos_refl l:on use:icoherent_transitive inv:clos_refl.
+Qed.
+
+Lemma icoherentR_transitive' {Ξ a b c} :
+  icoherent Ξ a b -> icoherentR Ξ b c -> icoherent Ξ a c.
+Proof.
+  hauto lq:on inv:clos_refl use:icoherent_transitive.
 Qed.
 
 Lemma Wt_Pi_inv Γ ℓ ℓ0 A B U (h : Wt Γ ℓ (tPi ℓ0 A B) U) :
@@ -264,100 +270,111 @@ Proof.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
 Qed.
 
-Lemma Wt_App_inv Γ b a T (h : Wt Γ (tApp b a) T) :
-  exists A B, Wt Γ b (tPi A B) /\
-         Wt Γ a A /\
-         Join (subst_tm (a..) B) T /\
-         exists i, Wt Γ T (tUniv i).
+Lemma Wt_App_inv Γ ℓ b ℓ0 a T (h : Wt Γ ℓ (tApp b ℓ0 a) T) :
+  exists A B, Wt Γ ℓ b (tPi ℓ0 A B) /\
+         Wt Γ ℓ0 a A /\
+          icoherentR (unzip1 Γ) (subst_tm (a..) B) T /\
+         exists ℓ i, Wt Γ ℓ T (tUniv i).
 Proof.
-  move E : (tApp b a) h => ba h.
-  move : b a E.
-  elim : Γ ba T /h => //.
-  - move => Γ a A B b h0 _ h1 _ ? ? [] *; subst.
+  move E : (tApp b ℓ0 a) h => ba h.
+  move : ℓ0 b a E.
+  elim : Γ ℓ ba T /h => //.
+  - move => Γ ℓ ℓ0 a A B b h0 _ h1 _ ℓ1 ? ? [*]; subst.
     exists A, B; repeat split => //.
-    + apply join_subst_star. apply Join_reflexive.
+    + sfirstorder ctrs:clos_refl.
     + move /Wt_regularity : h0.
-      move => [i /Wt_Pi_Univ_inv] [hA hB].
-      exists i.
+      move => [i [ℓ1 /Wt_Pi_Univ_inv]] [hA hB].
+      exists ℓ1, i.
       change (tUniv i) with (subst_tm (b..) (tUniv i)).
       apply : subst_Syn; eauto.
-  - hauto lq:on rew:off use:Join_transitive.
+  - hauto q:on use:@icoherentR_transitive.
 Qed.
 
-
-Lemma Wt_If_inv Γ a b c T (h : Wt Γ (tIf a b c) T) :
-  exists A, Wt Γ a tSwitch /\
-         Wt Γ b A /\
-         Wt Γ c A /\
-         Join A T /\
-         exists i, Wt Γ T (tUniv i).
+Lemma Wt_If_inv Γ ℓ a b c T (h : Wt Γ ℓ (tIf a b c) T) :
+  exists A, Wt Γ ℓ a tSwitch /\
+         Wt Γ ℓ b A /\
+         Wt Γ ℓ c A /\
+         icoherentR (unzip1 Γ) A T /\
+         exists ℓ i, Wt Γ ℓ T (tUniv i).
 Proof.
   move E : (tIf a b c) h => a0 h.
   move : a b c E.
-  elim : Γ a0 T / h => //.
-  - hauto lq:on rew:off use:Join_transitive.
-  - qauto l:on use:Join_reflexive, Wt_regularity.
+  elim : Γ ℓ a0 T / h => //.
+  - hauto lq:on rew:off use:@icoherentR_transitive.
+  - hauto lq:on ctrs:clos_refl use:Wt_regularity.
 Qed.
 
-Lemma preservation_helper A0 A1 i j Γ a A :
-  Wt (A0 :: Γ) a A ->
-  Wt Γ A0 (tUniv i) ->
-  Wt Γ A1 (tUniv j) ->
-  Join A0 A1 ->
-  Wt (A1 :: Γ) a A.
+Lemma preservation_helper ℓ ℓ0 ℓ1 ℓ2 A0 A1 i j Γ a A :
+  Wt ((ℓ0, A0) :: Γ) ℓ a A ->
+  Wt Γ ℓ1 A0 (tUniv i) ->
+  Wt Γ ℓ2 A1 (tUniv j) ->
+  icoherent (unzip1 Γ) A0 A1 ->
+  Wt ((ℓ0, A1) :: Γ) ℓ a A.
 Proof.
   move => h0 h1 h2 h3.
   replace a with (subst_tm ids a); last by asimpl.
   replace A with (subst_tm ids A); last by asimpl.
-  apply morphing_Syn with (Γ := A0 :: Γ).
+  apply morphing_Syn with (Γ := (ℓ0, A0) :: Γ).
   - done.
   - case => [_ | k /Arith_prebase.lt_S_n ?].
     + rewrite dep_ith_ren_tm0; asimpl.
-      apply T_Conv with (A := ren_tm shift A1) (i := i).
+      apply T_Conv with (A := ren_tm shift A1)
+                        (i := i) (ℓ1 := ℓ1).
       * apply T_Var; hauto l:on db:wff.
       * change (tUniv i) with (ren_tm shift (tUniv i)).
-        apply weakening_Syn with (i := j) => //.
-      * hauto lq:on use:Join_symmetric, join_renaming.
-    + asimpl.
+        eapply weakening_Syn with (i := j); eauto.
+      * hauto drew:off use:icoherent_symmetric unfold:ieq_good_renaming use:icoherent_renaming.
+    + asimpl => /=.
       change (var_tm (S k)) with (ren_tm shift (var_tm k)).
-      apply weakening_Syn with (i := j) => //.
+      eapply weakening_Syn with (i := j); eauto.
       apply T_Var; hauto lq:on db:wff.
   - eauto with wff.
 Qed.
 
-Lemma subject_reduction a b (h : Par a b) : forall Γ A,
-    Wt Γ a A -> Wt Γ b A.
+Lemma Par_icoherent' Γ ℓ a A b :
+  Par a b ->
+  Wt Γ ℓ a A  ->
+  icoherent (unzip1 Γ) a b.
+Proof. hauto lq:on use:typing_ieq, Par_icoherent. Qed.
+
+Lemma subject_reduction a b (h : Par a b) : forall Γ ℓ A,
+    Wt Γ ℓ a A -> Wt Γ ℓ b A.
 Proof.
   elim : a b /h => //.
-  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Pi_inv.
-    intros (i & hA0 & hAB0 & hAJoin & j & hA).
+  - move => ℓ A0 A1 B0 B1 h0 ih0 h1 ih1 Γ ℓ0 A /Wt_Pi_inv.
+    intros (i & hA0 & hAB0 & hAJoin & ℓ1 & j & hA).
     have ? : Wff Γ by eauto with wff.
-    apply T_Conv with (A := tUniv i) (i := j) => //.
-    qauto l:on ctrs:Wt use:preservation_helper, Par_join.
-  - move => A0 A1 a0 a1 h0 ih0 h1 ih1 Γ A /Wt_Abs_inv.
-    intros (B & i & hPi & ha0 & hJoin & j & hA).
+    apply T_Conv with (A := tUniv i) (i := j) (ℓ1 := ℓ1) => //.
+    + qauto l:on ctrs:Wt use:preservation_helper, Par_icoherent'.
+    + hauto l:on inv:clos_refl use:Par_refl ctrs:IEq.
+  - move => ℓ A0 A1 a0 a1 h0 ih0 h1 ih1 Γ ℓ0 A /Wt_Abs_inv.
+    intros (ℓ1 & B & i & hPi & ha0 & hJoin & ℓ2 & j & hA).
     case /Wt_Pi_Univ_inv : hPi => hA0 hB.
-    apply T_Conv with (A := tPi A1 B) (i := j) => //.
-    apply T_Abs with (i := i).
-    + qauto l:on ctrs:Wt use:preservation_helper, Par_join.
-    + qauto l:on ctrs:Wt use:preservation_helper, Par_join.
-    + suff : Join (tPi A1 B) (tPi A0 B) by hauto l:on use:Join_transitive.
-      apply Join_symmetric.
-      apply Par_join.
-      hauto lq:on ctrs:Par use:Par_refl.
-  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_App_inv.
-    intros (A0 & B & hPi & hb0 & hJoin & i & hA).
+    eapply T_Conv with (A := tPi ℓ A1 B) (i := j); eauto.
+    apply T_Abs with (i := i) (ℓ1 := ℓ1).
+    + qauto l:on ctrs:Wt use:preservation_helper, Par_icoherent'.
+    + qauto l:on ctrs:Wt use:preservation_helper, Par_icoherent'.
+    + suff : icoherent (unzip1 Γ) (tPi ℓ A1 B) (tPi ℓ A0 B) by hauto lq:on inv:clos_refl use:icoherent_transitive.
+      apply icoherent_symmetric.
+      apply : Par_icoherent';
+        hauto lq:on ctrs:Par,Wt use:Par_refl.
+  - move => a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 Γ ℓ A /Wt_App_inv.
+    intros (A0 & B & hPi & hb0 & hJoin & ℓ1 & i & hA).
     eapply T_Conv with (A := subst_tm (b1..) B); eauto.
     apply : T_App; eauto.
-    apply : Join_transitive; eauto.
-    apply Join_symmetric.
-    apply Par_join.
+    eapply icoherentR_transitive'; eauto.
+    apply icoherent_symmetric.
+    have ? : Wt Γ ℓ (tApp a0 ℓ0 b0) (subst_tm (b0..) B)
+      by hauto lq:on ctrs:Wt.
+    have : exists ℓ T, Wt Γ ℓ (subst_tm (b0..) B) T by hauto lq:on use:Wt_regularity.
+    intros (ℓ2 & T & h).
+    apply : Par_icoherent'; eauto.
     apply par_morphing; last by apply Par_refl.
     hauto q:on ctrs:Par inv:nat simp:asimpl.
-  - move => a A a0 b0 b1 haa0 iha hbb0 ihb Γ A0 /Wt_App_inv.
-    intros (A1 & B & ha & hb0 & hJoin & i & hA0).
-    have /iha /Wt_Abs_inv := ha; intros (B0 & k & hPi & ha0 & hJoin' & j & hPi').
-    case /join_pi_inj : hJoin' => *.
+  - move => a ℓ0 A a0 b0 b1 haa0 iha hbb0 ihb Γ ℓ A0 /Wt_App_inv.
+    intros (A1 & B & ha & hb0 & hJoin & ℓ1 & i & hA0).
+    have /iha /Wt_Abs_inv := ha; intros (ℓ3 & B0 & k & hPi & ha0 & hJoin' & ℓ2 & j & hPi').
+    case /icoherent_pi_inj : hJoin' => *.
     case /Wt_Pi_Univ_inv : hPi => *.
     move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
     move /ihb in hb0.

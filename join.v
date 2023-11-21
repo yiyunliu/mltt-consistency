@@ -32,6 +32,7 @@ Inductive Par : tm -> tm -> Prop :=
   Par (tPi ℓ A0 B0) (tPi ℓ A1 B1)
 | P_Abs ℓ A0 A1 a0 a1 :
   Par a0 a1 ->
+  Par A0 A1 ->
   (* -------------------- *)
   Par (tAbs ℓ A0 a0) (tAbs ℓ A1 a1)
 | P_App a0 a1 ℓ b0 b1 :
@@ -442,7 +443,11 @@ Lemma simulation : forall Ξ ℓ,
 Proof.
   apply IEq_mutual; try qauto ctrs:IEq, Par, GIEq inv:Par.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
-  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - move => Ξ ℓ ℓ0 A0 A1 a0 a1 h0 ih0 a'.
+    elim /Par_inv => // h1 ℓ1 A2 A3 a2 a3 h2 h3 [] *; subst.
+    case /ih0 : (h2) => a2 h.
+    exists (tAbs ℓ0 A1 a2).
+    hauto lq:on ctrs:IEq, Par use:Par_refl.
   - move => Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 a'.
     elim /Par_inv => //.
     + hauto lq:on ctrs:Par, IEq.
@@ -539,6 +544,11 @@ Lemma icoherent_PER Ξ : PER tm (icoherent Ξ).
     intros (c1 & h40 & h41).
     exists a1, c1, (ℓ0 `&` ℓ1)%O.
     sfirstorder use:Rstar_transitive, ieq_trans_heterogeneous.
+Qed.
+
+Lemma icoherent_symmetric Ξ a b : icoherent Ξ a b -> icoherent Ξ b a.
+Proof.
+  hauto lq:on use:icoherent_PER inv:PER unfold:Symmetric.
 Qed.
 
 Lemma ieq_wg Ξ ℓ a b :
