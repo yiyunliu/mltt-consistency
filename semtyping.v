@@ -35,7 +35,11 @@ Lemma InterpExt_Univ' n Interp m PF :
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
 Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
-  InterpUnivN n := InterpExt n (fun m A PA => forall (h : m < n), InterpUnivN m A PA).
+  InterpUnivN n := InterpExt n (fun m A PA =>
+                                  match Compare_dec.lt_dec m n with
+                                  | left h => InterpUnivN m A PA
+                                  | right _ => False
+                                  end).
 
 Lemma InterpExt_NotVar Interp n i P : ~InterpExt n Interp (var_tm i) P.
 Proof.
@@ -192,22 +196,29 @@ Proof.
 Qed.
 
 Lemma InterpExt_lt_redundant n I A PA
-  (h : InterpExt n I A PA):
-  InterpExt n (fun m A PA => forall (h : m < n), I m A PA) A PA.
+  (h : InterpExt n I A PA) :
+      InterpExt n (fun m A PA =>
+                     match Compare_dec.lt_dec m n with
+                     | left h => I m A PA
+                     | right _ => False
+                     end) A PA.
 Proof.
   elim : A PA / h.
   - hauto l:on.
   - hauto l:on.
   - hauto l:on ctrs:InterpExt.
-  - move => m ?.
+  - move => m h.
     apply InterpExt_Univ' => //.
-    fext.
-    sfirstorder use:propositional_extensionality.
+    case : Compare_dec.lt_dec => //.
   - hauto lq:on ctrs:InterpExt.
 Qed.
 
 Lemma InterpExt_lt_redundant2 n (I :fin -> tm -> (tm -> Prop) -> Prop ) A PA
-  (h : InterpExt n (fun m A PA => forall (h : m < n), I m A PA) A PA) :
+  (h : InterpExt n (fun m A PA =>
+                      match Compare_dec.lt_dec m n with
+                     | left h => I m A PA
+                     | right _ => False
+                     end) A PA) :
   InterpExt n I A PA.
 Proof.
   elim : A PA / h.
@@ -216,8 +227,7 @@ Proof.
   - hauto l:on ctrs:InterpExt.
   - move => m ?.
     apply InterpExt_Univ' => //.
-    fext.
-    sfirstorder use:propositional_extensionality.
+    case : Compare_dec.lt_dec => //.
   - hauto lq:on ctrs:InterpExt.
 Qed.
 
