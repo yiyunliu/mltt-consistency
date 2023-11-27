@@ -72,6 +72,22 @@ Definition tm_rel := tm -> tm -> Prop.
 Definition ProdSpace (PA : tm_rel) (PF : tm -> tm_rel -> Prop) (b0 b1 : tm)  :=
   forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB /\ PB (tApp b0 a0) (tApp b1 a1).
 
+Lemma ProdSpace_El_Sym (PA : tm_rel) (PF : tm -> tm_rel -> Prop) (b0 b1 : tm)
+  (h0 : forall a0 a1, PA a0 a1 -> PA a1 a0)
+  (h3 : forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> PF a1 PB)
+  (h1 : ProdSpace PA PF b0 b1)
+  (h2 : forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> forall b0 b1, PB b0 b1 -> PB b1 b0) :
+  ProdSpace PA PF b1 b0.
+Proof.
+  rewrite /ProdSpace in h1 *.
+  move => a1 a0 ha10.
+  case /h0 /h1 : (ha10) => PB hPB.
+  exists PB.
+  split.
+  - sfirstorder.
+  - apply h2 with (a0 := a0) (a1 := a1); sfirstorder.
+Qed.
+
 Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm -> tm -> tm_rel -> Prop :=
 | InterpExt_False : InterpExt n Interp tFalse tFalse
                       (fun _ _ => False)
@@ -79,7 +95,8 @@ Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm 
                        (fun a b => exists v, Rstar _ Par a v /\ Rstar _ Par b v /\ is_bool_val v)
 | InterpExt_Fun A0 B0 A1 B1 PA (PF : tm -> tm_rel -> Prop) :
   InterpExt n Interp A0 A1 PA ->
-  (forall a0 a1, PA a0 a1 -> (exists PB, PF a0 PB) /\ (exists PB, PF a1 PB)) ->
+  (forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB) ->
+  (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> PF a1 PB) ->
   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpExt n Interp (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) ->
   InterpExt n Interp (tPi A0 B0) (tPi A1 B1) (ProdSpace PA PF)
 | InterpExt_Univ m :
@@ -91,42 +108,64 @@ Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm 
   InterpExt n Interp A1 B1 PA ->
   InterpExt n Interp A0 B0 PA.
 
+Lemma InterpExt_El_Sym n Interp A A0 PA
+  (h0 : forall m A0 A1 PA, m < n -> Interp m A0 A1 PA -> Interp m A1 A0 PA)
+  (h : InterpExt n Interp A A0 PA) :
+  forall a b, PA a b -> PA b a.
+Proof.
+  elim : A A0 PA / h.
+  - sfirstorder.
+  - sfirstorder.
+  - move => A0 B0 A1 B1 PA PF hPA ihPA PFTot PFRes hPF ihPF b0 b1 hb.
+    hauto l:on use:ProdSpace_El_Sym.
+  - hauto lq:on.
+  - sfirstorder.
+Qed.
+
+Lemma InterpExt_Sym n Interp A A0 PA
+  (hl : forall m A0 A1 PA, m < n -> Interp m A0 A1 PA -> Interp m A1 A0 PA)
+  (h : InterpExt n Interp A A0 PA) :
+  InterpExt n Interp A0 A PA.
+Proof.
+  elim : A A0 PA / h.
+  - sfirstorder ctrs:InterpExt.
+  - sfirstorder ctrs:InterpExt.
+  - move => A0 B0 A1 B1 PA PF h0 ih0 hTot hRes hPF ihPF.
+    apply InterpExt_Fun => //.
+    have hh : forall a0 a1, PA a0 a1 -> PA a1 a0 by qauto l:on use:InterpExt_El_Sym.
+    move => a0 a1 PB h1 h2.
+    apply ihPF => //.
+    sfirstorder.
+    sfirstorder.
+  - hauto lq:on ctrs:InterpExt.
+  - hauto lq:on ctrs:InterpExt.
+Qed.
+
 Lemma InterpExt_Univ' n Interp m PF :
-  PF = (fun A => exists PA, Interp m A PA \/ ) ->
+  PF = (fun A0 A1 => exists PA, Interp m A0 A1 PA) ->
   m < n ->
-  InterpExt n Interp (tUniv m) PF.
+  InterpExt n Interp (tUniv m) (tUniv m) PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
-Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
-  InterpUnivN n := InterpExt n (fun m A PA =>
+Equations InterpUnivN (n : nat) : tm -> tm -> tm_rel -> Prop by wf n lt :=
+  InterpUnivN n := InterpExt n (fun m A0 A1 PA =>
                                   match Compare_dec.lt_dec m n with
-                                  | left h => InterpUnivN m A PA
+                                  | left h => InterpUnivN m A0 A1 PA
                                   | right _ => False
                                   end).
 
-Lemma InterpExt_NotVar Interp n i P : ~InterpExt n Interp (var_tm i) P.
+Lemma InterpUniv_Sym n : forall A B PA,
+    InterpUnivN n A B PA ->
+    InterpUnivN n B A PA.
 Proof.
-  move E : (var_tm i) => a0 h.
-  move : i E.
-  elim : a0 P / h; hauto inv:InterpExt, Par.
-Qed.
+  move : n.
+  elim /Wf_nat.lt_wf_ind.
+  move => n ih A B PA h.
+  apply InterpExt_Sym.
+  move => n ih A B PA h.
+  case : A B PA /h.
 
-Lemma InterpUnivN_NotVar n i P : ~ InterpUnivN n (var_tm i) P.
-Proof.
-  hauto l:on rew:db:InterpUnivN use:InterpExt_NotVar.
-Qed.
 
-Lemma InterpExt_NotAbs Interp n A a P : ~ InterpExt n Interp (tAbs A a) P.
-Proof.
-  move E : (tAbs A a) => a0 h.
-  move : A a E.
-  elim : a0 P / h; hauto inv:Par.
-Qed.
-
-Lemma InterpUnivN_NotAbs n A a P : ~ InterpUnivN n (tAbs A a) P.
-Proof.
-  hauto l:on rew:db:InterpUnivN use:InterpExt_NotAbs.
-Qed.
 
 Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
   exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
