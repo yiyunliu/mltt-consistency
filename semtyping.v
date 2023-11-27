@@ -1,3 +1,6 @@
+From HB Require Import structures.
+From mathcomp Require Import ssrnat eqtype.
+Set Bullet Behavior "Strict Subproofs".
 From WR Require Import syntax join.
 From Coq Require Import
   Sets.Relations_2
@@ -9,27 +12,87 @@ From Coq Require Import
 From Hammer Require Import Tactics.
 From Equations Require Import Equations.
 
-Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
-  forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
+Fixpoint tm_eqb (a b : tm) : bool :=
+  match a, b with
+  | var_tm m, var_tm n => m == n
+  | tAbs A a, tAbs B b => tm_eqb A B && tm_eqb a b
+  | tPi A0 A1, tPi B0 B1 => tm_eqb A0 B0 && tm_eqb A1 B1
+  | tApp a0 a1, tApp b0 b1 => tm_eqb a0 b0 && tm_eqb a1 b1
+  | tFalse, tFalse => true
+  | tUniv i, tUniv j => i == j
+  | tOn, tOn => true
+  | tOff, tOff => true
+  | tIf a0 a1 a2, tIf b0 b1 b2 => tm_eqb a0 b0 && tm_eqb a1 b1 && tm_eqb a2 b2
+  | tSwitch, tSwitch => true
+  | _, _ => false
+  end.
 
-Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
-| InterpExt_False : InterpExt n Interp tFalse (const False)
-| InterpExt_Switch : InterpExt n Interp tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v)
-| InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
-  InterpExt n Interp A PA ->
-  (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
-  InterpExt n Interp (tPi A B) (ProdSpace PA PF)
+Lemma tm_eqP : Equality.axiom tm_eqb.
+Proof.
+  move => a.
+  elim : a; try qauto ctrs:Bool.reflect.
+  - move => n.
+    case => /ltac:(try qauto ctrs:Bool.reflect) m.
+    suff : reflect (n = m) (n == m)
+      by hauto q:on ctrs:Bool.reflect inv:Bool.reflect.
+     sfirstorder use:eqnP.
+  - move => A ihA a iha.
+    case => /ltac:(try qauto ctrs:Bool.reflect) B b.
+    move /(_ B) in ihA.
+    move /(_ b) in iha.
+    apply Bool.iff_reflect.
+    hauto q:on  inv:Bool.reflect.
+  - move => a0 iha0 a1 iha1.
+    case => /ltac:(try qauto ctrs:Bool.reflect) b0 b1 /=.
+    move /(_ b0) in iha0. move /(_ b1) in iha1.
+    apply Bool.iff_reflect.
+    hauto q:on  inv:Bool.reflect.
+  - move => A ihA a iha.
+    case => /ltac:(try qauto ctrs:Bool.reflect) B b.
+    move /(_ B) in ihA.
+    move /(_ b) in iha.
+    apply Bool.iff_reflect.
+    hauto q:on  inv:Bool.reflect.
+  - move => n.
+    case => /ltac:(try qauto ctrs:Bool.reflect) m.
+    suff : reflect (n = m) (n == m)
+      by hauto q:on ctrs:Bool.reflect inv:Bool.reflect.
+    sfirstorder use:eqnP.
+  - move => a0 iha0 a1 iha1 a2 iha2.
+    case => /ltac:(try qauto ctrs:Bool.reflect) b0 b1 b2.
+    move /(_ b0) in iha0. move /(_ b1) in iha1. move /(_ b2) in iha2.
+    apply Bool.iff_reflect.
+    hauto q:on  inv:Bool.reflect.
+Qed.
+
+HB.instance Definition _ := hasDecEq.Build _ tm_eqP.
+
+Definition tm_rel := tm -> tm -> Prop.
+
+Definition ProdSpace (PA : tm_rel) (PF : tm -> tm_rel -> Prop) (b0 b1 : tm)  :=
+  forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB /\ PB (tApp b0 a0) (tApp b1 a1).
+
+Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm -> tm -> tm_rel -> Prop :=
+| InterpExt_False : InterpExt n Interp tFalse tFalse
+                      (fun _ _ => False)
+| InterpExt_Switch : InterpExt n Interp tSwitch tSwitch
+                       (fun a b => exists v, Rstar _ Par a v /\ Rstar _ Par b v /\ is_bool_val v)
+| InterpExt_Fun A0 B0 A1 B1 PA (PF : tm -> tm_rel -> Prop) :
+  InterpExt n Interp A0 A1 PA ->
+  (forall a0 a1, PA a0 a1 -> (exists PB, PF a0 PB) /\ (exists PB, PF a1 PB)) ->
+  (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpExt n Interp (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) ->
+  InterpExt n Interp (tPi A0 B0) (tPi A1 B1) (ProdSpace PA PF)
 | InterpExt_Univ m :
   m < n ->
-  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
-| InterpExt_Step A A0 PA :
-  Par A A0 ->
-  InterpExt n Interp A0 PA ->
-  InterpExt n Interp A PA.
+  InterpExt n Interp (tUniv m) (tUniv m) (fun A0 A1 => exists PA, Interp m A0 A1 PA)
+| InterpExt_Step A0 A1 B0 B1 PA :
+  Rstar _ Par A0 A1 ->
+  Rstar _ Par B0 B1 ->
+  InterpExt n Interp A1 B1 PA ->
+  InterpExt n Interp A0 B0 PA.
 
 Lemma InterpExt_Univ' n Interp m PF :
-  PF = (fun A => exists PA, Interp m A PA) ->
+  PF = (fun A => exists PA, Interp m A PA \/ ) ->
   m < n ->
   InterpExt n Interp (tUniv m) PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
