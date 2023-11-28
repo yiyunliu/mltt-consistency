@@ -1,6 +1,6 @@
 From HB Require Import structures.
-From mathcomp Require Import ssrnat eqtype ssrbool.
-Set Bullet Behavior "Strict Subproofs".
+From mathcomp Require Import ssrnat eqtype ssrbool zify.
+#[export] Set Bullet Behavior "Strict Subproofs".
 From WR Require Import syntax join.
 From Coq Require Import
   Sets.Relations_2
@@ -147,19 +147,29 @@ Lemma InterpExt_Univ' n Interp m PF :
   InterpExt n Interp (tUniv m) (tUniv m) PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
-Locate "<".
+Lemma ltb_acc : forall a : nat, Acc (fun x y => x < y) a.
+Proof.
+  constructor.
+  elim : a => [|a].
+  - lia.
+  - move => ih.
+    case => [_|b h].
+    + constructor. lia.
+    + have ? : b < a by lia.
+      constructor => y h1.
+      apply ih.
+      lia.
+Qed.
 
+#[export]Instance ltb_wf : WellFounded (fun x y => x < y) := ltb_acc.
 
 (* wf is over coq's lt but not ssreflect's *)
-Equations InterpUnivN (n : nat) : tm -> tm -> tm_rel -> Prop by wf n lt :=
+Equations InterpUnivN (n : nat) : tm -> tm -> tm_rel -> Prop by wf n (fun x y => x < y) :=
   InterpUnivN n := InterpExt n (fun m A0 A1 PA =>
                                   match @idP (m < n) with
                                   | Bool.ReflectT h => InterpUnivN m A0 A1 PA
                                   | _ => False
                                   end).
-Next Obligation.
-  sauto use:leP.
-Qed.
 
 Lemma InterpExt_lt_redundant n I A0 A1 PA
   (h : InterpExt n I A0 A1 PA) :
@@ -212,16 +222,11 @@ Lemma InterpUniv_Sym n : forall A B PA,
     InterpUnivN n A B PA ->
     InterpUnivN n B A PA.
 Proof.
-  move : n.
-  elim /Wf_nat.lt_wf_ind.
-  move => n ih A B PA h.
-  simp InterpUniv in *.
-  best use:InterpExt_Sym rew:db:InterpUniv.
-  apply InterpExt_Sym.
-  move => n ih A B PA h.
-  case : A B PA /h.
-
-
+  (* See ubnP for a more idiomatic way of doing strong induction with ssreflect *)
+  have h : Acc (fun x y => x < y) n by sfirstorder use:wellfounded.
+  elim : n /h.
+  hauto l:on db:InterpUniv use:InterpExt_Sym.
+Qed.
 
 Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
   exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),

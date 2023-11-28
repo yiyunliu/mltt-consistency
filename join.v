@@ -1,10 +1,6 @@
 From WR Require Import syntax.
-From Coq Require Import
-  ssreflect
-  Sets.Relations_2
-  Sets.Relations_3
-  Sets.Relations_3_facts.
 From Hammer Require Import Tactics.
+From stdpp Require Import ssreflect relations.
 
 Definition is_bool_val a :=
   match a with

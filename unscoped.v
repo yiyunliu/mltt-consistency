@@ -191,8 +191,6 @@ Tactic Notation "fsimpl" "in" "*" :=
 Notation "s '..'" := (scons s ids) (at level 1, format "s ..") : subst_scope.
 #[export]Instance idsRen : Var nat nat := id.
 
-Notation "↑" := (shift).
-
 (** ** Tactics for unscoped syntax *)
 
 (** Unfold of the instances in goal and context. *)
