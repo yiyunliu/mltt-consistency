@@ -1,16 +1,11 @@
 From HB Require Import structures.
-From mathcomp Require Import ssrnat eqtype ssrbool zify.
+From WR Require Import join.
+From mathcomp Require Export ssrnat eqtype ssrbool zify.
+From Hammer Require Import Tactics Hammer.
 #[export] Set Bullet Behavior "Strict Subproofs".
-From WR Require Import syntax join.
-From Coq Require Import
-  Sets.Relations_2
-  Sets.Relations_2_facts
-  ssreflect
-  ssrbool
-  Program.Basics
-  Logic.PropExtensionality.
-From Hammer Require Import Tactics.
+From Coq Require Import Logic.PropExtensionality.
 From Equations Require Import Equations.
+Import stdpp.relations (rtc_refl).
 
 Fixpoint tm_eqb (a b : tm) : bool :=
   match a, b with
@@ -92,7 +87,7 @@ Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm 
 | InterpExt_False : InterpExt n Interp tFalse tFalse
                       (fun _ _ => False)
 | InterpExt_Switch : InterpExt n Interp tSwitch tSwitch
-                       (fun a b => exists v, Rstar _ Par a v /\ Rstar _ Par b v /\ is_bool_val v)
+                       (fun a b => exists v, Pars a v /\ Pars b v /\ is_bool_val v)
 | InterpExt_Fun A0 B0 A1 B1 PA (PF : tm -> tm_rel -> Prop) :
   InterpExt n Interp A0 A1 PA ->
   (forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB) ->
@@ -100,11 +95,11 @@ Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm 
   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpExt n Interp (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) ->
   InterpExt n Interp (tPi A0 B0) (tPi A1 B1) (ProdSpace PA PF)
 | InterpExt_Univ m :
-  is_true (m < n) ->
+  m < n ->
   InterpExt n Interp (tUniv m) (tUniv m) (fun A0 A1 => exists PA, Interp m A0 A1 PA)
 | InterpExt_Step A0 A1 B0 B1 PA :
-  Rstar _ Par A0 A1 ->
-  Rstar _ Par B0 B1 ->
+  Par A0 A1 ->
+  Par B0 B1 ->
   InterpExt n Interp A1 B1 PA ->
   InterpExt n Interp A0 B0 PA.
 
@@ -155,9 +150,10 @@ Proof.
   - move => ih.
     case => [_|b h].
     + constructor. lia.
-    + have ? : b < a by lia.
+    + have ? : b < a by done.
       constructor => y h1.
       apply ih.
+      simpl in *.
       lia.
 Qed.
 
@@ -228,8 +224,150 @@ Proof.
   hauto l:on db:InterpUniv use:InterpExt_Sym.
 Qed.
 
-Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
-  exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
+Lemma InterpUniv_El_Sym n A B PA
+    (h : InterpUnivN n A B PA) :
+    forall a b, PA a b -> PA b a.
+Proof.
+  hauto lq:on use:InterpUniv_Sym, InterpExt_El_Sym db:InterpUniv.
+Qed.
+
+Lemma Par_preserves_false (A B : tm):
+  A == tFalse ->
+  Par A B ->
+  B == tFalse.
+Proof.
+  case : A => // ?.
+  inversion 1 => //.
+Qed.
+
+Lemma Par_preserves_switch (A B : tm):
+  A == tSwitch ->
+  Par A B ->
+  B == tSwitch.
+Proof.
+  case : A => // ?.
+  inversion 1 => //.
+Qed.
+
+Lemma Par_preserves_univ (A B : tm) (i : nat) :
+  A == tUniv i ->
+  Par A B ->
+  B == tUniv i.
+Proof.
+  case : A => // ? ?.
+  inversion 1 => //.
+Qed.
+
+Lemma InterpExt_False_inv n I A0 A1 P :
+  (A0 == tFalse) || (A1 == tFalse) ->
+  InterpExt n I A0 A1 P ->
+  P = (fun a b => False) /\ Pars A0 tFalse /\ Pars A1 tFalse.
+Proof.
+  move => h1 h.
+  move : h1.
+  elim : A0 A1 P / h => //.
+  hauto lq:on inv:Par ctrs:rtc.
+  hauto qb:on ctrs:rtc use:@rtc_refl use:Par_preserves_false.
+Qed.
+
+Lemma InterpExt_Switch_inv n I A0 A1 P :
+  (A0 == tSwitch) || (A1 == tSwitch) ->
+  InterpExt n I A0 A1 P ->
+  P = (fun a b => exists v, Pars a v /\ Pars b v /\ is_bool_val v) /\ Pars A0 tSwitch /\ Pars A1 tSwitch.
+Proof.
+  move => h1 h.
+  move : h1.
+  elim : A0 A1 P / h => //.
+  hauto lq:on inv:Par ctrs:rtc.
+  hauto qb:on ctrs:rtc use:@rtc_refl use:Par_preserves_switch.
+Qed.
+
+Lemma InterpExt_Univ_inv n I A0 A1 m P :
+  (A0 == tUniv m) || (A1 == tUniv m) ->
+  InterpExt n I A0 A1 P ->
+  P = (fun A0 A1 => exists PA, I m A0 A1 PA) /\ m < n /\ Pars A0 (tUniv m) /\ Pars A1 (tUniv m).
+Proof.
+  move => /[swap] h.
+  elim : A0 A1 P / h => //.
+  - move => m0 h /=.
+    rewrite Bool.orb_diag => /eqP. hauto lq:on ctrs:rtc.
+  - hauto qb:on ctrs:rtc use:@rtc_refl use:Par_preserves_univ.
+Qed.
+
+Lemma InterpExt_back_preservation_star i I A0 A1 B P
+  (h : InterpExt i I A1 B P) :
+  Pars A0 A1 ->
+  InterpExt i I A0 B P.
+Proof.
+  induction 1;
+    hauto l:on ctrs:InterpExt use:Par_refl.
+Qed.
+
+Lemma InterpExt_back_preservation_star2 i I B A0 A1 P
+  (h : InterpExt i I B A1 P) :
+  Pars A0 A1 ->
+  InterpExt i I B A0 P.
+Proof.
+  induction 1;
+    hauto l:on ctrs:InterpExt use:Par_refl.
+Qed.
+
+Lemma InterpExt_preservation n I A0 A1 B0 B1 P (h : InterpExt n I A0 B0 P) :
+  Par A0 A1  ->
+  Par B0 B1 ->
+  InterpExt n I A1 B1 P.
+Proof.
+  move : A1 B1.
+  elim : A0 B0 P / h; auto.
+  - hauto lq:on inv:Par ctrs:InterpExt.
+  - hauto lq:on inv:Par ctrs:InterpExt.
+  - move => A0 B0 A1 B1 PA PF hPA ihPA hPB hPB' hPB'' ihPB A2 B2.
+    elim /Par_inv => //.
+    move => ? ? A3 ? B3 h1 h2 [] ? ? ?; subst.
+    elim /Par_inv => //.
+    move => ? ? A4 ? B4 h3 h4 [] ? ? ?; subst.
+    apply InterpExt_Fun; auto.
+    move => a0 a1 PB ha hPB0.
+    apply : ihPB; eauto;
+      sfirstorder use:par_cong, Par_refl.
+  - hauto lq:on inv:Par ctrs:InterpExt.
+  - move => A0 A1 B0 B1 P h0 h1 h2 ih A2 B2 h3 h4.
+    move /par_diamond /(_ h3) : (h0).
+    move /par_diamond /(_ h4) : (h1).
+    hauto lq:on ctrs:InterpExt.
+Qed.
+
+Lemma InterpExt_preservation_star n I A0 A1 B P
+  (h : InterpExt n I A0 B P) :
+  Pars A0 A1 ->
+  InterpExt n I A1 B P.
+Proof. induction 1; hauto l:on use:InterpExt_preservation, Par_refl. Qed.
+
+Lemma InterpExt_preservation_star2 n I B A0 A1 P
+  (h : InterpExt n I B A0 P) :
+  Pars A0 A1 ->
+  InterpExt n I B A1 P.
+Proof. induction 1; hauto l:on use:InterpExt_preservation, Par_refl. Qed.
+
+Lemma InterpExt_Trans n Interp A B C PA PC :
+  InterpExt n Interp A B PA ->
+  InterpExt n Interp B C PC ->
+  PA = PC /\ InterpExt n Interp A C PA.
+  move => h.
+  move : C PC.
+  elim : A B PA / h.
+  - move => C PC /InterpExt_False_inv.
+    hauto lq:on use:InterpExt_back_preservation_star2.
+  - move => C PC /InterpExt_Switch_inv.
+    hauto lq:on use:InterpExt_back_preservation_star2.
+  - admit.
+  - move => m h C PC /InterpExt_Univ_inv.
+    move /(_ m). rewrite eq_refl.
+    hauto lq:on ctrs:InterpExt use:InterpExt_back_preservation_star2.
+  - hauto lq:on rew:off ctrs:InterpExt use:InterpExt_preservation, Par_refl.
+Admitted.
+
+Lemma InterpExt_Fun_inv n Interp A B T P  (h : InterpExt n Interp (tPi A B) T P) : exists (PA : tm_rel) (PF : tm -> tm_rel -> Prop),
     InterpExt n Interp A PA /\
     (forall a, PA a -> exists PB, PF a PB) /\
     (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) /\
@@ -243,82 +381,24 @@ Proof.
     hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
 Qed.
 
-Lemma InterpExt_preservation n I A B P (h : InterpExt n I A P) :
-  Par A B ->
-  InterpExt n I B P.
-Proof.
-  move : B.
-  elim : A P / h; auto.
-  - hauto lq:on inv:Par ctrs:InterpExt.
-  - hauto lq:on inv:Par ctrs:InterpExt.
-  - move => A B PA PF hPA ihPA hPB hPB' ihPB T hT.
-    elim /Par_inv :  hT => //.
-    move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
-    apply InterpExt_Fun; auto.
-    move => a PB ha hPB0.
-    apply : ihPB; eauto.
-    sfirstorder use:par_cong, Par_refl.
-  - hauto lq:on inv:Par ctrs:InterpExt.
-  - move => A B P h0 h1 ih1 C hC.
-    have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
-    hauto lq:on ctrs:InterpExt.
-Qed.
-
 Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
   Par A B ->
   InterpUnivN n B P.
 Proof. hauto l:on rew:db:InterpUnivN use: InterpExt_preservation. Qed.
 
-Lemma InterpExt_back_preservation_star i I A B P (h : InterpExt i I B P) :
-  Rstar _ Par A B ->
-  InterpExt i I A P.
-Proof. induction 1; hauto l:on ctrs:InterpExt. Qed.
-
-Lemma InterpExt_preservation_star n I A B P (h : InterpExt n I A P) :
-  Rstar _ Par A B ->
-  InterpExt n I B P.
-Proof. induction 1; hauto l:on use:InterpExt_preservation. Qed.
-
 Lemma InterpUnivN_preservation_star n A B P (h : InterpUnivN n A P) :
-  Rstar _ Par A B ->
+  Pars A B ->
   InterpUnivN n B P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_preservation_star. Qed.
 
 Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
-  Rstar _ Par A B ->
+  Pars A B ->
   InterpUnivN n A P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
-Lemma InterpExt_Switch_inv n I P :
-  InterpExt n I tSwitch P ->
-  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
-Proof.
-  move E : tSwitch => A h.
-  move : E.
-  elim : A P / h; hauto lq:on inv:Par.
-Qed.
-
-Lemma InterpExt_False_inv n I P :
-  InterpExt n I tFalse P ->
-  P = (const False).
-Proof.
-  move E : tFalse => A h.
-  move : E.
-  elim : A P / h; hauto lq:on inv:Par.
-Qed.
-
-Lemma InterpExt_Univ_inv n I P m :
-  InterpExt n I (tUniv m) P ->
-  P = (fun A => exists PA, I m A PA) /\ m < n.
-Proof.
-  move E : (tUniv m) => A h.
-  move : E.
-  elim : A P / h; hauto lq:on inv:Par.
-Qed.
-
 Lemma InterpUnivN_Switch_inv n P :
   InterpUnivN n tSwitch P ->
-  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
+  P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Switch_inv. Qed.
 
 Lemma InterpExt_deterministic n I A PA PB :
@@ -415,7 +495,7 @@ Qed.
 
 Lemma InterpUnivN_back_clos_star n A PA :
     InterpUnivN n A PA ->
-    forall a b, Rstar _ Par a b ->
+    forall a b, Pars a b ->
            PA b -> PA a.
 Proof.
   move => h a b.

@@ -1,6 +1,8 @@
 From WR Require Export syntax.
-From Hammer Require Export Tactics.
-From stdpp Require Export ssreflect relations.
+From Hammer Require Import Tactics.
+From Coq Require Export ssreflect.
+From stdpp Require Export relations (rtc, diamond, confluent).
+Import relations (diamond_confluent, rtc_once, rtc_transitive).
 
 Definition is_bool_val a :=
   match a with
