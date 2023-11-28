@@ -349,6 +349,30 @@ Lemma InterpExt_preservation_star2 n I B A0 A1 P
   InterpExt n I B A1 P.
 Proof. induction 1; hauto l:on use:InterpExt_preservation, Par_refl. Qed.
 
+Lemma InterpExt_Fun_inv n Interp A0 B0 T1 P  (h : InterpExt n Interp (tPi A0 B0) T1 P) :
+ exists (A1 B1 : tm) (PA : tm_rel) (PF : tm -> tm_rel -> Prop),
+   Pars T1 (tPi A1 B1) /\
+    InterpExt n Interp A0 A1 PA /\
+     (forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB) /\
+   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> PF a1 PB) /\
+   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpExt n Interp (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) /\
+     P = ProdSpace PA PF.
+Proof.
+  move E : (tPi A0 B0) h => T0 h.
+  move : A0 B0 E.
+  elim : T0 T1 P / h => //.
+  - hauto l:on ctrs:rtc.
+  - move => A0 A1 B0 B1 PA hp0 hp1 hPA ihPA A2 B2 ?; subst.
+    elim /Par_inv : hp0 => // hp0 A0 A3 B3 B4 hp2 hp3 [] *; subst.
+    move /(_ A3 B4 ltac:(done)) in ihPA.
+    move : ihPA; intros (A1 & B3 & PA0 & PF & h).
+    exists A1, B3, PA0, PF.
+    repeat split; try sfirstorder.
+    + hauto lq:on ctrs:rtc.
+    + hauto lq:on ctrs:InterpExt use:InterpExt_preservation, Par_refl.
+    + sblast use: par_subst, @rtc_refl, Par_refl.
+Qed.
+
 Lemma InterpExt_Trans n Interp A B C PA PC :
   InterpExt n Interp A B PA ->
   InterpExt n Interp B C PC ->
@@ -360,26 +384,39 @@ Lemma InterpExt_Trans n Interp A B C PA PC :
     hauto lq:on use:InterpExt_back_preservation_star2.
   - move => C PC /InterpExt_Switch_inv.
     hauto lq:on use:InterpExt_back_preservation_star2.
-  - admit.
+  - move => A0 B0 A1 B1 PA PF hPA ihPA PFTot PFRes hPF ihPF C PC /InterpExt_Fun_inv.
+    intros (A2 & B2 & PA0 & PF0 & hp & hPA0 & PFTot' & PFRes' & hPF' & ?); subst.
+    have ? : PA = PA0 by sfirstorder. subst.
+    split; cycle 1.
+    + apply : InterpExt_back_preservation_star2; eauto.
+      apply InterpExt_Fun; eauto.
+      sfirstorder.
+      move => a0 a1 PB ha01 hPB.
+      have ? : PA0 a0 a0 by admit.
+      hauto lq:on rew:off.
+    + rewrite /ProdSpace.
+      fext.
+      move => b0 b1 a0 a1 h.
+      apply propositional_extensionality.
+      have ? : PA0 a0 a0 by admit.
+      split.
+      intros (PB & hPB & hPB1).
+      specialize PFTot' with (1 := h).
+      case : PFTot' => PB0 ?.
+      exists PB0; split; auto.
+      have : PB = PB0 by hauto lq:on rew:off.
+      scongruence.
+      intros (PB & hPB & hPB1).
+      specialize PFTot with (1 := h).
+      case : PFTot => PB0 ?.
+      exists PB0.
+      have : PB0 = PB by hauto lq:on rew:off.
+      hauto l:on.
   - move => m h C PC /InterpExt_Univ_inv.
     move /(_ m). rewrite eq_refl.
     hauto lq:on ctrs:InterpExt use:InterpExt_back_preservation_star2.
   - hauto lq:on rew:off ctrs:InterpExt use:InterpExt_preservation, Par_refl.
 Admitted.
-
-Lemma InterpExt_Fun_inv n Interp A B T P  (h : InterpExt n Interp (tPi A B) T P) : exists (PA : tm_rel) (PF : tm -> tm_rel -> Prop),
-    InterpExt n Interp A PA /\
-    (forall a, PA a -> exists PB, PF a PB) /\
-    (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) /\
-    P = ProdSpace PA PF.
-Proof.
-  move E : (tPi A B) h => T h.
-  move : A B E.
-  elim : T P / h => //.
-  - hauto l:on.
-  - move => *; subst.
-    hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
-Qed.
 
 Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
   Par A B ->
