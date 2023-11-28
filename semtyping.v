@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From mathcomp Require Import ssrnat eqtype.
+From mathcomp Require Import ssrnat eqtype ssrbool.
 Set Bullet Behavior "Strict Subproofs".
 From WR Require Import syntax join.
 From Coq Require Import
@@ -100,7 +100,7 @@ Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm 
   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpExt n Interp (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) ->
   InterpExt n Interp (tPi A0 B0) (tPi A1 B1) (ProdSpace PA PF)
 | InterpExt_Univ m :
-  m < n ->
+  is_true (m < n) ->
   InterpExt n Interp (tUniv m) (tUniv m) (fun A0 A1 => exists PA, Interp m A0 A1 PA)
 | InterpExt_Step A0 A1 B0 B1 PA :
   Rstar _ Par A0 A1 ->
@@ -147,12 +147,66 @@ Lemma InterpExt_Univ' n Interp m PF :
   InterpExt n Interp (tUniv m) (tUniv m) PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
+Locate "<".
+
+
+(* wf is over coq's lt but not ssreflect's *)
 Equations InterpUnivN (n : nat) : tm -> tm -> tm_rel -> Prop by wf n lt :=
   InterpUnivN n := InterpExt n (fun m A0 A1 PA =>
-                                  match Compare_dec.lt_dec m n with
-                                  | left h => InterpUnivN m A0 A1 PA
-                                  | right _ => False
+                                  match @idP (m < n) with
+                                  | Bool.ReflectT h => InterpUnivN m A0 A1 PA
+                                  | _ => False
                                   end).
+Next Obligation.
+  sauto use:leP.
+Qed.
+
+Lemma InterpExt_lt_redundant n I A0 A1 PA
+  (h : InterpExt n I A0 A1 PA) :
+      InterpExt n (fun m A0 A1 PA =>
+                     match @idP (m < n) with
+                     | ReflectT h => I m A0 A1 PA
+                     | _ => False
+                     end) A0 A1 PA.
+Proof.
+  elim : A0 A1 PA / h.
+  - hauto l:on.
+  - hauto l:on.
+  - hauto l:on ctrs:InterpExt.
+  - move => m h.
+    apply InterpExt_Univ' => //.
+    destruct idP => //.
+  - hauto lq:on ctrs:InterpExt.
+Qed.
+
+Lemma InterpExt_lt_redundant2 n I A0 A1 PA
+  (h : InterpExt n (fun m A0 A1 PA =>
+                      match @idP (m < n) with
+                     | ReflectT h => I m A0 A1 PA
+                     | _ => False
+                     end) A0 A1 PA) :
+  InterpExt n I A0 A1 PA.
+Proof.
+  elim : A0 A1 PA / h.
+  - hauto l:on.
+  - hauto l:on.
+  - hauto l:on ctrs:InterpExt.
+  - move => m ?.
+    apply InterpExt_Univ' => //.
+    destruct idP => //.
+  - hauto lq:on ctrs:InterpExt.
+Qed.
+
+Lemma InterpUnivN_nolt n :
+  InterpUnivN n = InterpExt n InterpUnivN.
+Proof.
+  simp InterpUnivN.
+  fext => A0 A1 P.
+  apply propositional_extensionality.
+  hauto l:on use:InterpExt_lt_redundant, InterpExt_lt_redundant2.
+Qed.
+
+#[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
 
 Lemma InterpUniv_Sym n : forall A B PA,
     InterpUnivN n A B PA ->
@@ -161,6 +215,8 @@ Proof.
   move : n.
   elim /Wf_nat.lt_wf_ind.
   move => n ih A B PA h.
+  simp InterpUniv in *.
+  best use:InterpExt_Sym rew:db:InterpUniv.
   apply InterpExt_Sym.
   move => n ih A B PA h.
   case : A B PA /h.
@@ -296,53 +352,6 @@ Proof.
   move => h h0.
   elim : A PA /h0; sauto l:on ctrs:InterpExt.
 Qed.
-
-Lemma InterpExt_lt_redundant n I A PA
-  (h : InterpExt n I A PA) :
-      InterpExt n (fun m A PA =>
-                     match Compare_dec.lt_dec m n with
-                     | left h => I m A PA
-                     | right _ => False
-                     end) A PA.
-Proof.
-  elim : A PA / h.
-  - hauto l:on.
-  - hauto l:on.
-  - hauto l:on ctrs:InterpExt.
-  - move => m h.
-    apply InterpExt_Univ' => //.
-    case : Compare_dec.lt_dec => //.
-  - hauto lq:on ctrs:InterpExt.
-Qed.
-
-Lemma InterpExt_lt_redundant2 n (I :fin -> tm -> (tm -> Prop) -> Prop ) A PA
-  (h : InterpExt n (fun m A PA =>
-                      match Compare_dec.lt_dec m n with
-                     | left h => I m A PA
-                     | right _ => False
-                     end) A PA) :
-  InterpExt n I A PA.
-Proof.
-  elim : A PA / h.
-  - hauto l:on.
-  - hauto l:on.
-  - hauto l:on ctrs:InterpExt.
-  - move => m ?.
-    apply InterpExt_Univ' => //.
-    case : Compare_dec.lt_dec => //.
-  - hauto lq:on ctrs:InterpExt.
-Qed.
-
-Lemma InterpUnivN_nolt n :
-  InterpUnivN n = InterpExt n InterpUnivN.
-Proof.
-  simp InterpUnivN.
-  fext => A P.
-  apply propositional_extensionality.
-  hauto l:on use:InterpExt_lt_redundant, InterpExt_lt_redundant2.
-Qed.
-
-#[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
 
 Lemma InterpUnivN_cumulative n A PA :
   InterpUnivN n A PA -> forall m, n < m ->
