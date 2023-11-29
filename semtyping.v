@@ -1,7 +1,7 @@
 From HB Require Import structures.
 From WR Require Import join.
 From mathcomp Require Export ssrnat eqtype ssrbool zify.
-From Hammer Require Import Tactics.
+From Hammer Require Import Tactics Hammer.
 #[export] Set Bullet Behavior "Strict Subproofs".
 From Coq Require Import Logic.PropExtensionality.
 From Equations Require Import Equations.
@@ -83,6 +83,7 @@ Proof.
   - apply h2 with (a0 := a0) (a1 := a1); sfirstorder.
 Qed.
 
+(* Would it be cleaner to factor out the PER relation out? *)
 Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm -> tm -> tm_rel -> Prop :=
 | InterpExt_False : InterpExt n Interp tFalse tFalse
                       (fun _ _ => False)
@@ -376,7 +377,28 @@ Qed.
 Lemma is_bool_val_par v0 v1 : is_bool_val v0 -> Pars v0 v1 -> is_bool_val v1.
 Proof. induction 2; hauto q:on inv:Par. Qed.
 
+
+Lemma ProdSpace_El_Trans PA PF b0 b1 b2
+  (hTot : forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB)
+  (ihPF : forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> forall b0 b1 b2, PB b0 b1 -> PB b1 b2 -> PB b0 b2)
+  (h01 : ProdSpace PA PF b0 b1)
+  (h12 : ProdSpace PA PF b1 b2) :
+  ProdSpace PA PF b0 b2.
+Proof.
+  rewrite /ProdSpace in h01 h12 * => a0 a2 ha02.
+  case /hTot : (ha02) => PB hPB.
+  exists PB.
+  split; first done.
+  move /ihPF :(ha02).
+  move /(_ PB hPB).
+  case /h12 : (ha02) => PB0 h0.
+  case /h01 : (ha02) => PB1 h1.
+  apply.
+  best.
+
+
 Lemma InterpExt_El_Trans n Interp A B PA
+  (hI : forall m A B C PA PB, m < n -> Interp m A B PA -> Interp m B C PB -> Interp m A C PA /\ PA = PB)
   (h : InterpExt n Interp A B PA ) :
   forall a0 a1 a2, PA a0 a1 -> PA a1 a2 -> PA a0 a2.
 Proof.
@@ -386,11 +408,15 @@ Proof.
     have [v ?] : exists v, Pars v0 v /\ Pars v1 v by sfirstorder use:par_confluent.
     exists v.
     sfirstorder use:@relations.rtc_transitive, is_bool_val_par.
-  - admit.
-  - admit.
+  - move => A0 B0 A1 B1 PA PF hPA ihPA PFTot PFRes hPF ihPF b0 b1 b2 h01 h12.
+  (* Lemma about ProdSpace? *)
+    rewrite /ProdSpace in h01 h12 * => a0 a2.
+    admit.
+  - hauto lq:on.
   - sfirstorder.
 Admitted.
 
+(* Think about the Pi case and try to understand whether symmetry is needed *)
 Lemma InterpExt_Trans n Interp A B C PA PC :
   InterpExt n Interp A B PA ->
   InterpExt n Interp B C PC ->
