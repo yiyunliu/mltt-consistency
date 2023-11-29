@@ -65,7 +65,7 @@ HB.instance Definition _ := hasDecEq.Build _ tm_eqP.
 Definition tm_rel := tm -> tm -> Prop.
 
 Definition ProdSpace (PA : tm_rel) (PF : tm -> tm_rel -> Prop) (b0 b1 : tm)  :=
-  forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB /\ PB (tApp b0 a0) (tApp b1 a1).
+  forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> PB (tApp b0 a0) (tApp b1 a1).
 
 Lemma ProdSpace_El_Sym (PA : tm_rel) (PF : tm -> tm_rel -> Prop) (b0 b1 : tm)
   (h0 : forall a0 a1, PA a0 a1 -> PA a1 a0)
@@ -73,15 +73,7 @@ Lemma ProdSpace_El_Sym (PA : tm_rel) (PF : tm -> tm_rel -> Prop) (b0 b1 : tm)
   (h1 : ProdSpace PA PF b0 b1)
   (h2 : forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> forall b0 b1, PB b0 b1 -> PB b1 b0) :
   ProdSpace PA PF b1 b0.
-Proof.
-  rewrite /ProdSpace in h1 *.
-  move => a1 a0 ha10.
-  case /h0 /h1 : (ha10) => PB hPB.
-  exists PB.
-  split.
-  - sfirstorder.
-  - apply h2 with (a0 := a0) (a1 := a1); sfirstorder.
-Qed.
+Proof. qauto l:on unfold:ProdSpace. Qed.
 
 (* Would it be cleaner to factor out the PER relation out? *)
 Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm -> tm -> tm_rel -> Prop :=
@@ -103,6 +95,12 @@ Inductive InterpExt (n : nat) (Interp : nat -> tm -> tm -> tm_rel -> Prop) : tm 
   Par B0 B1 ->
   InterpExt n Interp A1 B1 PA ->
   InterpExt n Interp A0 B0 PA.
+
+Lemma InterpExt_Fun' n Interp A0 B0 A1 B1 PA (PF : tm -> tm_rel -> Prop) :
+  InterpExt n Interp A0 A1 PA ->
+  (forall a0 a1 PB, PA a0 a1 -> (exists PB, PF a0 PB) /\ (PF a0 PB -> PF a1 PB /\ InterpExt n Interp (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB)) ->
+  InterpExt n Interp (tPi A0 B0) (tPi A1 B1) (ProdSpace PA PF).
+Proof. hauto l:on ctrs:InterpExt. Qed.
 
 Lemma InterpExt_El_Sym n Interp A A0 PA
   (h0 : forall m A0 A1 PA, m < n -> Interp m A0 A1 PA -> Interp m A1 A0 PA)
@@ -126,13 +124,7 @@ Proof.
   elim : A A0 PA / h.
   - sfirstorder ctrs:InterpExt.
   - sfirstorder ctrs:InterpExt.
-  - move => A0 B0 A1 B1 PA PF h0 ih0 hTot hRes hPF ihPF.
-    apply InterpExt_Fun => //.
-    have hh : forall a0 a1, PA a0 a1 -> PA a1 a0 by qauto l:on use:InterpExt_El_Sym.
-    move => a0 a1 PB h1 h2.
-    apply ihPF => //.
-    sfirstorder.
-    sfirstorder.
+  - hauto l:on use:InterpExt_El_Sym ctrs:InterpExt.
   - hauto lq:on ctrs:InterpExt.
   - hauto lq:on ctrs:InterpExt.
 Qed.
@@ -379,25 +371,21 @@ Proof. induction 2; hauto q:on inv:Par. Qed.
 
 
 Lemma ProdSpace_El_Trans PA PF b0 b1 b2
-  (hTot : forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB)
+  (hPA : forall a0 a1, PA a0 a1 -> PA a1 a0)
+  (hPA' : forall a0 a1 a2, PA a0 a1 -> PA a1 a2 -> PA a0 a2)
   (ihPF : forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> forall b0 b1 b2, PB b0 b1 -> PB b1 b2 -> PB b0 b2)
   (h01 : ProdSpace PA PF b0 b1)
   (h12 : ProdSpace PA PF b1 b2) :
   ProdSpace PA PF b0 b2.
 Proof.
-  rewrite /ProdSpace in h01 h12 * => a0 a2 ha02.
-  case /hTot : (ha02) => PB hPB.
-  exists PB.
-  split; first done.
+  rewrite /ProdSpace in h01 h12 * => a0 a2 PB ha02 hPB.
   move /ihPF :(ha02).
   move /(_ PB hPB).
-  case /h12 : (ha02) => PB0 h0.
-  case /h01 : (ha02) => PB1 h1.
-  apply.
-  best.
-
+  have : PA a0 a0 by qauto l:on. hauto lq:on rew:off.
+Qed.
 
 Lemma InterpExt_El_Trans n Interp A B PA
+  (hI0 : forall m A0 A1 PA, m < n -> Interp m A0 A1 PA -> Interp m A1 A0 PA)
   (hI : forall m A B C PA PB, m < n -> Interp m A B PA -> Interp m B C PB -> Interp m A C PA /\ PA = PB)
   (h : InterpExt n Interp A B PA ) :
   forall a0 a1 a2, PA a0 a1 -> PA a1 a2 -> PA a0 a2.
@@ -408,16 +396,14 @@ Proof.
     have [v ?] : exists v, Pars v0 v /\ Pars v1 v by sfirstorder use:par_confluent.
     exists v.
     sfirstorder use:@relations.rtc_transitive, is_bool_val_par.
-  - move => A0 B0 A1 B1 PA PF hPA ihPA PFTot PFRes hPF ihPF b0 b1 b2 h01 h12.
-  (* Lemma about ProdSpace? *)
-    rewrite /ProdSpace in h01 h12 * => a0 a2.
-    admit.
+  - hauto l:on use:InterpExt_El_Sym, ProdSpace_El_Trans.
   - hauto lq:on.
   - sfirstorder.
-Admitted.
+Qed.
 
-(* Think about the Pi case and try to understand whether symmetry is needed *)
-Lemma InterpExt_Trans n Interp A B C PA PC :
+Lemma InterpExt_Trans n Interp A B C PA PC
+  (hI0 : forall m A0 A1 PA, m < n -> Interp m A0 A1 PA -> Interp m A1 A0 PA)
+  (hI : forall m A B C PA PB, m < n -> Interp m A B PA -> Interp m B C PB -> Interp m A C PA /\ PA = PB) :
   InterpExt n Interp A B PA ->
   InterpExt n Interp B C PC ->
   PA = PC /\ InterpExt n Interp A C PA.
@@ -430,37 +416,28 @@ Lemma InterpExt_Trans n Interp A B C PA PC :
     hauto lq:on use:InterpExt_back_preservation_star2.
   - move => A0 B0 A1 B1 PA PF hPA ihPA PFTot PFRes hPF ihPF C PC /InterpExt_Fun_inv.
     intros (A2 & B2 & PA0 & PF0 & hp & hPA0 & PFTot' & PFRes' & hPF' & ?); subst.
-    have ? : PA = PA0 by sfirstorder. subst.
+    have ? : PA0 = PA by sfirstorder. subst.
+    have ? : forall a0 a1, PA a0 a1 -> PA a0 a0
+        by hauto lq:on use:InterpExt_El_Trans, InterpExt_El_Sym.
+    move {hI hI0}.
+    rewrite /ProdSpace.
     split; cycle 1.
     + apply : InterpExt_back_preservation_star2; eauto.
-      apply InterpExt_Fun; eauto.
-      sfirstorder.
-      move => a0 a1 PB ha01 hPB.
-      have ? : PA0 a0 a0 by admit.
-      hauto lq:on rew:off.
-    + rewrite /ProdSpace.
-      fext.
-      move => b0 b1 a0 a1 h.
+      apply InterpExt_Fun'; eauto.
+      * sfirstorder.
+      * move => a0 a1 PB h0.
+        split; first by sfirstorder.
+        suff : PA a0 a0; hauto lq:on rew:off.
+    + fext.
+      move => b0 b1 a0 a1 PB ha01.
+      have ? : PA a0 a0 by firstorder.
       apply propositional_extensionality.
-      have ? : PA0 a0 a0 by admit.
-      split.
-      intros (PB & hPB & hPB1).
-      specialize PFTot' with (1 := h).
-      case : PFTot' => PB0 ?.
-      exists PB0; split; auto.
-      have : PB = PB0 by hauto lq:on rew:off.
-      scongruence.
-      intros (PB & hPB & hPB1).
-      specialize PFTot with (1 := h).
-      case : PFTot => PB0 ?.
-      exists PB0.
-      have : PB0 = PB by hauto lq:on rew:off.
-      hauto l:on.
+      split; hauto lq:on rew:off.
   - move => m h C PC /InterpExt_Univ_inv.
     move /(_ m). rewrite eq_refl.
     hauto lq:on ctrs:InterpExt use:InterpExt_back_preservation_star2.
   - hauto lq:on rew:off ctrs:InterpExt use:InterpExt_preservation, Par_refl.
-Admitted.
+Qed.
 
 Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
   Par A B ->
