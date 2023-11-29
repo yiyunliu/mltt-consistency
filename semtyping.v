@@ -10,7 +10,7 @@ From Hammer Require Import Tactics.
 From Equations Require Import Equations.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
-  forall a, PA a -> exists PB, PF a PB /\ PB (tApp b a).
+  forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
 Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_False : InterpExt n Interp tFalse (const False)
@@ -164,15 +164,17 @@ Lemma InterpExt_deterministic n I A PA PB :
   PA = PB.
 Proof.
   move => h.
-  suff ? : InterpExt n I A PB -> forall x, PA x <-> PB x.
-  move => *; fext. sfirstorder use:propositional_extensionality.
   move : PB.
   elim : A PA / h.
   - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_False_inv.
   - hauto lq:on inv:InterpExt use:InterpExt_Switch_inv.
   - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
     move /InterpExt_Fun_inv : hP.
-    qauto l:on unfold:ProdSpace.
+    intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.
+    have ? : PA0 = PA by sfirstorder. subst.
+    fext => b a PB ha.
+    apply propositional_extensionality.
+    hauto lq:on rew:off.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
   - hauto l:on use:InterpExt_preservation.
 Qed.
@@ -275,13 +277,10 @@ Proof.
   elim : A PA / h.
   - sfirstorder.
   - hauto lq:on ctrs:Rstar use:Rstar_transitive.
-  - move => A B PA PF hPA ihA hPFTot hPF ihPF a b hab.
-    rewrite /ProdSpace => hb.
-    move => a0 ha0.
-    move : (hb _ ha0). intros (PB & hPB & hPB').
-    exists PB; split; auto.
-    apply : ihPF; eauto.
-    hauto l:on ctrs:Par use:Par_refl.
+  - move => A B PA PF hPA ihA hPFTot hPF ihPF b0 b1 hb01.
+    rewrite /ProdSpace => hPB a PB ha hPFa.
+    have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
+    hauto lq:on ctrs:Par.
   - hauto lq:on.
   - sfirstorder.
 Qed.

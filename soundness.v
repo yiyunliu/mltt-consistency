@@ -62,6 +62,12 @@ Proof.
   hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
 Qed.
 
+Lemma P_AppAbs_cbn (A a b b0 : tm) :
+  b0 = subst_tm (b..) a ->
+  Par (tApp (tAbs A a) b) b0.
+Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
+
+
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a A) /\
   (Wff Γ -> forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i))).
@@ -121,23 +127,14 @@ Proof.
         by asimpl in hPF.
       * move => *.
         by asimpl.
-    + rewrite /ProdSpace => b hPAb.
-      move /(_ (b .: γ) ltac:(hauto l:on use:γ_ok_cons rew:db:InterpUniv)) : ha.
-      intros (j & PB & hPB & hPBa).
-      case /(_ b hPAb) : hTot => PB0 hPB0.
-      move /(_ b PB0 hPAb hPB0) in hPF.
+    + rewrite /ProdSpace => b PB hb hPB.
+      have ? : γ_ok (A :: Γ) (b .: γ) by apply : γ_ok_cons; eauto; simp InterpUniv.
+      move /(_ (b .: γ) ltac:(done)) : ha.
+      intros (j & PB0 & hPB0 & ha).
+      have ? : PB0 = PB by hauto l:on use:InterpUnivN_deterministic'. subst.
       rewrite -InterpUnivN_nolt in hPF.
-      asimpl in hPF.
-      have ? : PB0 = PB by hauto l:on use:InterpUnivN_deterministic'.
-      subst.
-      exists PB; split; eauto.
       apply : InterpUnivN_back_clos; eauto.
-      apply : P_AppAbs'.
-      2 : {
-        apply Par_refl.
-      }
-      by asimpl.
-      apply Par_refl.
+      apply P_AppAbs_cbn; by asimpl.
   - move => Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
     move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
@@ -155,13 +152,7 @@ Proof.
     rewrite -InterpUnivN_nolt in hPB'.
     rewrite /ProdSpace in hf.
     asimpl in *.
-    exists i, PB; split; first done.
-    move /(_ _ hPA0b) : hf; intros (PB0 & hPB0 & hPB0').
-    have hPB0'' := hPF _ PB0 hPA0b hPB0.
-    asimpl in hPB0''.
-    rewrite -InterpUnivN_nolt in hPB0''.
-    suff : PB = PB0 by congruence.
-    sfirstorder use:InterpUnivN_deterministic'.
+    hauto lq:on.
   - rewrite /SemWt /Join /coherent => Γ a A B i _ hA _ hB [C [? ?]] γ hγ.
     case : (hA γ hγ) => j [PA [hPA hPAa]].
     case : (hB γ hγ) => k [PB [hPB hPB']].
