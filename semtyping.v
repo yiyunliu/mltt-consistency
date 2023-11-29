@@ -1,7 +1,7 @@
 From HB Require Import structures.
 From WR Require Import join.
 From mathcomp Require Export ssrnat eqtype ssrbool zify.
-From Hammer Require Import Tactics Hammer.
+From Hammer Require Import Tactics.
 #[export] Set Bullet Behavior "Strict Subproofs".
 From Coq Require Import Logic.PropExtensionality.
 From Equations Require Import Equations.
@@ -372,6 +372,24 @@ Proof.
     + hauto lq:on ctrs:InterpExt use:InterpExt_preservation, Par_refl.
     + sblast use: par_subst, @rtc_refl, Par_refl.
 Qed.
+
+Lemma is_bool_val_par v0 v1 : is_bool_val v0 -> Pars v0 v1 -> is_bool_val v1.
+Proof. induction 2; hauto q:on inv:Par. Qed.
+
+Lemma InterpExt_El_Trans n Interp A B PA
+  (h : InterpExt n Interp A B PA ) :
+  forall a0 a1 a2, PA a0 a1 -> PA a1 a2 -> PA a0 a2.
+Proof.
+  elim : A B PA / h.
+  - sfirstorder.
+  - move => a0 a1 a2 [v0 ?] [v1 ?].
+    have [v ?] : exists v, Pars v0 v /\ Pars v1 v by sfirstorder use:par_confluent.
+    exists v.
+    sfirstorder use:@relations.rtc_transitive, is_bool_val_par.
+  - admit.
+  - admit.
+  - sfirstorder.
+Admitted.
 
 Lemma InterpExt_Trans n Interp A B C PA PC :
   InterpExt n Interp A B PA ->
