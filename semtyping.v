@@ -603,9 +603,14 @@ Proof.
   by simp InterpUniv.
 Qed.
 
+Lemma InterpExt_Univ_inv1 n I m P :
+  InterpExt n I (tUniv m) (tUniv m) P ->
+  P = (fun A0 A1 => exists PA, I m A0 A1 PA) /\ m < n.
+Proof. hauto lqb:on use:@eq_refl, InterpExt_Univ_inv. Qed.
+
 Lemma InterpUnivN_Univ_inv' i j P :
   InterpUnivN i (tUniv j) (tUniv j) P ->
   P = (fun A B : tm => exists PA, InterpUnivN j A B PA) /\ j < i.
 Proof.
-  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
+  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv1, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
 Qed.
