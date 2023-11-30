@@ -644,3 +644,13 @@ Section InterpUnivN_Intro.
 
 End InterpUnivN_Intro.
 #[export]Hint Resolve InterpUniv_False InterpUniv_Switch InterpUniv_Fun InterpUniv_Univ : InterpUniv.
+
+Lemma InterpUniv_Fun_inv n A0 B0 T1 P  (h : InterpUnivN n  (tPi A0 B0) T1 P) :
+ exists (A1 B1 : tm) (PA : tm_rel) (PF : tm -> tm_rel -> Prop),
+   Pars T1 (tPi A1 B1) /\
+    InterpUnivN n A0 A1 PA /\
+     (forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB) /\
+   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> PF a1 PB) /\
+   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpUnivN n (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) /\
+     P = ProdSpace PA PF.
+Proof. hauto l:on db:InterpUniv use:InterpExt_Fun_inv. Qed.
