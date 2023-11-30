@@ -645,7 +645,7 @@ Section InterpUnivN_Intro.
 End InterpUnivN_Intro.
 #[export]Hint Resolve InterpUniv_False InterpUniv_Switch InterpUniv_Fun InterpUniv_Univ : InterpUniv.
 
-Lemma InterpUniv_Fun_inv n A0 B0 T1 P  (h : InterpUnivN n  (tPi A0 B0) T1 P) :
+Lemma InterpUniv_Fun_inv0 n A0 B0 T1 P  (h : InterpUnivN n  (tPi A0 B0) T1 P) :
  exists (A1 B1 : tm) (PA : tm_rel) (PF : tm -> tm_rel -> Prop),
    Pars T1 (tPi A1 B1) /\
     InterpUnivN n A0 A1 PA /\
@@ -654,3 +654,32 @@ Lemma InterpUniv_Fun_inv n A0 B0 T1 P  (h : InterpUnivN n  (tPi A0 B0) T1 P) :
    (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpUnivN n (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) /\
      P = ProdSpace PA PF.
 Proof. hauto l:on db:InterpUniv use:InterpExt_Fun_inv. Qed.
+
+Lemma InterpExt_Fun_inv_helper n Interp T A0 B0 A1 B1 a PB
+  (h0 : Pars (tPi A0 B0) (tPi A1 B1))
+  (h1 : InterpExt n Interp T (subst_tm (a..) B1) PB) :
+  InterpExt n Interp T (subst_tm (a..) B0) PB.
+Proof.
+  hauto q:on inv:Par use:par_subst_star,
+          pars_pi_inv, InterpExt_back_preservation_star2.
+Qed.
+
+Lemma InterpUniv_Fun_inv_helper n T A0 B0 A1 B1 a PB
+  (h0 : Pars (tPi A0 B0) (tPi A1 B1))
+  (h1 : InterpUnivN n T (subst_tm (a..) B1) PB) :
+  InterpUnivN n T (subst_tm (a..) B0) PB.
+Proof.
+  hauto l:on use:InterpExt_Fun_inv_helper rew:db:InterpUniv.
+Qed.
+
+Lemma InterpUniv_Fun_inv n A0 B0 A1 B1 P  (h : InterpUnivN n  (tPi A0 B0) (tPi A1 B1) P) :
+ exists (PA : tm_rel) (PF : tm -> tm_rel -> Prop),
+    InterpUnivN n A0 A1 PA /\
+     (forall a0 a1, PA a0 a1 -> exists PB, PF a0 PB) /\
+   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> PF a1 PB) /\
+   (forall a0 a1 PB, PA a0 a1 -> PF a0 PB -> InterpUnivN n (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB) /\
+     P = ProdSpace PA PF.
+Proof.
+  move /InterpUniv_Fun_inv0 : h.
+  hauto l:on use:pars_pi_inv, InterpUnivN_back_preservation_star2, par_subst_star.
+Qed.

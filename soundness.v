@@ -1,5 +1,5 @@
 From WR Require Import syntax join semtyping typing common.
-From Coq Require Import ssreflect ssrbool Sets.Relations_2 Sets.Relations_2_facts Sets.Relations_3 Program.Basics.
+From Coq Require Import ssreflect ssrbool.
 From Hammer Require Import Tactics.
 From Equations Require Import Equations.
 
@@ -67,80 +67,63 @@ Proof.
   hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
 Qed.
 
-Section SemanticTyping.
-  Variable Γ : context.
+Lemma P_AppAbs_cbn A a0 b b1 :
+  b = subst_tm (b1..) a0 ->
+  (* ---------------------------- *)
+  Par (tApp (tAbs A a0) b1) b.
+Proof. hauto lq:on use:P_AppAbs, Par_refl. Qed.
 
-  Variable A B a b : tm.
-
-  Variable m : nat.
-
-  Lemma ST_Var i :
-    SemWff Γ ->
-    i < length Γ ->
-    (* ----------------------------------------------------- *)
-    SemWt Γ (var_tm i) (dep_ith Γ i).
-  Proof using Γ.
-    move => ih ? γ0 γ1 hγ.
-    move /(_ i ltac:(done)) in ih.
-    case : ih => F ih.
-    suff ih' : SemWt Γ (dep_ith Γ i) (tUniv (F i)).
-    + case /(_ _ _ hγ) : ih' => j [PA [hPA hi]].
-      simpl in hPA.
-      case /InterpUnivN_Univ_inv' : hPA => ? ?; subst.
-      move : hi; intros (PA & hi).
-      exists (F i), PA; sfirstorder.
-    + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
-  Qed.
-
-  Lemma ST_False :
-    SemWff Γ ->
-    SemWt Γ tFalse (tUniv m).
-  Proof using m.
-    hauto l:on use:InterpUniv_Univ, InterpUniv_False.
-  Qed.
-
-  Lemma ST_Abs :
-    SemWt Γ (tPi A B) (tUniv m) ->
-    SemWt (A :: Γ) a B ->
-    (* ----------------------- *)
-    SemWt Γ (tAbs A a) (tPi A B).
-  Proof.
-    rewrite /SemWt.
-    move => //  h0 h1 γ0 γ1 hγ.
-    move /(_ γ0 γ1 hγ) : h0; intros (n & P_Univ & hP_Univ & hP_Univ').
-    move /InterpUnivN_Univ_inv' : hP_Univ => [*]; subst.
-    case : hP_Univ' => PA hPA.
-    exists m, PA; split; first by auto.
+Lemma ST_Var Γ i :
+  SemWff Γ ->
+  i < length Γ ->
+  (* ----------------------------------------------------- *)
+  SemWt Γ (var_tm i) (dep_ith Γ i).
+Proof using Type.
+  move => ih ? γ0 γ1 hγ.
+  move /(_ i ltac:(done)) in ih.
+  case : ih => F ih.
+  suff ih' : SemWt Γ (dep_ith Γ i) (tUniv (F i)).
+  + case /(_ _ _ hγ) : ih' => j [PA [hPA hi]].
     simpl in hPA.
-    move /InterpUniv_Fun_inv : hPA.
-    rename PA into PA0.
-    intros (A0 & B0 & PA & PF & ? & hPA0 & hTot & hRes & hPF & ?). subst.
-    move => a0 a1 PB ha hPB.
-    move /InterpUniv_Refl in hPA0.
-    have hγ' : γ_ok (subst_tm γ0 A :: Γ) (a0 .: γ0) (a1 .: γ1) by
-    apply : γ_ok_cons ;eauto.
-    simpl.
-    apply : InterpUnivN_back_clos; eauto.
+    case /InterpUnivN_Univ_inv' : hPA => ? ?; subst.
+    move : hi; intros (PA & hi).
+    exists (F i), PA; sfirstorder.
+  + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
+Qed.
 
+Lemma ST_False Γ m :
+  SemWff Γ ->
+  SemWt Γ tFalse (tUniv m).
+Proof using Type.
+  hauto l:on use:InterpUniv_Univ, InterpUniv_False.
+Qed.
 
-    move /InterpUnivN_inv_Fun : hPA .
-    exists (S m), (fun A B => exists PA, InterpUnivN m A B PA).
-    split; first by best use: InterpUnivN_Univ_inv.
-    exists (ProdSpace PA (fun a PB => InterpUnivN i (subst_tm (a .: γ) B) PB)).
-    simp InterpUniv.
-    simpl.
-    apply InterpExt_Fun.
-    + simp InterpUniv in hPA.
-    + move => a ha.
-      move /(_ _ ltac:(qauto use:γ_ok_consU)) in h1.
-      move : h1; intros (x & PB & hPB & h).
-      move /InterpUnivN_Univ_inv' : hPB => [*]; subst.
-      hauto lq:on rew:db:InterpUniv.
-    + move => a PB ha.
-      suff hγ_cons : γ_ok (A :: Γ) (a .: γ) by asimpl.
-      qauto use:γ_ok_consU.
-
-End SemanticTyping.
+Lemma ST_Abs Γ A B m a :
+  SemWt Γ (tPi A B) (tUniv m) ->
+  SemWt (A :: Γ) a B ->
+  (* ----------------------- *)
+  SemWt Γ (tAbs A a) (tPi A B).
+Proof.
+  rewrite /SemWt.
+  move => //  h0 h1 γ0 γ1 hγ.
+  move /(_ γ0 γ1 hγ) : h0; intros (n & P_Univ & hP_Univ & hP_Univ').
+  move /InterpUnivN_Univ_inv' : hP_Univ => [*]; subst.
+  case : hP_Univ' => PA hPA.
+  exists m, PA; split; first by auto.
+  simpl in hPA.
+  move /InterpUniv_Fun_inv : hPA.
+  rename PA into PA0.
+  intros (PA & PF & hPA0 & hTot & hRes & hPF & ?). subst.
+  move => a0 a1 PB ha0 hPB.
+  have : γ_ok (A :: Γ) (a0 .: γ0) (a1 .: γ1) by eauto using γ_ok_cons.
+  move /h1.
+  intros (j & PB0 & hPB0 & ha).
+  move : hPF ha0 hPB.
+  repeat move/[apply].
+  asimpl => hPB.
+  have ? : PB0 = PB by hauto l:on use:InterpUnivN_deterministic'. subst.
+  hauto lq:on use:P_AppAbs_cbn, InterpUnivN_back_clos solve:(by asimpl).
+Qed.
 
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a a A A) /\
