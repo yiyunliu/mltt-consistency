@@ -1,5 +1,6 @@
 From WR Require Import syntax.
-From Coq Require Import ssreflect List.
+From mathcomp Require Import ssrnat zify.
+From Coq Require Import ssreflect ssrbool List.
 Require Import Psatz.
 From Hammer Require Import Tactics.
 Import ListNotations.

@@ -614,3 +614,33 @@ Lemma InterpUnivN_Univ_inv' i j P :
 Proof.
   hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv1, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
 Qed.
+
+(* Introduction rules for InterpUnivN *)
+Section InterpUnivN_Intro.
+  Variable i j : nat.
+
+  Lemma InterpUniv_False : InterpUnivN i tFalse tFalse (fun _ _ => False).
+  Proof using i. hauto lq:on rew:db:InterpUniv ctrs:InterpExt... Qed.
+
+  Lemma InterpUniv_Switch :
+    InterpUnivN i tSwitch tSwitch
+      (fun a b => exists v, Pars a v /\ Pars b v /\ is_bool_val v).
+  Proof using i. hauto lq:on rew:db:InterpUniv ctrs:InterpExt. Qed.
+
+  Lemma InterpUniv_Fun A0 A1 PA PF B0 B1 :
+    InterpUnivN i A0 A1 PA ->
+    (forall a0 a1 PB, PA a0 a1 -> (exists PB, PF a0 PB) /\ (PF a0 PB -> PF a1 PB /\ InterpUnivN i (subst_tm (a0..) B0) (subst_tm (a1..) B1) PB)) ->
+    InterpUnivN i (tPi A0 B0) (tPi A1 B1) (ProdSpace PA PF).
+  Proof using i. hauto lq:on use:InterpExt_Fun' rew:db:InterpUniv. Qed.
+
+  Lemma InterpUniv_Univ :
+    i < j ->
+    InterpUnivN j (tUniv i) (tUniv i) (fun A0 A1 => exists PA, InterpUnivN i A0 A1 PA).
+  Proof using i j.
+    simp InterpUniv => ?.
+    apply InterpExt_Univ' => //.
+    by simp InterpUniv.
+  Qed.
+
+End InterpUnivN_Intro.
+#[export]Hint Resolve InterpUniv_False InterpUniv_Switch InterpUniv_Fun InterpUniv_Univ : InterpUniv.

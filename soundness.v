@@ -1,17 +1,19 @@
 From WR Require Import syntax join semtyping typing common.
 From Coq Require Import ssreflect ssrbool Sets.Relations_2 Sets.Relations_2_facts Sets.Relations_3 Program.Basics.
 From Hammer Require Import Tactics.
-Require Import Psatz.
 From Equations Require Import Equations.
 
-Definition γ_ok Γ γ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
-Definition SemWt Γ a A := forall γ, γ_ok Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
+Definition γ_ok Γ γ0 γ1 := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm γ0 (dep_ith Γ i)) (subst_tm γ1 (dep_ith Γ i)) PA -> PA (γ0 i) (γ1 i).
 
-Lemma γ_ok_cons {i Γ γ a PA A} :
-  InterpUnivN i (subst_tm γ A) PA ->
-  PA a ->
-  γ_ok Γ γ ->
-  γ_ok (A :: Γ) (a .: γ).
+Definition SemWt Γ a b A B := forall γ0 γ1, γ_ok Γ γ0 γ1 -> exists m PA, InterpUnivN m (subst_tm γ0 A) (subst_tm γ1 B) PA /\ PA (subst_tm γ0 a) (subst_tm γ1 b).
+
+Definition SemWff Γ := forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (ith Γ i) (tUniv (F i)) (tUniv (F i)).
+
+Lemma γ_ok_cons {i Γ γ0 γ1 a b PA A B} :
+  InterpUnivN i (subst_tm γ0 A) (subst_tm γ1 B) PA ->
+  PA a b ->
+  γ_ok Γ γ0 γ1 ->
+  γ_ok (A :: Γ) (a .: γ0) (b .: γ1).
 Proof.
   move => h0 h1 h2.
   case => /= [_ | m ? PA0].
@@ -24,47 +26,90 @@ Proof.
     lia.
 Qed.
 
-Lemma γ_ok_renaming Γ γ :
+Lemma γ_ok_renaming Γ γ0 γ1 :
   forall Δ ξ,
     good_renaming ξ Γ Δ ->
-    γ_ok Δ γ ->
-    γ_ok Γ (ξ >> γ).
+    γ_ok Δ γ0 γ1 ->
+    γ_ok Γ (ξ >> γ0) (ξ >> γ1).
 Proof.
   move => Δ ξ hscope h1.
   rewrite /γ_ok => i hi j PA.
-  replace (subst_tm (ξ >> γ) (dep_ith Γ i)) with
-    (subst_tm γ (ren_tm ξ (dep_ith Γ i))); last by asimpl.
+  replace (subst_tm (ξ >> γ0) (dep_ith Γ i)) with
+    (subst_tm γ0 (ren_tm ξ (dep_ith Γ i))); last by asimpl.
+  replace (subst_tm (ξ >> γ1) (dep_ith Γ i)) with
+    (subst_tm γ1 (ren_tm ξ (dep_ith Γ i))); last by asimpl.
   rewrite /good_renaming in hscope.
-  case /(_ i hi) : hscope => ? h0.
+  case /(_ i ltac:(lia)) : hscope => ? h0.
   rewrite -h0; auto.
-  by apply h1.
+  rewrite /γ_ok in h1.
+  by apply h1; lia.
 Qed.
 
-Lemma renaming_SemWt Γ a A :
-  SemWt Γ a A ->
+Lemma renaming_SemWt Γ a b A B :
+  SemWt Γ a b A B ->
   forall Δ ξ,
     good_renaming ξ Γ Δ ->
-    SemWt Δ (ren_tm ξ a) (ren_tm ξ A).
+    SemWt Δ (ren_tm ξ a) (ren_tm ξ b) (ren_tm ξ A) (ren_tm ξ B).
 Proof.
-  rewrite /SemWt => h Δ ξ hξ γ hγ.
-  have hγ' : (γ_ok Γ (ξ >> γ)) by eauto using γ_ok_renaming.
-  case /(_ _ hγ') : h => PA hPA.
+  rewrite /SemWt => h Δ ξ hξ γ0 γ1 hγ.
+  have hγ' : (γ_ok Γ (ξ >> γ0) (ξ >> γ1)) by eauto using γ_ok_renaming.
+  case /(_ _ _ hγ') : h => PA hPA.
   exists PA.
   by asimpl.
 Qed.
 
-Lemma γ_ok_consU {i Γ γ a PA A} :
-  InterpUnivN i (subst_tm γ A) PA ->
-  PA a ->
-  γ_ok Γ γ ->
-  γ_ok (A :: Γ) (a .: γ).
+Lemma γ_ok_consU {i Γ γ0 γ1 a b PA A B} :
+  InterpUnivN i (subst_tm γ0 A) (subst_tm γ1 B) PA ->
+  PA a b ->
+  γ_ok Γ γ0 γ1 ->
+  γ_ok (A :: Γ) (a .: γ0) (b .: γ1).
 Proof.
   hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
 Qed.
 
+Section SemanticTyping.
+  Variable Γ : context.
+
+  Variable A B a b : tm.
+
+  Variable m : nat.
+
+  Lemma ST_Var i :
+    SemWff Γ ->
+    i < length Γ ->
+    (* ----------------------------------------------------- *)
+    SemWt Γ (var_tm i) (var_tm i) (dep_ith Γ i) (dep_ith Γ i).
+  Proof using Γ.
+    move => ih ? γ0 γ1 hγ.
+    move /(_ i ltac:(done)) in ih.
+    case : ih => F ih.
+    suff ih' : SemWt Γ (dep_ith Γ i) (dep_ith Γ i) (tUniv (F i)) (tUniv (F i)).
+    + case /(_ _ _ hγ) : ih' => j [PA [hPA hi]].
+      simpl in hPA.
+      case /InterpUnivN_Univ_inv' : hPA => ? ?; subst.
+      move : hi; intros (PA & hi).
+      exists (F i), PA; sfirstorder.
+    + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
+  Qed.
+
+  Lemma ST_False :
+    SemWff Γ ->
+    SemWt Γ tFalse tFalse (tUniv m) (tUniv m).
+  Proof using m.
+    hauto l:on use:InterpUniv_Univ, InterpUniv_False.
+  Qed.
+
+  Lemma ST_Pi :
+    SemWt Γ (tPi A B) (tPi A B) (tUniv m) (tUniv m) ->
+    SemWt (A :: Γ) a B ->
+    (* ----------------------- *)
+    SemWt (tAbs )
+
+End SemanticTyping.
+
 Theorem soundness Γ :
-  (forall a A, Wt Γ a A -> SemWt Γ a A) /\
-  (Wff Γ -> forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i))).
+  (forall a A, Wt Γ a A -> SemWt Γ a a A A) /\
+  (Wff Γ -> forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (ith Γ i) (tUniv (F i)) (tUniv (F i))).
 Proof.
   move : Γ.
   apply wt_mutual.
