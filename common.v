@@ -1,8 +1,4 @@
-From WR Require Import syntax.
-From Coq Require Import ssreflect List.
-Require Import Psatz.
-From Hammer Require Import Tactics.
-Import ListNotations.
+From WR Require Import syntax imports.
 
 Definition context := list tm.
 

@@ -1,10 +1,4 @@
-From WR Require Import syntax.
-From Coq Require Import
-  ssreflect
-  Sets.Relations_2
-  Sets.Relations_3
-  Sets.Relations_3_facts.
-From Hammer Require Import Tactics.
+From WR Require Import syntax imports.
 
 Definition is_bool_val a :=
   match a with
@@ -72,63 +66,62 @@ Inductive Par : tm -> tm -> Prop :=
 
 #[export]Hint Constructors Par : par.
 
-Definition Join := coherent _ Par.
+Notation Pars := (rtc Par).
 
-Lemma pars_pi_inv A B C (h : Rstar _ Par (tPi A B) C) :
-  exists A0 B0, C = tPi A0 B0 /\ Rstar _ Par A A0 /\ Rstar _ Par B B0.
+Definition Coherent a0 a1 := (exists b, Pars a0 b /\ Pars a1 b).
+
+Lemma pars_pi_inv A B C (h : Pars (tPi A B) C) :
+  exists A0 B0, C = tPi A0 B0 /\ Pars A A0 /\ Pars B B0.
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
-  elim : T C / h; hecrush inv:Par ctrs:Rstar, Par.
+  elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
 Qed.
 
-Lemma join_pi_inj A B A0 B0 (h : Join (tPi A B) (tPi A0 B0)) :
-  Join A A0 /\ Join B B0.
-Proof. hauto q:on use:pars_pi_inv unfold:Join, coherent. Qed.
+Lemma Coherent_pi_inj A B A0 B0 (h : Coherent (tPi A B) (tPi A0 B0)) :
+  Coherent A A0 /\ Coherent B B0.
+Proof. hauto q:on use:pars_pi_inv. Qed.
 
-Lemma pars_univ_inv i A (h : Rstar _ Par (tUniv i) A) :
+Lemma pars_univ_inv i A (h : Pars (tUniv i) A) :
   A = tUniv i.
 Proof.
   move E : (tUniv i) h => A0 h.
   move : E.
-  elim : A0 A / h; hauto lq:on rew:off ctrs:Rstar, Par inv:Par.
+  elim : A0 A / h; hauto lq:on rew:off ctrs:rtc, Par inv:Par.
 Qed.
 
-Lemma join_univ_inj i j (h : Join (tUniv i) (tUniv j)) : i = j.
-Proof. hauto lq:on rew:off inv:Rstar use:pars_univ_inv unfold:Join, coherent. Qed.
+Lemma Coherent_univ_inj i j (h : Coherent (tUniv i) (tUniv j)) : i = j.
+Proof. hauto lq:on rew:off inv:rtc use:pars_univ_inv. Qed.
 
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
 Lemma P_IfOn_star a b c :
-  Rstar _ Par a tOn ->
-  Rstar _ Par (tIf a b c) b.
+  Pars a tOn ->
+  Pars (tIf a b c) b.
   move E : tOn => v h.
   move : E.
   elim : a v / h.
-  - hauto lq:on ctrs:Par use:Par_refl, Rstar_contains_R unfold:contains.
+  - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.
   - move => a a0 a1 h0 h1 h2 ?; subst.
     move /(_ eq_refl) in h2.
-    apply : Rstar_transitive; eauto.
-    apply Rstar_contains_R.
-    hauto lq:on ctrs:Par use:Par_refl.
+    apply : rtc_transitive; eauto.
+    hauto lq:on use:@rtc_once,Par_refl ctrs:Par.
 Qed.
 
 Lemma P_IfOff_star a b c :
-  Rstar _ Par a tOff ->
-  Rstar _ Par (tIf a b c) c.
+  Pars a tOff ->
+  Pars (tIf a b c) c.
   move E : tOff => v h.
   move : E.
   elim : a v / h.
-  - hauto lq:on ctrs:Par use:Par_refl, Rstar_contains_R unfold:contains.
+  - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.
   - move => a a0 a1 h0 h1 h2 ?; subst.
     move /(_ eq_refl) in h2.
-    apply : Rstar_transitive; eauto.
-    apply Rstar_contains_R.
+    apply : rtc_transitive; eauto.
+    apply @rtc_once.
     hauto lq:on ctrs:Par use:Par_refl.
 Qed.
-
-#[export]Hint Unfold Join : par.
 
 Lemma P_AppAbs' a A a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
@@ -149,14 +142,14 @@ Lemma par_renaming a b (ξ : fin -> fin) :
 Qed.
 
 Lemma pars_renaming a b (ξ : fin -> fin) :
-  Rstar _ Par a b ->
-  Rstar _ Par (ren_tm ξ a) (ren_tm ξ b).
-Proof. induction 1; hauto lq:on ctrs:Rstar use:par_renaming. Qed.
+  Pars a b ->
+  Pars (ren_tm ξ a) (ren_tm ξ b).
+Proof. induction 1; hauto lq:on ctrs:rtc use:par_renaming. Qed.
 
-Lemma join_renaming a b (ξ : fin -> fin) :
-  Join a b ->
-  Join (ren_tm ξ a) (ren_tm ξ b).
-Proof. hauto lq:on rew:off unfold:Join, coherent use:pars_renaming. Qed.
+Lemma Coherent_renaming a b (ξ : fin -> fin) :
+  Coherent a b ->
+  Coherent (ren_tm ξ a) (ren_tm ξ b).
+Proof. hauto lq:on rew:off use:pars_renaming. Qed.
 
 Lemma par_morphing_lift (ξ0 ξ1 : fin -> tm)
   (h : forall i, Par (ξ0 i) (ξ1 i)) :
@@ -192,42 +185,42 @@ Lemma par_subst a0 a1 (h : Par a0 a1) (ξ : fin -> tm) :
   Par (subst_tm ξ a0) (subst_tm ξ a1).
 Proof. hauto l:on use:Par_refl, par_morphing. Qed.
 
-Lemma par_morphing_star a0 a1 (h : Rstar _ Par a0 a1) (ξ0 ξ1 : fin -> tm) :
+Lemma par_morphing_star a0 a1 (h : Pars a0 a1) (ξ0 ξ1 : fin -> tm) :
   (forall i, Par (ξ0 i) (ξ1 i)) ->
-  Rstar _ Par (subst_tm ξ0 a0) (subst_tm ξ1 a1).
+  Pars (subst_tm ξ0 a0) (subst_tm ξ1 a1).
 Proof.
   induction h.
-  - move => h. apply Rstar_contains_R. eauto using par_morphing, Par_refl.
+  - move => h. apply @rtc_once. eauto using par_morphing, Par_refl.
   - move => h0.
-    apply : Rstar_transitive; eauto.
-    apply Rstar_contains_R.
+    apply : rtc_transitive; eauto.
+    apply @rtc_once.
     sfirstorder use:par_morphing, Par_refl.
 Qed.
 
-Lemma Par_join a b :
-  Par a b -> Join a b.
-Proof. sfirstorder use:Rstar_contains_R unfold:Join. Qed.
+Lemma Par_Coherent a b :
+  Par a b -> Coherent a b.
+Proof. hauto lq:on use:@rtc_once, @rtc_refl. Qed.
 
-Lemma join_morphing a0 a1 (h : Join a0 a1) (ξ0 ξ1 : fin -> tm) :
+Lemma Coherent_morphing a0 a1 (h : Coherent a0 a1) (ξ0 ξ1 : fin -> tm) :
   (forall i, Par (ξ0 i) (ξ1 i)) ->
-  Join (subst_tm ξ0 a0) (subst_tm ξ1 a1).
+  Coherent (subst_tm ξ0 a0) (subst_tm ξ1 a1).
 Proof.
-  hauto l:on unfold:Join,coherent use:par_morphing_star, Par_refl, Par_join.
+  hauto l:on use:par_morphing_star, Par_refl, Par_Coherent unfold:Coherent.
 Qed.
 
-Lemma par_subst_star a0 a1 (h : Rstar _ Par a0 a1) (ξ : fin -> tm) :
-  Rstar _ Par (subst_tm ξ a0) (subst_tm ξ a1).
+Lemma par_subst_star a0 a1 (h : Pars a0 a1) (ξ : fin -> tm) :
+  Pars (subst_tm ξ a0) (subst_tm ξ a1).
 Proof. hauto l:on use:par_morphing_star, Par_refl. Qed.
 
-Lemma join_subst_star a0 a1 (h : Join a0 a1) (ξ : fin -> tm) :
-  Join (subst_tm ξ a0) (subst_tm ξ a1).
-Proof. hauto lq:on use:join_morphing, Par_refl unfold:Join, coherent. Qed.
+Lemma Coherent_subst_star a0 a1 (h : Coherent a0 a1) (ξ : fin -> tm) :
+  Coherent (subst_tm ξ a0) (subst_tm ξ a1).
+Proof. hauto lq:on use:Coherent_morphing, Par_refl. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 
-Lemma par_confluent : Strongly_confluent _ Par.
+Lemma par_confluent : diamond Par.
 Proof.
-  rewrite /Strongly_confluent.
+  rewrite /diamond.
   move => a b b0 h.
   move : b0.
   elim : a b / h.
@@ -274,26 +267,25 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
 Qed.
 
-Lemma pars_confluent : Confluent _ Par.
+Lemma pars_confluent : confluent Par.
 Proof.
-  apply Strong_confluence.
-  apply par_confluent.
+  sfirstorder use:par_confluent, @diamond_confluent.
 Qed.
 
-Lemma Join_reflexive a :
-  Join a a.
-Proof. hauto l:on ctrs:Rstar. Qed.
+Lemma Coherent_reflexive a :
+  Coherent a a.
+Proof. hauto l:on ctrs:rtc. Qed.
 
-Lemma Join_symmetric a b :
-  Join a b -> Join b a.
-Proof. sfirstorder use:coherent_symmetric. Qed.
+Lemma Coherent_symmetric a b :
+  Coherent a b -> Coherent b a.
+Proof. sfirstorder. Qed.
 
-Lemma Join_transitive a b c :
-  Join a b -> Join b c -> Join a c.
+Lemma Coherent_transitive a b c :
+  Coherent a b -> Coherent b c -> Coherent a c.
 Proof.
   have := pars_confluent.
-  rewrite /Confluent /confluent /Join /coherent => h [z0 [? h0]] [z1 [h1 ?]].
+  move => h [z0 [? h0]] [z1 [h1 ?]].
   move /(_ b _ _ h0 h1) in h.
   case : h => z [*].
-  exists z. split; sfirstorder use:Rstar_transitive.
+  exists z. split; sfirstorder use:@rtc_transitive.
 Qed.

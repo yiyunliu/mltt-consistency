@@ -1,8 +1,4 @@
-From WR Require Import syntax join typing common.
-From Coq Require Import ssreflect Sets.Relations_2 ssrbool.
-From Hammer Require Import Tactics.
-Require Coq.Init.Datatypes.
-Require Import Psatz.
+From WR Require Import syntax imports join typing common.
 
 Lemma good_renaming_up ξ Γ Δ A :
   good_renaming ξ Γ Δ ->
@@ -64,32 +60,34 @@ Qed.
 Lemma Wt_Pi_inv Γ A B U (h : Wt Γ (tPi A B) U) :
   exists i, Wt Γ A (tUniv i) /\
          Wt (A :: Γ) B (tUniv i) /\
-         Join (tUniv i) U /\
+         Coherent (tUniv i) U /\
          exists i, Wt Γ U (tUniv i).
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
   elim :  Γ T U / h => //.
   - hauto l:on use:Wt_Univ.
-  - hauto lq:on rew:off use:Join_transitive.
+  - qauto l:on use:Coherent_transitive.
 Qed.
 
 Lemma Wt_Pi_Univ_inv Γ A B i (h : Wt Γ (tPi A B) (tUniv i)) :
   Wt Γ A (tUniv i) /\
   Wt (A :: Γ) B (tUniv i).
-Proof. hauto lq:on use:Wt_Pi_inv, join_univ_inj. Qed.
+Proof. 
+  qauto l:on use:Coherent_univ_inj, Wt_Pi_inv.
+ Qed.
 
 Lemma Wt_Abs_inv Γ A a T (h : Wt Γ (tAbs A a) T) :
   exists B i, Wt Γ (tPi A B) (tUniv i) /\
          Wt (A :: Γ) a B /\
-         Join (tPi A B) T /\
+         Coherent (tPi A B) T /\
          exists i, (Wt Γ T (tUniv i)).
 Proof.
   move E : (tAbs A a) h => a0 h.
   move : A a E.
   elim : Γ a0 T / h => //.
-  - hauto lq:on use:Join_reflexive.
-  - hauto lq:on rew:off use:Join_transitive.
+  - hauto lq:on use:Coherent_reflexive.
+  - hauto lq:on use:Coherent_transitive.
 Qed.
 
 Lemma renaming_Syn Γ a A (h : Wt Γ a A) : forall Δ ξ,
@@ -101,7 +99,7 @@ Proof.
   - hauto lq:on ctrs:Wt use:good_renaming_up db:wff.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
-  - qauto l:on ctrs:Wt use:join_renaming.
+  - qauto l:on ctrs:Wt use:Coherent_renaming.
 Qed.
 
 Lemma weakening_Syn Γ a A B i
@@ -164,7 +162,7 @@ Proof.
     apply : T_Abs; eauto.
     hauto q:on use:good_morphing_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
-  - hauto q:on ctrs:Wt use:join_subst_star.
+  - hauto q:on ctrs:Wt use:Coherent_subst_star.
 Qed.
 
 Lemma subst_Syn Γ A a b B
@@ -191,7 +189,7 @@ Qed.
 Lemma Wt_App_inv Γ b a T (h : Wt Γ (tApp b a) T) :
   exists A B, Wt Γ b (tPi A B) /\
          Wt Γ a A /\
-         Join (subst_tm (a..) B) T /\
+         Coherent (subst_tm (a..) B) T /\
          exists i, Wt Γ T (tUniv i).
 Proof.
   move E : (tApp b a) h => ba h.
@@ -199,13 +197,13 @@ Proof.
   elim : Γ ba T /h => //.
   - move => Γ a A B b h0 _ h1 _ ? ? [] *; subst.
     exists A, B; repeat split => //.
-    + apply join_subst_star. apply Join_reflexive.
+    + apply Coherent_subst_star. apply Coherent_reflexive.
     + move /Wt_regularity : h0.
       move => [i /Wt_Pi_Univ_inv] [hA hB].
       exists i.
       change (tUniv i) with (subst_tm (b..) (tUniv i)).
       apply : subst_Syn; eauto.
-  - hauto lq:on rew:off use:Join_transitive.
+  - hauto lq:on rew:off use:Coherent_transitive.
 Qed.
 
 
@@ -213,21 +211,21 @@ Lemma Wt_If_inv Γ a b c T (h : Wt Γ (tIf a b c) T) :
   exists A, Wt Γ a tSwitch /\
          Wt Γ b A /\
          Wt Γ c A /\
-         Join A T /\
+         Coherent A T /\
          exists i, Wt Γ T (tUniv i).
 Proof.
   move E : (tIf a b c) h => a0 h.
   move : a b c E.
   elim : Γ a0 T / h => //.
-  - hauto lq:on rew:off use:Join_transitive.
-  - qauto l:on use:Join_reflexive, Wt_regularity.
+  - hauto lq:on rew:off use:Coherent_transitive.
+  - qauto l:on use:Coherent_reflexive, Wt_regularity.
 Qed.
 
 Lemma preservation_helper A0 A1 i j Γ a A :
   Wt (A0 :: Γ) a A ->
   Wt Γ A0 (tUniv i) ->
   Wt Γ A1 (tUniv j) ->
-  Join A0 A1 ->
+  Coherent A0 A1 ->
   Wt (A1 :: Γ) a A.
 Proof.
   move => h0 h1 h2 h3.
@@ -241,7 +239,7 @@ Proof.
       * apply T_Var; hauto l:on db:wff.
       * change (tUniv i) with (ren_tm shift (tUniv i)).
         apply weakening_Syn with (i := j) => //.
-      * hauto lq:on use:Join_symmetric, join_renaming.
+      * hauto lq:on use:Coherent_symmetric, Coherent_renaming.
     + asimpl.
       change (var_tm (S k)) with (ren_tm shift (var_tm k)).
       apply weakening_Syn with (i := j) => //.
@@ -254,45 +252,45 @@ Lemma subject_reduction a b (h : Par a b) : forall Γ A,
 Proof.
   elim : a b /h => //.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Pi_inv.
-    intros (i & hA0 & hAB0 & hAJoin & j & hA).
+    intros (i & hA0 & hAB0 & hACoherent & j & hA).
     have ? : Wff Γ by eauto with wff.
     apply T_Conv with (A := tUniv i) (i := j) => //.
-    qauto l:on ctrs:Wt use:preservation_helper, Par_join.
+    qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
   - move => A0 A1 a0 a1 h0 ih0 h1 ih1 Γ A /Wt_Abs_inv.
-    intros (B & i & hPi & ha0 & hJoin & j & hA).
+    intros (B & i & hPi & ha0 & hCoherent & j & hA).
     case /Wt_Pi_Univ_inv : hPi => hA0 hB.
     apply T_Conv with (A := tPi A1 B) (i := j) => //.
     apply T_Abs with (i := i).
-    + qauto l:on ctrs:Wt use:preservation_helper, Par_join.
-    + qauto l:on ctrs:Wt use:preservation_helper, Par_join.
-    + suff : Join (tPi A1 B) (tPi A0 B) by hauto l:on use:Join_transitive.
-      apply Join_symmetric.
-      apply Par_join.
+    + qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
+    + qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
+    + suff : Coherent (tPi A1 B) (tPi A0 B) by hauto l:on use:Coherent_transitive.
+      apply Coherent_symmetric.
+      apply Par_Coherent.
       hauto lq:on ctrs:Par use:Par_refl.
   - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_App_inv.
-    intros (A0 & B & hPi & hb0 & hJoin & i & hA).
+    intros (A0 & B & hPi & hb0 & hCoherent & i & hA).
     eapply T_Conv with (A := subst_tm (b1..) B); eauto.
     apply : T_App; eauto.
-    apply : Join_transitive; eauto.
-    apply Join_symmetric.
-    apply Par_join.
+    apply : Coherent_transitive; eauto.
+    apply Coherent_symmetric.
+    apply Par_Coherent.
     apply par_morphing; last by apply Par_refl.
     hauto q:on ctrs:Par inv:nat simp:asimpl.
   - move => a A a0 b0 b1 haa0 iha hbb0 ihb Γ A0 /Wt_App_inv.
-    intros (A1 & B & ha & hb0 & hJoin & i & hA0).
-    have /iha /Wt_Abs_inv := ha; intros (B0 & k & hPi & ha0 & hJoin' & j & hPi').
-    case /join_pi_inj : hJoin' => *.
+    intros (A1 & B & ha & hb0 & hCoherent & i & hA0).
+    have /iha /Wt_Abs_inv := ha; intros (B0 & k & hPi & ha0 & hCoherent' & j & hPi').
+    case /Coherent_pi_inj : hCoherent' => *.
     case /Wt_Pi_Univ_inv : hPi => *.
     move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
     move /ihb in hb0.
     eapply T_Conv with (A := subst_tm (b1..) B0); eauto.
     + apply : subst_Syn; eauto.
       eapply T_Conv with (A := A1); eauto.
-      qauto l:on use:Join_symmetric.
-    + apply : Join_transitive; eauto.
-      apply Join_symmetric.
-      apply join_morphing.
-      * by apply Join_symmetric.
+      qauto l:on use:Coherent_symmetric.
+    + apply : Coherent_transitive; eauto.
+      apply Coherent_symmetric.
+      apply Coherent_morphing.
+      * by apply Coherent_symmetric.
       * case; [by asimpl | sfirstorder use:Par_refl].
   - hauto lq:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
@@ -334,12 +332,12 @@ Lemma par_head a b (h : Par a b) :
         tm_to_head b = Some hd.
 Proof. induction h => //. Qed.
 
-Lemma par_head_star a b (h : Rstar _ Par a b) :
+Lemma par_head_star a b (h : Pars a b) :
   forall hd, tm_to_head a = Some hd ->
         tm_to_head b = Some hd.
 Proof. induction h; eauto using par_head. Qed.
 
-Lemma join_consistent a b (h : Join a b) :
+Lemma Coherent_consistent a b (h : Coherent a b) :
   forall hd hd1, tm_to_head a = Some hd ->
             tm_to_head b = Some hd1 ->
             hd = hd1.
@@ -347,32 +345,32 @@ Proof. qblast use:par_head_star. Qed.
 
 Lemma Wt_Univ_winv Γ i U :
   Wt Γ (tUniv i) U ->
-  exists j, Join (tUniv j) U.
+  exists j, Coherent (tUniv j) U.
 Proof.
   move E : (tUniv i) => U0 h.
   move : i E.
-  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+  induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive.
 Qed.
 
 Lemma Wt_False_winv Γ U :
   Wt Γ tFalse U ->
-  exists j, Join (tUniv j) U.
+  exists j, Coherent (tUniv j) U.
 Proof.
   move E : tFalse => U0 h.
   move : E.
-  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+  induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive.
 Qed.
 
 Lemma Wt_On_Off_winv Γ a A (h : Wt Γ a A) :
-  is_bool_val a -> Join tSwitch A.
-Proof. induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive. Qed.
+  is_bool_val a -> Coherent tSwitch A.
+Proof. induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive. Qed.
 
 Lemma Wt_Switch_winv Γ A :
   Wt Γ tSwitch A ->
-  exists i, Join (tUniv i) A.
+  exists i, Coherent (tUniv i) A.
 Proof.
   move E : tSwitch => a h. move : E.
-  induction h => //; qauto l:on ctrs:Wt use:Join_transitive, Join_reflexive.
+  induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive.
 Qed.
 
 Lemma wt_pi_canon a A B :
@@ -382,12 +380,12 @@ Lemma wt_pi_canon a A B :
 Proof.
   case : a => //.
   - hauto lq:on.
-  - qauto l:on use:Wt_Pi_inv, join_consistent.
-  - qauto l:on use:Wt_False_winv, join_consistent.
-  - qauto l:on use:Wt_Univ_winv, join_consistent.
-  - qauto l:on use:Wt_On_Off_winv, join_consistent.
-  - qauto l:on use:Wt_On_Off_winv, join_consistent.
-  - qauto l:on use:Wt_Switch_winv, join_consistent.
+  - qauto l:on use:Wt_Pi_inv, Coherent_consistent.
+  - qauto l:on use:Wt_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Univ_winv, Coherent_consistent.
+  - qauto l:on use:Wt_On_Off_winv, Coherent_consistent.
+  - qauto l:on use:Wt_On_Off_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Switch_winv, Coherent_consistent.
 Qed.
 
 Lemma wt_switch_canon a :
@@ -396,11 +394,11 @@ Lemma wt_switch_canon a :
   is_bool_val a.
 Proof.
   case : a => //.
-  - qauto l:on use:Wt_Abs_inv, join_consistent.
-  - qauto l:on use:Wt_Pi_inv, join_consistent.
-  - qauto l:on use:Wt_False_winv, join_consistent.
-  - qauto l:on use:Wt_Univ_winv, join_consistent.
-  - qauto l:on use:Wt_Switch_winv, join_consistent.
+  - qauto l:on use:Wt_Abs_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Pi_inv, Coherent_consistent.
+  - qauto l:on use:Wt_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Univ_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Switch_winv, Coherent_consistent.
 Qed.
 
 Lemma wt_progress a A (h :Wt nil a A) : is_value a \/ exists a0, Par a a0.

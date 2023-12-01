@@ -1,8 +1,4 @@
-From WR Require Import syntax join semtyping typing common.
-From Coq Require Import ssreflect ssrbool Sets.Relations_2 Sets.Relations_2_facts Sets.Relations_3 Program.Basics.
-From Hammer Require Import Tactics.
-Require Import Psatz.
-From Equations Require Import Equations.
+From WR Require Import syntax join semtyping typing common imports.
 
 Definition γ_ok Γ γ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
 Definition SemWt Γ a A := forall γ, γ_ok Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
@@ -153,7 +149,7 @@ Proof.
     rewrite /ProdSpace in hf.
     asimpl in *.
     hauto lq:on.
-  - rewrite /SemWt /Join /coherent => Γ a A B i _ hA _ hB [C [? ?]] γ hγ.
+  - rewrite /SemWt => Γ a A B i _ hA _ hB [C [? ?]] γ hγ.
     case : (hA γ hγ) => j [PA [hPA hPAa]].
     case : (hB γ hγ) => k [PB [hPB hPB']].
     simpl in hPB.
@@ -161,8 +157,8 @@ Proof.
     case : hPB' =>  PA0 hPA0.
     exists i, PA0.
     split; auto.
-    have [*] : Rstar _ Par (subst_tm γ A) (subst_tm γ C) /\
-                 Rstar _ Par (subst_tm γ B) (subst_tm γ C)
+    have [*] : Pars (subst_tm γ A) (subst_tm γ C) /\
+                 Pars (subst_tm γ B) (subst_tm γ C)
       by sfirstorder use:par_subst_star.
     have ? :InterpUnivN i (subst_tm γ C) PA0 by sfirstorder use:InterpUnivN_preservation_star.
     have ? :InterpUnivN i (subst_tm γ A) PA0 by sfirstorder use:InterpUnivN_back_preservation_star.

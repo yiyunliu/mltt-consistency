@@ -1,20 +1,11 @@
-From WR Require Import syntax join.
-From Coq Require Import
-  Sets.Relations_2
-  Sets.Relations_2_facts
-  ssreflect
-  ssrbool
-  Program.Basics
-  Logic.PropExtensionality.
-From Hammer Require Import Tactics.
-From Equations Require Import Equations.
+From WR Require Import syntax join imports.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
 Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_False : InterpExt n Interp tFalse (const False)
-| InterpExt_Switch : InterpExt n Interp tSwitch (fun a => exists v, Rstar _ Par a v /\ is_bool_val v)
+| InterpExt_Switch : InterpExt n Interp tSwitch (fun a => exists v, Pars a v /\ is_bool_val v)
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
   InterpExt n Interp A PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
@@ -107,28 +98,28 @@ Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
 Proof. hauto l:on rew:db:InterpUnivN use: InterpExt_preservation. Qed.
 
 Lemma InterpExt_back_preservation_star i I A B P (h : InterpExt i I B P) :
-  Rstar _ Par A B ->
+  Pars A B ->
   InterpExt i I A P.
 Proof. induction 1; hauto l:on ctrs:InterpExt. Qed.
 
 Lemma InterpExt_preservation_star n I A B P (h : InterpExt n I A P) :
-  Rstar _ Par A B ->
+  Pars A B ->
   InterpExt n I B P.
 Proof. induction 1; hauto l:on use:InterpExt_preservation. Qed.
 
 Lemma InterpUnivN_preservation_star n A B P (h : InterpUnivN n A P) :
-  Rstar _ Par A B ->
+  Pars A B ->
   InterpUnivN n B P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_preservation_star. Qed.
 
 Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
-  Rstar _ Par A B ->
+  Pars A B ->
   InterpUnivN n A P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
 Lemma InterpExt_Switch_inv n I P :
   InterpExt n I tSwitch P ->
-  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
+  P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof.
   move E : tSwitch => A h.
   move : E.
@@ -155,7 +146,7 @@ Qed.
 
 Lemma InterpUnivN_Switch_inv n P :
   InterpUnivN n tSwitch P ->
-  P = fun a => exists v, Rstar _ Par a v /\ is_bool_val v.
+  P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Switch_inv. Qed.
 
 Lemma InterpExt_deterministic n I A PA PB :
@@ -276,7 +267,7 @@ Proof.
   move => h.
   elim : A PA / h.
   - sfirstorder.
-  - hauto lq:on ctrs:Rstar use:Rstar_transitive.
+  - hauto lq:on ctrs:rtc.
   - move => A B PA PF hPA ihA hPFTot hPF ihPF b0 b1 hb01.
     rewrite /ProdSpace => hPB a PB ha hPFa.
     have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
@@ -298,7 +289,7 @@ Qed.
 
 Lemma InterpUnivN_back_clos_star n A PA :
     InterpUnivN n A PA ->
-    forall a b, Rstar _ Par a b ->
+    forall a b, Pars a b ->
            PA b -> PA a.
 Proof.
   move => h a b.

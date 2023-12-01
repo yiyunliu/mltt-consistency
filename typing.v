@@ -34,7 +34,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 | T_Conv a A B i :
   Wt Γ a A ->
   Wt Γ B (tUniv i) ->
-  Join A B ->
+  Coherent A B ->
   (* ----------- *)
   Wt Γ a B
 
