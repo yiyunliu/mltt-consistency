@@ -152,6 +152,15 @@ Lemma InterpUnivN_Bool_inv n P :
   P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
+Lemma InterpExt_Eq_inv n I a b A P :
+  InterpExt n I (tEq a b A) P ->
+  P = (fun A => Pars A tRefl).
+Proof.
+  move E : (tEq a b A) => T h.
+  move : a b A E.
+  elim : T P /h => //. hauto lq:on rew:off inv:Par.
+Qed.
+
 Lemma InterpExt_deterministic n I A PA PB :
   InterpExt n I A PA ->
   InterpExt n I A PB ->
@@ -170,6 +179,7 @@ Proof.
     apply propositional_extensionality.
     hauto lq:on rew:off.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
+  - hauto lq:on inv:InterpExt use:InterpExt_Eq_inv.
   - hauto l:on use:InterpExt_preservation.
 Qed.
 
@@ -206,6 +216,7 @@ Proof.
   - move => m h.
     apply InterpExt_Univ' => //.
     case : Compare_dec.lt_dec => //.
+  - hauto l:on.
   - hauto lq:on ctrs:InterpExt.
 Qed.
 
@@ -224,6 +235,7 @@ Proof.
   - move => m ?.
     apply InterpExt_Univ' => //.
     case : Compare_dec.lt_dec => //.
+  - hauto l:on.
   - hauto lq:on ctrs:InterpExt.
 Qed.
 
@@ -276,6 +288,7 @@ Proof.
     have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
     hauto lq:on ctrs:Par.
   - hauto lq:on.
+  - hauto lq:on ctrs:rtc.
   - sfirstorder.
 Qed.
 
