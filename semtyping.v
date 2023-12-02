@@ -4,8 +4,8 @@ Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm
   forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
 Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
-| InterpExt_False : InterpExt n Interp tFalse (const False)
-| InterpExt_Switch : InterpExt n Interp tSwitch (fun a => exists v, Pars a v /\ is_bool_val v)
+| InterpExt_Void : InterpExt n Interp tVoid (const False)
+| InterpExt_Bool : InterpExt n Interp tBool (fun a => exists v, Pars a v /\ is_bool_val v)
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
   InterpExt n Interp A PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
@@ -117,20 +117,20 @@ Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
   InterpUnivN n A P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
-Lemma InterpExt_Switch_inv n I P :
-  InterpExt n I tSwitch P ->
+Lemma InterpExt_Bool_inv n I P :
+  InterpExt n I tBool P ->
   P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof.
-  move E : tSwitch => A h.
+  move E : tBool => A h.
   move : E.
   elim : A P / h; hauto lq:on inv:Par.
 Qed.
 
-Lemma InterpExt_False_inv n I P :
-  InterpExt n I tFalse P ->
+Lemma InterpExt_Void_inv n I P :
+  InterpExt n I tVoid P ->
   P = (const False).
 Proof.
-  move E : tFalse => A h.
+  move E : tVoid => A h.
   move : E.
   elim : A P / h; hauto lq:on inv:Par.
 Qed.
@@ -144,10 +144,10 @@ Proof.
   elim : A P / h; hauto lq:on inv:Par.
 Qed.
 
-Lemma InterpUnivN_Switch_inv n P :
-  InterpUnivN n tSwitch P ->
+Lemma InterpUnivN_Bool_inv n P :
+  InterpUnivN n tBool P ->
   P = fun a => exists v, Pars a v /\ is_bool_val v.
-Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Switch_inv. Qed.
+Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
 Lemma InterpExt_deterministic n I A PA PB :
   InterpExt n I A PA ->
@@ -157,8 +157,8 @@ Proof.
   move => h.
   move : PB.
   elim : A PA / h.
-  - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_False_inv.
-  - hauto lq:on inv:InterpExt use:InterpExt_Switch_inv.
+  - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_Void_inv.
+  - hauto lq:on inv:InterpExt use:InterpExt_Bool_inv.
   - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
     move /InterpExt_Fun_inv : hP.
     intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.

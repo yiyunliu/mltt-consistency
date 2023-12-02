@@ -8,10 +8,10 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   (* ------ *)
   Wt Γ (var_tm i) (dep_ith Γ i)
 
-| T_False i :
+| T_Void i :
   Wff Γ ->
   (* -------- *)
-  Wt Γ tFalse (tUniv i)
+  Wt Γ tVoid (tUniv i)
 
 | T_Pi i A B :
   Wt Γ A (tUniv i) ->
@@ -38,27 +38,27 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   (* ----------- *)
   Wt Γ a B
 
-| T_On :
+| T_True :
   Wff Γ ->
   (* --------- *)
-  Wt Γ tOn tSwitch
+  Wt Γ tTrue tBool
 
-| T_Off :
+| T_False :
   Wff Γ ->
   (* --------- *)
-  Wt Γ tOff tSwitch
+  Wt Γ tFalse tBool
 
 | T_If a b c A :
-  Wt Γ a tSwitch ->
+  Wt Γ a tBool ->
   Wt Γ b A ->
   Wt Γ c A ->
   (* ------------ *)
   Wt Γ (tIf a b c) A
 
-| T_Switch i :
+| T_Bool i :
   Wff Γ ->
   (* ----------- *)
-  Wt Γ tSwitch (tUniv i)
+  Wt Γ tBool (tUniv i)
 
 | T_Univ i j :
   Wff Γ ->

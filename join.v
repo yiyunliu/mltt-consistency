@@ -2,8 +2,8 @@ From WR Require Import syntax imports.
 
 Definition is_bool_val a :=
   match a with
-  | tOn => true
-  | tOff => true
+  | tTrue => true
+  | tFalse => true
   | _ => false
   end.
 
@@ -14,9 +14,9 @@ Inductive Par : tm -> tm -> Prop :=
 | P_Univ n :
   (* -------- *)
   Par (tUniv n) (tUniv n)
-| P_False :
+| P_Void :
   (* -------- *)
-  Par tFalse tFalse
+  Par tVoid tVoid
 | P_Pi A0 A1 B0 B1 :
   Par A0 A1 ->
   Par B0 B1 ->
@@ -37,32 +37,32 @@ Inductive Par : tm -> tm -> Prop :=
   Par b0 b1 ->
   (* ---------------------------- *)
   Par (tApp a b0) (subst_tm (b1..) a0)
-| P_On :
+| P_True :
   (* ------- *)
-  Par tOn tOn
-| P_Off :
+  Par tTrue tTrue
+| P_False :
   (* ---------- *)
-  Par tOff tOff
+  Par tFalse tFalse
 | P_If a0 a1 b0 b1 c0 c1:
   Par a0 a1 ->
   Par b0 b1 ->
   Par c0 c1 ->
   (* ---------- *)
   Par (tIf a0 b0 c0) (tIf a1 b1 c1)
-| P_IfOn a b0 b1 c0 c1 :
-  Par a tOn ->
+| P_IfTrue a b0 b1 c0 c1 :
+  Par a tTrue ->
   Par b0 b1 ->
   Par c0 c1 ->
   (* ---------- *)
   Par (tIf a b0 c0) b1
-| P_IfOff a b0 b1 c0 c1 :
-  Par a tOff ->
+| P_IfFalse a b0 b1 c0 c1 :
+  Par a tFalse ->
   Par b0 b1 ->
   Par c0 c1 ->
   (* ---------- *)
   Par (tIf a b0 c0) c1
-| P_Switch :
-  Par tSwitch tSwitch.
+| P_Bool :
+  Par tBool tBool.
 
 #[export]Hint Constructors Par : par.
 
@@ -96,10 +96,10 @@ Proof. hauto lq:on rew:off inv:rtc use:pars_univ_inv. Qed.
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
-Lemma P_IfOn_star a b c :
-  Pars a tOn ->
+Lemma P_IfTrue_star a b c :
+  Pars a tTrue ->
   Pars (tIf a b c) b.
-  move E : tOn => v h.
+  move E : tTrue => v h.
   move : E.
   elim : a v / h.
   - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.
@@ -109,10 +109,10 @@ Lemma P_IfOn_star a b c :
     hauto lq:on use:@rtc_once,Par_refl ctrs:Par.
 Qed.
 
-Lemma P_IfOff_star a b c :
-  Pars a tOff ->
+Lemma P_IfFalse_star a b c :
+  Pars a tFalse ->
   Pars (tIf a b c) c.
-  move E : tOff => v h.
+  move E : tFalse => v h.
   move : E.
   elim : a v / h.
   - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.

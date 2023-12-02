@@ -6,17 +6,13 @@ Fixpoint dep_ith Γ i :=
   match Γ , i with
   | (A :: Γ), 0 => ren_tm shift A
   | (A :: Γ), (S i) => ren_tm shift (dep_ith Γ i)
-  | _, _ => tFalse
+  | _, _ => tVoid
   end.
 
-Notation ith Γ i := (nth i Γ tFalse).
+Notation ith Γ i := (nth i Γ tVoid).
 
 Lemma dep_ith_ren_tm (Γ : context) (A : tm) (x : fin) :
   dep_ith (A :: Γ) (S x) = ren_tm shift (dep_ith Γ x).
-Proof. done. Qed.
-
-Lemma dep_ith_ren_tm0 (Γ : context) (A : tm) :
-  dep_ith (A :: Γ) 0 = ren_tm shift A.
 Proof. done. Qed.
 
 Definition good_renaming ξ Γ Δ :=

@@ -167,7 +167,7 @@ Proof.
   - hauto l:on.
   - hauto l:on.
   - rewrite /SemWt => Γ a b c A _ ha _ hb _ hc γ hγ.
-    case /(_ γ hγ) : ha => i [? [/InterpUnivN_Switch_inv ? ha']]; subst.
+    case /(_ γ hγ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
     case /(_ γ hγ) : hb => j [PA [hPA hb']].
     case /(_ γ hγ) : hc => k [PB [hPB hc']].
     have ? : PA = PB by hauto lq:on rew:off use:InterpUnivN_deterministic'.
@@ -177,9 +177,9 @@ Proof.
     case : ha' => v [hred hv].
     case : v hred hv => // ha0 _.
     + apply (InterpUnivN_back_clos_star j) with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
-      eauto using P_IfOn_star with sets.
+      eauto using P_IfTrue_star with sets.
     + apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
-      eauto using P_IfOff_star with sets.
+      eauto using P_IfFalse_star with sets.
   - rewrite /SemWt => Γ i γ hγ.
     simpl.
     exists (S i), (fun A => exists PA, InterpUnivN i A PA).
@@ -190,7 +190,7 @@ Proof.
   - hauto l:on.
 Qed.
 
-Lemma consistency a : ~Wt nil a tFalse.
+Lemma consistency a : ~Wt nil a tVoid.
 Proof.
   move => h.
   apply soundness in h.
@@ -201,6 +201,6 @@ Proof.
   asimpl.
   move => i [PA [hPA ha]].
   simp InterpUniv in hPA.
-  apply InterpExt_False_inv in hPA; subst.
+  apply InterpExt_Void_inv in hPA; subst.
   apply ha.
 Qed.

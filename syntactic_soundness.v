@@ -208,7 +208,7 @@ Qed.
 
 
 Lemma Wt_If_inv Γ a b c T (h : Wt Γ (tIf a b c) T) :
-  exists A, Wt Γ a tSwitch /\
+  exists A, Wt Γ a tBool /\
          Wt Γ b A /\
          Wt Γ c A /\
          Coherent A T /\
@@ -234,7 +234,7 @@ Proof.
   apply morphing_Syn with (Γ := A0 :: Γ).
   - done.
   - case => [_ | k /Arith_prebase.lt_S_n ?].
-    + rewrite dep_ith_ren_tm0; asimpl.
+    + simpl; asimpl.
       apply T_Conv with (A := ren_tm shift A1) (i := i).
       * apply T_Var; hauto l:on db:wff.
       * change (tUniv i) with (ren_tm shift (tUniv i)).
@@ -301,26 +301,26 @@ Definition is_value (a : tm) :=
   match a with
   | tPi A B => true
   | tAbs A a => true
-  | tSwitch => true
-  | tOn => true
-  | tOff => true
+  | tBool => true
+  | tTrue => true
   | tFalse => true
+  | tVoid => true
   | tIf a b c => false
   | tApp a b => false
   | tUniv _ => true
   | var_tm _ => false
   end.
 
-Inductive head := hPi | hAbs | hSwitch | hOn | hOff | hFalse | hUniv | hVar.
+Inductive head := hPi | hAbs | hBool | hTrue | hVoid | hFalse | hUniv | hVar.
 
 Definition tm_to_head (a : tm) :=
   match a with
   | tPi A B => Some hPi
   | tAbs A a => Some hAbs
-  | tSwitch => Some hSwitch
-  | tOn => Some hOn
-  | tOff => Some hOff
+  | tBool => Some hBool
+  | tTrue => Some hTrue
   | tFalse => Some hFalse
+  | tVoid => Some hVoid
   | tIf a b c => None
   | tApp a b => None
   | tUniv _ => Some hUniv
@@ -352,24 +352,24 @@ Proof.
   induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive.
 Qed.
 
-Lemma Wt_False_winv Γ U :
-  Wt Γ tFalse U ->
+Lemma Wt_Void_winv Γ U :
+  Wt Γ tVoid U ->
   exists j, Coherent (tUniv j) U.
 Proof.
-  move E : tFalse => U0 h.
+  move E : tVoid => U0 h.
   move : E.
   induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive.
 Qed.
 
-Lemma Wt_On_Off_winv Γ a A (h : Wt Γ a A) :
-  is_bool_val a -> Coherent tSwitch A.
+Lemma Wt_True_False_winv Γ a A (h : Wt Γ a A) :
+  is_bool_val a -> Coherent tBool A.
 Proof. induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive. Qed.
 
-Lemma Wt_Switch_winv Γ A :
-  Wt Γ tSwitch A ->
+Lemma Wt_Bool_winv Γ A :
+  Wt Γ tBool A ->
   exists i, Coherent (tUniv i) A.
 Proof.
-  move E : tSwitch => a h. move : E.
+  move E : tBool => a h. move : E.
   induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive.
 Qed.
 
@@ -381,24 +381,24 @@ Proof.
   case : a => //.
   - hauto lq:on.
   - qauto l:on use:Wt_Pi_inv, Coherent_consistent.
-  - qauto l:on use:Wt_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Void_winv, Coherent_consistent.
   - qauto l:on use:Wt_Univ_winv, Coherent_consistent.
-  - qauto l:on use:Wt_On_Off_winv, Coherent_consistent.
-  - qauto l:on use:Wt_On_Off_winv, Coherent_consistent.
-  - qauto l:on use:Wt_Switch_winv, Coherent_consistent.
+  - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Bool_winv, Coherent_consistent.
 Qed.
 
 Lemma wt_switch_canon a :
-  Wt nil a tSwitch ->
+  Wt nil a tBool ->
   is_value a ->
   is_bool_val a.
 Proof.
   case : a => //.
   - qauto l:on use:Wt_Abs_inv, Coherent_consistent.
   - qauto l:on use:Wt_Pi_inv, Coherent_consistent.
-  - qauto l:on use:Wt_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Void_winv, Coherent_consistent.
   - qauto l:on use:Wt_Univ_winv, Coherent_consistent.
-  - qauto l:on use:Wt_Switch_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Bool_winv, Coherent_consistent.
 Qed.
 
 Lemma wt_progress a A (h :Wt nil a A) : is_value a \/ exists a0, Par a a0.
