@@ -97,9 +97,20 @@ Proof.
   elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
 Qed.
 
+Lemma pars_eq_inv a b A C (h : Pars (tEq a b A) C) :
+  exists a0 b0 A0, C = tEq a0 b0 A0 /\ Pars a a0 /\ Pars b b0 /\ Pars A A0.
+Proof.
+  move E : (tEq a b A) h => T h.
+  move : a b A E.
+  elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
+Qed.
+
 Lemma Coherent_pi_inj A B A0 B0 (h : Coherent (tPi A B) (tPi A0 B0)) :
   Coherent A A0 /\ Coherent B B0.
 Proof. hauto q:on use:pars_pi_inv. Qed.
+
+Lemma Coherent_eq_inj a b A a0 b0 A0 (h : Coherent (tEq a b A) (tEq a0 b0 A0)) : Coherent a a0 /\ Coherent b b0 /\ Coherent A A0.
+Proof. hauto q:on use:pars_eq_inv. Qed.
 
 Lemma pars_univ_inv i A (h : Pars (tUniv i) A) :
   A = tUniv i.
@@ -142,6 +153,20 @@ Lemma P_IfFalse_star a b c :
     hauto lq:on ctrs:Par use:Par_refl.
 Qed.
 
+Lemma P_JRefl_star t a b p :
+  Pars p tRefl  ->
+  Pars (tJ t a b p) (subst_tm (a..) t).
+Proof.
+  move E : tRefl => v h.
+  move : E.
+  elim : p v / h.
+  - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.
+  - move => x y z h0 h1 ih ?; subst.
+    move /(_ ltac:(done)) in ih.
+    apply : rtc_l; eauto.
+    apply P_J; sfirstorder use:Par_refl.
+Qed.
+
 Lemma P_AppAbs' a A a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
   Par a (tAbs A a0) ->
@@ -150,14 +175,25 @@ Lemma P_AppAbs' a A a0 b0 b b1 :
   Par (tApp a b0) b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
+Lemma P_JRefl' t0 a0 b0 T p t1 a1 b1 :
+  T = (subst_tm (a1..) t1) ->
+  Par t0 t1 ->
+  Par a0 a1 ->
+  Par b0 b1 ->
+  Par p tRefl ->
+  Par (tJ t0 a0 b0 p) T.
+Proof. qauto use:P_JRefl. Qed.
+
 Lemma par_renaming a b (ξ : fin -> fin) :
   Par a b ->
   Par (ren_tm ξ a) (ren_tm ξ b).
   move => h.
   move : ξ.
   elim : a b / h => /=; eauto with par.
-  move => *.
-  apply : P_AppAbs'; eauto. by asimpl.
+  - move => *.
+    apply : P_AppAbs'; eauto. by asimpl.
+  - move => *.
+    apply : P_JRefl'; eauto. by asimpl.
 Qed.
 
 Lemma pars_renaming a b (ξ : fin -> fin) :
@@ -190,6 +226,10 @@ Proof.
   - hauto lq:on db:par use:par_morphing_lift.
   - hauto lq:on db:par use:par_morphing_lift.
   - move => *; apply : P_AppAbs'; eauto; by asimpl.
+  - hauto lq:on db:par use:par_morphing_lift.
+  - move => *; apply : P_JRefl'; eauto;
+           last by hauto lq:on db:par use:par_morphing_lift.
+    by asimpl.
 Qed.
 
 Lemma par_cong a0 a1 b0 b1 (h : Par a0 a1) (h1 : Par b0 b1) :
@@ -284,7 +324,9 @@ Proof.
   - move => a b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 b2.
     elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
-Qed.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+Admitted.
 
 Lemma pars_confluent : confluent Par.
 Proof.

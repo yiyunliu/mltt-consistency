@@ -14,6 +14,8 @@ Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -
 | InterpExt_Univ m :
   m < n ->
   InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
+| InterpExt_Eq a b A :
+  InterpExt n Interp (tEq a b A) (fun a => Pars a tRefl)
 | InterpExt_Step A A0 PA :
   Par A A0 ->
   InterpExt n Interp A0 PA ->
@@ -86,6 +88,7 @@ Proof.
     move => a PB ha hPB0.
     apply : ihPB; eauto.
     sfirstorder use:par_cong, Par_refl.
+  - hauto lq:on inv:Par ctrs:InterpExt.
   - hauto lq:on inv:Par ctrs:InterpExt.
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
