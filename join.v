@@ -62,7 +62,26 @@ Inductive Par : tm -> tm -> Prop :=
   (* ---------- *)
   Par (tIf a b0 c0) c1
 | P_Bool :
-  Par tBool tBool.
+  Par tBool tBool
+| P_Refl :
+  Par tRefl tRefl
+| P_Eq a0 b0 A0 a1 b1 A1 :
+  Par a0 a1 ->
+  Par b0 b1 ->
+  Par A0 A1 ->
+  Par (tEq a0 b0 A0) (tEq a1 b1 A1)
+| P_J t0 a0 b0 p0 t1 a1 b1 p1 :
+  Par t0 t1 ->
+  Par a0 a1 ->
+  Par b0 b1 ->
+  Par p0 p1 ->
+  Par (tJ t0 a0 b0 p0) (tJ t1 a1 b1 p1)
+| P_JRefl t0 a0 b0 p t1 a1 b1 :
+  Par t0 t1 ->
+  Par a0 a1 ->
+  Par b0 b1 ->
+  Par p tRefl ->
+  Par (tJ t0 a0 b0 p) (subst_tm (a1..) t1).
 
 #[export]Hint Constructors Par : par.
 
