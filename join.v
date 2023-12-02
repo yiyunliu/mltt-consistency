@@ -326,7 +326,21 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
-Admitted.
+  - move => t0 a0 b0 p0 t1 a1 b1 p1 ht iht ha iha hb ihb hp ihp ?.
+    elim /Par_inv=> //.
+    + hauto q:on ctrs:Par.
+    + hauto lq:on rew:off use:par_cong ctrs:Par inv:Par.
+  - move => t0 a0 b0 p t1 a1 b1 ht iht ha iha hb ihb hp ihp ?.
+    elim /Par_inv=> //.
+    + hauto q:on use:par_cong ctrs:Par inv:Par.
+    + move => ? t2 a2 b2 p0 t3 a3 b3 ht' ha' hb' hp' [] *; subst.
+      move  : iht ht'. move /[apply].
+      case => t ?.
+      move : iha ha'. move /[apply].
+      case => a ?.
+      exists (subst_tm (a..) t).
+      sfirstorder use:par_cong.
+Qed.
 
 Lemma pars_confluent : confluent Par.
 Proof.
