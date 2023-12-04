@@ -85,7 +85,7 @@ Qed.
 Lemma Wt_Pi_Univ_inv Γ A B i (h : Wt Γ (tPi A B) (tUniv i)) :
   Wt Γ A (tUniv i) /\
   Wt (A :: Γ) B (tUniv i).
-Proof. 
+Proof.
   qauto l:on use:Coherent_univ_inj, Wt_Pi_inv.
  Qed.
 
@@ -102,8 +102,8 @@ Proof.
   - hauto lq:on use:Coherent_transitive.
 Qed.
 
-Lemma good_renaming_suc ξ Γ A Δ 
-  (h : good_renaming ξ Γ Δ) : 
+Lemma good_renaming_suc ξ Γ A Δ
+  (h : good_renaming ξ Γ Δ) :
   good_renaming (ξ >> S) Γ (ren_tm ξ A :: Δ).
 Proof.
   move => i h0.
@@ -120,6 +120,10 @@ Proof.
     by asimpl.
 Qed.
 
+Lemma renaming_Syn_helper ξ a b C :
+  subst_tm (ren_tm ξ a .: (ren_tm ξ b)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C) = ren_tm ξ (subst_tm (a .: b ..) C).
+Proof. by asimpl. Qed.
+
 Lemma renaming_Syn Γ a A (h : Wt Γ a A) : forall Δ ξ,
     good_renaming ξ Γ Δ ->
     Wff Δ ->
@@ -132,10 +136,8 @@ Proof.
   - qauto l:on ctrs:Wt use:Coherent_renaming.
   - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
-    replace (ren_tm ξ (subst_tm (p .: b..) C)) with
-      (subst_tm (ren_tm ξ p .: (ren_tm ξ b)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C)); last by asimpl.
-    apply T_J with (i := i) (j := j) (A := ren_tm ξ A) =>//;
-                   try qauto ctrs:Wt.
+    rewrite -renaming_Syn_helper.
+    eapply T_J; try qauto ctrs:Wt.
     + apply ihC.
       * move /good_renaming_up in hξ.
         move /(_ A) in hξ.
@@ -147,8 +149,7 @@ Proof.
         apply T_Eq with (i := 0).  asimpl.
         sfirstorder use:good_renaming_suc.
         apply :T_Var; sfirstorder ctrs:Wt.
-    + replace (subst_tm (tRefl .: (ren_tm ξ a)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C)) with (ren_tm ξ (subst_tm (tRefl .: a ..) C)); last by asimpl.
-      sfirstorder.
+    + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
 Qed.
 
 Lemma weakening_Syn Γ a A B i
@@ -170,6 +171,17 @@ Proof. sfirstorder use:weakening_Syn. Qed.
 Definition good_morphing ρ Γ Δ :=
   forall i, i < length Γ -> Wt Δ (ρ i) (subst_tm ρ (dep_ith Γ i)).
 
+Lemma good_morphing_suc Γ Δ A j ξ (h : good_morphing ξ Γ Δ)
+  (hh : Wt Δ (subst_tm ξ A) (tUniv j)) :
+  good_morphing (ξ >> ren_tm S) Γ (subst_tm ξ A :: Δ).
+Proof.
+  move => i h0.
+  rewrite /good_morphing in h.
+  specialize h with (1 := h0).
+  eapply weakening_Syn in h; eauto.
+  move : h. asimpl. by apply.
+Qed.
+
 Lemma T_Var' Γ i A :
   A = dep_ith Γ i ->
   Wff Γ ->
@@ -180,11 +192,10 @@ Proof. qauto ctrs:Wt. Qed.
 
 Lemma good_morphing_up ρ k Γ Δ A
   (h : good_morphing ρ Γ Δ) :
-  Wff Δ ->
   Wt Δ (subst_tm ρ A) (tUniv k) ->
   good_morphing (up_tm_tm ρ) (A :: Γ) (subst_tm ρ A :: Δ).
 Proof.
-  rewrite /good_morphing => h1 h2.
+  rewrite /good_morphing => h1.
   case => [_ | i /Arith_prebase.lt_S_n ?].
   - apply T_Var' => /=.
     + by asimpl.
@@ -212,6 +223,22 @@ Proof.
     hauto q:on use:good_morphing_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - hauto q:on ctrs:Wt use:Coherent_subst_star.
+  - move => Γ t a b p A i j C ha iha hb ihb hA ihA  hp
+             ihp hC ihC ht iht Δ ξ hξ hΔ /=.
+    have ? : Wt Δ (subst_tm ξ a) (subst_tm ξ A) by hauto l:on.
+    have hwff : Wff (subst_tm ξ A :: Δ) by eauto using wff_cons.
+    eapply T_J' with (i := i) (C := (subst_tm (up_tm_tm (up_tm_tm ξ)) C)); eauto; first by asimpl.
+    + move => [:hwteq].
+      apply ihC.
+      * move : ihA (hξ) (hΔ); repeat move/[apply].
+        move : good_morphing_up (hξ). repeat move/[apply].
+        move : good_morphing_up. move/[apply].
+        move /(_ 0 (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A))).
+        asimpl. apply. abstract:hwteq. apply T_Eq.
+        ** hauto lq:on use:good_morphing_suc.
+        ** apply T_Var' => //; hauto l:on simp+:asimpl.
+      * qauto l:on use:wff_cons simp+:asimpl.
+    + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
 Qed.
 
 Lemma subst_Syn Γ A a b B
@@ -225,6 +252,11 @@ Proof.
   - asimpl; eauto using T_Var with wff.
 Qed.
 
+Lemma T_UnivSuc Γ i :
+  Wff Γ ->
+  Wt Γ (tUniv i) (tUniv (S i)).
+Proof. sfirstorder use:T_Univ. Qed.
+
 Lemma Wt_regularity Γ a A
   (h : Wt Γ a A) :
   exists i, Wt Γ A (tUniv i).
@@ -233,6 +265,8 @@ Proof.
   - inversion 1.
     hauto l:on use:dep_ith_shift,good_renaming_truncate, renaming_Syn.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
+  - hauto lq:on use:T_UnivSuc db:wff.
+  -
 Qed.
 
 Lemma Wt_App_inv Γ b a T (h : Wt Γ (tApp b a) T) :
