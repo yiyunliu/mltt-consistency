@@ -1,3 +1,8 @@
+Inductive myid (A : Type) (a : A) : A -> Type :=
+  | myrefl : myid A a a.
+
+Check myid_rect.
+
 From WR Require Import syntax imports.
 
 Definition is_bool_val a :=
@@ -81,7 +86,7 @@ Inductive Par : tm -> tm -> Prop :=
   Par a0 a1 ->
   Par b0 b1 ->
   Par p tRefl ->
-  Par (tJ t0 a0 b0 p) (subst_tm (a1..) t1).
+  Par (tJ t0 a0 b0 p) t1.
 
 #[export]Hint Constructors Par : par.
 
@@ -155,7 +160,7 @@ Qed.
 
 Lemma P_JRefl_star t a b p :
   Pars p tRefl  ->
-  Pars (tJ t a b p) (subst_tm (a..) t).
+  Pars (tJ t a b p) t.
 Proof.
   move E : tRefl => v h.
   move : E.
@@ -175,15 +180,6 @@ Lemma P_AppAbs' a A a0 b0 b b1 :
   Par (tApp a b0) b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
-Lemma P_JRefl' t0 a0 b0 T p t1 a1 b1 :
-  T = (subst_tm (a1..) t1) ->
-  Par t0 t1 ->
-  Par a0 a1 ->
-  Par b0 b1 ->
-  Par p tRefl ->
-  Par (tJ t0 a0 b0 p) T.
-Proof. qauto use:P_JRefl. Qed.
-
 Lemma par_renaming a b (ξ : fin -> fin) :
   Par a b ->
   Par (ren_tm ξ a) (ren_tm ξ b).
@@ -192,8 +188,6 @@ Lemma par_renaming a b (ξ : fin -> fin) :
   elim : a b / h => /=; eauto with par.
   - move => *.
     apply : P_AppAbs'; eauto. by asimpl.
-  - move => *.
-    apply : P_JRefl'; eauto. by asimpl.
 Qed.
 
 Lemma pars_renaming a b (ξ : fin -> fin) :
@@ -227,9 +221,7 @@ Proof.
   - hauto lq:on db:par use:par_morphing_lift.
   - move => *; apply : P_AppAbs'; eauto; by asimpl.
   - hauto lq:on db:par use:par_morphing_lift.
-  - move => *; apply : P_JRefl'; eauto;
-           last by hauto lq:on db:par use:par_morphing_lift.
-    by asimpl.
+  - hauto lq:on db:par use:par_morphing_lift.
 Qed.
 
 Lemma par_cong a0 a1 b0 b1 (h : Par a0 a1) (h1 : Par b0 b1) :
@@ -326,20 +318,11 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
-  - move => t0 a0 b0 p0 t1 a1 b1 p1 ht iht ha iha hb ihb hp ihp ?.
-    elim /Par_inv=> //.
-    + hauto q:on ctrs:Par.
-    + hauto lq:on rew:off use:par_cong ctrs:Par inv:Par.
+  - hauto lq:on inv:Par ctrs:Par.
   - move => t0 a0 b0 p t1 a1 b1 ht iht ha iha hb ihb hp ihp ?.
     elim /Par_inv=> //.
-    + hauto q:on use:par_cong ctrs:Par inv:Par.
-    + move => ? t2 a2 b2 p0 t3 a3 b3 ht' ha' hb' hp' [] *; subst.
-      move  : iht ht'. move /[apply].
-      case => t ?.
-      move : iha ha'. move /[apply].
-      case => a ?.
-      exists (subst_tm (a..) t).
-      sfirstorder use:par_cong.
+    + hauto q:on  ctrs:Par inv:Par.
+    + hauto q:on  ctrs:Par.
 Qed.
 
 Lemma pars_confluent : confluent Par.

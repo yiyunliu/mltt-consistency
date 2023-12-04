@@ -24,6 +24,17 @@ Lemma T_App' Γ a A B0 B b :
   Wt Γ (tApp a b) B0.
 Proof. qauto ctrs:Wt. Qed.
 
+Lemma T_J' (Γ : context) (t a b p A : tm) (i : fin) (C C0 : tm) :
+  C0 = (subst_tm (p .: b..) C) ->
+  Wt Γ a A ->
+  Wt Γ b A ->
+  Wt Γ p (tEq a b A) ->
+  Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) ->
+  Wt Γ t (subst_tm (tRefl .: a..) C) ->
+  Wt Γ (tJ t a b p) C0.
+Proof. hauto lq:on use:T_J. Qed.
+
+
 Lemma wff_nil :
   Wff nil.
 Proof.
@@ -100,6 +111,20 @@ Proof.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - qauto l:on ctrs:Wt use:Coherent_renaming.
+  - move => Γ t a b p A i C ha iha hb ihb hp ihp heq iheq ht iht.
+    move => Δ ξ hξ hΔ /=.
+    replace (ren_tm ξ (subst_tm (p .: b..) C)) with
+      (subst_tm (ren_tm ξ p .: (ren_tm ξ b)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C)); last by asimpl.
+    apply T_J with (i := i) (A := ren_tm ξ A) =>//.
+    + sfirstorder.
+    + sfirstorder.
+    + sfirstorder.
+    + apply iheq.
+      admit.
+      apply Wff_intro with (F := )
+      admit.
+    + replace (subst_tm (tRefl .: (ren_tm ξ a)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C)) with (ren_tm ξ (subst_tm (tRefl .: a ..) C)); last by asimpl.
+      sfirstorder.
 Qed.
 
 Lemma weakening_Syn Γ a A B i

@@ -78,11 +78,12 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   (* ----------------------- *)
   Wt Γ (tEq a b A) (tUniv i)
 
-| T_J t a b p A i C : 
+| T_J t a b p A i j C : 
   Wt Γ a A ->
   Wt Γ b A ->
+  Wt Γ A (tUniv j) ->
   Wt Γ p (tEq a b A) ->
-  Wt (tEq a (var_tm 0) A :: A :: Γ) C (tUniv i) ->
+  Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) ->
   Wt Γ t (subst_tm (tRefl .: a ..) C) ->
   Wt Γ (tJ t a b p) (subst_tm (p .: b..) C)
   
