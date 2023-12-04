@@ -347,6 +347,29 @@ Proof.
        hauto l:on use:T_J.
 Qed.
 
+Lemma Wt_J_inv Γ t a b p U (h : Wt Γ (tJ t a b p) U) :
+  exists A C i,
+    Wt Γ p (tEq a b A) /\
+    Wt Γ a A /\
+    Wt Γ b A /\
+    (exists j, Wt Γ A (tUniv j)) /\
+    Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) /\
+    Wt Γ t (subst_tm (tRefl .: a ..) C) /\
+    Coherent (subst_tm (p .: b..) C) U /\
+    exists j, Wt Γ U (tUniv j).
+Proof.
+  move E : (tJ t a b p) h => T h.
+  move : t a b p E.
+  elim :  Γ T U / h => //.
+  - hauto lq:on rew:off use:Coherent_transitive.
+  - move => Γ t a b p A i j C ha _ hb _ hA _ hp _ hC _ ht _ ? ? ? ? [] *; subst.
+    exists A, C, i. repeat split => //.
+    sfirstorder.
+    sfirstorder use:Coherent_reflexive.
+    have ? : Wt Γ (tJ t a b p) (subst_tm (p .: b..) C) by hauto l:on use:T_J.
+    sfirstorder ctrs:Wt use:Wt_regularity.
+Qed.
+
 Lemma preservation_helper A0 A1 i j Γ a A :
   Wt (A0 :: Γ) a A ->
   Wt Γ A0 (tUniv i) ->
@@ -371,6 +394,21 @@ Proof.
       apply weakening_Syn with (i := j) => //.
       apply T_Var; hauto lq:on db:wff.
   - eauto with wff.
+Qed.
+
+Lemma T_Refl' Γ a0 a1 A
+  (hΓ : Wff Γ)
+  (h : Par a0 a1) :
+  Wt Γ a0 A ->
+  Wt Γ a1 A ->
+  Wt Γ tRefl (tEq a0 a1 A).
+Proof.
+  move => *.
+  apply T_Conv with (A := tEq a0 a0 A) (i := 0).
+  - by apply T_Refl.
+  - by apply T_Eq_simpl.
+  - apply Par_Coherent.
+    sfirstorder use:P_Eq,Par_refl.
 Qed.
 
 Lemma subject_reduction a b (h : Par a b) : forall Γ A,
@@ -425,6 +463,35 @@ Proof.
     intros (ha0' & hb0' & (q & hA0') & (i & eq) & (j & hA)).
     apply T_Conv with (A := (tUniv i)) (i := j); eauto.
     hauto l:on ctrs:Wt use:@rtc_once.
+  - move => t0 a0 b0 p0 t1 a1 b1 p1 ht iht ha iha hb ihb hp ihp Γ U /Wt_J_inv.
+    intros (A & C & i & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (j & hU)).
+    have ? : Par (tEq a0 b0 A) (tEq a1 b1 A) by hauto lq:on ctrs:Par use:Par_refl.
+    have ? : Coherent (tEq a0 b0 A) (tEq a1 b1 A) by hauto l:on use:@rtc_once.
+    apply T_Conv with (A := subst_tm (p1 .: b1..) C) (i := j) => //.
+    apply T_J_simpl with (A := A) (i := i).
+    + hauto lq:on use:T_Eq_simpl, T_Conv.
+    + eapply preservation_helper with (i := 0) (j := 0); eauto.
+      * hauto drew:off ctrs:Wt use:T_Eq_simpl, weakening_Syn' db:wff.
+      * hauto drew:off ctrs:Wt use:T_Eq_simpl, weakening_Syn' db:wff.
+      * sfirstorder use:Par_Coherent, P_Eq, par_renaming, Par_refl.
+    + apply T_Conv with (A := subst_tm (tRefl .: a0..) C) (i := i);auto.
+      * move : morphing_Syn hC0. move/[apply].
+        move /(_ Γ (tRefl .: a1..)).
+        move => [:hwff].
+        asimpl. apply; last by (abstract : hwff; eauto using Wt_Wff).
+        (* Use proof by reflection to generalize subst_Syn *)
+        case => [_ |/= q /Arith_prebase.lt_S_n].
+        ** simpl; asimpl.
+           apply T_Refl'; eauto.
+        ** case : q => [_ | /= q /Arith_prebase.lt_S_n ?] /=;
+                        asimpl; hauto q:on ctrs:Wt.
+      * apply Par_Coherent.
+        apply par_morphing; hauto lq:on use:Par_refl inv:nat.
+    + apply : Coherent_transitive; eauto.
+      apply Coherent_symmetric.
+      apply Par_Coherent.
+      apply par_morphing; last by apply Par_refl.
+      hauto lq:on inv:nat use:Par_refl.
   -
 Qed.
 
