@@ -146,9 +146,11 @@ Proof.
         by asimpl in hξ.
       * move => [:hwff].
         apply : wff_cons; last by (abstract : hwff; hauto q:on use:wff_cons).
-        apply T_Eq with (i := 0).  asimpl.
+        eapply T_Eq with (i := 0).  asimpl.
         sfirstorder use:good_renaming_suc.
         apply :T_Var; sfirstorder ctrs:Wt.
+        asimpl.
+        sfirstorder use:good_renaming_suc.
     + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
 Qed.
 
@@ -234,9 +236,10 @@ Proof.
         move : good_morphing_up (hξ). repeat move/[apply].
         move : good_morphing_up. move/[apply].
         move /(_ 0 (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A))).
-        asimpl. apply. abstract:hwteq. apply T_Eq.
+        asimpl. apply. abstract:hwteq. apply T_Eq with (j := j).
         ** hauto lq:on use:good_morphing_suc.
         ** apply T_Var' => //; hauto l:on simp+:asimpl.
+        ** hauto lq:on use:good_morphing_suc.
       * qauto l:on use:wff_cons simp+:asimpl.
     + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
 Qed.
@@ -298,7 +301,6 @@ Proof.
   - hauto lq:on rew:off use:Coherent_transitive.
 Qed.
 
-
 Lemma Wt_If_inv Γ a b c T (h : Wt Γ (tIf a b c) T) :
   exists A, Wt Γ a tBool /\
          Wt Γ b A /\
@@ -311,6 +313,38 @@ Proof.
   elim : Γ a0 T / h => //.
   - hauto lq:on rew:off use:Coherent_transitive.
   - qauto l:on use:Coherent_reflexive, Wt_regularity.
+Qed.
+
+Lemma Wt_Eq_inv Γ a b A U (h : Wt Γ (tEq a b A) U) :
+  Wt Γ a A /\
+  Wt Γ b A /\
+  (exists q,
+  Wt Γ A (tUniv q)) /\
+  (exists i, Coherent (tUniv i) U) /\ exists j, Wt Γ U (tUniv j).
+Proof.
+  move E : (tEq a b A) h => T h.
+  move : a b A E.
+  elim :  Γ T U / h => //.
+  - qauto l:on use:Coherent_transitive.
+  - hauto l:on use:Wt_Univ.
+Qed.
+
+Lemma T_Eq_simpl Γ a b A i :
+  Wt Γ a A ->
+  Wt Γ b A ->
+  Wt Γ (tEq a b A) (tUniv i).
+Proof. hauto lq:on use:T_Eq, Wt_regularity. Qed.
+
+Lemma T_J_simpl Γ t a b p A C i
+  (h : Wt Γ p (tEq a b A)) :
+  Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) ->
+  Wt Γ t (subst_tm (tRefl .: a ..) C) ->
+  Wt Γ (tJ t a b p) (subst_tm (p .: b..) C).
+Proof.
+  case /Wt_regularity : (h) => j /Wt_Eq_inv ?.
+  have [? ?] : exists i, Wt Γ A (tUniv i)
+      by sfirstorder use:Wt_regularity ctrs:Wt.
+       hauto l:on use:T_J.
 Qed.
 
 Lemma preservation_helper A0 A1 i j Γ a A :
@@ -387,6 +421,11 @@ Proof.
   - hauto lq:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
+  - move => a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ A /Wt_Eq_inv.
+    intros (ha0' & hb0' & (q & hA0') & (i & eq) & (j & hA)).
+    apply T_Conv with (A := (tUniv i)) (i := j); eauto.
+    hauto l:on ctrs:Wt use:@rtc_once.
+  -
 Qed.
 
 Definition is_value (a : tm) :=
