@@ -24,10 +24,11 @@ Lemma T_App' Γ a A B0 B b :
   Wt Γ (tApp a b) B0.
 Proof. qauto ctrs:Wt. Qed.
 
-Lemma T_J' (Γ : context) (t a b p A : tm) (i : fin) (C C0 : tm) :
+Lemma T_J' (Γ : context) (t a b p A : tm) (i j : fin) (C C0 : tm) :
   C0 = (subst_tm (p .: b..) C) ->
   Wt Γ a A ->
   Wt Γ b A ->
+  Wt Γ A (tUniv j) ->
   Wt Γ p (tEq a b A) ->
   Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) ->
   Wt Γ t (subst_tm (tRefl .: a..) C) ->
@@ -101,6 +102,24 @@ Proof.
   - hauto lq:on use:Coherent_transitive.
 Qed.
 
+Lemma good_renaming_suc ξ Γ A Δ 
+  (h : good_renaming ξ Γ Δ) : 
+  good_renaming (ξ >> S) Γ (ren_tm ξ A :: Δ).
+Proof.
+  move => i h0.
+  rewrite /good_renaming in h.
+  specialize h with (1 := h0).
+  case : h => ? h.
+  split.
+  - simpl.
+    asimpl.
+    lia.
+  - asimpl.
+    simpl.
+    rewrite h.
+    by asimpl.
+Qed.
+
 Lemma renaming_Syn Γ a A (h : Wt Γ a A) : forall Δ ξ,
     good_renaming ξ Γ Δ ->
     Wff Δ ->
@@ -111,18 +130,23 @@ Proof.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - qauto l:on ctrs:Wt use:Coherent_renaming.
-  - move => Γ t a b p A i C ha iha hb ihb hp ihp heq iheq ht iht.
-    move => Δ ξ hξ hΔ /=.
+  - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
+             ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     replace (ren_tm ξ (subst_tm (p .: b..) C)) with
       (subst_tm (ren_tm ξ p .: (ren_tm ξ b)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C)); last by asimpl.
-    apply T_J with (i := i) (A := ren_tm ξ A) =>//.
-    + sfirstorder.
-    + sfirstorder.
-    + sfirstorder.
-    + apply iheq.
-      admit.
-      apply Wff_intro with (F := )
-      admit.
+    apply T_J with (i := i) (j := j) (A := ren_tm ξ A) =>//;
+                   try qauto ctrs:Wt.
+    + apply ihC.
+      * move /good_renaming_up in hξ.
+        move /(_ A) in hξ.
+        move /good_renaming_up in hξ.
+        move /(_ (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A))) in hξ.
+        by asimpl in hξ.
+      * move => [:hwff].
+        apply : wff_cons; last by (abstract : hwff; hauto q:on use:wff_cons).
+        apply T_Eq with (i := 0).  asimpl.
+        sfirstorder use:good_renaming_suc.
+        apply :T_Var; sfirstorder ctrs:Wt.
     + replace (subst_tm (tRefl .: (ren_tm ξ a)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C)) with (ren_tm ξ (subst_tm (tRefl .: a ..) C)); last by asimpl.
       sfirstorder.
 Qed.
