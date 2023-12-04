@@ -492,8 +492,13 @@ Proof.
       apply Par_Coherent.
       apply par_morphing; last by apply Par_refl.
       hauto lq:on inv:nat use:Par_refl.
-  -
-Qed.
+  - move => t0 a0 b0 p t1 a1 b1 ht iht ha iha hb ihb hp ihp Γ U /Wt_J_inv.
+    intros (A & C & i & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (k & hU')).
+    move : ihp (hp0). move/[apply] => hRefl.
+    apply iht.
+    move : T_Conv ht0. move/[apply]. apply; eauto.
+    apply : Coherent_transitive;eauto.
+Admitted.
 
 Definition is_value (a : tm) :=
   match a with
@@ -506,6 +511,9 @@ Definition is_value (a : tm) :=
   | tIf a b c => false
   | tApp a b => false
   | tUniv _ => true
+  | tRefl => true
+  | tJ _ _ _ _ => false
+  | tEq _ _ _ => true
   | var_tm _ => false
   end.
 
