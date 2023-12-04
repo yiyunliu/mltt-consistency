@@ -266,7 +266,16 @@ Proof.
     hauto l:on use:dep_ith_shift,good_renaming_truncate, renaming_Syn.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
   - hauto lq:on use:T_UnivSuc db:wff.
-  -
+  - move => Γ t a b p A i j C ha iha hb ihb hA ihA hp ihp hC ihC ht iht.
+    exists i. change (tUniv i) with (subst_tm (p .: b..) (tUniv i)).
+    apply : morphing_Syn; eauto with wff.
+    rewrite /good_morphing.
+    case => [_ /= | /= k /Arith_prebase.lt_S_n].
+    + by asimpl.
+    + case : k => [ | /= k /Arith_prebase.lt_S_n ?].
+      * by asimpl.
+      * asimpl.
+        eauto using T_Var with wff.
 Qed.
 
 Lemma Wt_App_inv Γ b a T (h : Wt Γ (tApp b a) T) :
