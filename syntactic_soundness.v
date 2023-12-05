@@ -411,6 +411,24 @@ Proof.
     sfirstorder use:P_Eq,Par_refl.
 Qed.
 
+Lemma Wt_Refl_inv Γ T (h : Wt Γ tRefl T) :
+  exists a A, Wt Γ tRefl (tEq a a A)  /\
+         Wt Γ a A /\
+         Coherent (tEq a a A) T /\ exists i, Wt Γ T (tUniv i).
+Proof.
+  move E : tRefl h => p h.
+  move : E.
+  elim : p T / h=>//.
+  - hauto lq:on rew:off use:Coherent_transitive.
+  - hauto lq:on ctrs:Wt use:T_Eq_simpl, Coherent_reflexive.
+Qed.
+
+Lemma Wt_Refl_Coherent Γ a b A (h : Wt Γ tRefl (tEq a b A)) :
+  Coherent a b.
+Proof.
+  qauto l:on use:Wt_Refl_inv, Coherent_eq_inj, Coherent_transitive, Coherent_symmetric.
+Qed.
+
 Lemma subject_reduction a b (h : Par a b) : forall Γ A,
     Wt Γ a A -> Wt Γ b A.
 Proof.
@@ -498,7 +516,16 @@ Proof.
     apply iht.
     move : T_Conv ht0. move/[apply]. apply; eauto.
     apply : Coherent_transitive;eauto.
-Admitted.
+    have ? : Coherent a0 b0 by eauto using Wt_Refl_Coherent.
+    replace (subst_tm (tRefl .: a0..) C)
+      with (subst_tm (a0..)(subst_tm (tRefl..) C)); last by asimpl.
+    replace (subst_tm (p .: b0..) C)
+      with (subst_tm (b0..)(subst_tm ((ren_tm shift p)..) C)); last by asimpl.
+    apply coherent_cong; first by auto.
+    apply coherent_cong; last by apply Coherent_reflexive.
+    change tRefl with (ren_tm shift tRefl).
+    hauto lq:on ctrs:rtc use:Coherent_renaming.
+Qed.
 
 Definition is_value (a : tm) :=
   match a with

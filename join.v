@@ -224,6 +224,68 @@ Proof.
   - hauto lq:on db:par use:par_morphing_lift.
 Qed.
 
+Inductive good_pars_morphing : (fin -> tm) -> (fin -> tm) -> Prop :=
+| good_pars_morphing_one ξ :
+  good_pars_morphing ξ ξ
+| good_pars_morphing_cons ξ0 ξ1 ξ2 :
+  (forall i, Par (ξ0 i) (ξ1 i)) ->
+  good_pars_morphing ξ1 ξ2 ->
+  good_pars_morphing ξ0 ξ2.
+
+(* No idea how to induct on (forall i, Pars (ξ0 i) (ξ1 i) ) *)
+Lemma pars_morphing a b (ξ0 ξ1 : fin -> tm)
+  (h : good_pars_morphing ξ0 ξ1) :
+  Par a b ->
+  Pars (subst_tm ξ0 a) (subst_tm ξ1 b).
+Proof.
+  move : a b.
+  elim : ξ0 ξ1 / h.
+  - sfirstorder use:par_morphing, @rtc_once, Par_refl.
+  - hauto lq:on use:par_morphing, Par_refl ctrs:rtc.
+Qed.
+
+Lemma pars_morphing_star a b (ξ0 ξ1 : fin -> tm)
+  (h : good_pars_morphing ξ0 ξ1)
+  (h0 : Pars a b) :
+  Pars (subst_tm ξ0 a) (subst_tm ξ1 b).
+Proof.
+  elim : a b / h0.
+  - sfirstorder use:pars_morphing, Par_refl.
+  - move => x y z /[swap] _.
+    move : pars_morphing (good_pars_morphing_one ξ0); repeat move /[apply].
+    apply rtc_transitive.
+Qed.
+
+Definition good_coherent_morphing ξ0 ξ1 :=
+  exists ξ, good_pars_morphing ξ0 ξ /\ good_pars_morphing ξ1 ξ.
+
+Lemma coherent_morphing_star a b ξ0 ξ1
+  (h : good_coherent_morphing ξ0 ξ1)
+  (h0 : Coherent a b) :
+  Coherent (subst_tm ξ0 a) (subst_tm ξ1 b).
+Proof.
+  hauto q:on use:pars_morphing_star unfold:Coherent.
+Qed.
+
+Lemma coherent_cong_helper : forall a0 c, Pars a0 c -> good_pars_morphing a0.. c.. .
+Proof.
+  move => a0 c h2.
+  elim : a0 c / h2.
+    sfirstorder.
+    move => a b c ? ?.
+    apply : good_pars_morphing_cons.
+    hauto lq:on inv:nat use:Par_refl.
+Qed.
+
+Lemma coherent_cong a0 a1 b0 b1
+  (h : Coherent a0 b0)
+  (h1 : Coherent a1 b1) :
+  Coherent (subst_tm (a0..) a1) (subst_tm (b0..) b1).
+Proof.
+  apply coherent_morphing_star=>//.
+  sfirstorder use:coherent_cong_helper.
+Qed.
+
 Lemma par_cong a0 a1 b0 b1 (h : Par a0 a1) (h1 : Par b0 b1) :
   Par (subst_tm (b0..) a0) (subst_tm (b1..) a1).
 Proof.
