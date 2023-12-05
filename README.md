@@ -19,3 +19,18 @@ Simply run the following command:
 ```sh
 make
 ```
+
+## Todos
+Some of the features below are orthogonal and therefore can be
+developed independently from each other (e.g. strong normalization and
+existentials).
+
+- [x] Infinite universe hierarchy
+- [x] Identity types
+- [ ] Existentials
+- [ ] Alternative system with typed conversion and additional eta
+	  rules
+- [ ] Strong normalization (through Kripke semantics)
+- [ ] Extensional model (see the `per` branch)
+- [ ] Impredicative `Prop`
+- [ ] Proof irrelevance (see the `dcoi` branch)
