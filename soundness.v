@@ -198,9 +198,8 @@ Proof.
     move : hA (hγ); move/[apply] => hA.
     move : hp (hγ); move/[apply] => hp.
     move : ht (hγ); move/[apply]. intros (m & PA & hPA & ht).
-    have ? : Pars (subst_tm γ p) tRefl by
+    have [? [q ?]] : Pars (subst_tm γ p) tRefl /\ Coherent (subst_tm γ a) (subst_tm γ b) by
       sauto lq:on  rew:db:InterpUniv use:InterpExt_Eq_inv.
-    have [q [haq hbq]] : Coherent (subst_tm γ a) (subst_tm γ b) by admit.
     exists m, PA.
     split.
     + asimpl in hPA.
@@ -209,11 +208,12 @@ Proof.
       hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, @rtc_refl, good_pars_morphing_ext2.
     + (* would a negative interp for tEq be possible & potentially
          simplify the proof? *)
+      (* how would that affect the universe level? *)
       asimpl.
       eapply InterpUnivN_back_clos_star with (b := subst_tm γ t); eauto.
       sfirstorder use: P_JRefl_star.
   - hauto l:on.
-Admitted.
+Qed.
 
 Lemma consistency a : ~Wt nil a tVoid.
 Proof.

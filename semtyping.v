@@ -15,11 +15,16 @@ Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -
   m < n ->
   InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
 | InterpExt_Eq a b A :
-  InterpExt n Interp (tEq a b A) (fun a => Pars a tRefl)
+  InterpExt n Interp (tEq a b A) (fun p => Pars p tRefl /\ Coherent a b)
 | InterpExt_Step A A0 PA :
   Par A A0 ->
   InterpExt n Interp A0 PA ->
   InterpExt n Interp A PA.
+
+Lemma InterpExt_Eq' n I PA a b A :
+  PA = (fun p => Pars p tRefl /\ Coherent a b) ->
+  InterpExt n I (tEq a b A) PA.
+Proof. hauto lq:on use:InterpExt_Eq. Qed.
 
 Lemma InterpExt_Univ' n Interp m PF :
   PF = (fun A => exists PA, Interp m A PA) ->
@@ -89,7 +94,13 @@ Proof.
     apply : ihPB; eauto.
     sfirstorder use:par_cong, Par_refl.
   - hauto lq:on inv:Par ctrs:InterpExt.
-  - hauto lq:on inv:Par ctrs:InterpExt.
+  - move => a b A B.
+    elim /Par_inv=>// h ? ? ? a0 b0 A0 ? ? ? [] *. subst.
+    apply InterpExt_Eq'.
+    fext => p.
+    f_equal.
+    apply propositional_extensionality.
+    hauto lq:on use:Par_Coherent, Coherent_transitive, Coherent_symmetric.
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpExt.
@@ -159,13 +170,22 @@ Lemma InterpUnivN_Bool_inv n P :
   P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
+From Hammer Require Import Hammer.
 Lemma InterpExt_Eq_inv n I a b A P :
   InterpExt n I (tEq a b A) P ->
-  P = (fun A => Pars A tRefl).
+  P = (fun A => Pars A tRefl /\ Coherent a b).
 Proof.
   move E : (tEq a b A) => T h.
   move : a b A E.
   elim : T P /h => //. hauto lq:on rew:off inv:Par.
+  move => A A0 PA hred hA0 ih a b A1 ?. subst.
+  elim /Par_inv : hred=>//.
+  move => hred ? ? ? a2 b2 A2 ? ? ? [] *;subst.
+  specialize ih with (1 := eq_refl).
+  rewrite ih.
+  fext => A. f_equal.
+  apply propositional_extensionality.
+  hauto lq:on use:Par_Coherent, Coherent_symmetric, Coherent_transitive.
 Qed.
 
 Lemma InterpExt_deterministic n I A PA PB :
