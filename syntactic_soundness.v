@@ -544,7 +544,7 @@ Definition is_value (a : tm) :=
   | var_tm _ => false
   end.
 
-Inductive head := hPi | hAbs | hBool | hTrue | hVoid | hFalse | hUniv | hVar.
+Inductive head := hPi | hAbs | hBool | hTrue | hVoid | hFalse | hUniv | hVar | hEq | hRefl.
 
 Definition tm_to_head (a : tm) :=
   match a with
@@ -558,6 +558,9 @@ Definition tm_to_head (a : tm) :=
   | tApp a b => None
   | tUniv _ => Some hUniv
   | var_tm _ => Some hVar
+  | tEq _ _ _ => Some hEq
+  | tRefl => Some hRefl
+  | tJ _ _ _ _ => None
   end.
 
 Lemma par_head a b (h : Par a b) :
@@ -619,6 +622,8 @@ Proof.
   - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
   - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
   - qauto l:on use:Wt_Bool_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Eq_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Refl_inv, Coherent_consistent.
 Qed.
 
 Lemma wt_switch_canon a :
@@ -632,6 +637,24 @@ Proof.
   - qauto l:on use:Wt_Void_winv, Coherent_consistent.
   - qauto l:on use:Wt_Univ_winv, Coherent_consistent.
   - qauto l:on use:Wt_Bool_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Eq_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Refl_inv, Coherent_consistent.
+Qed.
+
+Lemma wt_refl_canon p a b A :
+  Wt nil p (tEq a b A) ->
+  is_value p ->
+  p = tRefl.
+Proof.
+  case : p => //.
+  - qauto l:on use:Wt_Abs_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Pi_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Void_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Univ_winv, Coherent_consistent.
+  - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Bool_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Eq_inv, Coherent_consistent.
 Qed.
 
 Lemma wt_progress a A (h :Wt nil a A) : is_value a \/ exists a0, Par a a0.
@@ -641,4 +664,5 @@ Proof.
   elim: Γ a A/h; try hauto q:on depth:2.
   - hauto lq:on rew:off ctrs:Par use:wt_pi_canon, Par_refl.
   - hauto lq:on rew:off use:wt_switch_canon, Par_refl.
+  - hauto lq:on rew:off ctrs:Par use:wt_refl_canon, Par_refl.
 Qed.
