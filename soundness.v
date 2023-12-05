@@ -188,7 +188,32 @@ Proof.
     exists (S j), (fun A => exists PA, InterpUnivN j A PA).
     sfirstorder use:InterpUnivN_Univ_inv.
   - hauto l:on.
-Qed.
+  - move => Γ a b A i j _ ha _ hb _ hA γ hγ/=.
+    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
+    hauto l:on use:InterpUnivN_Univ_inv.
+  - move => Γ t a b p A i j C _ ha _ hb _ hA _ hp _ hC _ ht.
+    move => γ hγ.
+    move : ha (hγ); move/[apply] => ha.
+    move : hb (hγ); move/[apply] => hb.
+    move : hA (hγ); move/[apply] => hA.
+    move : hp (hγ); move/[apply] => hp.
+    move : ht (hγ); move/[apply]. intros (m & PA & hPA & ht).
+    have ? : Pars (subst_tm γ p) tRefl by
+      sauto lq:on  rew:db:InterpUniv use:InterpExt_Eq_inv.
+    have [q [haq hbq]] : Coherent (subst_tm γ a) (subst_tm γ b) by admit.
+    exists m, PA.
+    split.
+    + asimpl in hPA.
+      apply : InterpUnivN_Coherent; eauto.
+      exists (subst_tm (tRefl .: (q .: γ)) C).
+      hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, @rtc_refl, good_pars_morphing_ext2.
+    + (* would a negative interp for tEq be possible & potentially
+         simplify the proof? *)
+      asimpl.
+      eapply InterpUnivN_back_clos_star with (b := subst_tm γ t); eauto.
+      sfirstorder use: P_JRefl_star.
+  - hauto l:on.
+Admitted.
 
 Lemma consistency a : ~Wt nil a tVoid.
 Proof.

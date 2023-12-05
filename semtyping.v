@@ -120,6 +120,13 @@ Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
   InterpUnivN n A P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
+Lemma InterpUnivN_Coherent n A B P (h : InterpUnivN n B P) :
+  Coherent A B ->
+  InterpUnivN n A P.
+Proof.
+  hauto l:on unfold:Coherent use:InterpUnivN_back_preservation_star, InterpUnivN_preservation_star.
+Qed.
+
 Lemma InterpExt_Bool_inv n I P :
   InterpExt n I tBool P ->
   P = fun a => exists v, Pars a v /\ is_bool_val v.

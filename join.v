@@ -232,6 +232,29 @@ Inductive good_pars_morphing : (fin -> tm) -> (fin -> tm) -> Prop :=
   good_pars_morphing ξ1 ξ2 ->
   good_pars_morphing ξ0 ξ2.
 
+Lemma good_pars_morphing_ext a b ξ0 ξ1
+  (h : Pars a b) :
+  good_pars_morphing ξ0 ξ1 ->
+  good_pars_morphing (a .: ξ0) (b .: ξ1).
+Proof.
+  elim : a b /h.
+  - move => a.
+    move => h.
+    elim : ξ0 ξ1 / h; first by sfirstorder.
+    move => ξ0 ξ1 ξ2 h h1.
+    apply good_pars_morphing_cons.
+    hauto lq:on inv:nat use:Par_refl.
+  - move => x y z ha hb /[apply].
+    apply : good_pars_morphing_cons.
+    hauto lq:on inv:nat use:Par_refl.
+Qed.
+
+Lemma good_pars_morphing_ext2 a0 b0 a1 b1 ξ0 ξ1
+  (h : Pars a0 b0) (h1 : Pars a1 b1) :
+  good_pars_morphing ξ0 ξ1 ->
+  good_pars_morphing (a0 .: (a1 .: ξ0)) (b0 .: (b1 .: ξ1)).
+Proof. sfirstorder use:good_pars_morphing_ext. Qed.
+
 (* No idea how to induct on (forall i, Pars (ξ0 i) (ξ1 i) ) *)
 Lemma pars_morphing a b (ξ0 ξ1 : fin -> tm)
   (h : good_pars_morphing ξ0 ξ1) :
