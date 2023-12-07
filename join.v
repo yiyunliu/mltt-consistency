@@ -1,9 +1,5 @@
-Inductive myid (A : Type) (a : A) : A -> Type :=
-  | myrefl : myid A a a.
-
-Check myid_rect.
-
 From WR Require Import syntax imports.
+Require Export Setoid.
 
 Definition is_bool_val a :=
   match a with
@@ -432,3 +428,9 @@ Proof.
   case : h => z [*].
   exists z. split; sfirstorder use:@rtc_transitive.
 Qed.
+
+Add Relation tm Coherent
+    reflexivity proved by Coherent_reflexive
+    symmetry proved by Coherent_symmetric
+    transitivity proved by Coherent_transitive
+    as Coherent_rel.
