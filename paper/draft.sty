@@ -1,0 +1,146 @@
+%%% draft.sty -- A package for inserting draft-only comments, etc.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{draft}[2016/05/08 v1.1 Draft-only comments, etc.]
+
+\RequirePackage{xcolor}
+\RequirePackage{xparse}
+
+%% Draft mode
+
+% A draft conditional, for detecting if we're in draft mode.  Defaults to true.
+\newif\ifdraft
+\drafttrue
+
+%% Defining draft-aware commands
+
+% `\NewDefinerWrapper{\newcommandish}{\command}{BODY}' defines the command
+% `\command', which has the same syntax as `\newcommand' (and friends); it's a
+% wrapper around `\newcommandish' (which should have the same syntax as
+% `\newcommand'), but where the body of the defined command is wrapped by
+% `BODY', with `#5' becoming the original body.
+% 
+% An example:
+%
+%     \NewDefinerWrapper{\newcommand}{\NewParentheticalCommand}{(#5)}
+%
+% defines a new command `\NewParentheticalCommand' such that
+%
+%     \NewParentheticalCommand{\pbolded}[1]{\textbf{#1}}
+%
+% is the same as defining
+%
+%     \newcommand{\pbolded}[1]{(\textbf{#1})}
+%
+% (note the parentheses around the bolding).
+\newcommand{\NewDefinerWrapper}[3]{%
+  \NewDocumentCommand{#2}{smO{0}o+m}{%
+    \IfBooleanTF{##1}
+      {\IfNoValueTF{##4}
+        {#1*{##2}[##3]{#3}}
+        {#1*{##2}[##3][##4]{#3}}}
+      {\IfNoValueTF{##4}
+        {#1{##2}[##3]{#3}}
+        {#1{##2}[##3][##4]{#3}}}%
+  }%
+}
+
+% `\NewStdDefinerWrappers{CommandSuffix}{BODY}' defines three commands for
+% defining commands:
+%
+%   * `\NewCommandSuffix', which wraps `\newcommand' with `BODY'.
+%   * `\RenewCommandSuffix', which wraps `\renewcommand' with `BODY'.
+%   * `\ProvideCommandSuffix', which wraps `\providecommand' with `BODY'.
+\newcommand{\NewStdDefinerWrappers}[2]{%
+  \expandafter\NewDefinerWrapper\expandafter\newcommand
+    \csname New#1\endcsname{#2}%
+  \expandafter\NewDefinerWrapper\expandafter\renewcommand
+    \csname Renew#1\endcsname{#2}%
+  \expandafter\NewDefinerWrapper\expandafter\providecommand
+    \csname Provide#1\endcsname{#2}%
+}
+
+% Defines the command `\NewDraftCommand' (resp. `\RenewDraftCommand' and
+% `\ProvideDraftCommand'), which acts like `\newcommand' (resp. `\renewcommand'
+% and `\providecommand') except that the resulting command completely disappears
+% if the document is not in draft mode.
+\NewStdDefinerWrappers{DraftCommand}{%
+  \ifdraft
+    #5%
+  \else
+    \@bsphack\@esphack
+  \fi
+}
+
+% `\whendraft{#1}' is `#1' when the document is in draft mode and completely
+% vanishes otherwise.
+\NewDraftCommand{\whendraft}[1]{#1}
+
+%% Draft-only notes, color-coded by author
+
+% The `\noteformat{format}' command defines the `format' that notes are in; `#1'
+% is replaced by the note author tag and `#2' is replaced by the text of the
+% note.  The default format is `[#1: #2]'; e.g. `[ASZ: I like this.]'.
+% (`\@noteformat' is the internal variable that holds the format.)
+\newcommand{\@noteformat}[2]{}
+\newcommand{\noteformat}[1]{\long\def\@noteformat##1##2{#1}}
+\noteformat{[#1: #2]}
+
+% `\makedraftnote{color}{author}{text}' unconditionally renders a draft note by
+% `author' in the given `color' with body `text'.  The formatting is that
+% specified by `\noteformat'.  Note that this command *always* typesets text;
+% see `\draftnote' for a draft-only command.
+\newcommand{\makedraftnote}[3]{\textcolor{#1}{\@noteformat{#2}{#3}}}
+
+% `\makedraftfootnote{color}{author}{text}' unconditionally renders a draft
+% footnote by `author' in the given `color' with body `text'.  The formatting is
+% that specified by `\noteformat'.  This command is like `\makedraftnote`, but
+% the body of the note is placed as a footnote.  Note that this command *always*
+% typesets text; see `\draftfootnote' for a draft-only command.
+\newcommand{\makedraftfootnote}[3]{%
+  \textcolor{#1}{\footnotemark}%
+  \begingroup
+    \edef\thefootnote{%
+      \noexpand\textcolor{#1}{\unexpanded\expandafter{\thefootnote}}}%
+    \footnotetext{\makedraftnote{#1}{#2}{#3}}%
+  \endgroup}
+
+% `\draftnote{color}{author}{text}' renders a draft note by `author' in the
+% given `color' with body `text' when in draft mode, and disappears otherwise
+% (as per `\makedraftnote').  `\draftfootnote{color}{author}{text}' is the same,
+% except the note is placed in a footnote.
+\NewDraftCommand{\draftnote}[3]{\makedraftnote{#1}{#2}{#3}}
+\NewDraftCommand{\draftfootnote}[3]{\makedraftfootnote{#1}{#2}{#3}}
+
+% A local variable used by `\newnote'.
+\newcommand*{\@note@name}{}
+
+% A local constant used by `\newnote' to detect an empty option argument.
+\newcommand*{\@note@name@empty}{\unexpanded{}}
+
+% `\newnote[author]{cmd}{color}' defines two new commands `\cmd' and `\cmdfoot'.
+% The former command is defined so that `\cmd{text}' renders a draft note by
+% `author' in the given `color' with body `text' when in draft mode, and
+% disappears otherwise (as per `\draftnote'); the latter command is defined so
+% that `\cmdfoot{text}' does the same thing, but places it in a footnote (as per
+% `\draftfootnote').  If `ABBREV' is omitted, it defaults to `CMD' (i.e., the
+% uppercase form of `cmd').
+\newcommand*{\newnote}[3][]{%
+  % Use the given name; if none was given, use the uppercase form of the command
+  % name.
+  \def\@note@name{\unexpanded{#1}}%
+  \ifx\@note@name\@note@name@empty
+    % Uppercases the *definition* of the name, so it can be used expandably
+    % below.
+    \uppercase{\def\@note@name{#2}}%
+  \fi
+  % Check that the macro names are unused, and then define the macros, expanding
+  % `\@note@name' but not `\draft(foot)note'.
+  \expandafter\newcommand\csname#2\endcsname{}%
+  \expandafter\long\expandafter\edef\csname#2\endcsname##1{%
+    \noexpand\draftnote{#3}{\@note@name}{##1}%
+  }%
+  \expandafter\newcommand\csname#2foot\endcsname{}%
+  \expandafter\long\expandafter\edef\csname#2foot\endcsname##1{%
+    \noexpand\draftfootnote{#3}{\@note@name}{##1}%
+  }
+}
