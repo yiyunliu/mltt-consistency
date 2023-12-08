@@ -1,5 +1,4 @@
 From WR Require Import syntax imports.
-Require Export Setoid.
 
 Definition is_bool_val a :=
   match a with
@@ -82,7 +81,9 @@ Inductive Par : tm -> tm -> Prop :=
   Par a0 a1 ->
   Par b0 b1 ->
   Par p tRefl ->
-  Par (tJ t0 a0 b0 p) t1.
+  Par (tJ t0 a0 b0 p) t1
+| P_Prop :
+  Par tProp tProp.
 
 #[export]Hint Constructors Par : par.
 
@@ -404,6 +405,7 @@ Proof.
     elim /Par_inv=> //.
     + hauto q:on  ctrs:Par inv:Par.
     + hauto q:on  ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
 Qed.
 
 Lemma pars_confluent : confluent Par.
