@@ -1,184 +1,135 @@
-From WR Require Import syntax join imports.
+From WR Require Import syntax join imports common.
 
-Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
-  forall a PB, PA a -> PF a PB -> PB (tApp b a).
+Definition candidate (P : tm -> Prop) : Prop :=
+  forall a b, Par a b -> P b -> P a.
 
-Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
-| InterpExt_Void : InterpExt n Interp tVoid (const False)
-| InterpExt_Bool : InterpExt n Interp tBool (fun a => exists v, Pars a v /\ is_bool_val v)
-| InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
-  InterpExt n Interp A PA ->
-  (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
-  InterpExt n Interp (tPi A B) (ProdSpace PA PF)
-| InterpExt_Univ m :
-  m < n ->
-  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
-| InterpExt_Eq a b A :
-  InterpExt n Interp (tEq a b A) (fun p => Pars p tRefl /\ Coherent a b)
-| InterpExt_Step A A0 PA :
+Definition PropSpace (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
+  forall PA a PB, candidate PA -> PA a -> PF a PB -> PB (tApp b a).
+
+Inductive InterpProp (γ : nat -> (tm -> Prop)) : tm -> (tm -> Prop) -> Prop :=
+| InterpProp_Var i : InterpProp γ (var_tm i) (γ i)
+| InterpProp_Void : InterpProp γ tVoid (const False)
+| InterpProp_Bool : InterpProp γ tBool (fun a => exists v, Pars a v /\ is_bool_val v)
+| InterpProp_Fun A B PF :
+  (forall PA a, candidate PA -> PA a -> exists PB, PF a PB) ->
+  (forall PA a PB, candidate PA -> PA a -> PF a PB -> InterpProp (PA .: γ) B PB) ->
+  InterpProp γ (tPi A B) (PropSpace PF)
+| InterpProp_Eq a b A :
+  InterpProp γ (tEq a b A) (fun p => Pars p tRefl /\ Coherent a b)
+| InterpProp_Step A A0 PA :
   Par A A0 ->
-  InterpExt n Interp A0 PA ->
-  InterpExt n Interp A PA.
+  InterpProp γ A0 PA ->
+  InterpProp γ A PA.
 
-Lemma InterpExt_Eq' n I PA a b A :
+Lemma InterpProp_Eq' γ PA a b A :
   PA = (fun p => Pars p tRefl /\ Coherent a b) ->
-  InterpExt n I (tEq a b A) PA.
-Proof. hauto lq:on use:InterpExt_Eq. Qed.
+  InterpProp γ (tEq a b A) PA.
+Proof. hauto lq:on use:InterpProp_Eq. Qed.
 
-Lemma InterpExt_Univ' n Interp m PF :
-  PF = (fun A => exists PA, Interp m A PA) ->
-  m < n ->
-  InterpExt n Interp (tUniv m) PF.
-Proof. hauto lq:on ctrs:InterpExt. Qed.
-
-Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
-  InterpUnivN n := InterpExt n (fun m A PA =>
-                                  match Compare_dec.lt_dec m n with
-                                  | left h => InterpUnivN m A PA
-                                  | right _ => False
-                                  end).
-
-Lemma InterpExt_NotVar Interp n i P : ~InterpExt n Interp (var_tm i) P.
-Proof.
-  move E : (var_tm i) => a0 h.
-  move : i E.
-  elim : a0 P / h; hauto inv:InterpExt, Par.
-Qed.
-
-Lemma InterpUnivN_NotVar n i P : ~ InterpUnivN n (var_tm i) P.
-Proof.
-  hauto l:on rew:db:InterpUnivN use:InterpExt_NotVar.
-Qed.
-
-Lemma InterpExt_NotAbs Interp n A a P : ~ InterpExt n Interp (tAbs A a) P.
-Proof.
-  move E : (tAbs A a) => a0 h.
-  move : A a E.
-  elim : a0 P / h; hauto inv:Par.
-Qed.
-
-Lemma InterpUnivN_NotAbs n A a P : ~ InterpUnivN n (tAbs A a) P.
-Proof.
-  hauto l:on rew:db:InterpUnivN use:InterpExt_NotAbs.
-Qed.
-
-Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
-  exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
-    InterpExt n Interp A PA /\
-    (forall a, PA a -> exists PB, PF a PB) /\
-    (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) /\
-    P = ProdSpace PA PF.
+Lemma InterpProp_Fun_inv γ A B P  (h : InterpProp γ (tPi A B) P) :
+  exists (PF : tm -> (tm -> Prop) -> Prop),
+    (forall PA a, candidate PA -> PA a -> exists PB, PF a PB) /\
+    (forall PA a PB, candidate PA -> PA a -> PF a PB -> InterpProp (PA .: γ) B PB) /\
+    P = PropSpace PF.
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
-  elim : T P / h => //.
+  elim : γ T P / h => //.
   - hauto l:on.
-  - move => *; subst.
-    hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
+  - move => γ A A0 PA hA hPA ihPA A1 B ?; subst.
+    elim /Par_inv : hA=>//.
+    hauto lq:on rew:off ctrs:InterpProp.
 Qed.
 
-Lemma InterpExt_preservation n I A B P (h : InterpExt n I A P) :
+Lemma InterpProp_preservation γ A B P (h : InterpProp γ A P) :
   Par A B ->
-  InterpExt n I B P.
+  InterpProp γ B P.
 Proof.
   move : B.
-  elim : A P / h; auto.
-  - hauto lq:on inv:Par ctrs:InterpExt.
-  - hauto lq:on inv:Par ctrs:InterpExt.
-  - move => A B PA PF hPA ihPA hPB hPB' ihPB T hT.
-    elim /Par_inv :  hT => //.
-    move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
-    apply InterpExt_Fun; auto.
-    move => a PB ha hPB0.
-    apply : ihPB; eauto.
-    sfirstorder use:par_cong, Par_refl.
-  - hauto lq:on inv:Par ctrs:InterpExt.
-  - move => a b A B.
+  elim : γ A P / h; auto.
+  - hauto lq:on inv:Par ctrs:InterpProp.
+  - hauto lq:on inv:Par ctrs:InterpProp.
+  - hauto lq:on inv:Par ctrs:InterpProp.
+  - hauto l:on ctrs:InterpProp inv:Par.
+  - move => γ a b A B.
     elim /Par_inv=>// h ? ? ? a0 b0 A0 ? ? ? [] *. subst.
-    apply InterpExt_Eq'.
+    apply InterpProp_Eq'.
     fext => p.
     f_equal.
     apply propositional_extensionality.
     hauto lq:on use:Par_Coherent, Coherent_transitive, Coherent_symmetric.
-  - move => A B P h0 h1 ih1 C hC.
-    have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
-    hauto lq:on ctrs:InterpExt.
+  - move => γ A B P h0 h1 ih1 C hC.
+    move:par_confluent h0 hC. repeat move/[apply].
+    hauto lq:on ctrs:InterpProp.
 Qed.
 
-Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
-  Par A B ->
-  InterpUnivN n B P.
-Proof. hauto l:on rew:db:InterpUnivN use: InterpExt_preservation. Qed.
+Lemma candidate_cons γ (h : forall i, candidate (γ i)) PA :
+  candidate PA ->
+  (forall i, candidate ((PA .: γ) i)).
+Proof. qauto l:on inv:nat. Qed.
 
-Lemma InterpExt_back_preservation_star i I A B P (h : InterpExt i I B P) :
-  Pars A B ->
-  InterpExt i I A P.
-Proof. induction 1; hauto l:on ctrs:InterpExt. Qed.
-
-Lemma InterpExt_preservation_star n I A B P (h : InterpExt n I A P) :
-  Pars A B ->
-  InterpExt n I B P.
-Proof. induction 1; hauto l:on use:InterpExt_preservation. Qed.
-
-Lemma InterpUnivN_preservation_star n A B P (h : InterpUnivN n A P) :
-  Pars A B ->
-  InterpUnivN n B P.
-Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_preservation_star. Qed.
-
-Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
-  Pars A B ->
-  InterpUnivN n A P.
-Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
-
-Lemma InterpUnivN_Coherent n A B P (h : InterpUnivN n B P) :
-  Coherent A B ->
-  InterpUnivN n A P.
+Lemma InterpProp_back_clos γ A PA :
+  (forall i, candidate (γ i)) ->
+  InterpProp γ A PA ->
+  forall a b, Par a b ->
+         PA b -> PA a.
 Proof.
-  hauto l:on unfold:Coherent use:InterpUnivN_back_preservation_star, InterpUnivN_preservation_star.
+  move/[swap] => h.
+  elim : γ A PA / h.
+  - sfirstorder.
+  - hauto lq:on ctrs:rtc.
+  - hauto lq:on ctrs:rtc.
+  - move => γ A B PF hPFTot hPF ihPF hγ b0 b1 hb01.
+    rewrite /PropSpace => hPB PA a PB hPFa.
+    have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
+    qauto l:on ctrs:rtc use:candidate_cons.
+  - hauto lq:on ctrs:rtc.
+  - sfirstorder.
 Qed.
 
-Lemma InterpExt_Bool_inv n I P :
-  InterpExt n I tBool P ->
+Lemma InterpProp_back_preservation_star γ A B P (h : InterpProp γ B P) :
+  Pars A B ->
+  InterpProp γ A P.
+Proof. induction 1; hauto l:on ctrs:InterpProp. Qed.
+
+Lemma InterpProp_preservation_star γ A B P (h : InterpProp γ A P) :
+  Pars A B ->
+  InterpProp γ B P.
+Proof. induction 1; hauto l:on use:InterpProp_preservation. Qed.
+
+Lemma InterpProp_Coherent γ A B P (h : InterpProp γ B P) :
+  Coherent A B ->
+  InterpProp γ A P.
+Proof.
+  hauto l:on unfold:Coherent use:InterpProp_back_preservation_star, InterpProp_preservation_star.
+Qed.
+
+Lemma InterpProp_Bool_inv γ P :
+  InterpProp γ tBool P ->
   P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof.
   move E : tBool => A h.
   move : E.
-  elim : A P / h; hauto lq:on inv:Par.
+  elim : γ A P / h; hauto lq:on inv:Par.
 Qed.
 
-Lemma InterpExt_Void_inv n I P :
-  InterpExt n I tVoid P ->
+Lemma InterpProp_Void_inv γ P :
+  InterpProp γ tVoid P ->
   P = (const False).
 Proof.
   move E : tVoid => A h.
   move : E.
-  elim : A P / h; hauto lq:on inv:Par.
+  elim : γ A P / h; hauto lq:on inv:Par.
 Qed.
 
-Lemma InterpExt_Univ_inv n I P m :
-  InterpExt n I (tUniv m) P ->
-  P = (fun A => exists PA, I m A PA) /\ m < n.
-Proof.
-  move E : (tUniv m) => A h.
-  move : E.
-  elim : A P / h; hauto lq:on inv:Par.
-Qed.
-
-Lemma InterpUnivN_Bool_inv n P :
-  InterpUnivN n tBool P ->
-  P = fun a => exists v, Pars a v /\ is_bool_val v.
-Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
-
-From Hammer Require Import Hammer.
-Lemma InterpExt_Eq_inv n I a b A P :
-  InterpExt n I (tEq a b A) P ->
+Lemma InterpProp_Eq_inv γ a b A P :
+  InterpProp γ (tEq a b A) P ->
   P = (fun A => Pars A tRefl /\ Coherent a b).
 Proof.
   move E : (tEq a b A) => T h.
   move : a b A E.
-  elim : T P /h => //. hauto lq:on rew:off inv:Par.
-  move => A A0 PA hred hA0 ih a b A1 ?. subst.
+  elim : γ T P /h => //. hauto lq:on rew:off inv:Par.
+  move => γ A A0 PA hred hA0 ih a b A1 ?. subst.
   elim /Par_inv : hred=>//.
   move => hred ? ? ? a2 b2 A2 ? ? ? [] *;subst.
   specialize ih with (1 := eq_refl).
@@ -188,170 +139,151 @@ Proof.
   hauto lq:on use:Par_Coherent, Coherent_symmetric, Coherent_transitive.
 Qed.
 
-Lemma InterpExt_deterministic n I A PA PB :
-  InterpExt n I A PA ->
-  InterpExt n I A PB ->
+Lemma InterpProp_Var_inv γ i P :
+  InterpProp γ (var_tm i) P ->
+  P = γ i.
+Proof.
+  move E : (var_tm i) => A h.
+  move : i E.
+  elim : γ A P / h=>//.
+  sfirstorder.
+  hauto lq:on rew:off inv:Par.
+Qed.
+
+Lemma InterpProp_deterministic γ A PA PB :
+  InterpProp γ A PA ->
+  InterpProp γ A PB ->
   PA = PB.
 Proof.
   move => h.
   move : PB.
-  elim : A PA / h.
-  - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_Void_inv.
-  - hauto lq:on inv:InterpExt use:InterpExt_Bool_inv.
-  - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
-    move /InterpExt_Fun_inv : hP.
-    intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.
-    have ? : PA0 = PA by sfirstorder. subst.
-    fext => b a PB ha.
+  elim : γ A PA / h.
+  - sfirstorder use:InterpProp_Var_inv.
+  - hauto lq:on inv:InterpProp ctrs:InterpProp use:InterpProp_Void_inv.
+  - hauto lq:on inv:InterpProp use:InterpProp_Bool_inv.
+  - move => γ A B PF hPB hPB' ihPB P hP.
+    move /InterpProp_Fun_inv : hP.
+    intros (PF0 & hPA0 & hPB0 & ?); subst.
+    fext.
+    move => b PA a PB hPA ha.
     apply propositional_extensionality.
-    hauto lq:on rew:off.
-  - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
-  - hauto lq:on inv:InterpExt use:InterpExt_Eq_inv.
-  - hauto l:on use:InterpExt_preservation.
+    sblast.
+  - hauto lq:on inv:InterpProp use:InterpProp_Eq_inv.
+  - hauto l:on use:InterpProp_preservation.
 Qed.
 
-Lemma InterpUnivN_deterministic n A PA PB :
-  InterpUnivN n A PA ->
-  InterpUnivN n A PB ->
-  PA = PB.
-Proof.
-  simp InterpUnivN.
-  eauto using InterpExt_deterministic.
-Qed.
-
-Lemma InterpExt_Lift n m I A PA :
-  n < m ->
-  InterpExt n I A PA ->
-  InterpExt m I A PA.
-Proof.
-  move => h h0.
-  elim : A PA /h0; sauto l:on ctrs:InterpExt.
-Qed.
-
-Lemma InterpExt_lt_redundant n I A PA
-  (h : InterpExt n I A PA) :
-      InterpExt n (fun m A PA =>
-                     match Compare_dec.lt_dec m n with
-                     | left h => I m A PA
-                     | right _ => False
-                     end) A PA.
-Proof.
-  elim : A PA / h.
-  - hauto l:on.
-  - hauto l:on.
-  - hauto l:on ctrs:InterpExt.
-  - move => m h.
-    apply InterpExt_Univ' => //.
-    case : Compare_dec.lt_dec => //.
-  - hauto l:on.
-  - hauto lq:on ctrs:InterpExt.
-Qed.
-
-Lemma InterpExt_lt_redundant2 n (I :fin -> tm -> (tm -> Prop) -> Prop ) A PA
-  (h : InterpExt n (fun m A PA =>
-                      match Compare_dec.lt_dec m n with
-                     | left h => I m A PA
-                     | right _ => False
-                     end) A PA) :
-  InterpExt n I A PA.
-Proof.
-  elim : A PA / h.
-  - hauto l:on.
-  - hauto l:on.
-  - hauto l:on ctrs:InterpExt.
-  - move => m ?.
-    apply InterpExt_Univ' => //.
-    case : Compare_dec.lt_dec => //.
-  - hauto l:on.
-  - hauto lq:on ctrs:InterpExt.
-Qed.
-
-Lemma InterpUnivN_nolt n :
-  InterpUnivN n = InterpExt n InterpUnivN.
-Proof.
-  simp InterpUnivN.
-  fext => A P.
-  apply propositional_extensionality.
-  hauto l:on use:InterpExt_lt_redundant, InterpExt_lt_redundant2.
-Qed.
-
-#[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
-
-Lemma InterpUnivN_cumulative n A PA :
-  InterpUnivN n A PA -> forall m, n < m ->
-  InterpUnivN m A PA.
-Proof.
-  hauto l:on rew:db:InterpUniv use:InterpExt_Lift.
-Qed.
-
-Lemma InterpUnivN_deterministic' n m A PA PB :
-  InterpUnivN n A PA ->
-  InterpUnivN m A PB ->
-  PA = PB.
-Proof.
-  move => h0 h1.
-  move : (Coq.Arith.Compare_dec.lt_eq_lt_dec m n).
-  case; first case.
-  - hauto l:on use:InterpUnivN_cumulative, InterpUnivN_deterministic.
-  - move => *; subst.
-    sfirstorder use:InterpUnivN_deterministic.
-  - move => ?.
-    symmetry.
-    hauto l:on use:InterpUnivN_cumulative, InterpUnivN_deterministic.
-Qed.
-
-Lemma InterpExt_back_clos n (I : nat -> tm -> (tm -> Prop) -> Prop) A PA
-  (hI : forall m, m < n -> forall a b, Par a b -> forall PA, I m b PA -> I m a PA ):
-  InterpExt n I A PA ->
-  forall a b, Par a b ->
-         PA b -> PA a.
-Proof.
-  move => h.
-  elim : A PA / h.
-  - sfirstorder.
-  - hauto lq:on ctrs:rtc.
-  - move => A B PA PF hPA ihA hPFTot hPF ihPF b0 b1 hb01.
-    rewrite /ProdSpace => hPB a PB ha hPFa.
-    have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
-    hauto lq:on ctrs:Par.
-  - hauto lq:on.
-  - hauto lq:on ctrs:rtc.
-  - sfirstorder.
-Qed.
-
-Lemma InterpUnivN_back_clos n A PA :
-    InterpUnivN n A PA ->
-    forall a b, Par a b ->
-           PA b -> PA a.
-Proof.
-  elim /Wf_nat.lt_wf_ind : n => n ih.
-  simp InterpUniv.
-  apply InterpExt_back_clos.
-  ecrush.
-Qed.
-
-Lemma InterpUnivN_back_clos_star n A PA :
-    InterpUnivN n A PA ->
+Lemma InterpProp_back_clos_star γ A PA :
+  (forall i, candidate (γ i)) ->
+  InterpProp γ A PA ->
     forall a b, Pars a b ->
            PA b -> PA a.
 Proof.
   move => h a b.
-  induction 1; sfirstorder use:InterpUnivN_back_clos.
+  induction 1 => // /ltac:(sfirstorder use:InterpProp_back_clos).
 Qed.
 
-Lemma InterpUnivN_Univ_inv i j :
-  j < i ->
-  InterpUnivN i (tUniv j) (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA).
+Definition ργ_ok (Γ : list tm) (ρ : nat -> tm) (γ : nat -> (tm -> Prop)) := forall i , candidate (γ i) /\ (i < length Γ -> forall PA, InterpProp γ (dep_ith Γ i) PA -> PA (ρ i)).
+Definition SemWt Γ a A := forall ρ γ, ργ_ok Γ ρ γ  -> exists PA, InterpProp γ A PA /\ PA (subst_tm ρ a).
+Definition SemTWt Γ A := forall ρ γ, ργ_ok Γ ρ γ  ->  exists PA, InterpProp γ A PA.
+
+Lemma InterpProp_renaming ξ γ A PA :
+  InterpProp (ξ >> γ) A PA -> InterpProp γ (ren_tm ξ A) PA.
 Proof.
-  move => hji.
-  simp InterpUniv.
-  apply InterpExt_Univ' => [|//].
-  by simp InterpUniv.
+  move E : (ξ >> γ) => γ' h.
+  move : ξ γ E.
+  elim : γ'  A PA  / h.
+  - move => *. subst. asimpl. sfirstorder.
+  - sfirstorder.
+  - sfirstorder.
+  - move => ? A B PF PFTot PFRes ihPF ξ γ ?; subst.
+    asimpl.
+    apply InterpProp_Fun.
+    sfirstorder.
+    move => PA a PB hPA ha hPB.
+    apply : ihPF; eauto.
+    by asimpl.
+  - move => ? a b A ξ γ ?; subst.
+    asimpl.
+    apply InterpProp_Eq'.
+    fext => p.
+    apply propositional_extensionality.
+    split.
+    hauto l:on use:Coherent_renaming.
+    move => ?.
+    split; first by tauto.
+    admit.
+Admitted.
+
+Lemma γ_ok_renaming Γ ρ γ :
+  forall Δ ξ,
+    good_renaming ξ Γ Δ ->
+    ργ_ok Δ ρ γ ->
+    ργ_ok Γ (ξ >> ρ) (ξ >> γ).
+Proof.
+  move => Δ ξ hscope h1.
+  rewrite /ργ_ok => i.
+  split; first by sfirstorder.
+  move => h PA.
+  asimpl.
+  move : hscope h. move/[apply] .
+  case => h2 h3.
+  move /InterpProp_renaming.
+  rewrite -h3.
+  sfirstorder.
 Qed.
 
-Lemma InterpUnivN_Univ_inv' i j P :
-  InterpUnivN i (tUniv j) P ->
-  P = (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA) /\ j < i.
+
+
+Lemma renaming_SemWt Γ a A :
+  SemWt Γ a A ->
+  forall Δ ξ,
+    good_renaming ξ Γ Δ ->
+    SemWt Δ (ren_tm ξ a) (ren_tm ξ A).
 Proof.
-  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
+  rewrite /SemWt => h Δ ξ hξ ρ γ hργ.
+  have : ργ_ok Γ (ξ >> ρ) (ξ >> γ) by eauto using γ_ok_renaming.
+  move :h. move/[apply].
+  asimpl.
+  intros (PA & h0 & h1).
+  exists PA. move : h0.
+  split; last by auto.
+  sfirstorder use:InterpProp_renaming.
 Qed.
+
+Definition renaming_SemTWt Γ A :
+  SemTWt Γ A ->
+  forall Δ ξ,
+    good_renaming ξ Γ Δ ->
+    SemTWt Δ (ren_tm ξ A).
+Proof.
+  rewrite /SemWt => h Δ ξ hξ ρ γ hργ.
+  have : ργ_ok Γ (ξ >> ρ) (ξ >> γ) by eauto using γ_ok_renaming.
+  move :h. move/[apply].
+  asimpl.
+  intros (PA & h0).
+  exists PA. move : h0.
+  sfirstorder use:InterpProp_renaming.
+Qed.
+
+Definition SemWff Γ := forall i, i < length Γ -> SemTWt (skipn (S i) Γ) (ith Γ i).
+
+Section SemTyping.
+  Context (Γ : list tm).
+
+  Lemma ST_Var i
+    (h0 : SemWff Γ)
+    (h1 : i < length Γ) :
+    SemWt Γ (var_tm i) (dep_ith Γ i).
+  Proof using Type.
+    move : (h0) (h1). move/[apply].
+    move : renaming_SemTWt (good_renaming_truncate (S i) Γ). repeat move/[apply].
+    rewrite -dep_ith_shift.
+    move => h.
+    move => ρ γ h2.
+    move : h (h2). move/[apply].
+    case => PA h.
+    exists PA; split=>//.
+    asimpl.
+    case /(_ i) : h2 => h2 h3.
+    sfirstorder.
+  Qed.
