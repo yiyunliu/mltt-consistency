@@ -3,16 +3,15 @@ From WR Require Import syntax join imports common.
 Definition candidate (P : tm -> Prop) : Prop :=
   forall a b, Par a b -> P b -> P a.
 
-Definition PropSpace (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
-  forall PA a PB, candidate PA -> PA a -> PF a PB -> PB (tApp b a).
+Definition PropSpace (PF : (tm -> Prop) -> (tm -> Prop) -> Prop) (b : tm) :=
+  forall PA a PB, PA a -> candidate PA -> PF PA PB -> PB (tApp b a).
 
 Inductive InterpProp (γ : nat -> (tm -> Prop)) : tm -> (tm -> Prop) -> Prop :=
 | InterpProp_Var i : InterpProp γ (var_tm i) (γ i)
 | InterpProp_Void : InterpProp γ tVoid (const False)
 | InterpProp_Bool : InterpProp γ tBool (fun a => exists v, Pars a v /\ is_bool_val v)
 | InterpProp_Fun A B PF :
-  (forall PA a, candidate PA -> PA a -> exists PB, PF a PB) ->
-  (forall PA a PB, candidate PA -> PA a -> PF a PB -> InterpProp (PA .: γ) B PB) ->
+  (forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB) ->
   InterpProp γ (tPi A B) (PropSpace PF)
 | InterpProp_Eq a b A :
   InterpProp γ (tEq a b A) (fun p => Pars p tRefl /\ Coherent a b)
@@ -287,3 +286,20 @@ Section SemTyping.
     case /(_ i) : h2 => h2 h3.
     sfirstorder.
   Qed.
+
+  Lemma ST_Void :
+    SemTWt Γ tVoid.
+  Proof using Type. hauto l:on. Qed.
+
+  Lemma ST_Pi A B :
+    SemTWt Γ A ->
+    SemTWt (A :: Γ) B ->
+    SemTWt Γ (tPi A B).
+  Proof.
+    rewrite /SemTWt => hA hB ρ γ hργ.
+    move : hA (hργ); move/[apply]. intros (PA & hPA).
+    exists (PropSpace (fun a PB => forall PA,  candidate PA -> PA a -> InterpProp (PA .: γ) (subst_tm (a..) B) PB)).
+    apply InterpProp_Fun.
+    best.
+    best.
+    best.
