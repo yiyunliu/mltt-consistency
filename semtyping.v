@@ -11,6 +11,7 @@ Inductive InterpProp (γ : nat -> (tm -> Prop)) : tm -> (tm -> Prop) -> Prop :=
 | InterpProp_Void : InterpProp γ tVoid (const False)
 | InterpProp_Bool : InterpProp γ tBool (fun a => exists v, Pars a v /\ is_bool_val v)
 | InterpProp_Fun A B PF :
+  (forall PA, candidate PA -> exists PB, PF PA PB) ->
   (forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB) ->
   InterpProp γ (tPi A B) (PropSpace PF)
 | InterpProp_Eq a b A :
@@ -26,9 +27,9 @@ Lemma InterpProp_Eq' γ PA a b A :
 Proof. hauto lq:on use:InterpProp_Eq. Qed.
 
 Lemma InterpProp_Fun_inv γ A B P  (h : InterpProp γ (tPi A B) P) :
-  exists (PF : tm -> (tm -> Prop) -> Prop),
-    (forall PA a, candidate PA -> PA a -> exists PB, PF a PB) /\
-    (forall PA a PB, candidate PA -> PA a -> PF a PB -> InterpProp (PA .: γ) B PB) /\
+  exists (PF : (tm -> Prop) -> (tm -> Prop) -> Prop),
+    (forall PA, candidate PA -> exists PB, PF PA PB) /\
+    (forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB) /\
     P = PropSpace PF.
 Proof.
   move E : (tPi A B) h => T h.
@@ -198,7 +199,7 @@ Proof.
     asimpl.
     apply InterpProp_Fun.
     sfirstorder.
-    move => PA a PB hPA ha hPB.
+    move => *.
     apply : ihPF; eauto.
     by asimpl.
   - move => ? a b A ξ γ ?; subst.
@@ -230,8 +231,6 @@ Proof.
   rewrite -h3.
   sfirstorder.
 Qed.
-
-
 
 Lemma renaming_SemWt Γ a A :
   SemWt Γ a A ->
@@ -295,7 +294,7 @@ Section SemTyping.
     SemTWt Γ A ->
     SemTWt (A :: Γ) B ->
     SemTWt Γ (tPi A B).
-  Proof.
+  Proof using Type.
     rewrite /SemTWt => hA hB ρ γ hργ.
     move : hA (hργ); move/[apply]. intros (PA & hPA).
     exists (PropSpace (fun a PB => forall PA,  candidate PA -> PA a -> InterpProp (PA .: γ) (subst_tm (a..) B) PB)).
