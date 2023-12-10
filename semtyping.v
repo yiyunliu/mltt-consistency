@@ -15,6 +15,7 @@ Inductive InterpProp (γ : nat -> (tm -> Prop)) : tm -> (tm -> Prop) -> Prop :=
   (* Is this really impredicative? *)
   (* Can the input type really be interpreted? *)
   (* What if A : Type 1? *)
+  (* Need to match whatever valuation ργ_ok requires *)
   InterpProp γ A PA ->
   (forall PA, candidate PA -> exists PB, PF PA PB) ->
   (forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB) ->
