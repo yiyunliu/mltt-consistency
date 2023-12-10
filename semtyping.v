@@ -12,6 +12,9 @@ Inductive InterpProp (γ : nat -> (tm -> Prop)) : tm -> (tm -> Prop) -> Prop :=
 | InterpProp_Void : InterpProp γ tVoid (const False)
 | InterpProp_Bool : InterpProp γ tBool (fun a => exists v, Pars a v /\ is_bool_val v)
 | InterpProp_Fun A B PA PF :
+  (* Is this really impredicative? *)
+  (* Can the input type really be interpreted? *)
+  (* What if A : Type 1? *)
   InterpProp γ A PA ->
   (forall PA, candidate PA -> exists PB, PF PA PB) ->
   (forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB) ->
