@@ -215,10 +215,9 @@ Proof.
   - move => *. subst. asimpl. sfirstorder.
   - sfirstorder.
   - sfirstorder.
-  - move => ? A B PF PFTot PFRes ihPF ξ γ ?; subst.
+  - move => ? A B PA PF hPA ihPA PFTot PFRes ihPF ξ γ ?; subst.
     asimpl.
-    apply InterpProp_Fun.
-    sfirstorder.
+    apply InterpProp_Fun; eauto.
     move => *.
     apply : ihPF; eauto.
     by asimpl.
@@ -232,7 +231,28 @@ Proof.
     move => ?.
     split; first by tauto.
     admit.
+  - admit.
 Admitted.
+
+Lemma InterpProp_anti_renaming ξ γ A PA :
+  InterpProp γ (ren_tm ξ A) PA -> InterpProp (ξ >> γ) A PA.
+Proof.
+  move E : (ren_tm ξ A) => T h.
+  move : ξ A E.
+  elim : γ T PA /h.
+  - move => γ i ξ A eq.
+    case : A eq => //.
+    move => n. case => ?; subst.
+    replace (γ (ξ n)) with ((ξ >> γ) n); last by asimpl.
+    apply InterpProp_Var.
+  - hauto q:on ctrs:InterpProp inv:tm.
+  - hauto q:on ctrs:InterpProp inv:tm.
+  - admit.
+  - admit.
+  - admit.
+Admitted.
+
+
 
 Lemma ργ_ok_renaming Γ ρ γ :
   forall Δ ξ,
@@ -319,13 +339,12 @@ Section SemTyping.
   Proof using Type.
     rewrite /SemTWt => hA hB γ hγ.
      move : hA (hγ); move/[apply]. intros (PA & hPA).
-    exists (PropSpace (fun PA PB => InterpProp (PA .: γ) B PB)).
-    apply InterpProp_Fun.
+    exists (PropSpace PA (fun PA PB => InterpProp (PA .: γ) B PB)).
+    apply InterpProp_Fun; eauto.
     move => PA0 hPA0.
     move /(_ (PA0 .: γ)) : hB.
     case.
     - hauto q:on inv:nat.
-    - sfirstorder.
     - sfirstorder.
   Qed.
 
@@ -333,28 +352,40 @@ Section SemTyping.
     SemTWt (tPi A B) ->
     SemWt (A :: Γ) a B ->
     SemWt Γ (tAbs A a) (tPi A B).
-  Proof.
+  Proof using Type.
     rewrite /SemTWt /SemWt => hPi ha ρ γ hργ.
+    have ? : forall i, candidate (γ i) by sfirstorder.
     move /(_ γ ltac:(sfirstorder)) : hPi. intros (PPi & hPPi).
     exists PPi.
     move /InterpProp_Fun_inv : (hPPi).
-    intros (PF & PFTot & (hPF & ?)). subst.
+    intros (PA & PF & hPA & PFTot & (hPF & ?)). subst.
     split;first by auto.
     asimpl.
-    move => PA a0 PB ha0 /[dup] hPA.
+    move => a0 ha0 PA0 PB /[dup] hPA0.
     move : hPF. (repeat move/[apply]) => h.
     move : (h).
     move : InterpProp_back_clos. repeat move/[apply].
     apply; eauto using P_AppAbs_cbn.
-    have ? : forall i, candidate (γ i) by sfirstorder.
     qauto l:on inv:nat.
     asimpl.
-    move /(_ (a0 .: ρ) (PA .: γ)) in ha.
+    move /(_ (a0 .: ρ) (PA0 .: γ)) in ha.
     case : ha.
     - case.
-      asimpl. simpl. split; auto.
-      move => ? PA0.
-    admit.
-    move => PB0 [? ?].
-    have ? : PB0 = PB by sfirstorder use:InterpProp_deterministic. by subst.
-Admitted.
+      + asimpl. simpl. split; auto.
+        move => ? PA1.
+        move => h2.
+        have ? : InterpProp γ A PA1 by sfirstorder use:InterpProp_anti_renaming.
+        have ? : PA = PA1 by sfirstorder use:InterpProp_deterministic. subst.
+        sfirstorder.
+      + move => n.
+        asimpl.
+        split; auto.
+        simpl.
+        move /Arith_prebase.lt_S_n => ? PA1.
+        move => h2.
+        have ? : InterpProp γ (dep_ith Γ n) PA1 by sfirstorder use:InterpProp_anti_renaming.
+        sfirstorder.
+    - move => PB0.
+      case => *.
+      have ? : PB= PB0 by sfirstorder use:InterpProp_deterministic.  by subst.
+  Qed.
