@@ -3,17 +3,19 @@ From WR Require Import syntax join imports common.
 Definition candidate (P : tm -> Prop) : Prop :=
   forall a b, Par a b -> P b -> P a.
 
-Definition PropSpace (PF : (tm -> Prop) -> (tm -> Prop) -> Prop) (b : tm) :=
-  forall PA a PB, PA a -> candidate PA -> PF PA PB -> PB (tApp b a).
+Definition PropSpace (PA : tm -> Prop) (PF : (tm -> Prop) -> (tm -> Prop) -> Prop) (b : tm) :=
+  forall a, PA a ->
+       forall PA0 PB, candidate PA0 -> PF PA0 PB -> PB (tApp b a).
 
 Inductive InterpProp (γ : nat -> (tm -> Prop)) : tm -> (tm -> Prop) -> Prop :=
 | InterpProp_Var i : InterpProp γ (var_tm i) (γ i)
 | InterpProp_Void : InterpProp γ tVoid (const False)
 | InterpProp_Bool : InterpProp γ tBool (fun a => exists v, Pars a v /\ is_bool_val v)
-| InterpProp_Fun A B PF :
+| InterpProp_Fun A B PA PF :
+  InterpProp γ A PA ->
   (forall PA, candidate PA -> exists PB, PF PA PB) ->
   (forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB) ->
-  InterpProp γ (tPi A B) (PropSpace PF)
+  InterpProp γ (tPi A B) (PropSpace PA PF)
 | InterpProp_Eq a b A :
   InterpProp γ (tEq a b A) (fun p => Pars p tRefl /\ Coherent a b)
 | InterpProp_Step A A0 PA :
@@ -27,10 +29,11 @@ Lemma InterpProp_Eq' γ PA a b A :
 Proof. hauto lq:on use:InterpProp_Eq. Qed.
 
 Lemma InterpProp_Fun_inv γ A B P  (h : InterpProp γ (tPi A B) P) :
-  exists (PF : (tm -> Prop) -> (tm -> Prop) -> Prop),
+  exists PA (PF : (tm -> Prop) -> (tm -> Prop) -> Prop),
+    InterpProp γ A PA /\
     (forall PA, candidate PA -> exists PB, PF PA PB) /\
     (forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB) /\
-    P = PropSpace PF.
+    P = PropSpace PA PF.
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
@@ -79,9 +82,10 @@ Proof.
   - sfirstorder.
   - hauto lq:on ctrs:rtc.
   - hauto lq:on ctrs:rtc.
-  - move => γ A B PF hPFTot hPF ihPF hγ b0 b1 hb01.
-    rewrite /PropSpace => hPB PA a PB hPFa.
+  - move => γ A B PA PF hPA ihPA hPFTot hPF ihPF hγ b0 b1 hb01.
+    rewrite /PropSpace => hPB a Pa PA0 PB hPA0 hPB0.
     have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
+    apply : ihPF;
     qauto l:on ctrs:rtc use:candidate_cons.
   - hauto lq:on ctrs:rtc.
   - sfirstorder.
@@ -161,13 +165,23 @@ Proof.
   - sfirstorder use:InterpProp_Var_inv.
   - hauto lq:on inv:InterpProp ctrs:InterpProp use:InterpProp_Void_inv.
   - hauto lq:on inv:InterpProp use:InterpProp_Bool_inv.
-  - move => γ A B PF hPB hPB' ihPB P hP.
+  - move => γ A B PA PF hPA ihPA hPB hPB' ihPB P hP.
     move /InterpProp_Fun_inv : hP.
-    intros (PF0 & hPA0 & hPB0 & ?); subst.
-    fext.
-    move => b PA a PB hPA ha.
+    intros (PA0 & PF0 & hPA0 & hPB0 & hPB1 & ?); subst.
+    fext => b a.
+    have ? : PA0 = PA by sfirstorder. subst.
     apply propositional_extensionality.
-    sblast.
+    have ? : forall PA PB, candidate PA -> PF PA PB -> InterpProp (PA .: γ) B PB by sfirstorder.
+    have ? : forall PA PB, candidate PA -> PF0 PA PB -> InterpProp (PA .: γ) B PB by sfirstorder.
+    split.
+    + move => h ha PA0 PB hcand hh.
+      move : hPB (hcand); move/[apply]. case => PB0 ?.
+      have ? : PB0 = PB by sfirstorder. subst.
+      firstorder.
+    + move => h ha PA0 PB hcand hPB2.
+      move : (hPB0) (hcand). move/[apply]. case => PB0 ?.
+      have ? : PB = PB0 by sfirstorder. subst.
+      firstorder.
   - hauto lq:on inv:InterpProp use:InterpProp_Eq_inv.
   - hauto l:on use:InterpProp_preservation.
 Qed.
@@ -184,7 +198,13 @@ Qed.
 
 Definition ργ_ok (Γ : list tm) (ρ : nat -> tm) (γ : nat -> (tm -> Prop)) := forall i , candidate (γ i) /\ (i < length Γ -> forall PA, InterpProp γ (dep_ith Γ i) PA -> PA (ρ i)).
 Definition SemWt Γ a A := forall ρ γ, ργ_ok Γ ρ γ  -> exists PA, InterpProp γ A PA /\ PA (subst_tm ρ a).
-Definition SemTWt Γ A := forall ρ γ, ργ_ok Γ ρ γ  ->  exists PA, InterpProp γ A PA.
+Definition SemTWt A := forall γ, (forall i, candidate (γ i))  ->  exists PA, InterpProp γ A PA.
+
+
+Lemma P_AppAbs_cbn (A a b b0 : tm) :
+  b0 = subst_tm (b..) a ->
+  Par (tApp (tAbs A a) b) b0.
+Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
 
 Lemma InterpProp_renaming ξ γ A PA :
   InterpProp (ξ >> γ) A PA -> InterpProp γ (ren_tm ξ A) PA.
@@ -214,7 +234,7 @@ Proof.
     admit.
 Admitted.
 
-Lemma γ_ok_renaming Γ ρ γ :
+Lemma ργ_ok_renaming Γ ρ γ :
   forall Δ ξ,
     good_renaming ξ Γ Δ ->
     ργ_ok Δ ρ γ ->
@@ -239,7 +259,7 @@ Lemma renaming_SemWt Γ a A :
     SemWt Δ (ren_tm ξ a) (ren_tm ξ A).
 Proof.
   rewrite /SemWt => h Δ ξ hξ ρ γ hργ.
-  have : ργ_ok Γ (ξ >> ρ) (ξ >> γ) by eauto using γ_ok_renaming.
+  have : ργ_ok Γ (ξ >> ρ) (ξ >> γ) by eauto using ργ_ok_renaming.
   move :h. move/[apply].
   asimpl.
   intros (PA & h0 & h1).
@@ -248,22 +268,23 @@ Proof.
   sfirstorder use:InterpProp_renaming.
 Qed.
 
-Definition renaming_SemTWt Γ A :
-  SemTWt Γ A ->
-  forall Δ ξ,
-    good_renaming ξ Γ Δ ->
-    SemTWt Δ (ren_tm ξ A).
+Definition renaming_SemTWt ξ A :
+  SemTWt A ->
+  SemTWt (ren_tm ξ A).
 Proof.
-  rewrite /SemWt => h Δ ξ hξ ρ γ hργ.
-  have : ργ_ok Γ (ξ >> ρ) (ξ >> γ) by eauto using γ_ok_renaming.
+  rewrite /SemTWt => h γ h0.
+  have : (forall i, candidate (γ (ξ i))) by firstorder.
   move :h. move/[apply].
-  asimpl.
-  intros (PA & h0).
-  exists PA. move : h0.
-  sfirstorder use:InterpProp_renaming.
+  hauto l:on use:InterpProp_renaming.
 Qed.
 
-Definition SemWff Γ := forall i, i < length Γ -> SemTWt (skipn (S i) Γ) (ith Γ i).
+(* Lemma ργ_ok_cons A Γ a ρ PA γ *)
+(*   (h0 : candidate PA) *)
+(*   (h1 : PA a) *)
+(*   (h2 : ) *)
+(* ργ_ok (A :: Γ) (a .: ρ) (PA .: γ) *)
+
+Definition SemWff Γ := forall i, i < length Γ -> SemTWt (ith Γ i).
 
 Section SemTyping.
   Context (Γ : list tm).
@@ -274,31 +295,66 @@ Section SemTyping.
     SemWt Γ (var_tm i) (dep_ith Γ i).
   Proof using Type.
     move : (h0) (h1). move/[apply].
-    move : renaming_SemTWt (good_renaming_truncate (S i) Γ). repeat move/[apply].
+    move : renaming_SemTWt . repeat move/[apply].
+    move /(_ (Nat.add (S i))).
     rewrite -dep_ith_shift.
     move => h.
     move => ρ γ h2.
-    move : h (h2). move/[apply].
-    case => PA h.
-    exists PA; split=>//.
-    asimpl.
-    case /(_ i) : h2 => h2 h3.
+    move : h (h2).
+    rewrite /SemTWt.
+    move : h1.
+    move/[swap].
+    move /(_ γ ltac:(sfirstorder)).
     sfirstorder.
   Qed.
 
   Lemma ST_Void :
-    SemTWt Γ tVoid.
+    SemTWt tVoid.
   Proof using Type. hauto l:on. Qed.
 
   Lemma ST_Pi A B :
-    SemTWt Γ A ->
-    SemTWt (A :: Γ) B ->
-    SemTWt Γ (tPi A B).
+    SemTWt A ->
+    SemTWt B ->
+    SemTWt (tPi A B).
   Proof using Type.
-    rewrite /SemTWt => hA hB ρ γ hργ.
-    move : hA (hργ); move/[apply]. intros (PA & hPA).
-    exists (PropSpace (fun a PB => forall PA,  candidate PA -> PA a -> InterpProp (PA .: γ) (subst_tm (a..) B) PB)).
+    rewrite /SemTWt => hA hB γ hγ.
+     move : hA (hγ); move/[apply]. intros (PA & hPA).
+    exists (PropSpace (fun PA PB => InterpProp (PA .: γ) B PB)).
     apply InterpProp_Fun.
-    best.
-    best.
-    best.
+    move => PA0 hPA0.
+    move /(_ (PA0 .: γ)) : hB.
+    case.
+    - hauto q:on inv:nat.
+    - sfirstorder.
+    - sfirstorder.
+  Qed.
+
+  Lemma ST_Abs A a B :
+    SemTWt (tPi A B) ->
+    SemWt (A :: Γ) a B ->
+    SemWt Γ (tAbs A a) (tPi A B).
+  Proof.
+    rewrite /SemTWt /SemWt => hPi ha ρ γ hργ.
+    move /(_ γ ltac:(sfirstorder)) : hPi. intros (PPi & hPPi).
+    exists PPi.
+    move /InterpProp_Fun_inv : (hPPi).
+    intros (PF & PFTot & (hPF & ?)). subst.
+    split;first by auto.
+    asimpl.
+    move => PA a0 PB ha0 /[dup] hPA.
+    move : hPF. (repeat move/[apply]) => h.
+    move : (h).
+    move : InterpProp_back_clos. repeat move/[apply].
+    apply; eauto using P_AppAbs_cbn.
+    have ? : forall i, candidate (γ i) by sfirstorder.
+    qauto l:on inv:nat.
+    asimpl.
+    move /(_ (a0 .: ρ) (PA .: γ)) in ha.
+    case : ha.
+    - case.
+      asimpl. simpl. split; auto.
+      move => ? PA0.
+    admit.
+    move => PB0 [? ?].
+    have ? : PB0 = PB by sfirstorder use:InterpProp_deterministic. by subst.
+Admitted.

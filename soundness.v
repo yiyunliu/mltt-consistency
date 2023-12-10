@@ -58,12 +58,6 @@ Proof.
   hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
 Qed.
 
-Lemma P_AppAbs_cbn (A a b b0 : tm) :
-  b0 = subst_tm (b..) a ->
-  Par (tApp (tAbs A a) b) b0.
-Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
-
-
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a A) /\
   (Wff Γ -> forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i))).
