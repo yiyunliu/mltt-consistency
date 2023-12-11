@@ -1,14 +1,17 @@
 grammar
 
 nat, i, j, n :: '' ::= {{ com natural numbers }}
+  | 0 :: :: zero
   | S i :: :: succ
   | ( i ) :: :: Paren
   | | G | :: :: Length
+  | (# i #) :: :: SecretParen
+    {{ tex [[i]] }}
 
-tm, a , b , t, p, A :: 'a_' ::= {{ com terms and types }}
+tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
   | i :: :: Var
   | Pi A B :: :: Pi
-  | \ A . a :: :: Abs
+  | \ A a :: :: Abs
     {{ tex \lambda [[A]] \mathpunct{.} [[a]] }}
     {{ com function }}
   | a b :: :: App
@@ -16,6 +19,7 @@ tm, a , b , t, p, A :: 'a_' ::= {{ com terms and types }}
     {{ com function application }}
   | Set i :: :: Set {{ com sort }}
   | a { b } :: S :: Subst
+  | a { b0 , b1 } :: S :: SubstTwo
   | ( A )   :: M :: Paren {{ coq ([[A]]) }}
   | (# a #) :: S :: SecretParen
     {{ tex [[a]] }}
@@ -24,7 +28,8 @@ tm, a , b , t, p, A :: 'a_' ::= {{ com terms and types }}
     {{ tex ([[a]]) }}
   | a ~ b : A :: :: CEq
     {{ tex [[a]] \sim [[b]] \in {[[A]]} }}
-  | refl               :: :: Refl
+  | refl      :: :: Refl
+  | Void      :: :: Void
   | J t a b p         :: :: Transp
   | Bool           :: :: Bool
     {{ tex \mathbb{B} }}
@@ -33,6 +38,8 @@ tm, a , b , t, p, A :: 'a_' ::= {{ com terms and types }}
   | if a b0 b1 :: :: If
   | up n A :: :: Shift
     {{ tex \uparrow^{[[n]]} [[A]] }}
+  | up1 A :: :: ShiftOne
+    {{ tex \uparrow [[A]] }}
   | G i :: :: lookup
     {{ tex [[G]]_{[[i]]} }}
 
@@ -44,6 +51,7 @@ context, G {{ tex \Gamma }} :: 'ctx_' ::= {{ com contexts }}
    | G ++ G'         :: M  :: Append      {{ tex [[G]], [[G']] }}
 
    | ( G )           :: M  :: Paren       {{ coq ([[G]]) }}
+   | (# G #)           :: M  :: SecretParen {{ tex [[G]] }}
 
 terminals :: 'terminals_' ::=
   | <->               ::   :: iso           {{ tex \leftrightarrow }}
@@ -210,6 +218,82 @@ formula :: 'formula_' ::=
 %%Dependent Types
 
 defns
+   JPar :: '' ::=
+
+defn
+ a => b :: :: Par :: 'P_' {{ com Parallel Reduction }}
+ {{ tex [[ a ]] \Rightarrow [[ b ]]  }}
+by
+
+----------- :: Var
+i => i
+
+---------------- :: Set
+Set i => Set i
+
+-------------- :: Void
+Void => Void
+
+A0 => A1
+B0 => B1
+----------------------- :: Pi
+Pi A0 B0 => Pi A1 B1
+
+A0 => A1
+a0 => a1
+----------------------- :: Abs
+\ A0 a0 => \ A1 a1
+
+a0 => a1
+b0 => b1
+----------------------- :: App
+a0 b0 => a1 b1
+
+a => \ A a0
+b0 => b1
+----------------------- :: AppAbs
+a b0 => a0 { b1 }
+
+-------------- :: True
+true => true
+
+--------------- :: False
+false => false
+
+a0 => a1
+b0 => b1
+c0 => c1
+--------------------------- :: If
+if a0 b0 c0 => if a1 b1 c1
+
+a0 => true
+b0 => b1
+c0 => c1
+--------------------------- :: IfTrue
+if a0 b0 c0 => b1
+
+a0 => false
+b0 => b1
+c0 => c1
+--------------------------- :: IfFalse
+if a0 b0 c0 => c1
+
+-------------- :: Bool
+Bool => Bool
+
+
+
+
+
+defns
+JJoin :: '' ::=
+
+defn
+a <=> b :: :: Coherent :: ''
+{{ tex [[a]] \Leftrightarrow [[b]] }}
+by
+
+defns
 JTyping :: '' ::=
 
 defn
@@ -233,7 +317,7 @@ defn
 
 |- G
 i < j
--------------------------- :: Type
+-------------------------- :: Set
 G |-  Set i : Set j
 
 |- G
@@ -243,461 +327,65 @@ G |- i : up S i G i
 
 %% functions
 
-W |- psi A : type s1
-W ++ x : psi0 A |- psi B : type s2
-rule_pi s1 s2 s3
+G |- A : Set i
+G ++ A |- B : Set i
 --------------------------------------- :: Pi
-W |- psi Pi x :psi0 A. B : type s3
+G |- Pi A B : Set i
 
-W ++ x : psi0 A |- psi b : B
-W |- psi1 (Pi x:psi0 A. B) : type s
+G ++ A |- b : B
+G |- Pi A B : Set i
 ----------------------------------------------- :: Abs
-W |- psi \ psi0 x : A . b : Pi x :psi0 A . B
+G |- \ A b : Pi A B
 
-W |- psi b : Pi x :psi0 A . B
-W |- psi0 a : A
+G |- b : Pi A B
+G |- a : A
 ------------------------------------------- :: App
-W |- psi b psi0 a : B {a/x}
+G |- b a : B { a }
 
-W |- psi a : A
-W |- psi0 B : type s
-|W| |- A == B
+G |- a : A
+G |- B : Set i
+A <=> B
 ------------------------------- :: Conv
-W |- psi a : B
+G |- a : B
 
-W |- psi2 (@ psi0 a ~ a : psi1 A @) : type s
+|- G
+G |- a : A
 -------------------------------- :: Refl
-W |- psi refl : (@ psi0 a ~ a : psi1 A @)
+G |- refl : a ~ a : A
 
-W |- psi1 a : A
-W |- psi1 b : A
-W |- psi2 A : type s1
-rule_eq s1 s2
-psi1 <= psi0
-psi0 <= psi
+G |- a : A
+G |- b : A
+G |- A : Set j
 -------------------------------- :: CEq
-W |- psi (@ psi0 a ~ b : psi1 A @) : type s2
+G |- a ~ b : A : Set i
 
-hackBinder (Pi x : psi0 A . B)
-W ++ x : psi1 A |- psi0 B : type s
-W |- psi a : (@ psi0 a0 ~ a1 : psi1 A @)
-W |- psi b : B { a0 / x  }
-[ W |- psi2 A : type s1 ]
------------------------------------- :: Transp
-W |- psi transp a b : B { a1 / x }
+G |- a : A
+G |- b : A
+G |- A : Set j
+G |- p : a ~ b : A
+(# G ++ A #) ++ 0 ~ up1 a : up1 A |- C : Set i
+G |- t : C { a ,  refl }
+------------------------------------ :: J
+G |- J t a b p : C { b , p }
 
-
-W |- psi A : type s1
-rule_t s1 s2
------------------------------------- :: T
-W |- psi T psi0 A : type s2
-
-
-W |- psi0 a : A
-W |- psi1 T psi0 A : type s
------------------------------------- :: Box
-W |- psi box psi0 a : T psi0 A
-
-
-W |- psi a : T psi0 A
-psi0 <= psi
------------------------------------- :: Unbox
-W |- psi unbox psi0 a : A
-
-W |- psi A : type s1
-W ++ x : psi0 A |- psi B : type s2
-rule_sig s1 s2 s3
----------------------------------------- :: SSigma
-W |- psi x :psi0 A && B : type s3
-
-W |- psi1 x:psi0 A && B : type s
-W |- psi0 a : A
-W |- psi b : B {a/x}
------------------------------------------- :: SPair
-W |- psi (a psi0 & b) : x :psi0 A && B
-
-W |- psi a : x :psi0 A && B
-psi0 <= psi
------------------------------------ :: Proj1
-W |- psi fst psi0 a : A
-
-W |- psi a : x :psi0 A && B
-W |- psi0 fst psi0 a : A
------------------------------------ :: Proj2
-W |- psi snd psi0 a : B {fst psi0 a / x}
-
-|- W
-rule_unit s
--------------------------- :: TyUnit
-W |- psi Unit : type s
-
-W |- psi0 Unit : type s
--------------------------- :: TmUnit
-W |- psi unit : Unit
-
-
-|- W
-rule_bool s
+|- G
 -------------------------- :: Bool
-W |- psi Bool : type s
+G |- Bool : Set i
 
-
-W |- psi0 Bool : type s
+|- G
 ----------------------------- :: True
-W |- psi true : Bool
+G |- true : Bool
 
-W |- psi0 Bool : type s
+|- G
 ----------------------------- :: False
-W |- psi false : Bool
+G |- false : Bool
 
-W |- psi a : Bool
-W |- psi b0 : A
-W |- psi b1 : A
+G |- a : Bool
+G |- b0 : A
+G |- b1 : A
 ----------------------------- :: If
-W |- psi if a b0 b1 : A
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-defns
-   JRed :: '' ::=
-defn
-  a ~> b :: :: Red :: 'R_' {{ com Reduction }}
-by
-
-a0 ~> a1
----------------------- :: App
-a0 psi0 b ~> a1 psi0 b
-
--------------------------------------- :: AppAbs
-( \ psi0 x : A . a ) psi0 b ~> a {b / x}
-
-a ~> a0
------------------------ :: Transp
-transp a b ~> transp a0 b
-
------------------------ :: TranspRefl
-transp refl a ~> a
-
-a ~> a0
------------------------ :: Unbox
-unbox psi0 a ~> unbox psi0 a0
-
-------------------------------- :: UnboxBox
-unbox psi0 (box psi0 a) ~> a
-
-a ~> a'
---------------------------------------------------------- :: Proj1Cong
-fst psi a ~> fst psi a'
-
-
-a ~> a'
---------------------------------------------------------- :: Proj2Cong
-snd psi a ~> snd psi a'
-
-
---------------------------------------------------------- :: Proj1Beta
-fst psi (a1 psi & a2) ~> a1
-
---------------------------------------------------------- :: Proj2Beta
-snd psi (a1 psi & a2) ~> a2
-
-
-a ~> a'
-------------------------------- :: If
-if a b0 b1 ~> if a' b0 b1
-
-
------------------------ :: IfTrue
-if true b0 b1 ~> b0
-
------------------------ :: IfFalse
-if false b0 b1 ~> b1
-
-
-defns
-   JReds :: '' ::=
-defn
-  a ~>* b :: :: Reds :: 'Rs_' {{ com Transitive and reflexive closure of reduction }}
-by
-
------------------------- :: Refl
-a ~>* a
-
-a0 ~> b
-b ~>* a1
------------------------- :: Step
-a0 ~>* a1
-
-
-defns
-   JPar :: '' ::=
-
-defn
-P |- psi psi0 a => b ::  :: CPar :: 'CPar_' {{ com Parallel reduction at [[psi]] is guarded by [[psi0]] }}
- {{ tex [[ P ]] \vdash^{[[psi]]}_{[[psi0]]} [[ a ]] [[=>]] [[ b ]]  }}
-
-by
-
-psi0 <= psi
-P |- psi a1 => a2
--------------------------------- :: Leq
-P |- psi psi0 a1 => a2
-
-not (psi0 <= psi)
-uniq P
--------------------------------- :: Nleq
-P |- psi psi0 a1 => a2
-
-
-defn
- P |- psi  a => b :: :: Par :: 'Par_' {{ com Parallel Reduction }}
- {{ tex [[P]] [[|-]]  [[ a ]] \Rightarrow_{[[ psi ]]} [[ b ]]  }}
-by
-
-uniq P
-psi0 <= psi
-x : psi0 in P
--------------------- :: Var
-P |- psi x => x
-
-uniq P
--------------------------------- :: Type
-P |- psi type s => type s
-
-
-P |- psi  A1 => A2
-P ++ x : psi1 |- psi  B1 => B2
----------------------------------------------- :: Pi
-P |- psi  Pi x :psi1 A1. B1 => Pi x :psi1 A2. B2
-
-P |- psi  a => (\ psi0 x : A. a')
-P |- psi psi0 b => b'
------------------------------ :: AppBeta
-P |- psi  a psi0 b => a' { b' / x }
-
-P |- psi a => a'
-P |- psi psi0 b => b'
------------------------------ :: App
-P |- psi  a psi0 b => a' psi0  b'
-
-P ++ x: psi0 |- psi  b1 => b2
-% P |- psi  A1 => A2
-------------------------------------- :: Abs
-P |- psi  \ psi0 x : A1 . b1 => \ psi0 x : A2 . b2
-
-uniq P
--------------------------------- :: Refl
-P |- psi refl => refl
-
-% Does J need a label for x?
-P |- psi a0 => a1
-P |- psi b0 => b1
--------------------------------- :: Transp
-P |- psi transp a0 b0 => transp a1 b1
-
-P |- psi a0 => a1
-P |- psi b0 => b1
-psi0 <= psi
--------------------------------- :: CEq
-P |- psi psi0 a0 ~ b0 : psi1 A0 => psi0 a1 ~ b1 : psi1 A1
-
-P |- psi a0 => refl
-P |- psi b0 => b1
------------------------------------------- :: TranspRefl
-P |- psi transp a0 b0  => b1
-
-P |- psi A => B
-------------------------------------------- :: T
-P |- psi T psi0 A => T psi0 B
-
-P |- psi psi0 a => b
--------------------------------------- :: Box
-P |- psi box psi0 a => box psi0 b
-
-P |- psi a => b
-psi0 <= psi
--------------------------------------- :: Unbox
-P |- psi unbox psi0 a => unbox psi0 b
-
-P |- psi a => box psi0 b
-psi0 <= psi
-------------------------------------- :: UnboxBox
-P |- psi unbox psi0 a => b
-
-
-P |- psi a0 => a1
-psi0 <= psi
---------------------------------------------------------- :: Proj1Cong
-P |- psi fst psi0 a0 => fst psi0 a1
-
-P |- psi a0 => a1
---------------------------------------------------------- :: Proj2Cong
-P |- psi snd psi0 a0 => snd psi0 a1
-
-P |- psi b => (a1 psi0 & a2)
-psi0 <= psi
---------------------------------------------------------- :: Proj1Beta
-P |- psi fst psi0 b => a1
-
-P |- psi b => (a1 psi0 & a2)
---------------------------------------------------------- :: Proj2Beta
-P |- psi snd psi0 b => a2
-
-P |- psi psi0 a0 => a1
-P |- psi b0 => b1
---------------------------------------------------------- :: SPair
-P |- psi (a0 psi0 & b0) => (a1 psi0 & b1)
-
-P |- psi A0 => A1
-P ++ x : psi0 |- psi B0 => B1
---------------------------------------- :: SSigma
-P |- psi x :psi0 A0 && B0 => x :psi0 A1 && B1
-
-uniq P
--------------------------------- :: TyUnit
-P |- psi Unit => Unit
-
-uniq P
--------------------------------- :: TmUnit
-P |- psi unit => unit
-
-
-uniq P
------------------------------ :: Bool
-P |- psi Bool => Bool
-
-
-uniq P
------------------------------ :: True
-P |- psi true => true
-
-uniq P
------------------------------ :: False
-P |- psi false => false
-
-P |- psi a0 => a1
-P |- psi b0 => b2
-P |- psi b1 => b3
------------------------------ :: If
-P |- psi if a0 b0 b1 => if a1 b2 b3
-
-P |- psi a0 => true
-P |- psi b0 => b2
-P |- psi b1 => b3
------------------------------ :: IfTrue
-P |- psi if a0 b0 b1 => b2
-
-P |- psi a0 => false
-P |- psi b0 => b2
-P |- psi b1 => b3
------------------------------ :: IfFalse
-P |- psi if a0 b0 b1 => b3
-
-
-defns
-   JEPar :: '' ::=
-defn
-P |- a => b :: :: EPar :: 'EP_'
-by
-
-P |- psi a => b
-------------------------- :: One
-P |- a => b
-
-
-defns
-   JEMultiPar :: '' ::=
-defn
-P |- a =>* b :: :: EMPar :: 'EMP_' by
-
-P |- a => b
-------------------------- :: One
-P |- a =>* b
-
-P |- a => b
-P |- b =>*  a'
-------------------------- :: Step
-P |- a =>* a'
-
-
-defns
-   JEJoins :: '' ::=
-defn
-P |- a <=> b :: :: EJoins :: 'EJ_' by
-
-P |- a1 =>* b
-P |- a2 =>* b
-------------------------- :: ejoins
-P |- a1 <=> a2
-
-defns
-   JMultiPar :: '' ::=
-defn
-P |- psi  a =>* b  ::   :: MultiPar :: 'MP_'
-{{ tex [[P]] [[|-]] [[a]] [[=>*]]_{[[psi]]} [[b]] }}
-{{ com multistep parallel reduction }}
-by
-
-P |- psi a => b
-------------------------- :: One
-P |- psi a =>* b
-
-P |- psi  a =>  b
-P |- psi  b =>*  a'
--------------------------- :: Step
-P |- psi  a =>*  a'
-
-defns
-   JJoins :: '' ::=
-defn
-P |- psi  a <=> b  ::   :: Joins :: ''
-{{ tex [[P]][[|-]] [[a]] [[<=>]]_{[[psi]]}  [[b]] }}
-{{ com parallel reduction to a common term }}
-by
-
-P |- psi  a1 =>* b
-P |- psi  a2 =>* b
--------------------------- :: join
-P |- psi  a1 <=> a2
-
-defns
-  JCMultiPar :: '' ::=
-defn
-P |- psi psi0 a =>* b ::   :: CMultiPar :: 'CMP_'
-{{ tex [[P]] [[|-]]_{[[psi]]}^{[[psi0]]} [[a]] [[=>*]] [[b]] }}
-{{ com }}
-
-by
-
-psi0 <= psi
-P |- psi a1 =>* a2
--------------------------------- :: Leq
-P |- psi psi0 a1 =>* a2
-
-not (psi0 <= psi)
-uniq P
--------------------------------- :: Nleq
-P |- psi psi0 a1 =>* a2
-
-
-defns
-  JCJoins :: '' ::=
-defn
-P |- psi psi0 a <=> b ::   :: CJoins :: 'CJ_'
-{{ tex [[P]] [[|-]]^{[[psi]]}_{[[psi0]]} [[a]] [[<=>]] [[b]] }}
-{{ com }}
-
-by
-
-psi0 <= psi
-P |- psi a1 <=> a2
--------------------------------- :: Leq
-P |- psi psi0 a1 <=> a2
-
-not (psi0 <= psi)
-uniq P
--------------------------------- :: Nleq
-P |- psi psi0 a1 <=> a2
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+G |- if a b0 b1 : A
+
+|- G
+----------------------------- :: Void
+G |- Void : Set i
