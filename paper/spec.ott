@@ -73,7 +73,7 @@ terminals :: 'terminals_' ::=
   | notin             ::   :: notin      {{ tex \not\in }}
   | <=                ::   :: check      {{ tex \leq }}
   | =>                ::   :: infer      {{ tex \Rightarrow }}
-  | =>*               ::   :: minfer      {{ tex \Rightarrow^{\ast} }}
+  | =>+               ::   :: minfer      {{ tex \Rightarrow^{\ast} }}
   | ->                ::   :: arrow      {{ tex \to }}
   | <-|               ::   :: mapsfrom   {{ tex \mapsfrom }}
   | []                ::   :: box        {{ tex \Box }}
@@ -217,18 +217,41 @@ J t0 a0 b0 p => t1
 
 
 defns
+JPars :: '' ::=
+
+defn
+ a =>+ b :: :: Pars :: 'PS_' {{ com Parallel Reduction }}
+ {{ tex [[ a ]] \Rightarrow^+ [[ b ]]  }}
+by
+
+a => b
+---------- :: One
+a =>+ b
+
+a => b
+b =>+ c
+------------------ :: Step
+a =>+ c
+
+
+defns
 JJoin :: '' ::=
 
 defn
-a <=> b :: :: Coherent :: ''
+a <=> b :: :: Coherent :: 'C_' {{ com Coherence }}
 {{ tex [[a]] \Leftrightarrow [[b]] }}
 by
+
+a =>+ c
+b =>+ c
+----------------------- :: Intro
+a <=> b
 
 defns
 JTyping :: '' ::=
 
 defn
-|- G ::     :: Ctx :: 'Ctx_'
+|- G ::     :: Ctx :: 'Ctx_' {{ com Context Well-Formedness }}
 {{ tex \vdash [[G]] }}
 by
 

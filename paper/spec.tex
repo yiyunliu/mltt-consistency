@@ -20,10 +20,13 @@
 
 \section{Dynamics}
 \label{sec:dynamics}
+\drules[C]{$[[a <=> b]]$}{Coherence}{Intro}
+\drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{One, Step}
 \drules[P]{$[[a => b]]$}{Parallel Reduction}{Var, Set, Void, Pi, Abs, App, AppAbs, True, False, If, IfTrue, IfFalse, Bool, Eq, Refl, J, JRefl}
 
 \section{Statics}
 \label{sec:statics}
+\drules[Ctx]{$[[|-G]]$}{Context Well-Formedness}{Empty, Cons}
 \drules[T]{$[[G |- a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv, Refl, J, Bool, True, False, If, Void}
 
 \end{document}
