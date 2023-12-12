@@ -15,8 +15,15 @@ OTT_FLAGS := -tex_wrap false -tex_show_meta false -picky_multiple_parses false -
 #	$(PDFLATEX) $(MAIN)-output.tex
 #	$(PDFLATEX) $(MAIN)-output.tex
 
-spec.tex : spec.ott
-	$(OTT) $(OTT_FLAGS) -i spec.ott -o Qualitative-rules.tex
+spec-out.pdf : spec-out.tex
+	pdflatex -interaction nonstopmode spec-out.tex
+
+spec-out.tex : rules.tex spec.tex
+	ott $(OTTIFLAGS) \
+	    -i spec.ott -tex_filter spec.tex spec-out.tex
+
+rules.tex : spec.ott
+	$(OTT) $(OTT_FLAGS) -i spec.ott -o rules.tex
 
 .POHNY: clean
 clean:

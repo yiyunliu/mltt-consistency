@@ -1,0 +1,29 @@
+\documentclass{article}
+
+\usepackage{ottalt}
+\usepackage{mathpartir}
+\usepackage{supertabular}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{color}
+
+\inputott{rules}
+
+\title{System Specification}
+\author{Yiyun Liu}
+
+\begin{document}
+\maketitle
+
+\section{Grammar}
+\ottgrammar
+
+\section{Dynamics}
+\label{sec:dynamics}
+\drules[P]{$[[a => b]]$}{Parallel Reduction}{Var, Set, Void, Pi, Abs, App, AppAbs, True, False, If, IfTrue, IfFalse, Bool, Eq, Refl, J, JRefl}
+
+\section{Statics}
+\label{sec:statics}
+\drules[T]{$[[G |- a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv, Refl, J, Bool, True, False, If, Void}
+
+\end{document}

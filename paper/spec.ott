@@ -2,54 +2,61 @@ grammar
 
 nat, i, j, n :: '' ::= {{ com natural numbers }}
   | 0 :: :: zero
-  | S i :: :: succ
-  | ( i ) :: :: Paren
-  | | G | :: :: Length
-  | (# i #) :: :: SecretParen
+  | S i :: :: succ {{ tex 1 + [[i]] }}
+  | ( i ) :: S :: Paren
+  | | G | :: S :: Length
+  | (# i #) :: S :: SecretParen
     {{ tex [[i]] }}
 
 tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
   | i :: :: Var
+    {{ com variable }}
   | Pi A B :: :: Pi
+    {{ com dependent function type }}
   | \ A a :: :: Abs
     {{ tex \lambda [[A]] \mathpunct{.} [[a]] }}
     {{ com function }}
   | a b :: :: App
     {{ tex [[a]] \; [[b]] }}
     {{ com function application }}
-  | Set i :: :: Set {{ com sort }}
-  | a { b } :: S :: Subst
-  | a { b0 , b1 } :: S :: SubstTwo
+  | Set i :: :: Set
+    {{ com universe }}
+  | a { b } :: S :: Subst {{ tex [[a]] [ [[b]]  ] }}
+  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] [ [[b0]] , [[b1]]  ] }}
   | ( A )   :: M :: Paren {{ coq ([[A]]) }}
   | (# a #) :: S :: SecretParen
     {{ tex [[a]] }}
     {{ com parsing precedence is hard }}
   | (@ a @) :: M :: TexParen
     {{ tex ([[a]]) }}
-  | a ~ b : A :: :: CEq
-    {{ tex [[a]] \sim [[b]] \in {[[A]]} }}
+  | a ~ b : A :: :: Eq
+    {{ com identity type }}
+    {{ tex [[a]] \; \sim \; [[b]] \in {[[A]]} }}
   | refl      :: :: Refl
+    {{ com reflexivity proof }}
   | Void      :: :: Void
+    {{ com empty type }}
   | J t a b p         :: :: Transp
+    {{ com J eliminator }}
   | Bool           :: :: Bool
     {{ tex \mathbb{B} }}
+    {{ com boolean type }}
   | true :: :: True
   | false :: :: False
   | if a b0 b1 :: :: If
-  | up n A :: :: Shift
+    {{ tex \ottkw{if} \; [[a]]\; \ottkw{then}\; [[b0]]\; \ottkw{else}\; [[b1]] }}
+  | up n A :: S :: Shift
     {{ tex \uparrow^{[[n]]} [[A]] }}
-  | up1 A :: :: ShiftOne
-    {{ tex \uparrow [[A]] }}
-  | G i :: :: lookup
+  | up1 A :: S :: ShiftOne
+    {{ tex \uparrow[[A]] }}
+  | G i :: S :: lookup
     {{ tex [[G]]_{[[i]]} }}
 
 context, G {{ tex \Gamma }} :: 'ctx_' ::= {{ com contexts }}
 					  {{ coq list ( atom * (grade * tm) ) }}
    | empty           ::    :: Empty       {{ coq nil }}
-
-   | A               ::    :: One
-   | G ++ G'         :: M  :: Append      {{ tex [[G]], [[G']] }}
-
+   | A               :: M   :: One
+   | G ++ A          ::   :: Append      {{ tex [[G]], [[A]] }}
    | ( G )           :: M  :: Paren       {{ coq ([[G]]) }}
    | (# G #)           :: M  :: SecretParen {{ tex [[G]] }}
 
@@ -113,103 +120,7 @@ terminals :: 'terminals_' ::=
 formula :: 'formula_' ::=
   | i < j                     ::   :: lt
   | judgement                 ::   :: judgement
-  | x : psi in P              ::   :: inP
-    {{ coq binds [[x]] [[psi]] [[P]] }}
-  | x : psi A in W            ::   :: inW
-    {{ tex [[x]]\! :^{[[psi]]}\![[A]] \in [[ W ]] }}
-    {{ coq binds [[x]] ([[psi]], [[A]]) [[W]] }}
-  | x in fv a                 ::   :: used
-    {{ coq [[x]] `in` fv_tm_tm_tm [[a]] }}
-    {{ tex [[x]]\ [[in]]\ [[fv]]\ [[a]] }}
-  | x notin fv a              ::   :: fresh
-    {{ coq [[x]] `notin` fv_tm_tm_tm [[a]] }}
-  | x notin dom W             ::   :: notInGx
-    {{ coq ~ AtomSetImpl.In [[x]] (dom [[W]]) }}
-  | x notin dom D             ::   :: notInDx
-    {{ coq ~ AtomSetImpl.In [[x]] (dom [[D]]) }}
-  | x notin dom P             ::   :: notInPx
-    {{ coq ~ AtomSetImpl.In [[x]] (dom [[P]]) }}
-  | x notin dom H             ::   :: notInHX
-    {{ coq ~ AtomSetImpl.In [[x]] (dom [[H]]) }}
-    {{ tex [[ x ]] \notin [[ dom ]] \: [[ H ]] }}
-  | a = b                     ::   :: equal
-    {{ coq [[a]]=[[b]] }}
-  | a = psi b                 ::   :: equalQ
-    {{ tex [[ a ]] =_{[[ psi ]]} [[ b ]] }}
-  | W1 = W2                   ::   :: equalctx
-    {{ coq ([[W1]] = [[W2]]) }}
-  | D1 = D2                   ::   :: equalD
-    {{ coq ([[D1]] = [[D2]]) }}
-  | not ( psi1 <= psi2 )      ::   :: notsubrho
-    {{ coq not ([[psi1]] <= [[psi2]]) }}
-    {{ tex [[psi1]] \nleq [[psi2]] }}
-  | psi1 <= psi2              ::   :: subrho
-    {{ coq ([[psi1]] <= [[psi2]]) }}
-  | psi1 < psi2               ::   :: ltrho
-    {{ coq ([[psi1]] < [[psi2]]) }}
-  | psi1 = psi2               ::   :: eqrho
-    {{ coq ([[psi1]] = [[psi2]]) }}
-  | True                      ::   :: True
-    {{ coq True }}
-  | False                     ::   :: False
-    {{ coq False }}
-  % | not formula               ::   :: not
-  %   {{ coq not ([[formula]]) }}
-  %   {{ tex \neg [[formula]] }}
-  | formula1 /\ formula2      ::   :: and
-    {{ coq [[formula1]] /\ [[formula2]] }}
-  | formula1 \/ formula2      ::   :: or
-    {{ coq [[formula1]] \/ [[formula2]] }}
-  | formula1 implies formula2 ::   :: implies
-    {{ coq [[formula1]] -> [[formula2]] }}
-    {{ tex [[formula1]]\ [[implies]]\ [[formula2]] }}
-  | formula1 iff formula2     ::   :: iff
-    {{ coq [[formula1]] <-> [[formula2]] }}
-  | ( formula )               ::   :: Paren
-    {{ coq ([[formula]]) }}
-  | uniq W                    ::   :: uniqW
-    {{ coq uniq [[W]] }} {{ tex }}
-  | uniq P                    ::   :: uniqP
-    {{ coq uniq [[P]] }} {{ tex }}
-  | [ formula ]               ::   :: Suppress
-    {{ tex \suppress{[[formula]]} }}
-    {{ coq [[formula]] }}
-  | nolc A                    :: M :: nolcA
-    {{ tex }}
-    {{ coq DELETEME }}
-  | nolc C                    :: M :: nolcC
-    {{ tex }}
-    {{ coq DELETEME }}
-  | hackBinder A              :: M :: hackBinderA
-    {{ tex }}
-    {{ coq DELETEME }}
-  | ctx D W                   :: M :: ctx
-    {{ coq ctx [[D]][[W]] }}
-    {{ tex [[D]]\vdash[[W]] }}
-  | |- a ~>* b                ::   :: multistep
-  | W |- a : A                ::   :: Typ
-    {{ tex [[W]] \vdash[[a]]:[[A]] }}
-  | axiom s1 s2               ::   :: axiom
-    {{ coq axiom [[s1]] [[s2]] }}
-    {{ tex ([[s1]], [[s2]]) \in \mathcal{A}  }}
-  | rule_pi s1 s2 s3          ::   :: rule_pi
-    {{ coq rule_pi [[s1]] [[s2]] [[s3]] }}
-    {{ tex ([[s1]], [[s2]], [[s3]]) \in \mathcal{R}_{\Pi} }}
-  | rule_sig s1 s2 s3         ::   :: rule_sig
-    {{ coq rule_sig [[s1]] [[s2]] [[s3]] }}
-    {{ tex ([[s1]], [[s2]], [[s3]]) \in \mathcal{R}_{\Sigma} }}
-  | rule_eq s1 s2             ::   :: rule_eq
-    {{ coq rule_eq [[s1]] [[s2]] }}
-    {{ tex ([[s1]], [[s2]]) \in \mathcal{R}_{\sim} }}
-  | rule_t s1 s2              ::   :: rule_t
-    {{ coq rule_t [[s1]] [[s2]] }}
-    {{ tex ([[s1]], [[s2]]) \in \mathcal{R}_{T} }}
-  | rule_unit s              ::   :: rule_unit
-    {{ coq rule_unit [[s]] }}
-    {{ tex [[s]]  \in \mathcal{R}_{U} }}
-  | rule_bool s              ::   :: rule_bool
-    {{ coq rule_bool [[s]] }}
-    {{ tex [[s]]  \in \mathcal{R}_{B} }}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -281,8 +192,28 @@ if a0 b0 c0 => c1
 -------------- :: Bool
 Bool => Bool
 
+a0 => a1
+b0 => b1
+A0 => A1
+----------------------------- :: Eq
+a0 ~ b0 : A0 => a1 ~ b1 : A1
 
+------------- :: Refl
+refl => refl
 
+t0 => t1
+a0 => a1
+b0 => b1
+p0 => p1
+------------------------------- :: J
+J t0 a0 b0 p0 => J t1 a1 b1 p1
+
+t0 => t1
+a0 => a1
+b0 => b1
+p => refl
+-------------------- :: JRefl
+J t0 a0 b0 p => t1
 
 
 defns
@@ -356,7 +287,7 @@ G |- refl : a ~ a : A
 G |- a : A
 G |- b : A
 G |- A : Set j
--------------------------------- :: CEq
+-------------------------------- :: Eq
 G |- a ~ b : A : Set i
 
 G |- a : A
