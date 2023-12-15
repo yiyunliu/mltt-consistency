@@ -3,17 +3,17 @@ BIBTEX = bibtex
 OTT = ott
 OTT_FLAGS := -tex_wrap false -tex_show_meta false -picky_multiple_parses false -merge true
 
-# all : paper-output.pdf
+all : paper-output.pdf
 
-# paper-output.tex: Qualitative.ott Auxiliary.ott paper.tex Makefile Qualitative-rules.tex
-#	$(OTT) $(OTT_FLAGS) -tex_filter paper.tex paper-output.tex
-#	perl -i -ne 'print unless m/^%/' paper-output.tex
+paper-output.tex: paper.tex rules.tex
+	$(OTT) $(OTT_FLAGS) -i spec.ott -tex_filter paper.tex paper-output.tex
+	perl -i -ne 'print unless m/^%/' paper-output.tex
 
-# paper-output.pdf : $(MAIN)-output.tex $(MAKEDEPS) $(LATEXDEPS)
-#	$(PDFLATEX) $(MAIN)-output.tex
-#	$(BIBTEX) $(MAIN)-output
-#	$(PDFLATEX) $(MAIN)-output.tex
-#	$(PDFLATEX) $(MAIN)-output.tex
+paper-output.pdf : paper-output.tex
+	$(PDFLATEX) paper-output.tex
+	$(BIBTEX) paper-output
+	$(PDFLATEX) paper-output.tex
+	$(PDFLATEX) paper-output.tex
 
 spec-out.pdf : spec-out.tex
 	pdflatex -interaction nonstopmode spec-out.tex

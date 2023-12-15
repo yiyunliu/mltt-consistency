@@ -1,0 +1,813 @@
+@phdthesis{brady:phd,
+  author       = {Edwin C. Brady},
+  title        = {Practical implementation of a dependently typed functional programming
+                  language},
+  school       = {Durham University, {UK}},
+  year         = {2005},
+  url          = {http://etheses.dur.ac.uk/2800/},
+  timestamp    = {Tue, 05 Apr 2022 10:58:56 +0200},
+  biburl       = {https://dblp.org/rec/phd/ethos/Brady05.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+@article{hatcliff_danvy_1997, title={A computational formalization for partial
+                  evaluation}, volume={7}, DOI={10.1017/S0960129597002405},
+                  number={5}, journal={Mathematical Structures in Computer
+                  Science}, publisher={Cambridge University Press},
+                  author={Hatcliff, John and Danvy, Olivier}, year={1997},
+                  pages={507–541}}
+
+
+@article{sterling-harper:phase-distinction,
+author = {Sterling, Jonathan and Harper, Robert},
+title = {Logical Relations as Types: Proof-Relevant Parametricity for Program Modules},
+year = {2021},
+issue_date = {December 2021},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {68},
+number = {6},
+issn = {0004-5411},
+url = {https://doi.org/10.1145/3474834},
+doi = {10.1145/3474834},
+abstract = {The theory of program modules is of interest to language designers not only for its practical importance to programming, but also because it lies at the nexus of three fundamental concerns in language design: the phase distinction, computational effects, and type abstraction. We contribute a fresh “synthetic” take on program modules that treats modules as the fundamental constructs, in which the usual suspects of prior module calculi (kinds, constructors, dynamic programs) are rendered as derived notions in terms of a modal type-theoretic account of the phase distinction. We simplify the account of type abstraction (embodied in the generativity of module functors) through a lax modality that encapsulates computational effects, placing projectibility of module expressions on a type-theoretic basis. Our main result is a (significant) proof-relevant and phase-sensitive generalization of the Reynolds abstraction theorem for a calculus of program modules, based on a new kind of logical relation called a parametricity structure. Parametricity structures generalize the proof-irrelevant relations of classical parametricity to proof-relevant families, where there may be non-trivial evidence witnessing the relatedness of two programs—simplifying the metatheory of strong sums over the collection of types, for although there can be no “relation classifying relations,” one easily accommodates a “family classifying small families.” Using the insight that logical relations/parametricity is itself a form of phase distinction between the syntactic and the semantic, we contribute a new synthetic approach to phase separated parametricity based on the slogan logical relations as types, by iterating our modal account of the phase distinction. We axiomatize a dependent type theory of parametricity structures using two pairs of complementary modalities (syntactic, semantic) and (static, dynamic), substantiated using the topos theoretic Artin gluing construction. Then, to construct a simulation between two implementations of an abstract type, one simply programs a third implementation whose type component carries the representation invariant.},
+journal = {J. ACM},
+month = {oct},
+articleno = {41},
+numpages = {47},
+keywords = {closed modality, data abstraction, Artin gluing, module systems, phase distinction, representation independence, modal type theory, topos semantics, proof-relevance, parametricity, open modality, logical relations}
+}
+
+
+
+
+
+@InProceedings{cic,
+author="Coquand, Thierry
+and Paulin, Christine",
+editor="Martin-L{\"o}f, Per
+and Mints, Grigori",
+title="Inductively defined types",
+booktitle="COLOG-88",
+year="1990",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="50--66",
+isbn="978-3-540-46963-6",
+doi="10.1007/3-540-52335-9_47"
+}
+
+
+
+
+@inproceedings{hlist,
+author = {Kiselyov, Oleg and L\"{a}mmel, Ralf and Schupke, Keean},
+title = {Strongly Typed Heterogeneous Collections},
+year = {2004},
+isbn = {1581138504},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1017472.1017488},
+doi = {10.1145/1017472.1017488},
+abstract = {A heterogeneous collection is a datatype that is capable of storing data of different types, while providing operations for look-up, update, iteration, and others. There are various kinds of heterogeneous collections, differing in representation, invariants, and access operations. We describe HLIST - a Haskell library for strongly typed heterogeneous collections including extensible records. We illustrate HLIST's benefits in the context of type-safe database access in Haskell. The HLIST library relies on common extensions of Haskell 98. Our exploration raises interesting issues regarding Haskell's type system, in particular, avoidance of overlapping instances, and reification of type equality and type unification.},
+booktitle = {Proceedings of the 2004 ACM SIGPLAN Workshop on Haskell},
+pages = {96–107},
+numpages = {12},
+keywords = {type improvement, type-safe database access, haskell, collections, type-indexed rows, type equality, dependently typed programming, extensible records},
+location = {Snowbird, Utah, USA},
+series = {Haskell '04}
+}
+
+@incollection{Martin-Lof-1973,
+	Author = {Martin-L{\"o}f, Per},
+	Booktitle = {Logic Colloquium '73, Proceedings of the Logic Colloquium},
+	Editor = {H.E. Rose and J.C. Shepherdson},
+	Mrclass = {02C15 (02D99)},
+	Mrnumber = {0387009 (52 \#7856)},
+	Mrreviewer = {Horst Luckhardt},
+	Pages = {73--118},
+	Publisher = {North-Holland},
+	Series = {Studies in Logic and the Foundations of Mathematics},
+	Title = {An intuitionistic theory of types: predicative part},
+        doi = {10.1016/S0049-237X(08)71945-1},
+	Volume = 80,
+	Year = 1975}
+
+
+@book{martin-lof:bibliopolis,
+	Author = {Martin-L{\"o}f, Per},
+	Isbn = {88-7088-105-9},
+	Mrclass = {03B15 (03F50 03F55)},
+	Mrnumber = {769301 (86j:03005)},
+	Mrreviewer = {M. M. Richter},
+	Pages = {iv+91},
+	Publisher = {Bibliopolis},
+	Series = {Studies in Proof Theory},
+	Subtitle = {Notes by Giovanni Sambin},
+	Title = {Intuitionistic type theory},
+	Volume = {1},
+	Year = {1984}}
+
+@InProceedings{barras08,
+author="Barras, Bruno
+and Bernardo, Bruno",
+editor="Amadio, Roberto",
+title="The Implicit Calculus of Constructions as a Programming Language with Dependent Types",
+booktitle="Foundations of Software Science and Computational Structures",
+year="2008",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="365--379",
+abstract="In this paper, we show how Miquel's Implicit Calculus of Constructions (ICC) can be used as a programming language featuring dependent types. Since this system has an undecidable type-checking, we introduce a more verbose variant, called ICC* which fixes this issue. Datatypes and program specifications are enriched with logical assertions (such as preconditions, postconditions, invariants) and programs are decorated with proofs of those assertions. The point of using ICC* rather than the Calculus of Constructions (the core formalism of the Coq proof assistant) is that all of the static information (types and proof objects) is transparent, in the sense that it does not affect the computational behavior. This is concretized by a built-in extraction procedure that removes this static information. We also illustrate the main features of ICC* on classical examples of dependently typed programs.",
+isbn="978-3-540-78499-9"
+}
+
+@TechReport{ghc-core-spec,
+  Title                    = {System {FC}, as implemented in {GHC}},
+  Author                   = {Eisenberg, Richard A.},
+  Institution              = {University of Pennsylvania},
+  Year                     = {2015},
+  Number                   = {MS-CIS-15-09},
+
+  Owner                    = {rae},
+  Timestamp                = {2016.06.28},
+  Url                      = {https://github.com/ghc/ghc/blob/master/docs/core-spec/core-spec.pdf}
+}
+
+
+@software{agda,
+  author       = {{Agda Development Team}},
+  title        = {Agda},
+  year         = 2023,
+  version      = {2.6.3},
+  url          = {https://wiki.portal.chalmers.se/agda/Main/HomePage}
+}
+
+@software{ghc,
+  author       = {{GHC Development Team}},
+  title        = {The {Glasgow} {Haskell} {Compiler}},
+  year         = 2023,
+  version      = {9.2.7},
+  url          = {https://www.haskell.org/ghc/}
+}
+
+@software{coq,
+  author       = {{Coq Development Team}},
+  title        = {The {C}oq Proof Assistant},
+  month        = oct,
+  year         = 2019,
+  publisher    = {Zenodo},
+  version      = {8.10},
+  doi          = {10.5281/zenodo.3476303},
+  url          = {https://doi.org/10.5281/zenodo.3476303}
+}
+
+
+
+@PhdThesis{gundry:phd,
+  Title                    = {Type Inference, {H}askell and Dependent Types},
+  Author                   = {Gundry, Adam},
+  School                   = {University of Strathclyde},
+  Year                     = {2013}
+}
+
+@article{abel:icfp2020,
+author = {Abel, Andreas and Bernardy, Jean-Philippe},
+title = {A Unified View of Modalities in Type Systems},
+year = {2020},
+issue_date = {August 2020},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {4},
+number = {ICFP},
+url = {https://doi.org/10.1145/3408972},
+doi = {10.1145/3408972},
+abstract = {We propose to unify the treatment of a broad range of modalities in typed lambda calculi. We do so by defining a generic structure of modalities, and show that this structure arises naturally from the structure of intuitionistic logic, and as such finds instances in a wide range of type systems previously described in literature. Despite this generality, this structure has a rich metatheory, which we expose.},
+journal = {Proc. ACM Program. Lang.},
+month = {aug},
+articleno = {90},
+numpages = {28},
+keywords = {modal logic, linear types, subtyping}
+}
+
+@article{Abel12,
+  author    = {Andreas Abel and
+               Gabriel Scherer},
+  title     = {On Irrelevance and Algorithmic Equality in Predicative Type Theory},
+  journal   = {Logical Methods in Computer Science},
+  volume    = {8},
+  number    = {1},
+  year      = {2012},
+  pages     = {1:29},
+  doi       = {10.2168/LMCS-8(1:29)2012},
+  timestamp = {Tue, 14 May 2019 16:31:16 +0200},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+
+@InProceedings{brady:idris2,
+  author =	{Brady, Edwin C.},
+  title =	{{Idris 2: Quantitative Type Theory in Practice}},
+  booktitle =	{35th European Conference on Object-Oriented Programming (ECOOP 2021)},
+  pages =	{9:1--9:26},
+  series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+  ISBN =	{978-3-95977-190-0},
+  ISSN =	{1868-8969},
+  year =	{2021},
+  volume =	{194},
+  editor =	{M{\o}ller, Anders and Sridharan, Manu},
+  publisher =	{Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  address =	{Dagstuhl, Germany},
+  URN =		{urn:nbn:de:0030-drops-140527},
+  doi =		{10.4230/LIPIcs.ECOOP.2021.9},
+  annote =	{Keywords: Dependent types, linear types, concurrency}
+}
+
+
+                  
+@inproceedings{leino2010dafny,
+  title={Dafny: An automatic program verifier for functional correctness},
+  author={Leino, K Rustan M},
+  booktitle={Logic for Programming, Artificial Intelligence, and Reasoning: 16th International Conference, LPAR-16, Dakar, Senegal, April 25--May 1, 2010, Revised Selected Papers 16},
+  pages={348--370},
+  year={2010},
+  organization={Springer}
+}
+                  
+
+@PhdThesis{girard-thesis,
+  Title                    = {Interpr\'etation fonctionnelle et \'elimination des coupures
+de l'arithm\'etique d'ordre sup\'erieur},
+  Author                   = {Jean-Yves Girard},
+  School                   = {Universit\'e Paris 7},
+  Year                     = {1972},
+
+  Owner                    = {rae},
+  Timestamp                = {2015.05.07}
+}
+
+@InProceedings{mishra2008erasure,
+author="Mishra-Linger, Nathan
+and Sheard, Tim",
+editor="Amadio, Roberto",
+title="Erasure and Polymorphism in Pure Type Systems",
+booktitle="Foundations of Software Science and Computational Structures",
+year="2008",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="350--364",
+abstract="We introduce Erasure Pure Type Systems, an extension to Pure Type Systems with an erasure semantics centered around a type constructor ∀ indicating parametric polymorphism. The erasure phase is guided by lightweight program annotations. The typing rules guarantee that well-typed programs obey a phase distinction between erasable (compile-time) and non-erasable (run-time) terms.",
+isbn="978-3-540-78499-9",
+doi={10.1007/978-3-540-78499-9_25}
+}
+
+@InProceedings{miquel:icc,
+author="Miquel, Alexandre",
+editor="Abramsky, Samson",
+title="The Implicit Calculus of Constructions Extending Pure Type Systems with an Intersection Type Binder and Subtyping",
+booktitle="Typed Lambda Calculi and Applications",
+year="2001",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="344--359",
+abstract="In this paper, we introduce a new type system, the Implicit Calculus of Constructions, which is a Curry-style variant of the Calculus of Constructions that we extend by adding an intersection type binder---called the implicit dependent product. Unlike the usual approach of Type Assignment Systems, the implicit product can be used at every place in the universe hierarchy. We study syntactical properties of this calculus such as the $\beta$$\eta$-subject reduction property, and we show that the implicit product induces a rich subtyping relation over the type system in a natural way. We also illustrate the specificities of this calculus by revisiting the impredicative encodings of the Calculus of Constructions, and we show that their translation into the implicit calculus helps to reflect the computational meaning of the underlying terms in a more accurate way.",
+isbn="978-3-540-45413-7",
+doi={10.1007/3-540-45413-6_27}
+}
+
+
+
+
+@inproceedings{modular_type_safety2012,
+author = {Schwaab, Christopher and Siek, Jeremy G.},
+title = {Modular Type-Safety Proofs in Agda},
+year = {2013},
+isbn = {9781450318600},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2428116.2428120},
+doi = {10.1145/2428116.2428120},
+abstract = {Methods for reusing code are widespread and well researched, but methods for reusing proofs are still emerging. We consider the use of dependent types for this purpose, introducing a modular approach for composing mechanized proofs. We show that common techniques for abstracting algorithms over data structures naturally translate to abstractions over proofs. We introduce a language composed of a series of smaller language components, each defined as functors, and tie them together by taking the fixed point of their sum [Malcom, 1990]. We then give proofs of type preservation for each language component and show how to compose these proofs into a proof for the entire language, again by taking the fixed point of a sum of functors.},
+booktitle = {Proceedings of the 7th Workshop on Programming Languages Meets Program Verification},
+pages = {3–12},
+numpages = {10},
+keywords = {agda, meta-theory, modularity},
+location = {Rome, Italy},
+series = {PLPV '13}
+}
+
+@inproceedings{coqalacarte2020,
+author = {Forster, Yannick and Stark, Kathrin},
+title = {Coq \`{a} La Carte: A Practical Approach to Modular Syntax with Binders},
+year = {2020},
+isbn = {9781450370974},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3372885.3373817},
+doi = {10.1145/3372885.3373817},
+abstract = {The mechanisation of the meta-theory of programming languages is still considered hard and requires considerable effort. When formalising properties of the extension of a language, one hence wants to reuse definitions and proofs. But type-theoretic proof assistants use inductive types and predicates to formalise syntax and type systems, and these definitions are closed to extensions. Available approaches for modular syntax are either inapplicable to type theory or add a layer of indirectness by requiring complicated encodings of types. We present a concise, transparent, and accessible approach to modular syntax with binders by adapting Swierstra's Data Types \`{a} la Carte approach to the Coq proof assistant. Our approach relies on two phases of code generation: We extend the Autosubst 2 tool and allow users to specify modular syntax with binders in a HOAS-like input language. To state and automatically compose modular functions and lemmas, we implement commands based on MetaCoq. We support modular syntax, functions, predicates, and theorems. We demonstrate the practicality of our approach by modular proofs of preservation, weak head normalisation, and strong normalisation for several variants of mini-ML.},
+booktitle = {Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs},
+pages = {186–200},
+numpages = {15},
+keywords = {Coq, modular syntax, syntax with binders},
+location = {New Orleans, LA, USA},
+series = {CPP 2020}
+}
+
+
+@INPROCEEDINGS{pfenning:irrelevance,
+author={Frank Pfenning},
+booktitle={Proceedings 16th Annual IEEE Symposium on Logic in Computer Science},
+title={Intensionality, extensionality, and proof irrelevance in modal type theory},
+year={2001},
+pages={221-230},
+keywords={formal logic;functional programming;type theory;α-conversion;βη-conversion;1st-order modal logics;consistency guarantee;definitional equalities;extensionality;functional programming;intensionally;judgmental concepts;logical frameworks;modal restrictions;modal type theory;object views;proof irrelevance;propositions;specifications;uniform type theory;Computer science;Functional programming;Heart;Logic programming},
+doi={10.1109/LICS.2001.932499},
+ISSN={1043-6871},
+publisher = {IEEE},
+month={},}
+
+@inproceedings{systemfc,
+author = {Sulzmann, Martin and Chakravarty, Manuel M. T. and Jones, Simon Peyton and Donnelly, Kevin},
+title = {System F with Type Equality Coercions},
+year = {2007},
+isbn = {159593393X},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1190315.1190324},
+doi = {10.1145/1190315.1190324},
+abstract = {We introduce System FC, which extends System F with support for non-syntactic type equality. There are two main extensions: (i) explicit witnesses for type equalities, and (ii) open, non-parametric type functions, given meaning by top-level equality axioms. Unlike System F, FC is expressive enough to serve as a target for several different source-language features, including Haskell's newtype, generalised algebraic data types, associated types, functional dependencies, and perhaps more besides.},
+booktitle = {Proceedings of the 2007 ACM SIGPLAN International Workshop on Types in Languages Design and Implementation},
+pages = {53–66},
+numpages = {14},
+keywords = {typed intermediate language, advanced type features},
+location = {Nice, Nice, France},
+series = {TLDI '07}
+}
+
+@article{10.1145/2480359.2429094,
+author = {Delaware, Benjamin and d. S. Oliveira, Bruno C. and Schrijvers, Tom},
+title = {Meta-Theory \`{a} La Carte},
+year = {2013},
+issue_date = {January 2013},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {48},
+number = {1},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/2480359.2429094},
+doi = {10.1145/2480359.2429094},
+abstract = {Formalizing meta-theory, or proofs about programming languages, in a proof assistant has many well-known benefits. Unfortunately, the considerable effort involved in mechanizing proofs has prevented it from becoming standard practice. This cost can be amortized by reusing as much of existing mechanized formalizations as possible when building a new language or extending an existing one. One important challenge in achieving reuse is that the inductive definitions and proofs used in these formalizations are closed to extension. This forces language designers to cut and paste existing definitions and proofs in an ad-hoc manner and to expend considerable effort to patch up the results.The key contribution of this paper is the development of an induction technique for extensible Church encodings using a novel reinterpretation of the universal property of folds. These encodings provide the foundation for a framework, formalized in Coq, which uses type classes to automate the composition of proofs from modular components. This framework enables a more structured approach to the reuse of meta-theory formalizations through the composition of modular inductive definitions and proofs.Several interesting language features, including binders and general recursion, illustrate the capabilities of our framework. We reuse these features to build fully mechanized definitions and proofs for a number of languages, including a version of mini-ML. Bounded induction enables proofs of properties for non-inductive semantic functions, and mediating type classes enable proof adaptation for more feature-rich languages.},
+journal = {SIGPLAN Not.},
+month = {jan},
+pages = {207–218},
+numpages = {12},
+keywords = {extensible church encodings, modular mechanized meta-theory, coq}
+}
+
+@inproceedings{delaware:metatheory,
+author = {Delaware, Benjamin and d. S. Oliveira, Bruno C. and Schrijvers, Tom},
+title = {Meta-Theory \`{a} La Carte},
+year = {2013},
+isbn = {9781450318327},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2429069.2429094},
+doi = {10.1145/2429069.2429094},
+abstract = {Formalizing meta-theory, or proofs about programming languages, in a proof assistant has many well-known benefits. Unfortunately, the considerable effort involved in mechanizing proofs has prevented it from becoming standard practice. This cost can be amortized by reusing as much of existing mechanized formalizations as possible when building a new language or extending an existing one. One important challenge in achieving reuse is that the inductive definitions and proofs used in these formalizations are closed to extension. This forces language designers to cut and paste existing definitions and proofs in an ad-hoc manner and to expend considerable effort to patch up the results.The key contribution of this paper is the development of an induction technique for extensible Church encodings using a novel reinterpretation of the universal property of folds. These encodings provide the foundation for a framework, formalized in Coq, which uses type classes to automate the composition of proofs from modular components. This framework enables a more structured approach to the reuse of meta-theory formalizations through the composition of modular inductive definitions and proofs.Several interesting language features, including binders and general recursion, illustrate the capabilities of our framework. We reuse these features to build fully mechanized definitions and proofs for a number of languages, including a version of mini-ML. Bounded induction enables proofs of properties for non-inductive semantic functions, and mediating type classes enable proof adaptation for more feature-rich languages.},
+booktitle = {Proceedings of the 40th Annual ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {207–218},
+numpages = {12},
+keywords = {extensible church encodings, modular mechanized meta-theory, coq},
+location = {Rome, Italy},
+series = {POPL '13}
+}
+
+
+@article{christiansen:haskellindustry,
+author = {Christiansen, David Thrane and Diatchki, Iavor S. and Dockins, Robert and Hendrix, Joe and Ravitch, Tristan},
+title = {Dependently Typed Haskell in Industry (Experience Report)},
+year = {2019},
+issue_date = {August 2019},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {3},
+number = {ICFP},
+url = {https://doi.org/10.1145/3341704},
+doi = {10.1145/3341704},
+abstract = {Recent versions of the Haskell compiler GHC have a number of advanced features that allow many idioms from dependently typed programming to be encoded. We describe our experiences using this "dependently typed Haskell" to construct a performance-critical library that is a key component in a number of verification tools. We have discovered that it can be done, and it brings significant value, but also at a high cost. In this experience report, we describe the ways in which programming at the edge of what is expressible in Haskell's type system has brought us value, the difficulties that it has imposed, and some of the ways we coped with the difficulties.},
+journal = {Proc. ACM Program. Lang.},
+month = {jul},
+articleno = {100},
+numpages = {16},
+keywords = {performance, dependent types, Haskell}
+}
+
+
+@article{eisenberg2017levity,
+  title={Levity polymorphism},
+  author={Eisenberg, Richard A and Peyton Jones, Simon},
+  journal={ACM SIGPLAN Notices},
+  volume={52},
+  number={6},
+  pages={525--539},
+  year={2017},
+  publisher={ACM New York, NY, USA}
+}
+
+
+@inproceedings{atkey2018syntax,
+author = {Atkey, Robert},
+title = {Syntax and Semantics of Quantitative Type Theory},
+year = {2018},
+isbn = {9781450355834},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3209108.3209189},
+doi = {10.1145/3209108.3209189},
+abstract = {We present Quantitative Type Theory, a Type Theory that records usage information for each variable in a judgement, based on a previous system by McBride. The usage information is used to give a realizability semantics using a variant of Linear Combinatory Algebras, refining the usual realizability semantics of Type Theory by accurately tracking resource behaviour. We define the semantics in terms of Quantitative Categories with Families, a novel extension of Categories with Families for modelling resource sensitive type theories.},
+booktitle = {Proceedings of the 33rd Annual ACM/IEEE Symposium on Logic in Computer Science},
+pages = {56–65},
+numpages = {10},
+keywords = {Type Theory, Linear Logic},
+location = {Oxford, United Kingdom},
+series = {LICS '18}
+}
+
+
+@book{vazou2016liquid,
+  title={Liquid Haskell: Haskell as a theorem prover},
+  author={Vazou, Niki},
+  year={2016},
+  publisher={University of California, San Diego}
+}
+
+@inproceedings{fstar-pldi13,
+author = {Swamy, Nikhil and Weinberger, Joel and Schlesinger, Cole and Chen, Juan and Livshits, Benjamin},
+title = {Verifying Higher-Order Programs with the Dijkstra Monad},
+year = {2013},
+isbn = {9781450320146},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2491956.2491978},
+doi = {10.1145/2491956.2491978},
+abstract = {Modern programming languages, ranging from Haskell and ML, to JavaScript, C# and Java, all make extensive use of higher-order state. This paper advocates a new verification methodology for higher-order stateful programs, based on a new monad of predicate transformers called the Dijkstra monad.Using the Dijkstra monad has a number of benefits. First, the monad naturally yields a weakest pre-condition calculus. Second, the computed specifications are structurally simpler in several ways, e.g., single-state post-conditions are sufficient (rather than the more complex two-state post-conditions). Finally, the monad can easily be varied to handle features like exceptions and heap invariants, while retaining the same type inference algorithm.We implement the Dijkstra monad and its type inference algorithm for the F* programming language. Our most extensive case study evaluates the Dijkstra monad and its F* implementation by using it to verify JavaScript programs.Specifically, we describe a tool chain that translates programs in a subset of JavaScript decorated with assertions and loop invariants to F*. Once in F*, our type inference algorithm computes verification conditions and automatically discharges their proofs using an SMT solver. We use our tools to prove that a core model of the JavaScript runtime in F* respects various invariants and that a suite of JavaScript source programs are free of runtime errors.},
+booktitle = {Proceedings of the 34th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+pages = {387–398},
+numpages = {12},
+keywords = {predicate transformer, refinement types, hoare monad, dynamic languages},
+location = {Seattle, Washington, USA},
+series = {PLDI '13}
+}
+
+
+
+@article{vazou2017refinement,
+  title={Refinement reflection: complete verification with SMT},
+  author={Vazou, Niki and Tondwalkar, Anish and Choudhury, Vikraman and Scott, Ryan G and Newton, Ryan R and Wadler, Philip and Jhala, Ranjit},
+  journal={Proceedings of the ACM on Programming Languages},
+  volume={2},
+  number={POPL},
+  pages={1--31},
+  year={2017},
+  publisher={ACM New York, NY, USA}
+}
+
+
+
+@article{swierstra_2008, title={Data types à la carte}, volume={18}, DOI={10.1017/S0956796808006758}, number={4}, journal={Journal of Functional Programming}, publisher={Cambridge University Press}, author={Swierstra, Wouter}, year={2008}, pages={423–436}}
+
+@inproceedings{10.1145/2429069.2429094,
+author = {Delaware, Benjamin and d. S. Oliveira, Bruno C. and Schrijvers, Tom},
+title = {Meta-Theory \`{a} La Carte},
+year = {2013},
+isbn = {9781450318327},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2429069.2429094},
+doi = {10.1145/2429069.2429094},
+abstract = {Formalizing meta-theory, or proofs about programming languages, in a proof assistant has many well-known benefits. Unfortunately, the considerable effort involved in mechanizing proofs has prevented it from becoming standard practice. This cost can be amortized by reusing as much of existing mechanized formalizations as possible when building a new language or extending an existing one. One important challenge in achieving reuse is that the inductive definitions and proofs used in these formalizations are closed to extension. This forces language designers to cut and paste existing definitions and proofs in an ad-hoc manner and to expend considerable effort to patch up the results.The key contribution of this paper is the development of an induction technique for extensible Church encodings using a novel reinterpretation of the universal property of folds. These encodings provide the foundation for a framework, formalized in Coq, which uses type classes to automate the composition of proofs from modular components. This framework enables a more structured approach to the reuse of meta-theory formalizations through the composition of modular inductive definitions and proofs.Several interesting language features, including binders and general recursion, illustrate the capabilities of our framework. We reuse these features to build fully mechanized definitions and proofs for a number of languages, including a version of mini-ML. Bounded induction enables proofs of properties for non-inductive semantic functions, and mediating type classes enable proof adaptation for more feature-rich languages.},
+booktitle = {Proceedings of the 40th Annual ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {207–218},
+numpages = {12},
+keywords = {extensible church encodings, coq, modular mechanized meta-theory},
+location = {Rome, Italy},
+series = {POPL '13}
+}
+
+
+
+@misc{wright:idris-table,
+  author =       {Robert Wright and Michel Steuwer and Ohad Kammar},
+  title =        {Idris2-Table: evaluating dependently-typed tables with the Brown Benchmark for Table Types (Extended Abstract)},
+  booktitle = {Workshop on Type-Driven Development (TyDe)},
+  year =      2022,
+  month =     sep,
+  note =      {Talk based on library \url{https://github.com/madman-bob/idris2-table}}}
+
+@article{capretta:general-recursion,
+  TITLE = {{General Recursion via Coinductive Types}},
+  AUTHOR = {Venanzio Capretta},
+  URL = {https://lmcs.episciences.org/2265},
+  DOI = {10.2168/LMCS-1(2:1)2005},
+  JOURNAL = {{Logical Methods in Computer Science}},
+  VOLUME = {{Volume 1, Issue 2}},
+  YEAR = {2005},
+  MONTH = Jul,
+  KEYWORDS = {Computer Science - Logic in Computer Science ; F.3.1},
+}
+
+@article{xia:interaction-trees,
+author = {Xia, Li-yao and Zakowski, Yannick and He, Paul and Hur, Chung-Kil and Malecha, Gregory and Pierce, Benjamin C. and Zdancewic, Steve},
+title = {Interaction Trees: Representing Recursive and Impure Programs in Coq},
+year = {2019},
+issue_date = {January 2020},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {4},
+number = {POPL},
+url = {https://doi.org/10.1145/3371119},
+doi = {10.1145/3371119},
+abstract = {Interaction trees (ITrees) are a general-purpose data structure for representing the behaviors of recursive programs that interact with their environments. A coinductive variant of “free monads,” ITrees are built out of uninterpreted events and their continuations. They support compositional construction of interpreters from event handlers, which give meaning to events by defining their semantics as monadic actions. ITrees are expressive enough to represent impure and potentially nonterminating, mutually recursive computations, while admitting a rich equational theory of equivalence up to weak bisimulation. In contrast to other approaches such as relationally specified operational semantics, ITrees are executable via code extraction, making them suitable for debugging, testing, and implementing software artifacts that are amenable to formal verification. We have implemented ITrees and their associated theory as a Coq library, mechanizing classic domain- and category-theoretic results about program semantics, iteration, monadic structures, and equational reasoning. Although the internals of the library rely heavily on coinductive proofs, the interface hides these details so that clients can use and reason about ITrees without explicit use of Coq’s coinduction tactics. To showcase the utility of our theory, we prove the termination-sensitive correctness of a compiler from a simple imperative source language to an assembly-like target whose meanings are given in an ITree-based denotational semantics. Unlike previous results using operational techniques, our bisimulation proof follows straightforwardly by structural induction and elementary rewriting via an equational theory of combinators for control-flow graphs.},
+journal = {Proc. ACM Program. Lang.},
+month = {dec},
+articleno = {51},
+numpages = {32},
+keywords = {monads, Coq, compiler correctness, coinduction}
+}
+
+@techreport{CoC,
+  title = {{The calculus of constructions}},
+  author = {Coquand, Thierry and Huet, G{\'e}rard},
+  url = {https://hal.inria.fr/inria-00076024},
+  number = {RR-0530},
+  institution = {INRIA},
+  year = 1986,
+  month = May,
+}
+
+@article{inoue:multistage,
+	title = {Reasoning about multi-stage programs},
+	volume = {26},
+	issn = {0956-7968, 1469-7653},
+	url = {https://www.cambridge.org/core/product/identifier/S0956796816000253/type/journal_article},
+	doi = {10.1017/S0956796816000253},
+	abstract = {We settle three basic questions that naturally arise when verifying code generators written in multi-stage functional programming languages. First, does adding staging to a language compromise any equalities that hold in the base language? Unfortunately it does, and more care is needed to reason about terms with free variables. Second, staging annotations, as the name “annotations” suggests, are often thought to be orthogonal to the behavior of a program, but when is this formally guaranteed to be true? We give termination conditions that characterize when this guarantee holds. Finally, do multi-stage languages satisfy useful, standard extensional properties, for example, that functions agreeing on all arguments are equivalent? We provide a sound and complete notion of applicative bisimulation, which establishes such properties or, in principle, any valid program equivalence. These results yield important insights into staging and allow us to prove the correctness of quite complicated multi-stage programs.},
+	pages = {e22},
+	journaltitle = {Journal of Functional Programming},
+	shortjournal = {J. Funct. Prog.},
+	author = {Inoue, Jun and Taha, Walid},
+	urldate = {2023-07-03},
+	date = {2016},
+	langid = {english},
+}
+
+@article{shikuma2008proving,
+  title={Proving noninterference by a fully complete translation to the simply typed lambda-calculus},
+  author={Shikuma, Naokata and Igarashi, Atsushi},
+  journal={Logical Methods in Computer Science},
+  volume={4},
+  year={2008},
+  publisher={Episciences. org},
+  url={https://doi.org/10.1007/978-3-540-77505-8_24},
+  doi={10.1007/978-3-540-77505-8_24}
+}
+
+@inproceedings{abadi1999core,
+author = {Abadi, Mart\'{\i}n and Banerjee, Anindya and Heintze, Nevin and Riecke, Jon G.},
+title = {A Core Calculus of Dependency},
+year = {1999},
+isbn = {1581130953},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/292540.292555},
+doi = {10.1145/292540.292555},
+abstract = {Notions of program dependency arise in many settings: security, partial evaluation, program slicing, and call-tracking. We argue that there is a central notion of dependency common to these settings that can be captured within a single calculus, the Dependency Core Calculus (DCC), a small extension of Moggi's computational lambda calculus. To establish this thesis, we translate typed calculi for secure information flow, binding-time analysis, slicing, and call-tracking into DCC. The translations help clarify aspects of the source calculi. We also define a semantic model for DCC and use it to give simple proofs of noninterference results for each case.},
+booktitle = {Proceedings of the 26th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {147–160},
+numpages = {14},
+location = {San Antonio, Texas, USA},
+series = {POPL '99}
+}
+
+@article{tse2004translating,
+  title={Translating dependency into parametricity},
+  author={Tse, Stephen and Zdancewic, Steve},
+  journal={ACM SIGPLAN Notices},
+  volume={39},
+  number={9},
+  pages={115--125},
+  year={2004},
+  publisher={ACM New York, NY, USA},
+  url= {https://doi.org/10.1145/1016848.1016868},
+  doi= {10.1145/1016848.1016868}
+}
+                  
+@article{gilbert2019definitional,
+  title={Definitional proof-irrelevance without K},
+  author={Gilbert, Ga{\"e}tan and Cockx, Jesper and Sozeau, Matthieu and Tabareau, Nicolas},
+  journal={Proceedings of the ACM on Programming Languages},
+  volume={3},
+  number={POPL},
+  pages={1--28},
+  year={2019},
+  publisher={ACM New York, NY, USA},
+  doi={10.1145/3290316}
+}
+
+@inbook{barendregt:lambda-calculi-with-types,
+  title     = {{Lambda Calculi with Types}},
+  author    = {Barendregt, Henk P.},
+  year      = {1993},
+  booktitle = {Handbook of Logic in Computer Science (Vol. 2): Background: Computational Structures},
+  publisher = {Oxford University Press, Inc.},
+  address   = {USA},
+  pages     = {117--309},
+  numpages  = {193},
+  isbn      = {0198537611}
+}
+
+@InProceedings{moon2021graded,
+author="Moon, Benjamin
+and Eades III, Harley
+and Orchard, Dominic",
+editor="Yoshida, Nobuko",
+title="Graded Modal Dependent Type Theory",
+booktitle="Programming Languages and Systems",
+year="2021",
+publisher="Springer International Publishing",
+address="Cham",
+pages="462--490",
+abstract="Graded type theories are an emerging paradigm for augmenting the reasoning power of types with parameterizable, fine-grained analyses of program properties. There have been many such theories in recent years which equip a type theory with quantitative dataflow tracking, usually via a semiring-like structure which provides analysis on variables (often called `quantitative' or `coeffect' theories). We present Graded Modal Dependent Type Theory (Grtt for short), which equips a dependent type theory with a general, parameterizable analysis of the flow of data, both in and between computational terms and types. In this theory, it is possible to study, restrict, and reason about data use in programs and types, enabling, for example, parametric quantifiers and linearity to be captured in a dependent setting. We propose Grtt, study its metatheory, and explore various case studies of its use in reasoning about programs and studying other type theories. We have implemented the theory and highlight the interesting details, including showing an application of grading to optimising the type checking procedure itself.",
+isbn="978-3-030-72019-3",
+url={https://doi.org/10.1007/978-3-030-72019-3_17},
+doi={10.1007/978-3-030-72019-3_17}
+}
+
+@article{barendregt1991introduction, title={Introduction to generalized type systems}, volume={1}, DOI={10.1017/S0956796800020025}, number={2}, journal={Journal of Functional Programming}, publisher={Cambridge University Press}, author={Barendregt, Henk}, year={1991}, pages="462--490"}
+
+
+@article{siles2012pure,
+  title={Pure type system conversion is always typable},
+  author={Siles, Vincent and Herbelin, Hugo},
+  journal={Journal of Functional Programming},
+  volume={22},
+  number={2},
+  pages={153--180},
+  year={2012},
+  publisher={Cambridge University Press}
+}
+
+@article{denning1977infoflow,
+  author = {Denning, Dorothy E. and Denning, Peter J.},
+  title = {Certification of Programs for Secure Information Flow},
+  year = {1977},
+  issue_date = {July 1977},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  volume = {20},
+  number = {7},
+  issn = {0001-0782},
+  url = {https://doi.org/10.1145/359636.359712},
+  doi = {10.1145/359636.359712},
+  journal = {Commun. ACM},
+  month = {jul},
+  pages = {504–513},
+  numpages = {10},
+}
+
+@techreport{sheard1995staged,
+  author = {Sheard, Time and Nelson, Neal},
+  title = {Type safe abstractions using program generators},
+  year = {1995},
+  institution = {Oregon Graduate Institute of Science and Technology},
+  number = {95-013},
+  url = {https://doi.org/10.6083/w95050724},
+  doi = {10.6083/w95050724}
+}
+
+@article{moggi1991monads,
+  title = {Notions of computation and monads},
+  journal = {Information and Computation},
+  volume = {93},
+  number = {1},
+  pages = {55-92},
+  year = {1991},
+  note = {Selections from 1989 IEEE Symposium on Logic in Computer Science},
+  issn = {0890-5401},
+  doi = {https://doi.org/10.1016/0890-5401(91)90052-4},
+  url = {https://www.sciencedirect.com/science/article/pii/0890540191900524},
+  author = {Eugenio Moggi},
+}
+
+@incollection{debruijn1994automath,
+  title={Some extensions of Automath: the AUT-4 family},
+  author={de Bruijn, Nicolaas Govert},
+  booktitle={Studies in Logic and the Foundations of Mathematics},
+  volume={133},
+  pages={283--288},
+  year={1994},
+  publisher={Elsevier}
+}
+
+@inproceedings{paulinmohring1989coc,
+  author = {Paulin-Mohring, Christine},
+  title = {Extracting {$F_{\omega}$}'s Programs from Proofs in the Calculus of Constructions},
+  year = {1989},
+  isbn = {0897912942},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  url = {https://doi.org/10.1145/75277.75285},
+  doi = {10.1145/75277.75285},
+  booktitle = {Proceedings of the 16th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+  pages = {89–104},
+  numpages = {16},
+  location = {Austin, Texas, USA},
+  series = {POPL '89}
+}
+
+@article{mcbride2016got,
+  title={I got plenty o’nuttin’},
+  author={McBride, Conor},
+  journal={A List of Successes That Can Change the World: Essays Dedicated to Philip Wadler on the Occasion of His 60th Birthday},
+  pages={207--233},
+  year={2016},
+  publisher={Springer},
+  doi={10.1007/978-3-319-30936-1_12}
+}
+
+@ARTICLE{sabelfeld2003language,
+
+  author={Sabelfeld, A. and Myers, A.C.},
+
+  journal={IEEE Journal on Selected Areas in Communications}, 
+
+  title={Language-based information-flow security}, 
+
+  year={2003},
+
+  volume={21},
+
+  number={1},
+
+  pages={5-19},
+
+  doi={10.1109/JSAC.2002.806121}}
+
+@article{taha2000metaml,
+  title={MetaML and multi-stage programming with explicit annotations},
+  author={Taha, Walid and Sheard, Tim},
+  journal={Theoretical computer science},
+  volume={248},
+  number={1-2},
+  pages={211--242},
+  year={2000},
+  publisher={Elsevier},
+  url={https://doi.org/10.1145/258993.259019},
+  doi={10.1145/258993.259019}
+}
+
+@inproceedings{barras2008implicit,
+  title={The implicit calculus of constructions as a programming language with dependent types},
+  author={Barras, Bruno and Bernardo, Bruno},
+  booktitle={Foundations of Software Science and Computational Structures: 11th International Conference, FOSSACS 2008, Held as Part of the Joint European Conferences on Theory and Practice of Software, ETAPS 2008, Budapest, Hungary, March 29-April 6, 2008. Proceedings 11},
+  pages={365--379},
+  year={2008},
+  organization={Springer}
+}
+
+@article{annenkov2023two, title={Two-level type theory and applications}, volume={33}, DOI={10.1017/S0960129523000130}, number={8}, journal={Mathematical Structures in Computer Science}, publisher={Cambridge University Press}, author={Annenkov, Danil and Capriotti, Paolo and Kraus, Nicolai and Sattler, Christian}, year={2023}, pages={688–743}}
+
+@article{kovacs2022staged,
+	doi = {10.1145/3547641},
+	url = {https://doi.org/10.1145%2F3547641},
+	year = 2022,
+	month = {aug},
+	publisher = {Association for Computing Machinery ({ACM})},
+	volume = {6},
+	number = {{ICFP}},
+	pages = {540--569},
+	author = {Andr{\'{a}}s Kov{\'{a}}cs},
+	title = {Staged compilation with two-level type theory},
+	journal = {Proceedings of the {ACM} on Programming Languages}
+}
+
+@inproceedings{nbeincoq,
+author = {Wieczorek, Pawe\l{} and Biernacki, Dariusz},
+title = {A Coq Formalization of Normalization by Evaluation for Martin-L\"{o}f Type Theory},
+year = {2018},
+isbn = {9781450355865},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3167091},
+doi = {10.1145/3167091},
+abstract = {We present a Coq formalization of the normalization-by-evaluation algorithm for Martin-L\"{o}f dependent type theory with one universe and judgmental equality. The end results of the formalization are certified implementations of a reduction-free normalizer and of a decision procedure for term equality.  The formalization takes advantage of a graph-based variant of the Bove-Capretta method to encode mutually recursive evaluation functions with nested recursive calls. The proof of completeness, which uses the PER-model of dependent types, is formalized by relying on impredicativity of the Coq system rather than on the commonly used induction-recursion scheme which is not available in Coq. The proof of soundness is formalized by encoding logical relations as partial functions.},
+booktitle = {Proceedings of the 7th ACM SIGPLAN International Conference on Certified Programs and Proofs},
+pages = {266–279},
+numpages = {14},
+keywords = {Coq, program certification, normalization by evaluation, type theory},
+location = {Los Angeles, CA, USA},
+series = {CPP 2018}
+}
