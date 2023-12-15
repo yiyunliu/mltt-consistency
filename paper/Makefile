@@ -19,12 +19,11 @@ spec-out.pdf : spec-out.tex
 	pdflatex -interaction nonstopmode spec-out.tex
 
 spec-out.tex : rules.tex spec.tex
-	ott $(OTTIFLAGS) \
-	    -i spec.ott -tex_filter spec.tex spec-out.tex
+	$(OTT) $(OTT_FLAGS) -i spec.ott -tex_filter spec.tex spec-out.tex
 
 rules.tex : spec.ott
 	$(OTT) $(OTT_FLAGS) -i spec.ott -o rules.tex
 
 .POHNY: clean
 clean:
-	rm -if *.log *.aux *.out *~ *.bbl *.blg *.fdb_latexmk *.fls *.tex.tmp *.synctex.gz *.pdf Qualitative-rules.tex
+	rm -if *.log *.aux *.out *~ *.bbl *.blg *.fdb_latexmk *.fls *.tex.tmp *.synctex.gz *.pdf rules.tex
