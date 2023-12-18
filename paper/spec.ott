@@ -51,6 +51,8 @@ tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
     {{ tex \uparrow[[A]] }}
   | G i :: S :: lookup
     {{ tex [[G]]_{[[i]]} }}
+  | A -> B :: M :: Arr
+    {{ tex [[A]] \rightarrow [[B]] }}
 
 context, G {{ tex \Gamma }} :: 'ctx_' ::= {{ com contexts }}
 					  {{ coq list ( atom * (grade * tm) ) }}

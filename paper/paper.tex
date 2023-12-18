@@ -46,7 +46,10 @@
 %%
 %%
 \documentclass[nonacm]{acmart}
-
+\usepackage{ottalt}
+\usepackage{xspace}
+\newcommand{\lang}{$\lambda^H$\xspace}
+\inputott{rules}
 %%
 %% \BibTeX command to typeset BibTeX logo in the docs
 \AtBeginDocument{%
@@ -225,14 +228,69 @@ type theory.
 \section{Review of Proof by Logical Relation}
 \label{sec:logrelstlc}
 
+
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
+In this section, we present the dynamics and statics of the
+dependent type theory whose logical consistency will be proven in
+Section~\ref{sec:logrelproof}. For concision, we refer to this system
+as \lang.
+
+The syntax of \lang can be found in Figure~\ref{fig:syntax}. As a
+dependent type theory, terms and types are collapsed into the same
+syntactic category. Dependent functions take the form $[[Pi A B]]$ and
+we use the notation $[[A -> B]]$ when the output type $[[B]]$ is not
+dependent on the input variable. $[[Set i]]$ represents the universe
+type where $[[i]]$ ranges over the set of natural numbers. Finally,
+\lang also includes an intensional identity type $[[a ~ b : A]]$ whose
+proofs can be eliminated by the J-eliminator $[[J t a b p]]$, where
+$[[p]]$ is an equality proof between $[[a]]$ and $[[b]]$, and $[[t]]$
+is the term whose type is to be casted.
+
+\lang is expressive enough to support large
+elimination, the ability to compute a type using a term as input. For
+example, the function $[[\ Bool if 0 Bool Bool -> Bool]]$ returns
+either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
+is $[[true]]$ or $[[false]]$.
+
+Figure~\ref{fig:par} shows the definition of the parallel reduction
+relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
+represent its transitive closure, which in turn allows us to define
+the coherence relation $[[a <=> b]]$. % The $*$ symbol is more commonly
+% used for the transitive and reflexive closure of a relation. However,
+% since we can show that parallel reduction is reflexive, the transitive
+% closure of parallel reduction must also be reflexive.
+We say that two terms $[[a]]$
+and $[[b]]$ are coherent if they can eventually reduce to some common
+term $[[c]]$ through parallel reduction. The symmetric notation of
+coherence suggests that it is an equivalence relation, and in fact, we
+will use coherence as the equational theory for our type conversion rule.
+
+The following lemma shows us that parallel reduction is
+reflexive. As a result, we only need to take its transitive closure
+for the resulting relation to also be reflexive.
+\begin{lemma}[Par Refl]
+  \label{lemma:parrefl}
+  For all terms $[[a]]$, $[[a => a]]$.
+\end{lemma}
+
+\begin{lemma}[Pars refl]
+  \label{lemma:parsrefl}
+  For all terms $[[a]]$, $[[a =>+ a]]$.
+\end{lemma}
+
+
+
+
+A more conventional presentation would instead use full beta reduction
+instead of parallel reduction as the base for the definition of
+coherence. However, the diamond
 
 \section{Semantic Typing}
 \label{sec:logreldep}
 
 \section{Consistency}
-\label{sec:logreldep}
+\label{sec:logrelproof}
 
 \section{Mechanization}
 \label{sec:logrelmech}
