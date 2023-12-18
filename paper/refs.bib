@@ -811,3 +811,36 @@ keywords = {Coq, program certification, normalization by evaluation, type theory
 location = {Los Angeles, CA, USA},
 series = {CPP 2018}
 }
+
+@article{syntacticsoundness,
+title = {A Syntactic Approach to Type Soundness},
+journal = {Information and Computation},
+volume = {115},
+number = {1},
+pages = {38-94},
+year = {1994},
+issn = {0890-5401},
+doi = {https://doi.org/10.1006/inco.1994.1093},
+url = {https://www.sciencedirect.com/science/article/pii/S0890540184710935},
+author = {A.K. Wright and M. Felleisen},
+abstract = {We present a new approach to proving type soundness for Hindley/Milner-style polymorphic type systems. The keys to our approach are (1) an adaptation of subject reduction theorems from combinatory logic to programming languages, and (2) the use of rewriting techniques for the specification of the language semantics. The approach easily extends from polymorphic functional languages to imperative languages that provide references, exceptions, continuations, and similar features. We illustrate the technique with a type soundness theorem for the core of Standard ML, which includes the first type soundness proof for polymorphic exceptions and continuations.}
+}
+
+@article{decagda,
+author = {Abel, Andreas and \"{O}hman, Joakim and Vezzosi, Andrea},
+title = {Decidability of Conversion for Type Theory in Type Theory},
+year = {2017},
+issue_date = {January 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {2},
+number = {POPL},
+url = {https://doi.org/10.1145/3158111},
+doi = {10.1145/3158111},
+abstract = {Type theory should be able to handle its own meta-theory, both to justify its foundational claims and to obtain a verified implementation. At the core of a type checker for intensional type theory lies an algorithm to check equality of types, or in other words, to check whether two types are convertible. We have formalized in Agda a practical conversion checking algorithm for a dependent type theory with one universe \`{a} la Russell, natural numbers, and η-equality for Π types. We prove the algorithm correct via a Kripke logical relation parameterized by a suitable notion of equivalence of terms. We then instantiate the parameterized fundamental lemma twice: once to obtain canonicity and injectivity of type formers, and once again to prove the completeness of the algorithm. Our proof relies on inductive-recursive definitions, but not on the uniqueness of identity proofs. Thus, it is valid in variants of intensional Martin-L\"{o}f Type Theory as long as they support induction-recursion, for instance, Extensional, Observational, or Homotopy Type Theory.},
+journal = {Proc. ACM Program. Lang.},
+month = {dec},
+articleno = {23},
+numpages = {29},
+keywords = {Agda, Logical relations, Formalization, Dependent types}
+}

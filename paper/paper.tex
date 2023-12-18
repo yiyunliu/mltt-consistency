@@ -5,17 +5,17 @@
 %% The original source files were:
 %%
 %% samples.dtx  (with options: `acmsmall')
-%% 
+%%
 %% IMPORTANT NOTICE:
-%% 
+%%
 %% For the copyright see the source file.
-%% 
+%%
 %% Any modified versions of this file must be renamed
 %% with new filenames distinct from sample-acmsmall.tex.
-%% 
+%%
 %% For distribution of the original source see the terms
 %% for copying and modification in the file samples.dtx.
-%% 
+%%
 %% This generated file may be distributed as long as the
 %% original source files, as listed above, are part of the
 %% same distribution. (The sources need not necessarily be
@@ -134,7 +134,7 @@ consistency proof for a dependently typed language that contains a
 rich set of features, including an infinite and cumulative universe
 hierarchy, natural numbers, and an intensional identity type. We have
 fully mechanized the consistency proof using the Coq proof assistant
-in under 1000 lines of code. 
+in under 1000 lines of code.
 \end{abstract}
 
 %%
@@ -152,7 +152,112 @@ in under 1000 lines of code.
 \maketitle
 
 \section{Introduction}
-NbE in Coq~\citep{nbeincoq}
+% Depending on its application, we care about certain metatheoretic
+% properties about a type system. As a programming language, we may care
+% about type soundness, which states that a well-typed never gets stuck
+% during evaluation.
+When a type system is used as a program logic where terms encode proofs, we
+want our type system to be logically consistent, meaning
+that the empty type is not inhabited.
+This paper is specifically
+about establishing logical consistency for a fully dependently typed
+system with an infinite universe hierarchy and support for large
+elimination. % The type system, presented in Section~\ref{sec:spec}, is
+% most similar to Martin-Lof's predicate type theory with the minor
+% difference that type conversion is based on untyped equality.
+
+The proof of various dependently typed systems, including Martin-Lof's
+type theory, has long been
+established in the literature and therefore the consistency result of
+this paper is not novel. Rather,
+our goal is to present the proof in a form that is digestable by a
+working type theorist and can be more readily mechanized in a proof
+assistant. Compared to existing efforts at mechanizing logical
+consistency or stronger properties such as existence of normal
+form~\citep{nbeincoq},
+decidable type checking~\citep{decagda}, our work is minimal since it requires very
+little scaffolding and therefore results in an extremely succinct
+proof of under 1000 lines of manually written Coq code for a dependent
+type theory that is reasonably complete in its features.
+
+The key technique that underlies our consistency proof is proof by
+logical relation. In Section~\ref{sec:logrelstlc}, we review the
+technique in the context of the simply typed lambda calculus. In
+Section~\ref{sec:spec}, we present the dependent type theory of
+interest. In Section~\ref{sec:logreldep}, we give the definition
+of the logical relation for the dependent type theory. Rather than
+presenting the logical relation as an inductive-recursive definition,
+we use the more elementary concept of a partial function to capture
+the interpretation of types. The alternative representation requires us
+to show that the set of equations indeed defines a partial function;
+that is, for each input, there should always be a unique
+output.
+From the interpretation function, we can define the semantic
+typing judgment for the set of lambda terms.
+In Section~\ref{sec:logrelproof}, we prove the fundamental lemma,
+which states that syntactic typing implies semantic typing. Once the
+fundamental lemma is established, logical consistency follows as a
+trivial corollary.
+
+The downside of a pen and paper proof is that the validity of the
+definitions themselves can be dubious at times. When working with a
+dependent type theory that has a universe hierarchy, an intuitive
+understanding of naive set theory no longer suffices as the size of
+sets matters. For example, the partial function representing the
+interpretation of types does not immediately correspond to a valid
+definition in a proof assistant. We cannot easily define it as a
+function as proof assistants such as Coq and Agda only accept total
+functions. We cannot naively encode the interpretation function as an
+inductive relation either since we violate the strict positivity
+constraint. A detailed discussion of how we work around such technical
+issues can be distracting. However, what can be equally distracting is
+following along a proof where even the validity of the statement is
+not trusted. As a result, we clearly mark the ``suspicious''
+definitions, and defer the discussion of these definitions
+until Section~\ref{sec:logrelmech}, where we give an overview of our
+short Coq mechanization proof and the various proof engineering
+techniques we adopt to make the mechanization for tractable.
+
+Finally, in Section~\ref{sec:relatedwork}, we give a short survey of
+existing literature related to logical consistency about dependent
+type theory.
+
+\section{Review of Proof by Logical Relation}
+\label{sec:logrelstlc}
+
+\section{Specification of a Dependent Type Theory}
+\label{sec:spec}
+
+\section{Semantic Typing}
+\label{sec:logreldep}
+
+\section{Consistency}
+\label{sec:logreldep}
+
+\section{Mechanization}
+\label{sec:logrelmech}
+
+\section{Related Work}
+\label{sec:relatedwork}
+
+% Type soundness can be proven through a syntactic
+% approach~\citep{syntacticsoundness} as a corollary of two properties:
+% progress and preservation. % The syntactic type soundness proof
+% % varies in complexity depending on the underlying type
+% % system. For example, a type system that tracks information flow would
+% % require additional structural rules related to security levels. In
+% % this paper, we focus on one specific type of complexity: the
+% In Figure~\ref{fig:stlcsoundness}, we summarize the structure of the
+% syntactic type soundness proof for the simply typed lambda
+% calculus. Each lemma can be proven by structural induction over the
+% typing derivation, while using the previous established results as
+% lemmas for specific cases that do not immediately follow from the
+% induction hypothesis. If we make our language more complex by adding
+% full dependent type support, the overall structure remains almost
+% identical.
+
+
+% NbE in Coq
 
 %%
 %% The next two lines define the bibliography style to be used, and
