@@ -397,6 +397,26 @@ beta reduction. The formulation of \lang is slightly more economical.
 
 \section{Semantic Typing}
 \label{sec:logreldep}
+\begin{figure}[h]
+  \begin{equation*}
+    \begin{split}
+      [ [[Bool]] ]_i &= \{ [[a]] \mid [[a =>+ true]] \text{ or } [[a =>+ false]] \} \\
+      [ [[Void]] ]_i &= \emptyset \\
+      [ [[a ~ b : A]] ]_i &= \{ [[p]] \mid [[p =>+ refl]] \text { and } [[a<=>b]] \}\\
+    \end{split}
+  \end{equation*}
+  \caption{Logical relation for \lang}
+  \label{fig:logrel}
+\end{figure}
+
+
+In this section, we show the definition of the logical relation as a
+partial function in Figure~\ref{fig:logrel}. The logical relation can
+be viewed as a partial function that takes a closed type,
+a natural number $[[i]]$ representing the universe level, and
+returns a set of closed terms that \emph{semantically} inhabit the
+closed type, though we do not strictly enforce the closedness of
+either the type or the term.
 
 \section{Consistency}
 \label{sec:logrelproof}
