@@ -97,7 +97,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{A Short and Mechanized Consistency Proof for a Dependent Type Theory}
+\title{A Short and Mechanized Consistency Proof for Dependent Type Theory}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -227,6 +227,16 @@ type theory.
 
 \section{Review of Proof by Logical Relation}
 \label{sec:logrelstlc}
+In this section, we give a quick review of the consistency proof of the
+simply typed lambda calculus augmented with the empty type through
+proof by logical relation.
+
+We give the full specification of the simply typed calculus in
+Figure~\ref{fig:stlcsyntax},\ref{fig:stlctyping},\ref{fig:stlcdynamics}
+without any further explanation since it is standard.
+
+The goal here is to show that the empty type cannot be
+inhabited. A naive attempt at proof by structural induction
 
 
 \section{Specification of a Dependent Type Theory}
