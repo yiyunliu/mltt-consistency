@@ -21,8 +21,8 @@ tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
     {{ com function application }}
   | Set i :: :: Set
     {{ com universe }}
-  | a { b } :: S :: Subst {{ tex [[a]] [ [[b]]  ] }}
-  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] [ [[b0]] , [[b1]]  ] }}
+  | a { b } :: S :: Subst {{ tex [[a]] \langle [[b]]  \rangle }}
+  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] \langle [[b0]] , [[b1]]  \rangle }}
   | ( A )   :: M :: Paren {{ coq ([[A]]) }}
   | (# a #) :: S :: SecretParen
     {{ tex [[a]] }}

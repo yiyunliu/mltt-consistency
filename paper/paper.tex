@@ -400,9 +400,13 @@ beta reduction. The formulation of \lang is slightly more economical.
 \begin{figure}[h]
   \begin{equation*}
     \begin{split}
-      [ [[Bool]] ]_i &= \{ [[a]] \mid [[a =>+ true]] \text{ or } [[a =>+ false]] \} \\
+      [-]_= &:: \mathit{Term} \rightarrow \mathcal{P}(\mathit{Term})\\
       [ [[Void]] ]_i &= \emptyset \\
-      [ [[a ~ b : A]] ]_i &= \{ [[p]] \mid [[p =>+ refl]] \text { and } [[a<=>b]] \}\\
+      [ [[Bool]] ]_i &= \{ [[a]] \mid [[a =>+ true]] \text{ or } [[a =>+ false]] \} \\
+      [ [[a ~ b : A]] ]_i &= \{ [[p]] \mid [[p =>+ refl]] \text{ and } [[a<=>b]] \}\\
+      [ [[Pi A B]] ]_i &= \{ [[b]] \mid \forall [[a]], \text{ if } [[a]] \in [ [[A]] ]_i\text{, then } [[b a]] \in [ [[B {a}]] ]_i \} \\
+      [ [[Set j]] ]_i &= \{ [[A]] \mid [[j < i]] \text{ and } [[A]] \in dom([-]_j) \}\\
+      [ [[ A ]] ]_i &= \{ [[a]] \mid [[a]] \in[ [[B]] ]_i \text{ and } [[A => B]] \}
     \end{split}
   \end{equation*}
   \caption{Logical relation for \lang}
