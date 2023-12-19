@@ -231,6 +231,47 @@ type theory.
 
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
+
+\begin{figure}[h]
+\[
+\begin{array}{lcll}
+\mathit{Natural\ numbers}\\
+[[i]],[[j]],[[n]] & ::= & [[0]]\ |\ [[S i]] & \mbox{zero, successor} \\ \\
+
+\mathit{Contexts}\\
+[[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
+\mathit{Terms}\\
+[[a]],[[b]],[[c]],[[t]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[i]]\  |\ [[Void]]
+                  & \mbox{universes, variables, empty type} \\
+            & |   & [[Pi A B]]\ |\ [[\ A a]]\ |\ [[a b]]
+                  & \mbox{function types, abstractions, applications} \\
+            & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J t a b p]]
+                  & \mbox{equality types, reflexivity proof, J eliminator} \\
+            & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ |\  [[if a b0 b1]]
+                  & \mbox{boolean type, true, false, if}
+\end{array}
+\]
+  \caption{Syntax of \lang}
+  \label{fig:syntax}
+\end{figure}
+
+
+\begin{figure}[h]
+\drules[P]{$[[a => b]]$}{Parallel Reduction}{Var, Set, Void, Pi, Abs, App, AppAbs, True, False, If, IfTrue, IfFalse, Bool, Eq, Refl, J, JRefl}
+\drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{One, Step}
+\drules[C]{$[[a <=> b]]$}{Coherence}{Intro}
+\caption{Parallel reduction and coherence}
+\label{fig:par}
+\end{figure}
+
+\begin{figure}[h]
+\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
+\drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv, Refl, J, Bool, True, False, If, Void}
+\caption{Syntactic typing for \lang}
+\label{fig:typing}
+\end{figure}
+
+
 In this section, we present the dynamics and statics of the
 dependent type theory whose logical consistency will be proven in
 Section~\ref{sec:logrelproof}. For concision, we refer to this system
