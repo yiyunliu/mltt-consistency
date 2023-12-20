@@ -400,13 +400,13 @@ beta reduction. The formulation of \lang is slightly more economical.
 \begin{figure}[h]
   \begin{equation*}
     \begin{split}
-      [-]_= &:: \mathit{Term} \rightarrow \mathcal{P}(\mathit{Term})\\
+      [-]_= &:: \mathit{Term} \rightarrow \mathit{Nat} \rightarrow \mathcal{P}(\mathit{Term})\\
       [ [[Void]] ]_i &= \emptyset \\
       [ [[Bool]] ]_i &= \{ [[a]] \mid [[a =>+ true]] \text{ or } [[a =>+ false]] \} \\
       [ [[a ~ b : A]] ]_i &= \{ [[p]] \mid [[p =>+ refl]] \text{ and } [[a<=>b]] \}\\
       [ [[Pi A B]] ]_i &= \{ [[b]] \mid \forall [[a]], \text{ if } [[a]] \in [ [[A]] ]_i\text{, then } [[b a]] \in [ [[B {a}]] ]_i \} \\
       [ [[Set j]] ]_i &= \{ [[A]] \mid [[j < i]] \text{ and } [[A]] \in dom([-]_j) \}\\
-      [ [[ A ]] ]_i &= \{ [[a]] \mid [[a]] \in[ [[B]] ]_i \text{ and } [[A => B]] \}
+      [ [[ A ]] ]_i &= \{ [[a]] \mid \exists [[B]], [[a]] \in[ [[B]] ]_i \text{ and } [[A => B]] \}
     \end{split}
   \end{equation*}
   \caption{Logical relation for \lang}
@@ -421,6 +421,26 @@ a natural number $[[i]]$ representing the universe level, and
 returns a set of closed terms that \emph{semantically} inhabit the
 closed type, though we do not strictly enforce the closedness of
 either the type or the term.
+
+The claim that $[ - ]_=$ is a partial function is not immediately
+obvious due to the last equation in its definition. The last equation
+ensures that the if some type $[[A]]$ is in the domain of the
+interpretation function, then any type $[[B]]$ that steps into $[[A]]$
+has the same interpretation as $[[A]]$. For example,
+since $[[if true Bool Void]]$ steps into $[[Bool]]$, we can say that
+$[[if true Bool Void]]$ is semantically inhabited by terms that
+reduces down to either $[[true]]$ or $[[false]]$ through the
+$[[Bool]]$ case of the interpretation function.
+
+However, due to the non-deterministic nature of parallel reduction,
+given some terms $[[A]]$, $[[B0]]$, $[[B1]]$ such that $[[A => B0]]$
+and $[[A => B1]]$, the meaning of $[[A]]$ could either be $[ [[B0]] ]_i$
+or $[ [[B1]] ]_i$. In fact, the definedness of $[ [[B0]] ]_i$ and $[
+[[B1]] ]_i$
+should not be taken as granted either. It is unclear for now whether
+the definedness of one implies the other.
+
+Fortunately,
 
 \section{Consistency}
 \label{sec:logrelproof}
