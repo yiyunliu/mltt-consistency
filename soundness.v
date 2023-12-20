@@ -85,7 +85,7 @@ Proof.
     exists (S i), (fun A => exists PA, InterpUnivN i A PA).
     hauto l:on use:InterpUnivN_Univ_inv.
   - rewrite /SemWt.
-    move => // Γ i A B _h0 h0 _h1 h1 γ hγ.
+    move => // Γ i A B _ h0 _ h1 γ hγ.
     move /(_ γ hγ) : h0; intros (m & P_Univ & hP_Univ & hP_Univ').
     move /InterpUnivN_Univ_inv' : hP_Univ => [*]; subst.
     case : hP_Univ' => PA hPA.
@@ -102,8 +102,7 @@ Proof.
       move /InterpUnivN_Univ_inv' : hPB => [*]; subst.
       hauto lq:on rew:db:InterpUniv.
     + move => a PB ha.
-      suff hγ_cons : γ_ok (A :: Γ) (a .: γ) by asimpl.
-      qauto use:γ_ok_consU.
+      by asimpl.
   - rewrite /SemWt.
     move => Γ A a B i _ hB _ ha.
     move => γ hγ.
@@ -118,7 +117,7 @@ Proof.
       apply InterpExt_Fun; first by [].
       * move => a0 ha0.
         case /(_ a0 ha0) : hTot => PB hPB.
-        move /(_ a0 PB ha0 hPB) in hPF.
+        move /(_ a0 PB hPB) in hPF.
         exists PB.
         by asimpl in hPF.
       * move => *.
@@ -144,7 +143,7 @@ Proof.
     subst.
     have hPA0b : PA (subst_tm γ b) by sfirstorder.
     move /(_ _ hPA0b) : hPFTot; intros (PB & hPB).
-    have hPB' := hPF _ PB hPA0b hPB.
+    have hPB' := hPF _ PB hPB.
     rewrite -InterpUnivN_nolt in hPB'.
     rewrite /ProdSpace in hf.
     asimpl in *.

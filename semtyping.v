@@ -9,7 +9,7 @@ Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
   InterpExt n Interp A PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
+  (forall a PB, PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
   InterpExt n Interp (tPi A B) (ProdSpace PA PF)
 | InterpExt_Univ m :
   m < n ->
@@ -67,7 +67,7 @@ Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
   exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
     InterpExt n Interp A PA /\
     (forall a, PA a -> exists PB, PF a PB) /\
-    (forall a PB, PA a -> PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) /\
+    (forall a PB, PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) /\
     P = ProdSpace PA PF.
 Proof.
   move E : (tPi A B) h => T h.
@@ -90,7 +90,7 @@ Proof.
     elim /Par_inv :  hT => //.
     move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
     apply InterpExt_Fun; auto.
-    move => a PB ha hPB0.
+    move => a PB hPB0.
     apply : ihPB; eauto.
     sfirstorder use:par_cong, Par_refl.
   - hauto lq:on inv:Par ctrs:InterpExt.
