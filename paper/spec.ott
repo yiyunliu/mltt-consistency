@@ -1,5 +1,7 @@
 grammar
 
+var, x, y :: '' ::= {{ com variables }}
+
 nat, i, j, n :: '' ::= {{ com natural numbers }}
   | 0 :: :: zero
   | S i :: :: succ {{ tex 1 + [[i]] }}
@@ -122,6 +124,12 @@ terminals :: 'terminals_' ::=
 formula :: 'formula_' ::=
   | i < j                     ::   :: lt
   | judgement                 ::   :: judgement
+  | a in S                    ::   :: membership
+
+set, S :: '' ::= {{ com sets }}
+  | emptyset :: :: empty
+    {{ tex \emptyset }}
+  | { a | formula } :: :: comprehension
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

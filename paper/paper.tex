@@ -421,78 +421,20 @@ of the logical relation that we are about to define. The specification
 itself does not immediately induce a definition as it is unclear
 whether there exists a smallest partial function that satisfies the
 specification.
-Without such as proof, we would not be able to induct on the graph of
-the function or use any inversion principle.
 
 The construction of a function that meets the specification in
 Figure~\ref{fig:logrel} can be broken down into two steps. To build an
 infinite hierarchy of universes, we first define a recursor that constructs
 the interpretation of the universe level $[[n]]$ given a parameterized
 interpretation function for universe levels that are strictly less
-than $[[n]]$. The well-definedness of this inductive relation requires
-some extra justification as it is not strictly positive. Instead, we
-must manually prove the monotonicity of the underlying functor.
+than $[[n]]$.
 Next, we use the well-foundedness of the less than relation to tie the
 knot and define the full interpretation function that meets the
 specification.
-
-For concision, we first fix the following parameters:
-\begin{equation*}
-  \begin{split}
-    i &:: \mathit{Nat} \\
-    I &:: \mathit{Nat} \rightarrow \mathit{Term} \times \mathcal{P}(\mathit{Term})
-  \end{split}
-\end{equation*}
-
-Now, consider the following function $F$:
-\begin{equation*}
-  \begin{split}
-    F &:: \mathit{Term} \times \mathcal{P}(\mathit{Term}) \rightarrow \mathit{Term} \times \mathcal{P}(\mathit{Term})\\
-    F(X) &= F_V  \cup F_B \cup F_I \cup F_\Pi(X) \cup F_U \cup F_S(X) \\
-    F_V &= \{ ([[Void]], \emptyset) \} \\
-    F_B &= \{ ([[Bool]], \{ [[a]] \mid [[a =>+ true]] \text{ or } [[a
-          =>+ false]] \})  \} \\
-    F_I &= \{ ([[a ~ b : A]], \{ [[p]] \mid [[p =>+ refl]] \text{ and
-          } [[a<=>b]] \})  \} \\
-          % This definition is wrong because it'd include all pi types
-    F_{\Pi}(X) &= ([[Pi A B]], \{ [[b]] \mid \exists A\text{ and }S, (A,S) \in X,
-                   \forall [[a]], \text{ if } [[a]] \in S \text{, then
-                 } \\
-    F_U &= \{([[Set j]] , \{ [[A]] \mid [[A]] \in
-          dom(I_j) \}) \mid j < i \} \\
-    F_S(X) &= ([[A]], \{ [[a]] \mid \exists ([[B]], S) \in X, [[a]]
-          \in S \text{ and } [[A => B]] \})  \\
-  \end{split}
-\end{equation*}
-
-
-
-%  The logical relation can
-% be viewed as a partial function that takes a closed type,
-% a natural number $[[i]]$ representing the universe level, and
-% returns a set of closed terms that \emph{semantically} inhabit the
-% closed type, though we do not strictly enforce the closedness of
-% either the type or the term.
-
-% The claim that $[ - ]_=$ is a partial function is not immediately
-% obvious due to the last equation in its definition. The last equation
-% ensures that the if some type $[[A]]$ is in the domain of the
-% interpretation function, then any type $[[B]]$ that steps into $[[A]]$
-% has the same interpretation as $[[A]]$. For example,
-% since $[[if true Bool Void]]$ steps into $[[Bool]]$, we can say that
-% $[[if true Bool Void]]$ is semantically inhabited by terms that
-% reduces down to either $[[true]]$ or $[[false]]$ through the
-% $[[Bool]]$ case of the interpretation function.
-
-% However, due to the non-deterministic nature of parallel reduction,
-% given some terms $[[A]]$, $[[B0]]$, $[[B1]]$ such that $[[A => B0]]$
-% and $[[A => B1]]$, the meaning of $[[A]]$ could either be $[ [[B0]] ]_i$
-% or $[ [[B1]] ]_i$. In fact, the definedness of $[ [[B0]] ]_i$ and $[
-% [[B1]] ]_i$
-% should not be taken as granted either. It is unclear for now whether
-% the definedness of one implies the other.
-
-% Fortunately,
+The resulting definition is then shown to be functional and thus
+justifies the notation $[ [[A]] ]_i$ since we know there would be an
+unambiguous output corresponding to the type $[[A]]$, assuming that
+$[[A]]$ is in the domain of the partial function.
 
 \section{Consistency}
 \label{sec:logrelproof}
