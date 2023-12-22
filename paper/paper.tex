@@ -398,44 +398,68 @@ beta reduction. The formulation of \lang is slightly more economical.
 \section{Semantic Typing}
 \label{sec:logreldep}
 \begin{figure}[h]
-  \begin{equation*}
-    \begin{split}
-      [-]_= &:: \mathit{Term} \rightarrow \mathit{Nat} \rightarrow \mathcal{P}(\mathit{Term})\\
-      [ [[Void]] ]_i &= \emptyset \\
-      [ [[Bool]] ]_i &= \{ [[a]] \mid [[a =>+ true]] \text{ or } [[a =>+ false]] \} \\
-      [ [[a ~ b : A]] ]_i &= \{ [[p]] \mid [[p =>+ refl]] \text{ and } [[a<=>b]] \}\\
-      [ [[Pi A B]] ]_i &= \{ [[b]] \mid \forall [[a]], \text{ if } [[a]] \in [ [[A]] ]_i\text{, then } [[b a]] \in [ [[B {a}]] ]_i \} \\
-      [ [[Set j]] ]_i &= \{ [[A]] \mid [[j < i]] \text{ and } [[A]] \in dom([-]_j) \}\\
-      [ [[ A ]] ]_i &= \{ [[a]] \mid \exists [[B]], [[a]] \in[ [[B]] ]_i \text{ and } [[A => B]] \}
-    \end{split}
-  \end{equation*}
-  \caption{Specification of the logical relation for \lang}
-  \label{fig:logrel}
+\begin{equation*}
+  \begin{split}
+    [[InterpR i A S]] &:= [[ Interp I i A S  ]] \\
+    [[I i]] &:= [[exists S , InterpR i A S]]
+  \end{split}
+\end{equation*}
+\drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Void, Bool, Eq, Pi, Set, Red}
+\caption{Logical relation for \lang}
+\label{fig:logrel}
 \end{figure}
+In this section, we define the logical relation for \lang{} in the
+form of an inductively defined relation (Figure~\ref{fig:logrel}). The
+logical relation takes the form $[[Interp I i A S]]$, where $[[I]]$ is a
+function that takes a natural number strictly less than $[[i]]$ to a set of
+terms, $[[i]]$ is a natural number representing the universe level,
+$[[A]]$ is a type, and $[[S]]$ a set of terms.
+% Intuitively, the relation $[[Interp I i A S]]$ takes $[[I]]$, an interpretation
+% for types from universes smaller than $[[Set i]]$ and builds the types
+% that semantically inhabit $[[Set i]]$.
+Ignoring $[[I]]$ for a moment, the notation $[[Interp I i A S]]$ reads
+that $[[A]]$ is a level-$[[i]]$ type
+semantically inhabited by terms from the set $[[S]]$. For example, the
+$[[Void]]$ type is not inhabited by any terms as it corresponds to the
+empty set, whereas the $[[Bool]]$ type is inhabted by the set of (not
+necessarily closed) terms that reduce to either $[[true]]$ or
+$[[false]]$. Not all terms have an interpretation since some terms do
+not correspond to types and therefore cannot be inhabited. For
+example, $[[true]]$ is a boolean value and therefore does not have a
+set corresponding to it.
+
+\Rref{T-Pi} requires some special attention. Let's focus first on the
+premises of \rref{T-Pi} and ignore the set that corresponds to $[[Pi A
+B]]$. For $[[Pi A B]]$ to have a meaning, we
+require that there exists some interpretation $[[S]]$ for the input
+type $[[A]]$. For each term $[[a]]$ in the set $[[S]]$, we also
+require that there exists some set that corresponds to the term $[[B
+{a}]]$. The function $[[F]]$ appearing in the premise is simply a
+result of skolemization. In fact, we can alternatively formulate the
+premise of \rref{T-Pi} as follows:
+
+This alternative definition becomes problematic when we try to fill
+out the missing conclusion of the rule. With the existential variant,
+we cannot conveniently refer to the witness that corresponds
+to the interpretation of the type $[[B { a }]]$ from the premise. It
+is tempting to rewrite the conclusion as follows, though this
+alternative definition ...
+
+In a fully dependently typed system, we may perform computations at
+the type level. Given $[[empty |- a : A]]$, the type $[[A]]$ may not
+be in head form but can reduce to the $[[Bool]]$ type. \Rref{I-Red}
+allows us to assign a type-level computation a meaning based on what
+type value it reduces to eventually.
+
+The addition of \rref{I-Red} requires us to prove several inversion
+lemmas about the logical relation. For example, given a proof of
 
 
-In this section, we present the definition of the logical relation as a
-partial function.
-Figure~\ref{fig:logrel} shows the specification
-of the logical relation that we are about to define. The specification
-itself does not immediately induce a definition as it is unclear
-whether there exists a smallest partial function that satisfies the
-specification.
 
-The construction of a function that meets the specification in
-Figure~\ref{fig:logrel} can be broken down into two steps. To build an
-infinite hierarchy of universes, we first define a recursor that constructs
-the interpretation of the universe level $[[n]]$ given a parameterized
-interpretation function for universe levels that are strictly less
-than $[[n]]$.
-Next, we use the well-foundedness of the less than relation to tie the
-knot and define the full interpretation function that meets the
-specification.
-The resulting definition is then shown to be functional and thus
-justifies the notation $[ [[A]] ]_i$ since we know there would be an
-unambiguous output corresponding to the type $[[A]]$, assuming that
-$[[A]]$ is in the domain of the partial function.
 
+% In the rules for $[[Interp I i A S]]$, we exclude cases where $[[A]]$
+% is neutral. Since we only care about consistency, it suffices to focus
+% only on terms that evaluate to closed terms.
 \section{Consistency}
 \label{sec:logrelproof}
 

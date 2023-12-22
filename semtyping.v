@@ -39,30 +39,6 @@ Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
                                   | right _ => False
                                   end).
 
-Lemma InterpExt_NotVar Interp n i P : ~InterpExt n Interp (var_tm i) P.
-Proof.
-  move E : (var_tm i) => a0 h.
-  move : i E.
-  elim : a0 P / h; hauto inv:InterpExt, Par.
-Qed.
-
-Lemma InterpUnivN_NotVar n i P : ~ InterpUnivN n (var_tm i) P.
-Proof.
-  hauto l:on rew:db:InterpUnivN use:InterpExt_NotVar.
-Qed.
-
-Lemma InterpExt_NotAbs Interp n A a P : ~ InterpExt n Interp (tAbs A a) P.
-Proof.
-  move E : (tAbs A a) => a0 h.
-  move : A a E.
-  elim : a0 P / h; hauto inv:Par.
-Qed.
-
-Lemma InterpUnivN_NotAbs n A a P : ~ InterpUnivN n (tAbs A a) P.
-Proof.
-  hauto l:on rew:db:InterpUnivN use:InterpExt_NotAbs.
-Qed.
-
 Lemma InterpExt_Fun_inv n Interp A B P  (h : InterpExt n Interp (tPi A B) P) :
   exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
     InterpExt n Interp A PA /\
@@ -170,7 +146,6 @@ Lemma InterpUnivN_Bool_inv n P :
   P = fun a => exists v, Pars a v /\ is_bool_val v.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
-From Hammer Require Import Hammer.
 Lemma InterpExt_Eq_inv n I a b A P :
   InterpExt n I (tEq a b A) P ->
   P = (fun A => Pars A tRefl /\ Coherent a b).
