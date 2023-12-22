@@ -130,6 +130,7 @@ set, S :: '' ::= {{ com sets }}
   | emptyset :: :: empty
     {{ tex \emptyset }}
   | { a | formula } :: :: comprehension
+    {{ tex \{ [[a]] \mid [[formula]]  \} }}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
