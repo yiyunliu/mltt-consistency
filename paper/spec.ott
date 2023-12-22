@@ -10,6 +10,26 @@ nat, i, j, n :: '' ::= {{ com natural numbers }}
   | (# i #) :: S :: SecretParen
     {{ tex [[i]] }}
 
+set, S, F :: '' ::= {{ com sets }}
+  | emptyset :: :: empty
+    {{ tex \emptyset }}
+  | { a | formula } :: :: comprehension
+    {{ tex \{ [[a]] \mid [[formula]]  \} }}
+  | dom S :: :: domain
+    {{ tex [[dom]]([[S]]) }}
+  | F a   :: :: App
+  | STm   :: :: SetOfTerms
+    {{ tex \textit{Term} }}
+  | PowerSet S :: :: PowerSet
+    {{ tex \mathcal{P}([[S]]) }}
+  | S1 -> S2 :: :: FunSet
+    {{ tex [[S1]] \rightarrow [[S2]] }}
+  | (# S #) :: :: HParen
+    {{ tex [[S]] }}
+  | P i :: :: Recursor
+    {{ tex [[P]]([[i]]) }}
+
+
 tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
   | i :: :: Var
     {{ com variable }}
@@ -71,7 +91,7 @@ terminals :: 'terminals_' ::=
   | min               ::   :: min           {{ tex \mathsf{min} }}
   | ==                ::   :: definitional  {{ tex \equiv }}
   | all               ::   :: forall     {{ tex \forall }}
-  | in                ::   :: in         {{ tex \ottkw{in} }}
+  | in                ::   :: in         {{ tex \in }}
   | let               ::   :: let        {{ tex \ottkw{let} }}
   | bind              ::   :: bind       {{ tex \ottkw{bind} }}
   | notin             ::   :: notin      {{ tex \not\in }}
@@ -124,13 +144,18 @@ terminals :: 'terminals_' ::=
 formula :: 'formula_' ::=
   | i < j                     ::   :: lt
   | judgement                 ::   :: judgement
-  | a in S                    ::   :: membership
-
-set, S :: '' ::= {{ com sets }}
-  | emptyset :: :: empty
-    {{ tex \emptyset }}
-  | { a | formula } :: :: comprehension
-    {{ tex \{ [[a]] \mid [[formula]]  \} }}
+  | a in S                    ::   :: tmembership
+  | S1 in S2                    ::   :: fmembership
+  | formula1 \/ formula2      ::   :: or
+  | formula1 , formula2       ::   :: and
+  | formula1 implies formula2 ::   :: implies
+    {{ tex [[formula1]]\implies [[formula2]] }}
+  | forall a , formula        ::   :: forallTm
+    {{ tex \forall [[a]], [[formula]] }}
+  | exists S , formula    ::   :: existsSet
+    {{ tex \exists [[S]], [[formula]] }}
+  | (# formula  #)            ::   :: HParen
+    {{ tex [[formula]] }}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -354,3 +379,41 @@ G |- if a b0 b1 : A
 |- G
 ----------------------------- :: Void
 G |- Void : Set i
+
+
+defns
+JI :: '' ::=
+
+defn
+I i A S ::  :: Interp :: 'I_' {{ com Interpretation relation }}
+{{ tex [ [[A]] ]_[[i]] \searrow [[S]] }}
+by
+
+--------------------------- :: Void
+I i Void emptyset
+
+
+--------------------------- :: Bool
+I i Bool { a | a =>+ true \/ a =>+ false   }
+
+
+--------------------------------------- :: Eq
+I i a ~ b : A { p | p =>+ refl , a <=> b  }
+
+
+I i A S
+F in S -> PowerSet STm
+forall a, (# a in S implies I i B { a } F a #)
+-------------------------------- :: Pi
+I i Pi A B { b | forall a, (# a in S implies b a in F a #) }
+
+
+j < i
+--------------------------------- :: Set
+I i Set j { A | exists S , I j A S }
+
+
+A => B
+I i B S
+--------------------------------- :: Red
+I i A S
