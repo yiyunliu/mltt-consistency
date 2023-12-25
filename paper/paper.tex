@@ -398,68 +398,90 @@ beta reduction. The formulation of \lang is slightly more economical.
 \section{Semantic Typing}
 \label{sec:logreldep}
 \begin{figure}[h]
-\begin{equation*}
-  \begin{split}
-    [[InterpR i A S]] &:= [[ Interp I i A S  ]] \\
-    [[I i]] &:= [[exists S , InterpR i A S]]
-  \end{split}
-\end{equation*}
 \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Void, Bool, Eq, Pi, Set, Red}
 \caption{Logical relation for \lang}
 \label{fig:logrel}
 \end{figure}
 In this section, we define the logical relation for \lang{} in the
 form of an inductively defined relation (Figure~\ref{fig:logrel}). The
-logical relation takes the form $[[Interp I i A S]]$, where $[[I]]$ is a
-function that takes a natural number strictly less than $[[i]]$ to a set of
-terms, $[[i]]$ is a natural number representing the universe level,
-$[[A]]$ is a type, and $[[S]]$ a set of terms.
-% Intuitively, the relation $[[Interp I i A S]]$ takes $[[I]]$, an interpretation
-% for types from universes smaller than $[[Set i]]$ and builds the types
-% that semantically inhabit $[[Set i]]$.
-Ignoring $[[I]]$ for a moment, the notation $[[Interp I i A S]]$ reads
-that $[[A]]$ is a level-$[[i]]$ type
-semantically inhabited by terms from the set $[[S]]$. For example, the
-$[[Void]]$ type is not inhabited by any terms as it corresponds to the
-empty set, whereas the $[[Bool]]$ type is inhabted by the set of (not
-necessarily closed) terms that reduce to either $[[true]]$ or
-$[[false]]$. Not all terms have an interpretation since some terms do
-not correspond to types and therefore cannot be inhabited. For
-example, $[[true]]$ is a boolean value and therefore does not have a
-set corresponding to it.
+logical relation takes the form $[[Interp I i A S]]$. The
+metavariables $[[A]]$ and $[[i]]$ stand for terms and natural
+numbers respectively, as introduced earlier in
+Figure~\ref{fig:syntax}.
+The metavariables $[[I]]$ and $[[S]]$ are
+sets with the following signatures:
+\begin{equation*}
+  \begin{split}
+    [[I]] &\in [[ { j | j < i  } ->  PowerSet STm ]] \\
+    [[S]] &\in [[PowerSet STm]]
+  \end{split}
+\end{equation*}
+The function $[[I]]$ is a family of subsets of terms indexed by
+natural numbers strictly less than the parameter $[[i]]$, which
+represents the current universe level.  In \rref{I-Set}, function
+$[[I]]$ is used to define the meaning of
+universes that are strictly smaller than the current level $[[i]]$. The
+restriction $[[j < i]]$ in \rref{I-Set} is crucial for our system to
+be predicative. Removing the ordering constraint would result in a
+system where one can encode Girard's paradox~\citep{girard-thesis}.
 
-\Rref{T-Pi} requires some special attention. Let's focus first on the
-premises of \rref{T-Pi} and ignore the set that corresponds to $[[Pi A
-B]]$. For $[[Pi A B]]$ to have a meaning, we
-require that there exists some interpretation $[[S]]$ for the input
-type $[[A]]$. For each term $[[a]]$ in the set $[[S]]$, we also
-require that there exists some set that corresponds to the term $[[B
-{a}]]$. The function $[[F]]$ appearing in the premise is simply a
-result of skolemization. In fact, we can alternatively formulate the
-premise of \rref{T-Pi} as follows:
+\begin{figure}[h]
+\begin{equation*}
+  \begin{split}
+    [[InterpR i A S]] &:= [[ Interp F i A S  ]] \\
+    [[F i]] &:= [[exists S , InterpR i A S]]
+  \end{split}
+\end{equation*}
+\caption{Logical relation for all universe levels}
+\label{fig:logrelrec}
+\end{figure}
+To tie the knot and obtain an interpretation of all universe levels,
+we define in Figure~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
+using the well-foundedness of the strict less than relation on natural
+numbers.
+The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
+level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
+$[[S]]$. The way it's constructed enables us to reason about its
+property by nested induction over the less than relation and the
+structure of the relation $[[Interp I i A S]]$, though for the
+majority of the cases we do not need any information about the
+parameterized function $[[I]]$, where the property about $[[InterpR i
+A S]]$ follows as a corollary of a property about $[[Interp I i A S]]$
+with no assumptions imposed on $[[I]]$.
 
-This alternative definition becomes problematic when we try to fill
-out the missing conclusion of the rule. With the existential variant,
-we cannot conveniently refer to the witness that corresponds
-to the interpretation of the type $[[B { a }]]$ from the premise. It
-is tempting to rewrite the conclusion as follows, though this
-alternative definition ...
+For the rest of the section, we establish some important facts about
+the logical relation that will be useful for proving fundamental lemma
+in Section~\ref{sec:logrelproof}.
 
-In a fully dependently typed system, we may perform computations at
-the type level. Given $[[empty |- a : A]]$, the type $[[A]]$ may not
-be in head form but can reduce to the $[[Bool]]$ type. \Rref{I-Red}
-allows us to assign a type-level computation a meaning based on what
-type value it reduces to eventually.
+The relation $[[Interp I i A S]]$ satisfies the following inversion
+principles.
+\begin{lemma}[Void Inv]
+  \label{lemma:voidinv}
+  If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
+\end{lemma}
+\begin{lemma}[Bool Inv]
+  \label{lemma:boolinv}
+  If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
+\end{lemma}
+\begin{lemma}[Eq Inv]
+  \label{lemma:eqinv}
+  If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
+\end{lemma}
+\begin{lemma}[Pi Inv]
+  \label{lemma:piinv}
+  If $[[Interp I i Pi A B S]]$, then there exists $[[S]],[[F]]$ such
+  that the following conditions hold:
+  \begin{itemize}
+  \item $[[Interp I i A S ]]$
+  \item $[[F in S -> PowerSet STm]]$
+  \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+  \end{itemize}
+\end{lemma}
+\begin{lemma}
+  \label{lemma:setinv}
+  If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
+\end{lemma}
 
-The addition of \rref{I-Red} requires us to prove several inversion
-lemmas about the logical relation. For example, given a proof of
-
-
-
-
-% In the rules for $[[Interp I i A S]]$, we exclude cases where $[[A]]$
-% is neutral. Since we only care about consistency, it suffices to focus
-% only on terms that evaluate to closed terms.
 \section{Consistency}
 \label{sec:logrelproof}
 

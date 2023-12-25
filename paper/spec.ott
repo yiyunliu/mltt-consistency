@@ -27,10 +27,12 @@ set, S, F, I :: '' ::= {{ com sets }}
     {{ tex [[S1]] \rightarrow [[S2]] }}
   | (# S #) :: :: HParen
     {{ tex [[S]] }}
-
-
+  | { i | formula  } :: :: comprehensionNat
+    {{ tex \{ [[i]] \mid [[formula]]  \} }}
 
 tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
+  | arg :: :: Hole
+    {{ tex - }}
   | i :: :: Var
     {{ com variable }}
   | Pi A B :: :: Pi
@@ -158,6 +160,7 @@ formula :: 'formula_' ::=
     {{ tex \exists [[S]], [[formula]] }}
   | (# formula  #)            ::   :: HParen
     {{ tex [[formula]] }}
+  | S1 = S2                   ::   :: SetEq
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
