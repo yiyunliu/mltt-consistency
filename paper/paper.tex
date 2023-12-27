@@ -362,6 +362,14 @@ Likewise, Lemma~\ref{lemma:pardiamond} can be proven by structural induction
 over the derivation of $[[a => b0]]$. The \rref{P-AppAbs} case requires
 the use of Lemma~\ref{lemma:parcong}.
 
+From Lemma~\ref{lemma:parcong} and \ref{lemma:parrefl}, we recover the
+single substitution property as a simple corollary.
+\begin{corollary}[Par subst]
+  \label{lemma:parsubst}
+  If $[[a0 => a1]]$, then $[[a0 {b} => a1 {b}]]$ for arbitrary $[[b]]$.
+\end{corollary}
+
+
 A relation that satisfies the
 diamond property must also be confluent, meaning that its transitive
 and reflexive closure is confluent.
@@ -387,6 +395,11 @@ term $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$. It sufficies
 to show that $[[a0 =>+ c]]$ and $[[a2 =>+ c]]$, both of which
 trivially hold since the transitive closure $[[a =>+ b]]$ is transitive.
 This concludes the proof that coherence is an equivalence relation.
+\begin{lemma}[Coherence Equivalence]
+  \label{lemma:coherenceequiv}
+  The relation $[[a <=> b]]$ satisfies reflexivity, symmetry, and
+  transitivity and therefore is an equivalence relation.
+\end{lemma}
 
 We note that a more conventional presentation of
 \rref{T-Conv} would instead use full beta reduction as the base for
@@ -455,32 +468,80 @@ in Section~\ref{sec:logrelproof}.
 
 The relation $[[Interp I i A S]]$ satisfies the following inversion
 principles.
-\begin{lemma}[Void Inv]
-  \label{lemma:voidinv}
-  If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
+\begin{lemma}[Inversion of the logical relation]
+  \label{lemma:interpinv}\leavevmode
+  \begin{enumerate}
+  \item If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
+  \item If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
+  \item If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
+  \item If $[[Interp I i Pi A B S]]$, then there exists $[[S]],[[F]]$ such that:
+    \begin{itemize}
+    \item $[[Interp I i A S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+    \end{itemize}
+  \item If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
+  \end{enumerate}
 \end{lemma}
-\begin{lemma}[Bool Inv]
-  \label{lemma:boolinv}
-  If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
+\begin{proof}
+  We only show the most involved function case; the rest follows a
+  similar but simpler pattern. We start by
+  inducting over the derivation of $[[Interp I i Pi A B S]]$. There
+  are only two possible cases we need to consider.
+  \begin{description}
+  \item[\Rref{I-Pi}:] Immediate.
+  \item[\Rref{I-Red}:] We know that there exists some $[[A0]]$ and
+    $[[B0]]$ such that $[[Pi A B => Pi A0 B0]]$, and from the
+    induction hypothesis, there exists $[[S]]$ and $[[F]]$ such that :
+    \begin{itemize}
+    \item $[[Interp I i A0 S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
+    \end{itemize}
+    By inverting $[[Pi A B => Pi A0 B0]]$, we derive $[[A => A0]]$ and
+    $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a} => B0 {a} ]]$ for all
+    $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
+    $[[F]]$ satisfies the desired properties:
+    \begin{itemize}
+    \item $[[Interp I i A S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+    \end{itemize}
+  \end{description}
+\end{proof}
+
+\Rref{I-Red} bakes into the logical relation the backward preservation
+property. The following property shows that preservation holds in the
+usual forward direction too.
+\begin{lemma}[Preservation of the logical relation]
+  \label{lemma:interppreservation}
+  If $[[Interp I i A S]]$ and $[[A => B]]$, then $[[Interp I i B S]]$.
 \end{lemma}
-\begin{lemma}[Eq Inv]
-  \label{lemma:eqinv}
-  If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
-\end{lemma}
-\begin{lemma}[Pi Inv]
-  \label{lemma:piinv}
-  If $[[Interp I i Pi A B S]]$, then there exists $[[S]],[[F]]$ such
-  that the following conditions hold:
-  \begin{itemize}
-  \item $[[Interp I i A S ]]$
-  \item $[[F in S -> PowerSet STm]]$
-  \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
-  \end{itemize}
-\end{lemma}
-\begin{lemma}
-  \label{lemma:setinv}
-  If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
-\end{lemma}
+\begin{proof}
+  We carry out the proof by induction over the derivation of $[[Interp
+  I i A S]]$.
+  \begin{description}
+  \item[\Rref{I-Void}:] There exists some $[[B]]$ such that $[[Void =>
+    B]]$. By inverting the derivation of $[[Void => B]]$, $[[B]]$ must
+    be $[[Void]]$ and the result trivially follows.
+  \item[\Rref{I-Bool, I-Set}:] Similar to the case for \rref{I-Void}.
+  \item[\Rref{I-Eq}:] We know that $[[Interp I i a ~ b : A { p | p =>+
+      refl , a <=> b  }]]$ and, by inverting the derivation of
+    parallel reduction, $[[a => a0]]$, $[[b => b0]]$, $[[A => A0]]$
+    for some $[[a0]]$, $[[b0]]$, and $[[A0]]$. Our goal is to show
+    that $[[Interp I i a0 ~ b0 : A {p | p =>+ refl, a <=> b}]]$. By
+    \rref{I-Eq}, we already know that $[[Interp I i a0 ~ b0 : A {p | p
+      =>+ refl, a0 <=> b0}]]$ and therefore it suffices to show that
+    the sets $[[{p | p =>+ refl, a <=> b}]]$ and $[[{p | p =>+ refl,
+      a0 <=> b0}]]$ are equal. Equivalently, it suffices to show that
+    $[[a <=> b]]$ if and only if $[[a0 <=> b0]]$. By definition, from
+    $[[a => a0]]$ and $[[b => b0]]$, we derive $[[a <=> a0]]$ and $[[b
+    <=> b0]]$. The result then immediately follows from the fact that
+    coherence is an equivalence relation
+    (Lemma~\ref{lemma:coherenceequiv}).
+  \item[\Rref{I-Pi}:]
+  \end{description}
+\end{proof}
 
 \section{Consistency}
 \label{sec:logrelproof}
