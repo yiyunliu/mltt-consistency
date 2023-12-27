@@ -292,7 +292,8 @@ dependent type theory, terms and types are collapsed into the same
 syntactic category. Dependent functions take the form $[[Pi A B]]$ and
 we use the notation $[[A -> B]]$ when the output type $[[B]]$ is not
 dependent on the input variable. $[[Set i]]$ represents the universe
-type where $[[i]]$ ranges over the set of natural numbers. Finally,
+type where $[[i]]$ ranges over the set of natural numbers.
+ Finally,
 \lang also includes an intensional identity type $[[a ~ b : A]]$ whose
 proofs can be eliminated by the J-eliminator $[[J t a b p]]$, where
 $[[p]]$ is an equality proof between $[[a]]$ and $[[b]]$, and $[[t]]$
@@ -440,10 +441,7 @@ system where one can encode Girard's paradox~\citep{girard-thesis}.
 
 \begin{figure}[h]
 \begin{equation*}
-  \begin{split}
-    [[InterpR i A S]] &:= [[ Interp F i A S  ]] \\
-    [[F i]] &:= [[exists S , InterpR i A S]]
-  \end{split}
+    [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I i]] := [[{A | exists S , InterpR i A S}]]
 \end{equation*}
 \caption{Logical relation for all universe levels}
 \label{fig:logrelrec}
@@ -451,7 +449,9 @@ system where one can encode Girard's paradox~\citep{girard-thesis}.
 To tie the knot and obtain an interpretation of all universe levels,
 we define in Figure~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
 using the well-foundedness of the strict less than relation on natural
-numbers.
+numbers (recall that
+the parameter $[[I]]$ of $[[Interp I i A S]]$ takes only natural
+numbers strictly less than $[[i]]$ as its input).
 The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
 level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
 $[[S]]$. The way it's constructed enables us to reason about its
@@ -474,11 +474,12 @@ principles.
   \item If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
   \item If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
   \item If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
-  \item If $[[Interp I i Pi A B S]]$, then there exists $[[S]],[[F]]$ such that:
+  \item If $[[Interp I i Pi A B S0]]$, then there exists $[[S]],[[F]]$ such that:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+    \item $[[S0 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
   \item If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
   \end{enumerate}
@@ -490,23 +491,28 @@ principles.
   are only two possible cases we need to consider.
   \begin{description}
   \item[\Rref{I-Pi}:] Immediate.
-  \item[\Rref{I-Red}:] We know that there exists some $[[A0]]$ and
-    $[[B0]]$ such that $[[Pi A B => Pi A0 B0]]$, and from the
+  \item[\Rref{I-Red}:] We are given that $[[Interp I i Pi A B S0]]$.
+    We know that there exists some $[[A0]]$ and
+    $[[B0]]$ such that $[[Pi A B => Pi A0 B0]]$ and $[[Interp I i Pi
+    A0 B0 S0]]$. From the
     induction hypothesis, there exists $[[S]]$ and $[[F]]$ such that :
     \begin{itemize}
     \item $[[Interp I i A0 S ]]$
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
+    \item $[[S0 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
     By inverting $[[Pi A B => Pi A0 B0]]$, we derive $[[A => A0]]$ and
     $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a} => B0 {a} ]]$ for all
     $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
-    $[[F]]$ satisfies the desired properties:
+    $[[F]]$ satisfies the following properties:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
     \end{itemize}
+    The properties above are exactly the preconditions needed to apply
+    \rref{I-Pi} for $[[Pi A B]]$ to finish off the proof.
   \end{description}
 \end{proof}
 
@@ -539,9 +545,100 @@ usual forward direction too.
     <=> b0]]$. The result then immediately follows from the fact that
     coherence is an equivalence relation
     (Lemma~\ref{lemma:coherenceequiv}).
-  \item[\Rref{I-Pi}:]
+  \item[\Rref{I-Pi}:] There exists $[[S]]$ and $[[F]]$
+    such that:
+    \begin{itemize}
+    \item $[[Interp I i Pi A B { b | forall a, (# a in S implies b a in F
+        a #) }]]$
+    \item $[[Interp I i A S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+    \end{itemize}
+    There exists some $[[A0]]$ and $[[B0]]$ such that $[[A => A0]]$ and
+    $[[B => B0]]$. Our goal is to show that $[[Interp I i Pi A0 B0 { b | forall a, (# a in S implies b a in F
+      a #) }]]$. By \rref{I-Pi}, it suffices to show:
+    \begin{itemize}
+    \item $[[Interp I i A0 S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
+    \end{itemize}
+    Since $[[A => A0]]$ and $[[B {a} => B0 {a}]]$ forall $[[a]]$, the
+    latter of which follows from Lemma~\ref{lemma:parsubst}, the above
+    conditions follow immediately from the induction hypothesis.
+  \item[\Rref{I-Red}:] There exists $[[B0]]$ and $[[S]]$ such that $[[A => B0]]$ and
+    $[[Interp I i B0 S]]$. Given an arbitrary $[[B]]$ such that $[[A
+    => B]]$, our goal is to show that $[[Interp I i B S]]$. By the diamond
+    property of parallel
+    reduction (Lemma~\ref{lemma:pardiamond}), there exists some term
+    $[[C]]$ such that $[[B0 => C]]$ and $[[B => C]]$. By the induction
+    hypothesis, we derive $[[Interp I i C S]]$ from $[[Interp I i
+    B0 S]]$. By \rref{I-Red} and
+    $[[B => C]]$, we conclude that $[[Interp I i B S]]$.
   \end{description}
 \end{proof}
+From Lemma~\ref{lemma:interppreservation} and \rref{I-Red}, we can easily
+derive the following corollary that two coherent types have the same
+interpretation.
+\begin{corollary}[Logical Relation for Coherent Types]
+  \label{lemma:logrelcoherence}
+  If $[[Interp I i A S]]$ and $[[A <=> B]]$, then $[[Interp I i B S]]$.
+\end{corollary}
+Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
+\begin{lemma}[Logical relation is functional]
+  \label{lemma:logreldeter}
+  If $[[Interp I i A S0]]$ and $[[Interp I i A S1]]$, then $[[S0 = S1]]$.
+\end{lemma}
+\begin{proof}
+  We start by inducting over the derivation of the first premise $[[Interp I i A
+  S0]]$.
+  \begin{description}
+  \item[\Rref{I-Void}:] We know that $[[Interp I i Void
+    emptyset]]$. Given $[[Interp I i Void S1]]$, our goal is to show that
+    $[[emptyset = S1]]$. This is immediate by applying the $[[Void]]$ case of
+    Lemma~\ref{lemma:interpinv} to $[[Interp I i Void S1]]$.
+  \item[\Rref{I-Bool, I-Eq, I-Set}:] Similar to the \rref{I-Void} case
+    by applying the matching case of Lemma~\ref{lemma:interpinv}
+    to $[[Interp I i A S1]]$.
+  \item[\Rref{I-Pi}:] There exists $[[S]]$ and $[[F]]$
+    such that:
+    \begin{itemize}
+    \item $[[Interp I i A S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+    \end{itemize}
+    Our goal is to show that given $[[Interp I i Pi A B S1]]$, we have
+    $[[S1 = { b | forall a, (# a in S implies b a in F
+      a #) }]]$.
+    By the function case of Lemma~\ref{lemma:interpinv}, there exists
+    some $[[S0]]$ and $[[F0]]$ such that:
+    \begin{itemize}
+    \item $[[Interp I i A S0 ]]$
+    \item $[[F0 in S0 -> PowerSet STm]]$
+    \item
+      $[[forall a, (# a in S0 implies Interp I i B { a } F0 a #)]]$
+    \item
+      $[[S1 = { b | forall a, (# a in S0 implies b a in F0 a #) }]]$
+    \end{itemize}
+    It suffices to show that $[[S = S0]]$ and $[[F = F0]]$. The
+    equality $[[S = S0]]$ immediately follows from the induction
+    hypothesis since $[[Interp I i A S]]$ and $[[Interp I i A
+    S0]]$. Therefore, functions $[[F]]$ and $[[F0]]$ have the same
+    domain and codomain and thus it suffices to show that forall $[[a in S]]$,
+    $[[F a = F0 a]]$. Suppose $[[a in S]]$, we must have $[[Interp I
+    i B {a} F a]]$ and $[[Interp I i B {a} F0 a]]$ from the two
+    $\forall$-quantified statements above. The equality $[[F a = F0 a]]$ then
+    immediately follows from the induction hypothesis.
+  \item[\Rref{I-Red}:] There exists some $[[B]]$ such that $[[A =>
+    B]]$ and $[[Interp I i B S0]]$. Our goal is to show that given
+    $[[Interp I i A S1]]$, we have $[[S0 = S1]]$. By
+    Lemma~\ref{lemma:interppreservation}, from $[[Interp I i A S1]]$
+    and $[[A => B]]$, we have $[[Interp I i B S1]]$. From the
+    induction hypothesis, we can conclude that $[[S0 = S1]]$ since
+    $[[Interp I i B S0]]$ and $[[Interp I i B S1]]$.
+  \end{description}
+\end{proof}
+
+
 
 \section{Consistency}
 \label{sec:logrelproof}
