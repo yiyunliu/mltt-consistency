@@ -696,6 +696,16 @@ all closed under expansion.
 
 \section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
+The logical relation we define in Figure~\ref{fig:logrel} does not
+include cases for variables. Likewise, for the base types such as
+boolean and equality, the output set $[[S]]$ contains only terms that
+evaluate to closed terms. To generalize our logical relation to open
+terms, we define the semantic typing judgment by closing the open
+terms with a substitution whose codomain consists of terms that
+respect the interpretation of the types from the context. The full
+definition of semantic typing ($[[ G |= a : A]]$) is presented in
+Figure~\ref{fig:semtyping}.
+
 
 \section{Mechanization}
 \label{sec:logrelmech}
