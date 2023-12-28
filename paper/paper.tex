@@ -409,7 +409,7 @@ doesn't satisfy the diamond property, one typically needs parallel
 reduction as an auxilliary definition to derive the confluence of full
 beta reduction. The formulation of \lang is slightly more economical.
 
-\section{Semantic Typing}
+\section{Logical Relation}
 \label{sec:logreldep}
 \begin{figure}[h]
 \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Void, Bool, Eq, Pi, Set, Red}
@@ -454,13 +454,14 @@ the parameter $[[I]]$ of $[[Interp I i A S]]$ takes only natural
 numbers strictly less than $[[i]]$ as its input).
 The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
 level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
-$[[S]]$. The way it's constructed enables us to reason about its
-property by nested induction over the less than relation and the
-structure of the relation $[[Interp I i A S]]$, though for the
-majority of the cases we do not need any information about the
-parameterized function $[[I]]$, where the property about $[[InterpR i
-A S]]$ follows as a corollary of a property about $[[Interp I i A S]]$
-with no assumptions imposed on $[[I]]$.
+$[[S]]$. For the
+majority of the properties we are about to prove in this section, we
+do not need any information about the parameterized function $[[I]]$.
+Each property about $[[InterpR i A S]]$ follows as a corollary of
+a property about $[[Interp I i A S]]$ with no or few assumptions imposed on
+$[[I]]$. As a result, we usually state our lemmas in terms of
+$[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
+A S]]$.
 
 For the rest of the section, we establish some important facts about
 the logical relation that will be useful for proving fundamental lemma
@@ -638,9 +639,62 @@ Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
   \end{description}
 \end{proof}
 
+The next lemma shows that our logical relation satisfies
+cumulativity. That is, if a type has an interpretation at a lower
+universe level, then we can obtain the same interpretation at a higher
+universe level.
+\begin{lemma}[Logical relation cumulativity]
+  \label{lemma:logrelcumulativity}
+  If $[[Interp I i0 A S]]$ and $[[i0 < i1]]$, then $[[Interp I i1 A S]]$.
+\end{lemma}
+\begin{proof}
+  Trivial by structural induction over the derivation of $[[Interp I
+  i0 A S]]$.
+\end{proof}
+Note that in the statement of Lemma~\ref{lemma:logrelcumulativity}, we
+implicitly assume that $[[I]]$ is defined on the set of natural
+numbers less than $[[i1]]$.
 
+\begin{corollary}[Logical relation is functional with different levels]
+  \label{lemma:logreldeterhet}
+  If $[[Interp I i0 A S0]]$ and $[[Interp I i1 A S1]]$, then $[[S0 = S1]]$.
+\end{corollary}
+\begin{proof}
+  Immediate from Lemma~\ref{lemma:logreldeter} and
+  \ref{lemma:logrelcumulativity}.
+\end{proof}
 
-\section{Consistency}
+We say that a set of terms $[[S]]$ is closed under expansion if given
+$[[a in S]]$, then $[[b in S]]$ for all $[[b => a]]$.
+The final property we want to show is that the output set $[[S]]$ from
+the logical relation is closed under expansion. Unlike the previous
+lemmas, we need to constrain the function $[[I]]$ so its outputs are
+all closed under expansion.
+\begin{lemma}[Logical Relation Elements back preservation]
+  \label{lemma:logrelbackclos}
+  If $[[Interp I i A S]]$ and $[[I]]$ satisfies the property that
+  for all $[[i]]$, $[[I i]]$ is closed under expansion, then the set
+  $[[S]]$ is closed under expansion.
+\end{lemma}
+\begin{proof}
+  Trivial by structural induction over the derivation of $[[Interp I i
+  A S]]$. The function case requires the following simple fact about
+  parallel reduction:
+  If $[[b0 => b1]]$ then $[[b0 a => b1 a]]$ for all $[[a]]$. This fact
+  is not immediate from the definition of parallel reduction but
+  follows from Lemma~\ref{lemma:parrefl} and \rref{P-App}.
+\end{proof}
+
+\begin{corollary}
+  \label{lemma:logrelNbackclos}
+  If $[[InterpR i A S]]$, then $[[S]]$ is closed under expansion.
+\end{corollary}
+\begin{proof}
+  Immediate from Lemma~\ref{lemma:logrelbackclos}, the definition of
+  $[[InterpR i A S]]$, and \rref{I-Red}.
+\end{proof}
+
+\section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
 
 \section{Mechanization}

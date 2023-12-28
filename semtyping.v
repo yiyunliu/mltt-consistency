@@ -200,7 +200,8 @@ Lemma InterpExt_Lift n m I A PA :
   InterpExt m I A PA.
 Proof.
   move => h h0.
-  elim : A PA /h0; sauto l:on ctrs:InterpExt.
+  elim : A PA /h0;
+    hauto l:on ctrs:InterpExt use:PeanoNat.Nat.lt_trans.
 Qed.
 
 Lemma InterpExt_lt_redundant n I A PA
@@ -299,10 +300,9 @@ Lemma InterpUnivN_back_clos n A PA :
     forall a b, Par a b ->
            PA b -> PA a.
 Proof.
-  elim /Wf_nat.lt_wf_ind : n => n ih.
   simp InterpUniv.
   apply InterpExt_back_clos.
-  ecrush.
+  qauto l:on rew:db:InterpUniv ctrs:InterpExt.
 Qed.
 
 Lemma InterpUnivN_back_clos_star n A PA :
