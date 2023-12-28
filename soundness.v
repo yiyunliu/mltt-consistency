@@ -2,6 +2,7 @@ From WR Require Import syntax join semtyping typing common imports.
 
 Definition γ_ok Γ γ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
 Definition SemWt Γ a A := forall γ, γ_ok Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
+Definition SemWff Γ := forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i)).
 
 Lemma γ_ok_cons {i Γ γ a PA A} :
   InterpUnivN i (subst_tm γ A) PA ->
@@ -49,24 +50,14 @@ Proof.
   by asimpl.
 Qed.
 
-Lemma γ_ok_consU {i Γ γ a PA A} :
-  InterpUnivN i (subst_tm γ A) PA ->
-  PA a ->
-  γ_ok Γ γ ->
-  γ_ok (A :: Γ) (a .: γ).
-Proof.
-  hauto q:on use:γ_ok_cons, InterpUnivN_deterministic'.
-Qed.
-
 Lemma P_AppAbs_cbn (A a b b0 : tm) :
   b0 = subst_tm (b..) a ->
   Par (tApp (tAbs A a) b) b0.
 Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
 
-
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a A) /\
-  (Wff Γ -> forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i))).
+  (Wff Γ -> SemWff Γ).
 Proof.
   move : Γ.
   apply wt_mutual.
@@ -97,7 +88,7 @@ Proof.
     apply InterpExt_Fun.
     + simp InterpUniv in hPA.
     + move => a ha.
-      move /(_ _ ltac:(qauto use:γ_ok_consU)) in h1.
+      move /(_ _ ltac:(qauto use:γ_ok_cons)) in h1.
       move : h1; intros (x & PB & hPB & h).
       move /InterpUnivN_Univ_inv' : hPB => [*]; subst.
       hauto lq:on rew:db:InterpUniv.
