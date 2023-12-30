@@ -328,5 +328,5 @@ Lemma InterpUnivN_Univ_inv' i j P :
   InterpUnivN i (tUniv j) P ->
   P = (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA) /\ j < i.
 Proof.
-  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv, InterpUnivN_Univ_inv, InterpUnivN_deterministic.
+  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv.
 Qed.

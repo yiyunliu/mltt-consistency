@@ -50,6 +50,21 @@ Proof.
   by asimpl.
 Qed.
 
+Lemma SemWt_Univ Γ A i :
+  SemWt Γ A (tUniv i) <->
+  forall γ, γ_ok Γ γ -> exists PA , InterpUnivN i (subst_tm γ A) PA.
+Proof.
+  rewrite /SemWt.
+  split.
+  - hauto lq:on rew:off use:InterpUnivN_Univ_inv'.
+  - move => /[swap] γ /[apply].
+    case => PA hPA.
+    exists (S i). eexists.
+    split.
+    + simp InterpUniv. apply InterpExt_Univ. lia.
+    + simpl. eauto.
+Qed.
+
 Lemma P_AppAbs_cbn (A a b b0 : tm) :
   b0 = subst_tm (b..) a ->
   Par (tApp (tAbs A a) b) b0.
@@ -72,36 +87,25 @@ Proof.
       move : hi; intros (PA & hi).
       exists (F i), PA; sfirstorder.
     + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
-  - move => Γ i γ hγ.
-    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
-    hauto l:on use:InterpUnivN_Univ_inv.
-  - rewrite /SemWt.
-    move => // Γ i A B _ h0 _ h1 γ hγ.
-    move /(_ γ hγ) : h0; intros (m & P_Univ & hP_Univ & hP_Univ').
-    move /InterpUnivN_Univ_inv' : hP_Univ => [*]; subst.
-    case : hP_Univ' => PA hPA.
-    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
-    split; first by eauto using InterpUnivN_Univ_inv.
+  - hauto l:on use:SemWt_Univ.
+  - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
+    apply SemWt_Univ.
+    move => γ hγ.
+    move /(_ γ hγ) : h0; intros (PA & hPA).
     exists (ProdSpace PA (fun a PB => InterpUnivN i (subst_tm (a .: γ) B) PB)).
     simp InterpUniv.
     simpl.
     apply InterpExt_Fun.
     + simp InterpUniv in hPA.
     + move => a ha.
-      move /(_ _ ltac:(qauto use:γ_ok_cons)) in h1.
-      move : h1; intros (x & PB & hPB & h).
-      move /InterpUnivN_Univ_inv' : hPB => [*]; subst.
+      case /(_ _ ltac:(qauto use:γ_ok_cons)) : h1 => PB hPB.
       hauto lq:on rew:db:InterpUniv.
-    + move => a PB ha.
-      by asimpl.
-  - rewrite /SemWt.
-    move => Γ A a B i _ hB _ ha.
+    + move => a PB ha. by asimpl.
+  - move => Γ A a B i _ /SemWt_Univ hB _ ha.
     move => γ hγ.
-    move /(_ γ hγ) : hB; intros (l & PPi & hPPi & hPi).
-    move /InterpUnivN_Univ_inv' : hPPi => [*]; subst.
-    case  : hPi => /= PPi hPPi.
-    simp InterpUniv in hPPi.
-    move /InterpExt_Fun_inv : hPPi. intros (PA & PF & hPA & hTot & hPF & ?); subst.
+    case /(_ γ hγ) : hB => PPi.
+    simp InterpUniv => /=.
+    move /InterpExt_Fun_inv. intros (PA & PF & hPA & hTot & hPF & ?); subst.
     exists i, (ProdSpace PA (fun a PB => InterpUnivN i (subst_tm (a .: γ) B) PB)).
     split.
     + simpl; simp InterpUniv.
@@ -139,20 +143,18 @@ Proof.
     rewrite /ProdSpace in hf.
     asimpl in *.
     hauto lq:on.
-  - rewrite /SemWt => Γ a A B i _ hA _ hB [C [? ?]] γ hγ.
+  - move => Γ a A B i _ hA _ /SemWt_Univ hB [C [? ?]] γ hγ.
     case : (hA γ hγ) => j [PA [hPA hPAa]].
-    case : (hB γ hγ) => k [PB [hPB hPB']].
+    case : (hB γ hγ) => PB hPB.
     simpl in hPB.
-    case /InterpUnivN_Univ_inv' : hPB => ? ?. subst.
-    case : hPB' =>  PA0 hPA0.
-    exists i, PA0.
+    exists i, PA.
     split; auto.
     have [*] : Pars (subst_tm γ A) (subst_tm γ C) /\
                  Pars (subst_tm γ B) (subst_tm γ C)
       by sfirstorder use:par_subst_star.
-    have ? :InterpUnivN i (subst_tm γ C) PA0 by sfirstorder use:InterpUnivN_preservation_star.
-    have ? :InterpUnivN i (subst_tm γ A) PA0 by sfirstorder use:InterpUnivN_back_preservation_star.
-    suff : PA = PA0 by congruence.
+    have ? :InterpUnivN i (subst_tm γ C) PB by sfirstorder use:InterpUnivN_preservation_star.
+    have ? :InterpUnivN i (subst_tm γ A) PB by sfirstorder use:InterpUnivN_back_preservation_star.
+    suff : PA = PB by congruence.
     eauto using InterpUnivN_deterministic'.
   - hauto l:on.
   - hauto l:on.
@@ -167,25 +169,14 @@ Proof.
     case : ha' => v [hred hv].
     case : v hred hv => // ha0 _.
     + apply (InterpUnivN_back_clos_star j) with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
-      eauto using P_IfTrue_star with sets.
+      eauto using P_IfTrue_star.
     + apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
-      eauto using P_IfFalse_star with sets.
-  - rewrite /SemWt => Γ i γ hγ.
-    simpl.
-    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
-    hauto l:on use:InterpUnivN_Univ_inv.
-  - move => Γ i j ? γ hγ /=.
-    exists (S j), (fun A => exists PA, InterpUnivN j A PA).
-    sfirstorder use:InterpUnivN_Univ_inv.
+      eauto using P_IfFalse_star.
+  - hauto l:on use:SemWt_Univ.
+  - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
   - hauto l:on.
-  - move => Γ a b A i j _ ha _ hb _ hA γ hγ/=.
-    exists (S i), (fun A => exists PA, InterpUnivN i A PA).
-    hauto l:on use:InterpUnivN_Univ_inv.
-  - move => Γ t a b p A i j C _ ha _ hb _ hA _ hp _ hC _ ht.
-    move => γ hγ.
-    move : ha (hγ); move/[apply] => ha.
-    move : hb (hγ); move/[apply] => hb.
-    move : hA (hγ); move/[apply] => hA.
+  - hauto l:on use:SemWt_Univ.
+  - move => Γ t a b p A i j C _ _ _ _ _ _ _ hp _ hC _ ht γ hγ.
     move : hp (hγ); move/[apply] => hp.
     move : ht (hγ); move/[apply]. intros (m & PA & hPA & ht).
     have [? [q ?]] : Pars (subst_tm γ p) tRefl /\ Coherent (subst_tm γ a) (subst_tm γ b) by
@@ -196,10 +187,7 @@ Proof.
       apply : InterpUnivN_Coherent; eauto.
       exists (subst_tm (tRefl .: (q .: γ)) C).
       hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, @rtc_refl, good_pars_morphing_ext2.
-    + (* would a negative interp for tEq be possible & potentially
-         simplify the proof? *)
-      (* how would that affect the universe level? *)
-      asimpl.
+    + asimpl.
       eapply InterpUnivN_back_clos_star with (b := subst_tm γ t); eauto.
       sfirstorder use: P_JRefl_star.
   - hauto l:on.
