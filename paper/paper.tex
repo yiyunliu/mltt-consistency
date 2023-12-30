@@ -696,6 +696,23 @@ all closed under expansion.
 
 \section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
+\begin{figure}[h]
+  \begin{equation*}
+    \begin{split}
+      [[rho |= G]] &:= \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
+                     } [[InterpR j (up S i G i) { rho } S ]] \text{, then } [[rho i in S]] \\
+      [[G |= a : A]] &:= \forall [[rho]], \text{ if }[[rho |=
+                       G]]\text{ then there exists some } [[j]] \text{
+                       and } [[S]] \text{ such that } [[InterpR j A
+                       {rho} S]] \text{ and } [[a {rho} in S]] \\
+      [[|= G]] &:= \forall [[i < |G|]], \exists [[j]], [[drop S i G |= G i : Set j]]
+    \end{split}
+  \end{equation*}
+  \caption{Semantic Typing for \lang}
+  \label{fig:semtyping}
+\end{figure}
+
+
 The logical relation we define in Figure~\ref{fig:logrel} does not
 include cases for variables. Likewise, for the base types such as
 boolean and equality, the output set $[[S]]$ contains only terms that
@@ -703,9 +720,25 @@ evaluate to closed terms. To generalize our logical relation to open
 terms, we define the semantic typing judgment by closing the open
 terms with a substitution whose codomain consists of terms that
 respect the interpretation of the types from the context. The full
-definition of semantic typing ($[[ G |= a : A]]$) is presented in
-Figure~\ref{fig:semtyping}.
+definitions of well-formed substitution ($[[rho |= G]]$), semantic
+typing ($[[ G |= a : A]]$), and semantic context well-formedness
+($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
 
+Next, we show that semantic typing is implied by syntactic typing
+case-by-case through a series of lemmas.
+
+\begin{lemma}[ST-Var]
+  If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= i : up S i G i]]$.
+\end{lemma}
+
+\begin{lemma}[ST-Set]
+  If $[[|= G]]$ and $[[i < j]]$, then $[[G |= Set i : Set j]]$.
+\end{lemma}
+
+\begin{lemma}[ST-Pi]
+  If $[[G |= A : Set i]]$ and $[[G ++ A |= B : Set i]]$, then $[[G |= Pi
+  A B : Set i]]$.
+\end{lemma}
 
 \section{Mechanization}
 \label{sec:logrelmech}

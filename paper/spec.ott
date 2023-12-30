@@ -30,6 +30,12 @@ set, S, F, I :: '' ::= {{ com sets }}
   | { i | formula  } :: :: comprehensionNat
     {{ tex \{ [[i]] \mid [[formula]]  \} }}
 
+rho {{ tex \rho }} :: '' ::= {{ com substitutions }}
+  | emptyS     :: :: emptyS
+  | id        :: :: id
+  | rho .: A  :: :: cons
+  | [ A ]         :: :: one
+
 tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
     {{ tex - }}
@@ -47,7 +53,8 @@ tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
     {{ com function application }}
   | Set i :: :: Set
     {{ com universe }}
-  | a { b } :: S :: Subst {{ tex [[a]] \langle [[b]]  \rangle }}
+  | a { A } :: S :: Subst {{ tex [[a]] \langle [[A]]  \rangle }}
+  | a { rho } :: S :: SubstRho {{ tex [[a]] \langle [[rho]]  \rangle }}
   | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] \langle [[b0]] , [[b1]]  \rangle }}
   | ( A )   :: M :: Paren {{ coq ([[A]]) }}
   | (# a #) :: S :: SecretParen
@@ -77,11 +84,14 @@ tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
     {{ tex \uparrow[[A]] }}
   | G i :: S :: lookup
     {{ tex [[G]]_{[[i]]} }}
+  | rho i :: S :: lookuprho
+    {{ tex [[rho]]_{[[i]]} }}
   | A -> B :: M :: Arr
     {{ tex [[A]] \rightarrow [[B]] }}
 
 context, G {{ tex \Gamma }} :: 'ctx_' ::= {{ com contexts }}
 					  {{ coq list ( atom * (grade * tm) ) }}
+   | drop n G        ::    :: Drop {{ tex [[G]] \downarrow_{[[n]]} }}
    | empty           ::    :: Empty       {{ coq nil }}
    | A               :: M   :: One
    | G ++ A          ::   :: Append      {{ tex [[G]], [[A]] }}
@@ -431,6 +441,23 @@ InterpR i A S ::  :: InterpR :: 'I_' {{ com Interpretation relation }}
 {{ tex [ [[A]] ]_[[i]] \searrow [[S]] }}
 by
 
-% Interp ( exists S , InterpR i A S )
-% ---------------------- :: Rec
-% InterpR i A S
+
+defns
+JSTyping :: '' ::=
+
+defn
+  rho |= G :: :: SubstWff :: 'SSubst_' {{ com SubstWff }}
+{{ tex [[rho]] \vDash [[G]] }}
+by
+
+
+defn
+  G |= a : A ::  :: STyping :: 'ST_' {{ com Semantic Typing }}
+{{ tex [[G]] \vDash [[a]]: [[A]] }}
+by
+
+
+defn
+|= G ::     :: SCtx :: 'SCtx_' {{ com Semantic Context Well-Formedness }}
+{{ tex \vDash [[G]] }}
+by
