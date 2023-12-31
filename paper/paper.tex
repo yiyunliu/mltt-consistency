@@ -184,8 +184,7 @@ proof of under 1000 lines of manually written Coq code for a dependent
 type theory that is reasonably complete in its features.
 
 The key technique that underlies our consistency proof is proof by
-logical relation. In Section~\ref{sec:logrelstlc}, we review the
-technique in the context of the simply typed lambda calculus. In
+logical relation. In
 Section~\ref{sec:spec}, we present the dependent type theory of
 interest. In Section~\ref{sec:logreldep}, we give the definition
 of the logical relation for the dependent type theory. Rather than
@@ -224,20 +223,6 @@ techniques we adopt to make the mechanization for tractable.
 Finally, in Section~\ref{sec:relatedwork}, we give a short survey of
 existing literature related to logical consistency about dependent
 type theory.
-
-\section{Review of Proof by Logical Relation}
-\label{sec:logrelstlc}
-In this section, we give a quick review of the consistency proof of the
-simply typed lambda calculus augmented with the empty type through
-proof by logical relation.
-
-We give the full specification of the simply typed calculus in
-Figure~\ref{fig:stlcsyntax},\ref{fig:stlctyping},\ref{fig:stlcdynamics}
-without any further explanation since it is standard.
-
-The goal here is to show that the empty type cannot be
-inhabited. A naive attempt at proof by structural induction
-
 
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
@@ -766,11 +751,21 @@ case-by-case through a series of lemmas.
   A B : Set i]]$.
 \end{lemma}
 \begin{proof}
-  Suppose $[[rho |= G]]$. Applying
-% Our goal is to show that there exists some
-%   $[[S]]$ such that $[[InterpR i Pi A B S ]]$.
-%   From the premise $[[G |= A : Set i]]$, we know that there exists
-%   some $[[S0]]$ such that
+  Applying Lemma~\ref{lemma:setinv} to the
+  conclusion, it now suffices to show that given $[[rho |= G]]$, there
+  exists some $[[S]]$ such that $[[InterpR i Pi A B S]]$.
+  From Lemma~\ref{lemma:setinv} and $[[G |= A : Set i]]$, we know that
+  there exists some set $[[S0]]$ such that $[[InterpR i A S0]]$.
+  Let $[[F]]$ be the following relation:
+  \[ (a, S) \in [[F]] \iff [[InterpR i B {rho .: a} S]] \]
+  By Lemma~\ref{lemma:logreldeter}, $[[F]]$ is a partial function with
+  the signature $[[STm -> PowerSet STm]]$.
+
+
+
+We
+  instantiate $[[S0]]$ with the set $\{ b \mid \forall [[ a in S0]],
+  \forall [[S1]], [[InterpR i B {a} S1]] \implies [[b a in S1]] \}$.
 \end{proof}
 
 \section{Mechanization}
