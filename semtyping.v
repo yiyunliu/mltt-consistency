@@ -185,6 +185,14 @@ Proof.
   - hauto l:on use:InterpExt_preservation.
 Qed.
 
+Lemma InterpExt_Fun' n I A B PA  :
+  InterpExt n I A PA ->
+  (forall a, PA a -> exists PB, InterpExt n I (subst_tm (a..) B) PB) ->
+  InterpExt n I (tPi A B) (ProdSpace PA (fun a => InterpExt n I (subst_tm (a..) B))).
+Proof.
+  move => h0 h1. apply InterpExt_Fun =>//.
+Qed.
+
 Lemma InterpUnivN_deterministic n A PA PB :
   InterpUnivN n A PA ->
   InterpUnivN n A PB ->
@@ -253,6 +261,14 @@ Qed.
 
 #[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
 
+Lemma InterpUnivN_Fun n A B PA :
+  InterpUnivN n A PA ->
+  (forall a, PA a -> exists PB, InterpUnivN n (subst_tm (a..) B) PB) ->
+  InterpUnivN n (tPi A B) (ProdSpace PA (fun a => InterpUnivN n (subst_tm (a..) B))).
+Proof.
+  hauto l:on use:InterpExt_Fun' rew:db:InterpUniv.
+Qed.
+
 Lemma InterpUnivN_cumulative n A PA :
   InterpUnivN n A PA -> forall m, n < m ->
   InterpUnivN m A PA.
@@ -275,6 +291,29 @@ Proof.
     symmetry.
     hauto l:on use:InterpUnivN_cumulative, InterpUnivN_deterministic.
 Qed.
+
+Lemma InterpUnivN_Fun_inv' n A B P  (h : InterpUnivN n (tPi A B) P) :
+  exists PA, InterpUnivN n A PA /\
+       (forall a, PA a -> exists PB, InterpUnivN n (subst_tm (a..) B) PB) /\
+       P = (fun b => forall a, PA a -> exists m PB, InterpUnivN m (subst_tm (a..) B) PB /\ PB (tApp b a)).
+Proof.
+  move : h.
+  simp InterpUniv.
+  move /InterpExt_Fun_inv.
+  intros (PA & PF & hPA & hPF & hPF0 & ?); subst.
+  exists PA. (repeat split) => //.
+  - hauto lq:on.
+  - fext => b a. apply propositional_extensionality.
+    split.
+    + hauto lq:on rew:db:InterpUniv.
+    + move /[swap] => PB0 /[apply].
+      case => m [PB [hPB ?]].
+      move /hPF0.
+      rewrite -InterpUnivN_nolt => ?.
+      suff : PB = PB0 by congruence.
+      hauto l:on use:InterpUnivN_deterministic'.
+Qed.
+
 
 Lemma InterpExt_back_clos n (I : nat -> tm -> (tm -> Prop) -> Prop) A PA
   (hI : forall m, m < n -> forall a b, Par a b -> forall PA, I m b PA -> I m a PA ):

@@ -92,57 +92,33 @@ Proof.
     apply SemWt_Univ.
     move => γ hγ.
     move /(_ γ hγ) : h0; intros (PA & hPA).
-    exists (ProdSpace PA (fun a PB => InterpUnivN i (subst_tm (a .: γ) B) PB)).
-    simp InterpUniv.
-    simpl.
-    apply InterpExt_Fun.
-    + simp InterpUniv in hPA.
-    + move => a ha.
-      case /(_ _ ltac:(qauto use:γ_ok_cons)) : h1 => PB hPB.
-      hauto lq:on rew:db:InterpUniv.
-    + move => a PB ha. by asimpl.
-  - move => Γ A a B i _ /SemWt_Univ hB _ ha.
-    move => γ hγ.
-    case /(_ γ hγ) : hB => PPi.
-    simp InterpUniv => /=.
-    move /InterpExt_Fun_inv. intros (PA & PF & hPA & hTot & hPF & ?); subst.
-    exists i, (ProdSpace PA (fun a PB => InterpUnivN i (subst_tm (a .: γ) B) PB)).
-    split.
-    + simpl; simp InterpUniv.
-      apply InterpExt_Fun; first by [].
-      * move => a0 ha0.
-        case /(_ a0 ha0) : hTot => PB hPB.
-        move /(_ a0 PB hPB) in hPF.
-        exists PB.
-        by asimpl in hPF.
-      * move => *.
-        by asimpl.
-    + rewrite /ProdSpace => b PB hb hPB.
-      have ? : γ_ok (A :: Γ) (b .: γ) by apply : γ_ok_cons; eauto; simp InterpUniv.
-      move /(_ (b .: γ) ltac:(done)) : ha.
-      intros (j & PB0 & hPB0 & ha).
-      have ? : PB0 = PB by hauto l:on use:InterpUnivN_deterministic'. subst.
-      rewrite -InterpUnivN_nolt in hPF.
-      apply : InterpUnivN_back_clos; eauto.
-      apply P_AppAbs_cbn; by asimpl.
+    eexists => /=.
+    apply InterpUnivN_Fun; eauto.
+    move => *; asimpl. hauto l:on use:γ_ok_cons.
+  - move => Γ A b B i _ /SemWt_Univ hB _ hb γ hγ.
+    case /(_ γ hγ) : hB => /= PPi hPPi.
+    exists i, PPi; split => //.
+    move /InterpUnivN_Fun_inv' : hPPi.
+    intros (PA & hPA & _ & ? ); subst.
+    move => a ha.
+    have : γ_ok (A :: Γ) (a .: γ) by hauto l:on use:γ_ok_cons.
+    rewrite /SemWt in hb.
+    move /hb.
+    intros (m & PB0 & hPB0 & hPB0').
+    exists m, PB0.
+    split => //. by asimpl.
+    apply : InterpUnivN_back_clos; eauto.
+    apply P_AppAbs_cbn; by asimpl.
   - move => Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
     move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
     move /(_ γ hγ) : ihb; intros (j & PA & hPA & hb).
     simpl in hPi.
-    rewrite InterpUnivN_nolt in hPi.
-    move /InterpExt_Fun_inv : hPi;
-      intros (PA0 & PF & hPA0 & hPFTot & hPF & ?); subst.
-    rewrite -InterpUnivN_nolt in hPA0.
-    have ? : PA0 = PA by eauto using InterpUnivN_deterministic'.
-    subst.
-    have hPA0b : PA (subst_tm γ b) by sfirstorder.
-    move /(_ _ hPA0b) : hPFTot; intros (PB & hPB).
-    have hPB' := hPF _ PB hPB.
-    rewrite -InterpUnivN_nolt in hPB'.
-    rewrite /ProdSpace in hf.
-    asimpl in *.
-    hauto lq:on.
+    move /InterpUnivN_Fun_inv' : hPi.
+    intros (PA0 & hPA0 & h0 & ?). subst.
+    have ? : PA0 = PA by eauto using InterpUnivN_deterministic'. subst.
+    move /hf : (hb). intros (m & PB & h).
+    move : h. asimpl. hauto l:on.
   - move => Γ a A B i _ hA _ /SemWt_Univ hB [C [? ?]] γ hγ.
     case : (hA γ hγ) => j [PA [hPA hPAa]].
     case : (hB γ hγ) => PB hPB.
