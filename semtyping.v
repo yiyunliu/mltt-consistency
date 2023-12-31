@@ -282,8 +282,7 @@ Lemma InterpUnivN_deterministic' n m A PA PB :
   PA = PB.
 Proof.
   move => h0 h1.
-  move : (Coq.Arith.Compare_dec.lt_eq_lt_dec m n).
-  case; first case.
+  case : (Coq.Arith.Compare_dec.lt_eq_lt_dec m n); first case.
   - hauto l:on use:InterpUnivN_cumulative, InterpUnivN_deterministic.
   - move => *; subst.
     sfirstorder use:InterpUnivN_deterministic.

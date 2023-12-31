@@ -758,14 +758,13 @@ case-by-case through a series of lemmas.
   there exists some set $[[S0]]$ such that $[[InterpR i A S0]]$.
   Let $[[F]]$ be the following relation:
   \[ (a, S) \in [[F]] \iff [[InterpR i B {rho .: a} S]] \]
-  By Lemma~\ref{lemma:logreldeter}, $[[F]]$ is a partial function with
-  the signature $[[STm -> PowerSet STm]]$.
-
-
-
-We
-  instantiate $[[S0]]$ with the set $\{ b \mid \forall [[ a in S0]],
-  \forall [[S1]], [[InterpR i B {a} S1]] \implies [[b a in S1]] \}$.
+  By Lemma~\ref{lemma:logreldeter}, $[[F]]$ is a partial
+function. From $[[G ++ A |= B : Set i]]$, we know that there must
+exists $[[S]]$ such that $[[InterpR i B {rho .: a} S]]$ for every $[[a
+in S0]]$. As a result, $[[F]]$ is defined on every element of $[[S0]]$.
+We can now instantiate  $[[S]]$ with the set $[[ { b | forall a, (# a
+  in S0 implies b a in F a #) }]]$. The goal $[[InterpR i Pi A B S]]$
+ immediately follows from  \rref{I-Pi} and the definition of $[[F]]$.
 \end{proof}
 
 \section{Mechanization}
