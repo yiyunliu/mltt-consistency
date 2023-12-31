@@ -34,6 +34,7 @@ rho {{ tex \rho }} :: '' ::= {{ com substitutions }}
   | emptyS     :: :: emptyS
   | id        :: :: id
   | rho .: A  :: :: cons
+    {{ tex [[rho]],[[A]] }}
   | [ A ]         :: :: one
 
 tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}

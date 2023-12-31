@@ -778,6 +778,23 @@ case-by-case through a series of lemmas.
   ]]$ for $[[S0]]$ and it's trivial to verify the conditions hold.
 \end{proof}
 
+The semantic context well-formedness judgment ($[[|= G]]$), unlike its syntactic
+counterpart $[[|- G]]$, is defined through a for all quantified statement rather
+than inductively over the context. It is easy to recover the same
+structural rules:
+\begin{lemma}[TODO]
+
+\end{lemma}
+
+Likewise, the semantic well-formendness judgment for substitutions
+satisfies similar structural rules.
+\begin{lemma}[Well-formed $[[rho]]$ cons]
+  If $[[InterpR i A S]]$, $[[a in S]]$, and $[[rho |= G]]$, then
+  $[[rho .: a |= G ++ A]]$.
+\end{lemma}
+
+
+
 \begin{lemma}[ST-Var]
   If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= i : up S i G i]]$.
 \end{lemma}
@@ -799,15 +816,9 @@ case-by-case through a series of lemmas.
   exists some $[[S]]$ such that $[[InterpR i Pi A B S]]$.
   From Lemma~\ref{lemma:setinv} and $[[G |= A : Set i]]$, we know that
   there exists some set $[[S0]]$ such that $[[InterpR i A S0]]$.
-  Let $[[F]]$ be the following relation:
-  \[ (a, S) \in [[F]] \iff [[InterpR i B {rho .: a} S]] \]
-  By Lemma~\ref{lemma:logreldeter}, $[[F]]$ is a partial
-function. From $[[G ++ A |= B : Set i]]$, we know that there must
+From $[[G ++ A |= B : Set i]]$, we know that there must
 exists $[[S]]$ such that $[[InterpR i B {rho .: a} S]]$ for every $[[a
-in S0]]$. As a result, $[[F]]$ is defined on every element of $[[S0]]$.
-We can now instantiate  $[[S]]$ with the set $[[ { b | forall a, (# a
-  in S0 implies b a in F a #) }]]$. The goal $[[InterpR i Pi A B S]]$
- immediately follows from  \rref{I-Pi} and the definition of $[[F]]$.
+in S0]]$. The conclusion immediately follows from Lemma~\ref{lemma:piintroalt}.
 \end{proof}
 
 \section{Mechanization}
