@@ -21,6 +21,14 @@ Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -
   InterpExt n Interp A0 PA ->
   InterpExt n Interp A PA.
 
+Lemma InterpExt_Fun_nopf n I A B PA  :
+  InterpExt n I A PA ->
+  (forall a, PA a -> exists PB, InterpExt n I (subst_tm (a..) B) PB) ->
+  InterpExt n I (tPi A B) (ProdSpace PA (fun a => InterpExt n I (subst_tm (a..) B))).
+Proof.
+  move => h0 h1. apply InterpExt_Fun =>//.
+Qed.
+
 Lemma InterpExt_Eq' n I PA a b A :
   PA = (fun p => Pars p tRefl /\ Coherent a b) ->
   InterpExt n I (tEq a b A) PA.
@@ -202,14 +210,6 @@ Proof.
     + sfirstorder.
 Qed.
 
-Lemma InterpExt_Fun' n I A B PA  :
-  InterpExt n I A PA ->
-  (forall a, PA a -> exists PB, InterpExt n I (subst_tm (a..) B) PB) ->
-  InterpExt n I (tPi A B) (ProdSpace PA (fun a => InterpExt n I (subst_tm (a..) B))).
-Proof.
-  move => h0 h1. apply InterpExt_Fun =>//.
-Qed.
-
 Lemma InterpUnivN_deterministic n A PA PB :
   InterpUnivN n A PA ->
   InterpUnivN n A PB ->
@@ -283,7 +283,7 @@ Lemma InterpUnivN_Fun n A B PA :
   (forall a, PA a -> exists PB, InterpUnivN n (subst_tm (a..) B) PB) ->
   InterpUnivN n (tPi A B) (ProdSpace PA (fun a => InterpUnivN n (subst_tm (a..) B))).
 Proof.
-  hauto l:on use:InterpExt_Fun' rew:db:InterpUniv.
+  hauto l:on use:InterpExt_Fun_nopf rew:db:InterpUniv.
 Qed.
 
 Lemma InterpUnivN_Fun_inv_nopf n A B P  (h : InterpUnivN n (tPi A B) P) :
@@ -322,44 +322,6 @@ Lemma InterpUnivN_deterministic' n m  A PA PB :
   InterpUnivN m A PB ->
   PA = PB.
 Proof. hauto lq:on rew:off use:InterpExt_deterministic' rew:db:InterpUniv. Qed.
-
-Lemma InterpExt_Fun_inv' n I A B P  (h : InterpExt n I (tPi A B) P) :
-  (exists PA, InterpExt n I A PA) /\
-    (forall m PA, InterpExt m I A PA -> forall a, PA a -> exists PB, InterpExt n I (subst_tm (a..) B) PB) /\
-    P = (fun b => exists m0 PA, InterpExt m0 I A PA /\ forall a, PA a -> exists m1 PB, InterpExt m1 I (subst_tm (a..) B) PB /\ PB (tApp b a)).
-Proof.
-  move : h.
-  move /InterpExt_Fun_inv.
-  intros (PA & PF & hPA & hPF & hPF0 & ?); subst.
-  repeat split.
-  - exists PA => //.
-  - move => m PA0 ?.
-    have ? : PA = PA0 by eauto using InterpExt_deterministic'. hauto lq:on.
-  - fext => b. apply propositional_extensionality.
-    split.
-    + hauto lq:on unfold:ProdSpace.
-    + intros (m & PA0 & (hPA0 & h)).
-      rewrite /ProdSpace => a PB /[dup].
-      have ? : PA = PA0 by eauto using InterpExt_deterministic'. subst.
-      move  : h. move/[apply].
-      intros (m0 & PB0 & h). move => *.
-      have : PB = PB0 by hauto l:on use:InterpExt_deterministic'. hauto lq:on.
-Qed.
-
-Lemma InterpUnivN_Fun_inv n A B P  (h : InterpUnivN n (tPi A B) P) :
-  (exists PA, InterpUnivN n A PA) /\
-    (forall m PA, InterpUnivN m A PA -> forall a, PA a -> exists PB, InterpUnivN n (subst_tm (a..) B) PB) /\
-    P = (fun b => exists m0 PA, InterpUnivN m0 A PA /\ forall a, PA a -> exists m1 PB, InterpUnivN m1 (subst_tm (a..) B) PB /\ PB (tApp b a)).
-Proof.
-  move : h.
-  simp InterpUniv => /InterpExt_Fun_inv' h.
-  repeat split.
-  - hauto lq:on rew:db:InterpUniv.
-  - hauto lq:on rew:db:InterpUniv.
-  - move : h; intros (_  & _ & ?). subst.
-    fext => b. apply propositional_extensionality.
-    hauto lq:on rew:db:InterpUniv.
-Qed.
 
 Lemma InterpExt_back_clos n (I : nat -> tm -> (tm -> Prop) -> Prop) A PA
   (hI : forall m, m < n -> forall a b, Par a b -> forall PA, I m b PA -> I m a PA ):

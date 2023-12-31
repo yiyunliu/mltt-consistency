@@ -96,14 +96,14 @@ Proof.
   - move => Γ A b B i _ /SemWt_Univ hB _ hb γ hγ.
     case /(_ γ hγ) : hB => /= PPi hPPi.
     exists i, PPi. split => //.
-    move /InterpUnivN_Fun_inv : hPPi.
-    intros ((PA & hPA) & h & ?). subst.
-    exists i, PA. split => // a ha.
-    rewrite /SemWt in hb.
+    move /InterpUnivN_Fun_inv_nopf : hPPi.
+    intros (PA & hPA & hTot & ?). subst.
+    rewrite /ProdSpace.
+    move => a PB ha. asimpl => hPB.
     have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
     move /hb.
     intros (m & PB0 & hPB0 & hPB0').
-    exists m, PB0. split; first by asimpl.
+    replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
     qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
   - move => Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
