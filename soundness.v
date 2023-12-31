@@ -16,9 +16,7 @@ Proof.
     asimpl in hPA0.
     suff : PA = PA0 by congruence.
     hauto l:on use:InterpUnivN_deterministic'.
-  - asimpl.
-    apply h2.
-    lia.
+  - asimpl. hauto lq:on unfold:γ_ok solve+:lia.
 Qed.
 
 Lemma γ_ok_renaming Γ γ :
@@ -33,7 +31,7 @@ Proof.
     (subst_tm γ (ren_tm ξ (dep_ith Γ i))); last by asimpl.
   rewrite /good_renaming in hscope.
   case /(_ i hi) : hscope => ? h0.
-  rewrite -h0; auto.
+  rewrite -h0 => //.
   by apply h1.
 Qed.
 
@@ -97,28 +95,26 @@ Proof.
     move => *; asimpl. eauto using γ_ok_cons.
   - move => Γ A b B i _ /SemWt_Univ hB _ hb γ hγ.
     case /(_ γ hγ) : hB => /= PPi hPPi.
-    exists i, PPi; split => //.
-    move /InterpUnivN_Fun_inv' : hPPi.
-    intros (PA & hPA & _ & ? ); subst.
-    move => a ha.
-    have : γ_ok (A :: Γ) (a .: γ) by hauto l:on use:γ_ok_cons.
+    exists i, PPi. split => //.
+    move /InterpUnivN_Fun_inv : hPPi.
+    intros ((PA & hPA) & h & ?). subst.
+    exists i, PA. split => // a ha.
     rewrite /SemWt in hb.
+    have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
     move /hb.
     intros (m & PB0 & hPB0 & hPB0').
-    exists m, PB0.
-    split => //. by asimpl.
-    apply : InterpUnivN_back_clos; eauto.
-    apply P_AppAbs_cbn; by asimpl.
+    exists m, PB0. split; first by asimpl.
+    qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
   - move => Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
     move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
     move /(_ γ hγ) : ihb; intros (j & PA & hPA & hb).
     simpl in hPi.
-    move /InterpUnivN_Fun_inv' : hPi.
-    intros (PA0 & hPA0 & h0 & ?). subst.
+    move /InterpUnivN_Fun_inv_nopf : hPi. intros (PA0 & hPA0 & hTot & ?). subst.
     have ? : PA0 = PA by eauto using InterpUnivN_deterministic'. subst.
-    move /hf : (hb). intros (m & PB & h).
-    move : h. asimpl. hauto l:on.
+    move  : hf (hb). move/[apply].
+    move : hTot hb. move/[apply].
+    asimpl. hauto lq:on.
   - move => Γ a A B i _ hA _ /SemWt_Univ hB [C [? ?]] γ hγ.
     case : (hA γ hγ) => j [PA [hPA hPAa]].
     case : (hB γ hγ) => PB hPB.
