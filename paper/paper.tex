@@ -624,6 +624,49 @@ Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
   \end{description}
 \end{proof}
 
+Lemma~\ref{lemma:logreldeter} enables us to derive the following
+alternative introduction and inversion principles for \rref{I-Pi}.
+\begin{lemma}[Pi Intro Alt]
+  \label{lemma:piintroalt}
+  Suppose the following two statements hold:
+  \begin{itemize}
+  \item $[[Interp I i A S]]$
+  \item $[[forall a, a in S implies (# exists S0 , Interp I i B {a} S0 #)]]$
+  \end{itemize}
+  Then we have $[[Interp I i Pi A B { b | forall a, (# a in S , forall
+    S0, (# Interp I i B {a} S0,  b a in F a #) #) }]]$
+\end{lemma}
+\begin{proof}
+  Let $[[F]]$ be the relation defined as follows:
+  \[ (a,S) \in [[F]] \iff [[Interp I i B {a} S]] \]
+  By the second bullet from the premise and
+  Lemma~\ref{lemma:logreldeter}, $[[F]]$ is a function that is total
+  on the set $[[S]]$. The conclusion then trivially follows from
+  \rref{I-Pi}.
+\end{proof}
+
+\begin{lemma}[Pi Inv Alt]
+  \label{lemma:piinvalt}
+  Suppose $[[Interp I i Pi A B S]]$, then there exists some $[[S0]]$
+  such that the following constraints hold:
+  \begin{itemize}
+  \item $[[Interp I i A S0]]$
+  \item $[[forall a, (# a in S0 implies (# exists S1 , Interp I i B {a}
+    S1 #) #)]]$
+  \item $[[S = { b | forall a, (# a in S0 , forall
+    S1, (# Interp I i B {a} S1,  b a in F a #) #) }]]$
+  \end{itemize}
+\end{lemma}
+\begin{proof}
+  Immedaite from Lemmas~\ref{lemma:interpinv} and \ref{lemma:logreldeter}.
+\end{proof}
+
+% The combination of Lemmas~\ref{lemma:piintroalt} and
+% \ref{lemma:piinvalt} reveals what we truly want to capture with
+% \rref{I-Pi}. A function type is semantically well-defined if its input
+% type is well-defined, and its output type is defined for each valid
+% inahbitant of its input type.
+
 The next lemma shows that our logical relation satisfies
 cumulativity. That is, if a type has an interpretation at a lower
 universe level, then we can obtain the same interpretation at a higher

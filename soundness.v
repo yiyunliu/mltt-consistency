@@ -115,19 +115,10 @@ Proof.
     move  : hf (hb). move/[apply].
     move : hTot hb. move/[apply].
     asimpl. hauto lq:on.
-  - move => Γ a A B i _ hA _ /SemWt_Univ hB [C [? ?]] γ hγ.
-    case : (hA γ hγ) => j [PA [hPA hPAa]].
-    case : (hB γ hγ) => PB hPB.
-    simpl in hPB.
-    exists i, PA.
-    split; auto.
-    have [*] : Pars (subst_tm γ A) (subst_tm γ C) /\
-                 Pars (subst_tm γ B) (subst_tm γ C)
-      by sfirstorder use:par_subst_star.
-    have ? :InterpUnivN i (subst_tm γ C) PB by sfirstorder use:InterpUnivN_preservation_star.
-    have ? :InterpUnivN i (subst_tm γ A) PB by sfirstorder use:InterpUnivN_back_preservation_star.
-    suff : PA = PB by congruence.
-    eauto using InterpUnivN_deterministic'.
+  - move => Γ a A B i _ hA _ /SemWt_Univ hB ? γ hγ.
+    have ? : Coherent (subst_tm γ A) (subst_tm γ B)
+      by eauto using Coherent_subst_star.
+    qauto l:on use:InterpUnivN_Coherent unfold:SemWt.
   - hauto l:on.
   - hauto l:on.
   - rewrite /SemWt => Γ a b c A _ ha _ hb _ hc γ hγ.

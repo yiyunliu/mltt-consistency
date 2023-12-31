@@ -166,6 +166,8 @@ formula :: 'formula_' ::=
     {{ tex [[formula1]]\implies [[formula2]] }}
   | forall a , formula        ::   :: forallTm
     {{ tex \forall [[a]], [[formula]] }}
+  | forall S , formula        ::   :: forallSet
+    {{ tex \forall [[S]], [[formula]] }}
   | exists S , formula    ::   :: existsSet
     {{ tex \exists [[S]], [[formula]] }}
   | (# formula  #)            ::   :: HParen
