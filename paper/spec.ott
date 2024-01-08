@@ -4,7 +4,7 @@ var, x, y :: '' ::= {{ com variables }}
 
 nat, i, j, n :: '' ::= {{ com natural numbers }}
   | 0 :: :: zero
-  | S i :: :: succ {{ tex 1 + [[i]] }}
+  | Suc i :: :: succ {{ tex 1 + [[i]] }}
   | ( i ) :: S :: Paren
   | | G | :: S :: Length
   | (# i #) :: S :: SecretParen
@@ -29,12 +29,16 @@ set, S, F, I :: '' ::= {{ com sets }}
     {{ tex [[S]] }}
   | { i | formula  } :: :: comprehensionNat
     {{ tex \{ [[i]] \mid [[formula]]  \} }}
+  | SNat :: :: SetofNats
+    {{ tex \mathbb{N} }}
 
 rho {{ tex \rho }} :: '' ::= {{ com substitutions }}
   | emptyS     :: :: emptyS
   | id        :: :: id
   | rho .: A  :: :: cons
     {{ tex [[rho]],[[A]] }}
+  | up rho    :: :: up
+    {{ tex \Uparrow [[rho]]}}
   | [ A ]         :: :: one
 
 tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
@@ -331,7 +335,7 @@ G |-  Set i : Set j
 |- G
 i < | G |
 --------------------------------------------- :: Var
-G |- i : up S i G i
+G |- i : up Suc i G i
 
 %% functions
 

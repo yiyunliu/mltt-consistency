@@ -199,27 +199,9 @@ typing judgment for the set of lambda terms.
 In Section~\ref{sec:logrelproof}, we prove the fundamental lemma,
 which states that syntactic typing implies semantic typing. Once the
 fundamental lemma is established, logical consistency follows as a
-trivial corollary.
-
-The downside of a pen and paper proof is that the validity of the
-definitions themselves can be dubious at times. When working with a
-dependent type theory that has a universe hierarchy, an intuitive
-understanding of naive set theory no longer suffices as the size of
-sets matters. For example, the partial function representing the
-interpretation of types does not immediately correspond to a valid
-definition in a proof assistant. We cannot easily define it as a
-function as proof assistants such as Coq and Agda only accept total
-functions. We cannot naively encode the interpretation function as an
-inductive relation either since we violate the strict positivity
-constraint. A detailed discussion of how we work around such technical
-issues can be distracting. However, what can be equally distracting is
-following along a proof where even the validity of the statement is
-not trusted. As a result, we clearly mark the ``suspicious''
-definitions, and defer the discussion of these definitions
-until Section~\ref{sec:logrelmech}, where we give an overview of our
-short Coq mechanization proof and the various proof engineering
-techniques we adopt to make the mechanization for tractable.
-
+trivial corollary. In Section~\ref{sec:logrelmech}, we point out the
+specifics related to the Coq mechanization of the proof described in earlier
+section.
 Finally, in Section~\ref{sec:relatedwork}, we give a short survey of
 existing literature related to logical consistency about dependent
 type theory.
@@ -231,7 +213,7 @@ type theory.
 \[
 \begin{array}{lcll}
 \mathit{Natural\ numbers}\\
-[[i]],[[j]],[[n]] & ::= & [[0]]\ |\ [[S i]] & \mbox{zero, successor} \\ \\
+[[i]],[[j]],[[n]] & \in &  [[SNat]] &  \\ \\
 
 \mathit{Contexts}\\
 [[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
@@ -243,7 +225,9 @@ type theory.
             & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J t a b p]]
                   & \mbox{equality types, reflexivity proof, J eliminator} \\
             & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ |\  [[if a b0 b1]]
-                  & \mbox{boolean type, true, false, if}
+                  & \mbox{boolean type, true, false, if} \\ \\
+\mathit{Substitution}\\
+[[rho]] & \in & [[SNat -> STm]] &
 \end{array}
 \]
   \caption{Syntax of \lang}
@@ -324,6 +308,17 @@ sequence of lemmas.
 Lemma~\ref{lemma:parrefl} can be proven by structural induction over
 the term $[[a]]$. Lemmas~\ref{lemma:parsrefl} and \ref{lemma:coherencerefl}
 immediately follow as corollaries of Lemma~\ref{lemma:parrefl}.
+
+The reflexivity of parallel reduction enables us to embed rules from
+call-by-name semantics into parallel reduction, as the following lemma
+shows.
+\begin{lemma}[Par AbsCbn] For all $[[A]], [[a]],$ and $[[b]]$,
+  \label{lemma:parabscbn}
+  $[[(\ A a) b => b {a}]]$
+\end{lemma}
+\begin{proof}
+  Immediate from Lemma~\ref{lemma:parrefl} and \rref{P-AppAbs}.
+\end{proof}
 
 Symmetry of coherence immediately falls from its definition.
 \begin{lemma}[Coherence sym]
@@ -654,7 +649,7 @@ alternative introduction and inversion principles for \rref{I-Pi}.
   \item $[[forall a, (# a in S0 implies (# exists S1 , Interp I i B {a}
     S1 #) #)]]$
   \item $[[S = { b | forall a, (# a in S0 , forall
-    S1, (# Interp I i B {a} S1,  b a in F a #) #) }]]$
+    S1, (# Interp I i B {a} S1,  b a in S1 #) #) }]]$
   \end{itemize}
 \end{lemma}
 \begin{proof}
@@ -728,12 +723,12 @@ all closed under expansion.
   \begin{equation*}
     \begin{split}
       [[rho |= G]] &:= \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
-                     } [[InterpR j (up S i G i) { rho } S ]] \text{, then } [[rho i in S]] \\
+                     } [[InterpR j (up Suc i G i) { rho } S ]] \text{, then } [[rho i in S]] \\
       [[G |= a : A]] &:= \forall [[rho]], \text{ if }[[rho |=
                        G]]\text{ then there exists some } [[j]] \text{
                        and } [[S]] \text{ such that } [[InterpR j A
                        {rho} S]] \text{ and } [[a {rho} in S]] \\
-      [[|= G]] &:= \forall [[i < |G|]], \exists [[j]], [[drop S i G |= G i : Set j]]
+      [[|= G]] &:= \forall [[i < |G|]], \exists [[j]], [[drop Suc i G |= G i : Set j]]
     \end{split}
   \end{equation*}
   \caption{Semantic Typing for \lang}
@@ -752,9 +747,8 @@ definitions of well-formed substitution ($[[rho |= G]]$), semantic
 typing ($[[ G |= a : A]]$), and semantic context well-formedness
 ($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
 
-Next, we show that semantic typing is implied by syntactic typing
-case-by-case through a series of lemmas.
-
+The following lemma makes the statement $[[G |= A : Set i]]$ easier to
+work with.
 \begin{lemma}[Set Inv]
   \label{lemma:setinv}
   The following two statements are equivalent:
@@ -782,9 +776,16 @@ The semantic context well-formedness judgment ($[[|= G]]$), unlike its syntactic
 counterpart $[[|- G]]$, is defined through a for all quantified statement rather
 than inductively over the context. It is easy to recover the same
 structural rules:
-\begin{lemma}[TODO]
-
+\begin{lemma}[Semantic context well-formedness cons]
+  \label{lemma:semwffcons}
+  If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ A]]$.
 \end{lemma}
+\begin{proof}
+  By the definition of semantic context well-formedness, the goal is
+  to show that given $[[i < | G ++ A |]] = [[Suc |G|]]$, $[[drop Suc i
+  (G ++ A) |= (G ++ A) i : Set j]]$. The statement can be easily
+  proven by case analysis on whether $[[i]]$ is zero.
+\end{proof}
 
 Likewise, the semantic well-formendness judgment for substitutions
 satisfies similar structural rules.
@@ -792,14 +793,25 @@ satisfies similar structural rules.
   If $[[InterpR i A S]]$, $[[a in S]]$, and $[[rho |= G]]$, then
   $[[rho .: a |= G ++ A]]$.
 \end{lemma}
+\begin{proof}
+  Start by unfolding the definition of $[[rho .: a |= G ++ A]]$ and
+  performing a case analysis similar to the proof of
+  Lemma~\ref{lemma:semwffcons}.  The case where the number is $[[0]]$
+  requires Lemma~\ref{lemma:logreldeterhet} to finish the proof.
+\end{proof}
 
-
-
+Next, we show some non-trivial cases of the fundamental theorem as
+top-level lemmas and leave the remaining cases as exercises for the reader.
 \begin{lemma}[ST-Var]
-  If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= i : up S i G i]]$.
+  \label{lemma:stvar}
+  If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= i : up Suc i G i]]$.
 \end{lemma}
+\begin{proof}
+  TODO: formulate renaming
+\end{proof}
 
 \begin{lemma}[ST-Set]
+  \label{lemma:stset}
   If $[[i < j]]$, then $[[G |= Set i : Set j]]$.
 \end{lemma}
 \begin{proof}
@@ -807,18 +819,93 @@ satisfies similar structural rules.
 \end{proof}
 
 \begin{lemma}[ST-Pi]
+  \label{lemma:stpi}
   If $[[G |= A : Set i]]$ and $[[G ++ A |= B : Set i]]$, then $[[G |= Pi
   A B : Set i]]$.
 \end{lemma}
 \begin{proof}
   Applying Lemma~\ref{lemma:setinv} to the
   conclusion, it now suffices to show that given $[[rho |= G]]$, there
-  exists some $[[S]]$ such that $[[InterpR i Pi A B S]]$.
+  exists some $[[S]]$ such that $[[InterpR i Pi A{rho} B{up rho} S]]$.
   From Lemma~\ref{lemma:setinv} and $[[G |= A : Set i]]$, we know that
-  there exists some set $[[S0]]$ such that $[[InterpR i A S0]]$.
+  there exists some set $[[S0]]$ such that $[[InterpR i A {rho} S0]]$.
 From $[[G ++ A |= B : Set i]]$, we know that there must
 exists $[[S]]$ such that $[[InterpR i B {rho .: a} S]]$ for every $[[a
 in S0]]$. The conclusion immediately follows from Lemma~\ref{lemma:piintroalt}.
+\end{proof}
+
+\begin{lemma}[ST-Abs]
+  \label{lemma:stabs}
+  If $[[G |= Pi A B : Set i]]$ and $[[G ++ A |= b : B]]$, then $[[G |=
+  \ A b : Pi A B]]$.
+\end{lemma}
+\begin{proof}
+  By unfolding the definition of $[[G |= \ A b : Pi A B]]$, we need to
+  show that given some $[[rho |= G]]$, there exists some $[[i]]$ and
+  $[[S]]$ such that $[[InterpR i Pi A {rho} B {up rho} S]]$ and $[[\
+  A{rho} b{up rho} in S]]$.
+
+  By Lemma~\ref{lemma:setinv} and the premise $[[G |= Pi A B : Set
+  i]]$, there exists some set $[[S]]$ such that
+  $[[InterpR i Pi A {rho} B {up rho} S]]$. It now suffices to show that
+  $[[\A{rho} b{up rho} in S
+  ]]$. By Lemma~\ref{lemma:piinvalt}, there exists some $[[S0]]$ such
+  that all following conditions hold:
+  \begin{itemize}
+  \item $[[InterpR i A{rho} S0]]$
+  \item $[[forall a, (# a in S0 implies (# exists S1 , InterpR i B
+    {rho .: a}
+    S1 #) #)]]$
+  \item $[[S = { b | forall a, (# a in S0 , forall
+      S1, (# InterpR i B {rho .: a} S1,  b a in S1 #) #) }]]$
+  \end{itemize}
+  To show that $[[\A{rho} b{up rho} in S]]$, we need to prove
+  that given $[[a in S0]]$,
+  $[[Interp I i B {rho .: a} S1]]$, we have  $[[( \A{rho} b{up rho} )
+  a in S1]]$.
+  By Lemma~\ref{lemma:logrelbackclos}, the set $[[S1]]$ is closed
+  under expansion. By Lemma~\ref{lemma:parabscbn}, since $[[( \A{rho} b{up rho} )
+  a => b {up rho} {a}]] = [[b {rho .: a}]]$, it suffices to show that
+  $[[b {rho .: a} in S1]]$, which is immediate from $[[G ++ A |= b :
+  B]]$ and the fact that the logical relation is deterministic and
+  cumulative (Lemma~\ref{lemma:logreldeterhet}).
+\end{proof}
+
+\begin{lemma}[ST-App]
+  \label{lemma:stapp}
+  If $[[G |= b : Pi A B]]$ and $[[G |= a : A]]$, then $[[G |= b a : B {a}]]$.
+\end{lemma}
+\begin{proof}
+Suppose $[[rho |= G]]$. The goal is to show that there exists some
+$[[i]]$ and $[[S1]]$
+such that  $[[b {rho} a {rho} in S1 ]]$ and $[[InterpR i B {a} {rho}
+S1]]$, or equivalently, $[[InterpR i B {rho .: a {rho}} S1]]$ since
+$[[B {a}{rho}]] = [[B {rho .: a {rho}}]]$. By the premise $[[G |= b :
+Pi A B]]$, Lemma~\ref{lemma:setinv}, and Lemma~\ref{lemma:piinvalt},
+there exists some $[[i]]$ and $[[S0]]$ such that:
+  \begin{itemize}
+  \item $[[InterpR i A{rho} S0]]$
+  \item $[[forall a0, (# a0 in S0 implies (# exists S1 , InterpR i B
+    {rho .: a0}
+    S1 #) #)]]$
+  \item $[[forall a0, (# a0 in S0 , forall
+      S1, (# InterpR i B {rho .: a0} S1,  b {rho} a0 in S1 #) #)]]$
+  \end{itemize}
+  Instantiating the variable $[[a0]]$ from the last two bullets with
+  the term $[[a {rho}]]$, the conclusion immediately follows.
+\end{proof}
+
+\begin{theorem}[The Fundamental Theorem]
+  \label{theorem:soundness}
+  If $[[G |- a : A]]$, then $[[G |= a : A]]$.
+\end{theorem}
+\begin{proof}
+  Proof by structural induction over the derivation of $[[G |- a :
+  A]]$. Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp}
+  can be used to discharge their syntactic counterpart
+  (e.g. Lemma~\ref{lemma:stabs} for case \rref{T-Abs}). The remaining
+  cases not covered by the lemmas are similar to the ones already
+shown or simpler and therefore omitted from the text.
 \end{proof}
 
 \section{Mechanization}
