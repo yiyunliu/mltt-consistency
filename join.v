@@ -127,6 +127,11 @@ Proof. hauto lq:on rew:off inv:rtc use:pars_univ_inv. Qed.
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
+Lemma P_AppAbs_cbn (A a b b0 : tm) :
+  b0 = subst_tm (b..) a ->
+  Par (tApp (tAbs A a) b) b0.
+Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
+
 Lemma P_IfTrue_star a b c :
   Pars a tTrue ->
   Pars (tIf a b c) b.

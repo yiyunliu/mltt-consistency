@@ -32,7 +32,8 @@ set, S, F, I :: '' ::= {{ com sets }}
   | SNat :: :: SetofNats
     {{ tex \mathbb{N} }}
 
-rho {{ tex \rho }} :: '' ::= {{ com substitutions }}
+rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
+  | ( rho )      :: :: Parens
   | emptyS     :: :: emptyS
   | id        :: :: id
   | rho .: A  :: :: cons
@@ -69,7 +70,7 @@ tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
     {{ tex ([[a]]) }}
   | a ~ b : A :: :: Eq
     {{ com identity type }}
-    {{ tex [[a]] \; \sim \; [[b]] \in {[[A]]} }}
+    {{ tex [[a]] \sim [[b]] \in {[[A]]} }}
   | refl      :: :: Refl
     {{ com reflexivity proof }}
   | Void      :: :: Void
@@ -88,9 +89,9 @@ tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
   | up1 A :: S :: ShiftOne
     {{ tex \uparrow[[A]] }}
   | G i :: S :: lookup
-    {{ tex [[G]]_{[[i]]} }}
+    {{ tex [[G]]([[i]]) }}
   | rho i :: S :: lookuprho
-    {{ tex [[rho]]_{[[i]]} }}
+    {{ tex [[rho]]([[i]]) }}
   | A -> B :: M :: Arr
     {{ tex [[A]] \rightarrow [[B]] }}
 

@@ -63,11 +63,6 @@ Proof.
     + simpl. eauto.
 Qed.
 
-Lemma P_AppAbs_cbn (A a b b0 : tm) :
-  b0 = subst_tm (b..) a ->
-  Par (tApp (tAbs A a) b) b0.
-Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
-
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a A) /\
   (Wff Γ -> SemWff Γ).

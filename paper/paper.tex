@@ -48,6 +48,8 @@
 \documentclass[nonacm]{acmart}
 \usepackage{ottalt}
 \usepackage{xspace}
+\usepackage[para]{footmisc}
+\newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
 \newcommand{\lang}{$\lambda^H$\xspace}
 \inputott{rules}
 %%
@@ -196,9 +198,9 @@ that is, for each input, there should always be a unique
 output.
 From the interpretation function, we can define the semantic
 typing judgment for the set of lambda terms.
-In Section~\ref{sec:logrelproof}, we prove the fundamental lemma,
+In Section~\ref{sec:logrelproof}, we prove the fundamental theorem,
 which states that syntactic typing implies semantic typing. Once the
-fundamental lemma is established, logical consistency follows as a
+fundamental theorem is established, logical consistency follows as a
 trivial corollary. In Section~\ref{sec:logrelmech}, we point out the
 specifics related to the Coq mechanization of the proof described in earlier
 section.
@@ -226,12 +228,64 @@ type theory.
                   & \mbox{equality types, reflexivity proof, J eliminator} \\
             & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ |\  [[if a b0 b1]]
                   & \mbox{boolean type, true, false, if} \\ \\
+\mathit{Renaming}\\
+[[xi]] & \in & [[SNat -> SNat]] & \\ \\
 \mathit{Substitution}\\
 [[rho]] & \in & [[SNat -> STm]] &
 \end{array}
 \]
   \caption{Syntax of \lang}
   \label{fig:syntax}
+\end{figure}
+
+\begin{figure}[h]
+    \[
+      \begin{array}{lll}
+        \mathit{Curried\ Addition} \\
+        add(n) & := & m \mapsto n + m \\ \\
+        \mathit{Extension ([[xi]])} \\
+        [[(xi .: j) 0]]  & := & 0 \\
+        [[(xi .: j) Suc i]]  & := & [[xi j]] \\ \\
+
+        \mathit{Extension ([[rho]])} \\
+        [[(rho .: a) 0]]  & := & [[a]] \\
+        [[(rho .: a) Suc i]]  & := & [[rho i]] \\ \\
+
+        \mathit{Up ([[xi]])} \\
+        [[up xi]] & := & (add(1) \circ [[xi]]) , 0 \\ \\
+
+        \mathit{Renaming} \\
+        [[i {xi}]] & := & [[xi i]] \\
+        [[(Set i) {xi}]] & := & [[Set i]] \\
+        [[Void {xi}]] & := & [[Void]]\\
+        [[(Pi A B) {xi}]] & := & [[Pi A{xi} B{up xi}]] \\
+        [[(\ A a) {xi}]] & := & [[\ A {xi} (#a {up xi}#)]] \\
+        [[(a b) {xi}]] & := & [[a {xi} (# b {xi} #)]] \\
+        [[Bool {xi}]] & := & [[Bool]] \\
+        [[true {xi}]] & := & [[true]] \\
+        [[false {xi}]] & := & [[false]] \\
+        [[(if a b0 b1) {xi}]] & := & [[if a{xi} b0{xi} b1{xi}]] \\
+        [[(a ~ b : A) {xi}]] & := & [[ a{xi} ~ b{xi} : A{xi}]] \\
+        [[refl {xi}]] & := & [[refl]] \\
+        [[(J t a b p ) {xi}]] & := & [[J t {xi} a {xi} b {xi} p{xi}]] \\ \\
+
+        \mathit{Shift} \\
+        [[up n A]] & := & A \langle add(n) \rangle \\ \\
+
+        \mathit{Shift\ one} \\
+        [[up1 A]] & := & \uparrow^1 [[A]] \\ \\
+
+        \mathit{Lookup} \\
+        [[(G ++ A) 0]] & := &  [[A]] \\
+        [[(G ++ A) Suc i]] & := & [[G i]] \\ \\
+
+        \mathit{Drop} \\
+        [[drop 0 G]] & := & [[G]] \\
+        [[drop Suc i (#G ++ A#)]] & := & [[drop i G]] \\ \\
+      \end{array}
+    \]
+  \caption{Auxiliary Functions over Syntax}
+  \label{fig:auxdef}
 \end{figure}
 
 
@@ -256,7 +310,13 @@ dependent type theory whose logical consistency will be proven in
 Section~\ref{sec:logrelproof}. For concision, we refer to this system
 as \lang.
 
-The syntax of \lang can be found in Figure~\ref{fig:syntax}. As a
+The syntax of \lang can be found in Figure~\ref{fig:syntax}. We use
+the unscoped DeBruijn representation to leave less ambiguity for the
+formulation of the system and simplify the reasoning about binders.
+Figure~\ref{fig:auxdef} shows the auxiliary definitions over the term
+syntax, including renaming, substitution, and operations over
+the typing context or substitution.
+As a
 dependent type theory, terms and types are collapsed into the same
 syntactic category. Dependent functions take the form $[[Pi A B]]$ and
 we use the notation $[[A -> B]]$ when the output type $[[B]]$ is not
@@ -277,10 +337,7 @@ is $[[true]]$ or $[[false]]$.
 Figure~\ref{fig:par} shows the definition of the parallel reduction
 relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
 represent its transitive closure, which in turn allows us to define
-the coherence relation $[[a <=> b]]$. % The $*$ symbol is more commonly
-% used for the transitive and reflexive closure of a relation. However,
-% since we can show that parallel reduction is reflexive, the transitive
-% closure of parallel reduction must also be reflexive.
+the coherence relation $[[a <=> b]]$.
 We say that two terms $[[a]]$
 and $[[b]]$ are coherent if they can eventually reduce to some common
 term $[[c]]$ through parallel reduction. The symmetric notation of
@@ -290,7 +347,7 @@ rule. Now, we prove that coherence is indeed an equivalence relation.
 
 First, we show that coherence is reflexive through the following
 sequence of lemmas.
-\begin{lemma}[Par Refl]
+\begin{lemma}[Par Refl\footnote{\dotv{join.v}{Par\_refl}}]
   \label{lemma:parrefl}
   For all terms $[[a]]$, $[[a => a]]$.
 \end{lemma}
@@ -300,7 +357,7 @@ sequence of lemmas.
   For all terms $[[a]]$, $[[a =>+ a]]$.
 \end{lemma}
 
-\begin{lemma}[Coherence refl]
+\begin{lemma}[Coherence refl\footnote{\dotv{join.v}{Coherent\_reflexive}}]
   \label{lemma:coherencerefl}
   For all terms $[[a]]$, $[[a <=> a]]$.
 \end{lemma}
@@ -312,7 +369,7 @@ immediately follow as corollaries of Lemma~\ref{lemma:parrefl}.
 The reflexivity of parallel reduction enables us to embed rules from
 call-by-name semantics into parallel reduction, as the following lemma
 shows.
-\begin{lemma}[Par AbsCbn] For all $[[A]], [[a]],$ and $[[b]]$,
+\begin{lemma}[Par AbsCbn\footnote{\dotv{join.v}{P\_AppAbs\_cbn}}] For all $[[A]], [[a]],$ and $[[b]]$,
   \label{lemma:parabscbn}
   $[[(\ A a) b => b {a}]]$
 \end{lemma}
@@ -321,18 +378,18 @@ shows.
 \end{proof}
 
 Symmetry of coherence immediately falls from its definition.
-\begin{lemma}[Coherence sym]
+\begin{lemma}[Coherence sym\footnote{\dotv{join.v}{Coherent\_symmetric}}]
   \label{lemma:coherencesym}
   If $[[a <=> b]]$, then $[[b <=> a]]$.
 \end{lemma}
 
 Before we can prove transitivity, we need to show that parallel
 reduction satisfies the diamond property.
-\begin{lemma}[Par cong]
+\begin{lemma}[Par cong\footnote{\dotv{join.v}{par\_cong}}]
   \label{lemma:parcong}
   If $[[a0 => a1]]$ and $[[b0 => b1]]$, then $[[a0 { b0 } => a1 { b1 }]]$.
 \end{lemma}
-\begin{lemma}[Par diamond]
+\begin{lemma}[Par diamond\footnote{\dotv{join.v}{par\_confluent}}]
   \label{lemma:pardiamond}
   If $[[a => b0]]$ and $[[a => b1]]$, then there exists some term
   $[[c]]$ such that $[[b0 => c]]$ and $[[b1 => c]]$.
@@ -345,7 +402,7 @@ the use of Lemma~\ref{lemma:parcong}.
 
 From Lemma~\ref{lemma:parcong} and \ref{lemma:parrefl}, we recover the
 single substitution property as a simple corollary.
-\begin{corollary}[Par subst]
+\begin{corollary}[Par subst\footnote{\dotv{join.v}{par\_subst}}]
   \label{lemma:parsubst}
   If $[[a0 => a1]]$, then $[[a0 {b} => a1 {b}]]$ for arbitrary $[[b]]$.
 \end{corollary}
@@ -354,7 +411,7 @@ single substitution property as a simple corollary.
 A relation that satisfies the
 diamond property must also be confluent, meaning that its transitive
 and reflexive closure is confluent.
-\begin{lemma}[Par confluent]
+\begin{lemma}[Par confluent\footnote{\dotv{join.v}{pars\_confluent}}]
   \label{lemma:parconfluent}
   If $[[a =>+ b0]]$ and $[[a =>+ b1]]$, then there exists some term
   $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$.
@@ -365,7 +422,7 @@ it coincides with the transitive and reflexive closure of $[[a => b]]$ since $[[
 
 The transitivity of the coherence relation follows as a corollary of
 Lemma~\ref{lemma:parconfluent}.
-\begin{lemma}[Coherence trans]
+\begin{lemma}[Coherence trans\footnote{\dotv{join.v}{Coherent\_transitive}}]
   \label{lemma:coherencetrans}
   If $[[a0 <=> a1]]$ and $[[a1 <=> a2]]$, then $[[a0 <=> a2]]$.
 \end{lemma}
@@ -387,7 +444,8 @@ We note that a more conventional presentation of
 the definition of coherence. However, since full beta reduction
 doesn't satisfy the diamond property, one typically needs parallel
 reduction as an auxilliary definition to derive the confluence of full
-beta reduction. The formulation of \lang is slightly more economical.
+beta reduction. Our formulation of \lang through parallel reduction
+is slightly more economical.
 
 \section{Logical Relation}
 \label{sec:logreldep}
@@ -444,7 +502,7 @@ $[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
 A S]]$.
 
 For the rest of the section, we establish some important facts about
-the logical relation that will be useful for proving fundamental lemma
+the logical relation that will be useful for proving fundamental theorem
 in Section~\ref{sec:logrelproof}.
 
 The relation $[[Interp I i A S]]$ satisfies the following inversion
@@ -452,17 +510,17 @@ principles.
 \begin{lemma}[Inversion of the logical relation]
   \label{lemma:interpinv}\leavevmode
   \begin{enumerate}
-  \item If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
-  \item If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
-  \item If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
-  \item If $[[Interp I i Pi A B S0]]$, then there exists $[[S]],[[F]]$ such that:
+  \item If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Void\_inv}}
+  \item If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Bool\_inv}}
+  \item If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}}
+  \item If $[[Interp I i Pi A B S0]]$, then there exists $[[S]],[[F]]$ such that:\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}}
     \begin{itemize}
     \item $[[Interp I i A S ]]$
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
     \item $[[S0 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
-  \item If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
+  \item If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Univ\_inv}}
   \end{enumerate}
 \end{lemma}
 \begin{proof}
@@ -500,7 +558,7 @@ principles.
 \Rref{I-Red} bakes into the logical relation the backward preservation
 property. The following property shows that preservation holds in the
 usual forward direction too.
-\begin{lemma}[Preservation of the logical relation]
+\begin{lemma}[Preservation of the logical relation\footnote{\dotv{semtyping.v}{InterpExt\_preservation}}]
   \label{lemma:interppreservation}
   If $[[Interp I i A S]]$ and $[[A => B]]$, then $[[Interp I i B S]]$.
 \end{lemma}
@@ -560,12 +618,12 @@ usual forward direction too.
 From Lemma~\ref{lemma:interppreservation} and \rref{I-Red}, we can easily
 derive the following corollary that two coherent types have the same
 interpretation.
-\begin{corollary}[Logical Relation for Coherent Types]
+\begin{corollary}[Logical Relation for Coherent Types\footnote{\dotv{semtyping.v}{InterpUnivN\_Coherent}}]
   \label{lemma:logrelcoherence}
   If $[[Interp I i A S]]$ and $[[A <=> B]]$, then $[[Interp I i B S]]$.
 \end{corollary}
 Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
-\begin{lemma}[Logical relation is functional]
+\begin{lemma}[Logical relation is functional\footnote{\dotv{semtyping.v}{InterpExt\_deterministic}}]
   \label{lemma:logreldeter}
   If $[[Interp I i A S0]]$ and $[[Interp I i A S1]]$, then $[[S0 = S1]]$.
 \end{lemma}
@@ -621,7 +679,7 @@ Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
 
 Lemma~\ref{lemma:logreldeter} enables us to derive the following
 alternative introduction and inversion principles for \rref{I-Pi}.
-\begin{lemma}[Pi Intro Alt]
+\begin{lemma}[Pi Intro Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_nopf}}]
   \label{lemma:piintroalt}
   Suppose the following two statements hold:
   \begin{itemize}
@@ -640,7 +698,7 @@ alternative introduction and inversion principles for \rref{I-Pi}.
   \rref{I-Pi}.
 \end{proof}
 
-\begin{lemma}[Pi Inv Alt]
+\begin{lemma}[Pi Inv Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
   \label{lemma:piinvalt}
   Suppose $[[Interp I i Pi A B S]]$, then there exists some $[[S0]]$
   such that the following constraints hold:
@@ -666,7 +724,7 @@ The next lemma shows that our logical relation satisfies
 cumulativity. That is, if a type has an interpretation at a lower
 universe level, then we can obtain the same interpretation at a higher
 universe level.
-\begin{lemma}[Logical relation cumulativity]
+\begin{lemma}[Logical relation cumulativity\footnote{\dotv{semtyping.v}{InterpExt\_cumulative}}]
   \label{lemma:logrelcumulativity}
   If $[[Interp I i0 A S]]$ and $[[i0 < i1]]$, then $[[Interp I i1 A S]]$.
 \end{lemma}
@@ -678,7 +736,7 @@ Note that in the statement of Lemma~\ref{lemma:logrelcumulativity}, we
 implicitly assume that $[[I]]$ is defined on the set of natural
 numbers less than $[[i1]]$.
 
-\begin{corollary}[Logical relation is functional with different levels]
+\begin{corollary}[Logical relation is functional with different levels\footnote{\dotv{semtyping.v}{InterpExt\_deterministic'}}]
   \label{lemma:logreldeterhet}
   If $[[Interp I i0 A S0]]$ and $[[Interp I i1 A S1]]$, then $[[S0 = S1]]$.
 \end{corollary}
@@ -693,7 +751,7 @@ The final property we want to show is that the output set $[[S]]$ from
 the logical relation is closed under expansion. Unlike the previous
 lemmas, we need to constrain the function $[[I]]$ so its outputs are
 all closed under expansion.
-\begin{lemma}[Logical Relation Elements back preservation]
+\begin{lemma}[Logical Relation Elements back preservation\footnote{\dotv{semtyping.v}{InterpExt\_back\_clos}}]
   \label{lemma:logrelbackclos}
   If $[[Interp I i A S]]$ and $[[I]]$ satisfies the property that
   for all $[[i]]$, $[[I i]]$ is closed under expansion, then the set
@@ -708,7 +766,7 @@ all closed under expansion.
   follows from Lemma~\ref{lemma:parrefl} and \rref{P-App}.
 \end{proof}
 
-\begin{corollary}
+\begin{corollary}[Logical Relation Elements back preservation (rec)\footnote{\dotv{semtyping.v}{InterpUnivN\_back\_clos}}]
   \label{lemma:logrelNbackclos}
   If $[[InterpR i A S]]$, then $[[S]]$ is closed under expansion.
 \end{corollary}
@@ -749,7 +807,7 @@ typing ($[[ G |= a : A]]$), and semantic context well-formedness
 
 The following lemma makes the statement $[[G |= A : Set i]]$ easier to
 work with.
-\begin{lemma}[Set Inv]
+\begin{lemma}[Set Inv\footnote{\dotv{soundness.v}{SemWt\_Univ}}]
   \label{lemma:setinv}
   The following two statements are equivalent:
   \begin{itemize}
@@ -789,7 +847,7 @@ structural rules:
 
 Likewise, the semantic well-formendness judgment for substitutions
 satisfies similar structural rules.
-\begin{lemma}[Well-formed $[[rho]]$ cons]
+\begin{lemma}[Well-formed $[[rho]]$ cons\footnote{\dotv{soundness.v}{$\gamma$\_ok\_cons}}]
   If $[[InterpR i A S]]$, $[[a in S]]$, and $[[rho |= G]]$, then
   $[[rho .: a |= G ++ A]]$.
 \end{lemma}
@@ -895,21 +953,41 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
   the term $[[a {rho}]]$, the conclusion immediately follows.
 \end{proof}
 
-\begin{theorem}[The Fundamental Theorem]
+\begin{theorem}[The Fundamental Theorem\footnote{\dotv{soundness.v}{soundness}}]
   \label{theorem:soundness}
-  If $[[G |- a : A]]$, then $[[G |= a : A]]$.
+  \begin{itemize}
+  \item If $[[G |- a : A]]$, then $[[G |= a : A]]$.
+  \item If $[[|- G]]$, then $[[|= G]]$.
+  \end{itemize}
 \end{theorem}
 \begin{proof}
-  Proof by structural induction over the derivation of $[[G |- a :
-  A]]$. Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp}
+  Proof by mutual induction over the derivation of $[[G |- a :
+  A]]$ and $[[|- G]]$.   The cases related to context well-formedness immediately follows
+  from Lemma~\ref{lemma:semwffcons}.
+Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp}
   can be used to discharge their syntactic counterpart
   (e.g. Lemma~\ref{lemma:stabs} for case \rref{T-Abs}). The remaining
   cases not covered by the lemmas are similar to the ones already
-shown or simpler and therefore omitted from the text.
+  shown or simpler and therefore omitted from the text.
+
+\end{proof}
+
+\begin{corollary}[Logical Consistency]
+  \label{corollary:consistency}
+  The judgment $[[empty |- a : Void ]]$ is not derivable.
+\end{corollary}
+\begin{proof}
+  Immediate from Theorem~\ref{theorem:soundness} and the $[[Void]]$ case of Lemma~\ref{lemma:interpinv}.
 \end{proof}
 
 \section{Mechanization}
 \label{sec:logrelmech}
+The Coq mechanization follows an almost identical structure as the
+proofs presented in Section~\ref{sec:logrelproof}. The inductive
+definition of the logical relation in Figure~\ref{fig:logrel} requires
+the impredicativity of Coq's \texttt{Prop} sort since in \rref{I-Pi},
+the function $[[F]]$ can be later instantiated into the logical
+relation itself (e.g. in the proof of Lemma~\ref{lemma:piintroalt}).
 
 \section{Related Work}
 \label{sec:relatedwork}
