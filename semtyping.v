@@ -61,6 +61,18 @@ Qed.
 Lemma ne_step_eq (a : tm) : ne a -> forall b, Par a b -> a = b.
 Proof. sfirstorder use:nf_ne_step_eq b:on. Qed.
 
+Lemma preservation_wn (a : tm) : wn a -> forall b, Par a b -> wn b.
+Proof.
+  rewrite /wn. move => [v [hv]].
+  elim : a v / hv.
+  - move => v hv b *.
+    have ? : v = b by sfirstorder use:nf_ne_step_eq b:on. subst.
+    eauto using rtc_refl.
+  - move => a0 a1 a2 hr0 hr1 /[apply] h a1' hr'.
+    move : par_confluent hr0 hr'. repeat move/[apply].
+    hauto lq:on ctrs:rtc.
+Qed.
+
 Lemma ne_nf_renaming (a : tm) :
   forall (ξ : nat -> nat),
     (ne a <-> ne (ren_tm ξ a)) /\ (nf a <-> nf (ren_tm ξ a)).
@@ -92,6 +104,9 @@ Inductive InterpExt n (I : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Pro
   m < n ->
   InterpExt n I (tUniv m) (SUniv I m)
 | InterpExt_Eq a b A :
+  wn a ->
+  wn b ->
+  wn A ->
   InterpExt n I (tEq a b A) (SEq a b)
 | InterpExt_Step A A0 PA :
   Par A A0 ->
@@ -162,6 +177,9 @@ Proof.
 Qed.
 
 Lemma InterpExt_Eq' n I PA a b A :
+  wn a ->
+  wn b ->
+  wn A ->
   PA = SEq a b ->
   InterpExt n I (tEq a b A) PA.
 Proof. hauto lq:on use:InterpExt_Eq. Qed.
@@ -212,9 +230,10 @@ Proof.
     apply : ihPB; eauto.
     sfirstorder use:par_cong, Par_refl.
   - hauto lq:on inv:Par ctrs:InterpExt.
-  - move => a b A B.
+  - move => a b A ?  ? ? B.
     elim /Par_inv=>// h ? ? ? a0 b0 A0 ? ? ? [] *. subst.
-    apply InterpExt_Eq'.
+    apply InterpExt_Eq'; eauto using preservation_wn.
+    (* Should have one goal remaining *)
     rewrite /SEq.
     fext => p. do 2 f_equal.
     apply propositional_extensionality.
@@ -393,7 +412,7 @@ Proof.
     apply InterpExt_Univ' => //.
     rewrite /SUniv.
     case : Compare_dec.lt_dec => //.
-  - hauto l:on.
+  - hauto l:on ctrs:InterpExt.
   - hauto lq:on ctrs:InterpExt.
 Qed.
 
@@ -414,7 +433,7 @@ Proof.
     apply InterpExt_Univ' => //.
     rewrite /SUniv.
     case : Compare_dec.lt_dec => //.
-  - hauto l:on.
+  - hauto l:on ctrs:InterpExt.
   - hauto lq:on ctrs:InterpExt.
 Qed.
 
@@ -530,3 +549,99 @@ Lemma InterpUnivN_Univ_inv' i j P :
 Proof.
   hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv unfold:SUniv.
 Qed.
+
+Lemma InterpExt_WNe n I A : wne A -> InterpExt n I A wne.
+Proof.
+  rewrite /wne.
+  move => [B [h0]].
+  elim : A B / h0; eauto with iext.
+Qed.
+
+Lemma S_Eq a0 a1 b0 b1 A0 A1 :
+  Pars a0 a1 ->
+  Pars b0 b1 ->
+  Pars A0 A1 ->
+  Pars (tEq a0 b0 A0) (tEq a1 b1 A1).
+Proof.
+  move => h.
+  move : b0 b1 A0 A1.
+  elim : a0 a1 /h.
+  - admit.
+  - move => a0 a1 a2 ih b0 b1 A0 A1 A2 A3 hr0 hr1.
+    eapply rtc_l; eauto.
+    hauto lq:on ctrs:Par use:Par_refl.
+Admitted.
+
+Lemma wn_eq a b A : wn a -> wn b -> wn A -> wn (tEq a b A).
+Proof.
+  rewrite /wn.
+  move => [va [? ?]] [vb [? ?]] [vA [? ?]].
+  exists (tEq va vb vA).
+  split.
+  - by apply S_Eq.
+  - hauto lqb:on.
+Qed.
+
+Lemma wn_pi A B : wn A -> wn B -> wn (tPi A B).
+Admitted.
+
+Lemma wn_antirenaming a (ξ : nat -> nat) : wn (ren_tm ξ a) -> wn a.
+Proof.
+  rewrite /wn.
+  move => [v [rv nfv]].
+  move /Pars_antirenaming : rv => [b [? hb]]. subst.
+  sfirstorder use:ne_nf_renaming.
+Qed.
+
+Lemma InterpExt_wn_ty n I A PA
+  (h0 : forall m, m < n -> CR (SUniv I m))
+  (h : InterpExt n I A PA) :
+  wn A.
+Proof.
+  elim : A PA / h; auto with nfne.
+  - move => A B PA PF hPA wnA hTot hRes ih.
+    apply wn_pi; first by auto.
+    have hzero : PA (var_tm var_zero) by hauto q:on ctrs:rtc use:adequacy.
+    move : hTot (hzero); move/[apply]. move => [PB].
+    move /ih.
+    match goal with [|- wn ?Q -> _] => replace Q with (ren_tm (var_zero..) B) end.
+    eauto using wn_antirenaming.
+    substify. by asimpl.
+  - exact wn_eq.
+  - hauto lq:on ctrs:rtc.
+Qed.
+
+Lemma adequacyU n A PA
+  (h : InterpUnivN n A PA)  :
+  CR PA.
+Proof.
+  (* move : n A PA h. *)
+  (* (* move : h. *) *)
+  (* elim /Wf_nat.lt_wf_ind => n ih A PA. *)
+(*   (* simp InterpUniv => /adequacy. *) *)
+(*   (* apply. *) *)
+(*   (* rewrite /SUniv. *) *)
+(*   (* move => m hm. *) *)
+(*   (* rewrite /SUniv => m ?. *) *)
+(*   (* rewrite /CR. *) *)
+(*   (* split. *) *)
+(*   (* - move => B [PB ?]. *) *)
+
+(*   (* admit. *) *)
+(*   (* best use:InterpExt_WNe. *) *)
+
+  move : h.
+  simp InterpUniv.
+  move /adequacy.
+  apply.
+  rewrite /SUniv => m hm.
+  split.
+  - move => B [PB].
+    simp InterpUniv.
+    apply InterpExt_wn_ty.
+    rewrite /CR /SUniv.
+    admit.
+  - move => B wneB.
+    simp InterpUniv.
+    hauto lq:on use:InterpExt_WNe.
+Admitted.

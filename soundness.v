@@ -60,7 +60,7 @@ Proof.
     exists (S i). eexists.
     split.
     + simp InterpUniv. apply InterpExt_Univ. lia.
-    + simpl. eauto.
+    + rewrite /SUniv. simpl. eauto.
 Qed.
 
 Theorem soundness Γ :
@@ -124,12 +124,14 @@ Proof.
     subst.
     exists j, PB; split; auto.
     simpl.
-    case : ha' => v [hred hv].
-    case : v hred hv => // ha0 _.
-    + apply (InterpUnivN_back_clos_star j) with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
-      eauto using P_IfTrue_star.
-    + apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
-      eauto using P_IfFalse_star.
+    case : ha' => v [hred [hv|hv]].
+    + case : v hred hv => // ha0 _.
+      * apply (InterpUnivN_back_clos_star j) with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
+        eauto using P_IfTrue_star.
+      * apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
+        eauto using P_IfFalse_star.
+    (* New case for when the scrutinee is neutral *)
+    + match goal with [|- _ ?a ] => have ? : wne a by best use:adequacy end .
   - hauto l:on use:SemWt_Univ.
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
   - hauto l:on.

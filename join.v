@@ -191,6 +191,39 @@ Lemma par_renaming a b (ξ : fin -> fin) :
     apply : P_AppAbs'; eauto. by asimpl.
 Qed.
 
+Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
+  (h : Par (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Par a b.
+Proof.
+  move Ea : (ren_tm ξ a) h => a0 h.
+  move : a ξ Ea.
+  elim : a0 b0 / h.
+  - move => i [] ξ=>//.
+    eauto with par.
+  - move => i [] ξ=>//.
+    eauto with par.
+  - move => [] ξ=>//.
+    eauto with par.
+  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 [] =>// A0' B0' ξ [] *. subst.
+    move : ih0 (@eq_refl _ (ren_tm ξ A0')). move/[apply].
+    move : ih1 (@eq_refl _ (ren_tm (upRen_tm_tm ξ) B0')). move/[apply].
+    move => [B1' [? ?]]. subst.
+    move => [A1' [? ?]]. subst.
+    exists (tPi A1' B1').
+    eauto with par.
+Admitted.
+
+Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
+  (h : Pars (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Pars a b.
+Proof.
+  move E :  (ren_tm ξ a) h => a0 h.
+  move : a E.
+  elim : a0 b0 / h.
+  - hauto lq:on ctrs:rtc.
+  - move => a b c h0 h ih a0 ?. subst.
+    move /Par_antirenaming : h0.
+    hauto lq:on ctrs:rtc, eq.
+Qed.
+
 Lemma pars_renaming a b (ξ : fin -> fin) :
   Pars a b ->
   Pars (ren_tm ξ a) (ren_tm ξ b).
