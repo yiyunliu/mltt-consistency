@@ -49,6 +49,12 @@ Qed.
 Definition wn (a : tm) := exists b, Pars a b /\ nf b.
 Definition wne (a : tm) := exists b, Pars a b /\ ne b.
 
+Lemma ext_wn (a : tm) i :
+    wn (tApp a (var_tm i)) ->
+    wn a.
+Proof.
+Admitted.
+
 Definition union (P Q : tm -> Prop) a := P a \/ Q a.
 Definition SBool (a : tm) := exists v, Pars a v /\ (is_bool_val v \/ ne v).
 Definition SUniv (I : nat -> tm -> (tm -> Prop) -> Prop) m A := exists PA, I m A PA.
@@ -113,6 +119,67 @@ Proof.
   - hauto l:on.
   - move => *; subst.
     hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
+Qed.
+
+Lemma bool_val_nf v : is_bool_val v -> nf v.
+Proof. hauto lq: on inv: tm unfold:is_bool_val. Qed.
+
+Lemma nf_wn v : nf v -> wn v.
+Proof. sfirstorder ctrs:rtc. Qed.
+
+Create HintDb nfne.
+#[export]Hint Resolve nf_wn bool_val_nf ne_nf : nfne.
+
+Definition CR (P : tm -> Prop) :=
+  (forall a, P a -> wn a) /\
+    (forall a, wne a -> P a).
+
+Lemma S_AppLR (a a0 b b0 : tm) :
+  Pars a a0 ->
+  Pars b b0 ->
+  Pars (tApp a b) (tApp a0 b0).
+Proof.
+  move => h. move :  b b0.
+  elim : a a0 / h.
+  - move => a a0 b h.
+    elim : a0 b / h.
+    + sfirstorder ctrs:rtc use:Par_refl.
+    + move => b0 b1 b2 h0 h1 h2.
+      eapply rtc_l; eauto.
+      hauto lq:on ctrs:rtc,Par use:Par_refl.
+  - move => a0 a1 a2 h0 h1 ih b0 b1 h2.
+    eapply rtc_l; eauto.
+    hauto lq:on ctrs:rtc, Par use:Par_refl.
+Qed.
+
+Lemma wne_app (a b : tm) :
+  wne a -> wn b -> wne (tApp a b).
+Proof.
+  case => a0 [h00 h01].
+  case => b0 [h10 h11].
+  rewrite /wne.
+  exists (tApp a0 b0).
+  hauto b:on use:S_AppLR.
+Qed.
+
+Lemma adequacy n I (h0 : forall m, m < n -> CR (SUniv I m)) A PA
+  (h : InterpExt n I A PA)  :
+  CR PA.
+Proof.
+  elim : A PA / h=>//.
+  - firstorder with nfne.
+  - firstorder with nfne.
+  - hauto q:on db:nfne.
+  - move => A B PA PF hA ihA hTot hRes ih.
+    split.
+    + rewrite /ProdSpace => b hb.
+      have hzero : PA (var_tm var_zero) by hauto lq:on ctrs:rtc.
+      move : hTot (hzero); move/[apply]. move => [PB ?].
+      apply ext_wn with (i := var_zero).
+      hauto q:on.
+    + rewrite /ProdSpace => b wnea a PB ha hPB.
+      suff : wn a by hauto q:on use:wne_app. firstorder.
+  - hauto lq:on db:nfne.
 Qed.
 
 Lemma InterpExt_preservation n I A B P (h : InterpExt n I A P) :
