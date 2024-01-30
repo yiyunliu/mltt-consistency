@@ -3,23 +3,75 @@ From WR Require Import syntax join imports.
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
-Inductive InterpExt n (Interp : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
-| InterpExt_Void : InterpExt n Interp tVoid (const False)
-| InterpExt_Bool : InterpExt n Interp tBool (fun a => exists v, Pars a v /\ is_bool_val v)
+Fixpoint ne (a : tm) :=
+  match a with
+  | var_tm _ => true
+  | tApp a b => ne a && nf b
+  | tAbs _ _ => false
+  | tPi A B => false
+  | tVoid => false
+  | tJ t a b p => ne t && nf a && nf b && nf p
+  | tUniv _ => false
+  | tTrue => false
+  | tFalse => false
+  | tIf a b c => ne a && nf b && nf c
+  | tBool => false
+  | tEq a b A => false
+  | tRefl => false
+  end
+with nf (a : tm) :=
+  match a with
+  | var_tm _ => true
+  | tApp a b => ne a && nf b
+  | tAbs A a => nf a
+  | tPi A B => nf A && nf B
+  | tVoid => true
+  | tJ t a b p => ne t && nf a && nf b && nf p
+  | tUniv _ => true
+  | tTrue => true
+  | tFalse => true
+  | tIf a b c => ne a && nf b && nf c
+  | tBool => true
+  | tEq a b A => nf a && nf b && nf A
+  | tRefl => true
+  end.
+
+Lemma ne_nf (a : tm) : ne a -> nf a.
+Proof. elim : a =>//. Qed.
+
+Lemma ne_nf_renaming (a : tm) :
+  forall (ξ : nat -> nat),
+    (ne a <-> ne (ren_tm ξ a)) /\ (nf a <-> nf (ren_tm ξ a)).
+Proof.
+  elim : a; solve [auto; hauto b:on].
+Qed.
+
+Definition wn (a : tm) := exists b, Pars a b /\ nf b.
+Definition wne (a : tm) := exists b, Pars a b /\ ne b.
+
+Definition union (P Q : tm -> Prop) a := P a \/ Q a.
+Definition SBool (a : tm) := exists v, Pars a v /\ (is_bool_val v \/ ne v).
+Definition SUniv (I : nat -> tm -> (tm -> Prop) -> Prop) m A := exists PA, I m A PA.
+Definition SEq a b p := (Pars p tRefl /\ Coherent a b) \/ wne p.
+
+Inductive InterpExt n (I : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
+| InterpExt_Ne A : ne A -> InterpExt n I A wne
+| InterpExt_Void : InterpExt n I tVoid wne
+| InterpExt_Bool : InterpExt n I tBool SBool
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
-  InterpExt n Interp A PA ->
+  InterpExt n I A PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PF a PB -> InterpExt n Interp (subst_tm (a..) B) PB) ->
-  InterpExt n Interp (tPi A B) (ProdSpace PA PF)
+  (forall a PB, PF a PB -> InterpExt n I (subst_tm (a..) B) PB) ->
+  InterpExt n I (tPi A B) (ProdSpace PA PF)
 | InterpExt_Univ m :
   m < n ->
-  InterpExt n Interp (tUniv m) (fun A => exists PA, Interp m A PA)
+  InterpExt n I (tUniv m) (SUniv I m)
 | InterpExt_Eq a b A :
-  InterpExt n Interp (tEq a b A) (fun p => Pars p tRefl /\ Coherent a b)
+  InterpExt n I (tEq a b A) (SEq a b)
 | InterpExt_Step A A0 PA :
   Par A A0 ->
-  InterpExt n Interp A0 PA ->
-  InterpExt n Interp A PA.
+  InterpExt n I A0 PA ->
+  InterpExt n I A PA.
 
 Lemma InterpExt_Fun_nopf n I A B PA  :
   InterpExt n I A PA ->
@@ -30,14 +82,14 @@ Proof.
 Qed.
 
 Lemma InterpExt_Eq' n I PA a b A :
-  PA = (fun p => Pars p tRefl /\ Coherent a b) ->
+  PA = SEq a b ->
   InterpExt n I (tEq a b A) PA.
 Proof. hauto lq:on use:InterpExt_Eq. Qed.
 
-Lemma InterpExt_Univ' n Interp m PF :
-  PF = (fun A => exists PA, Interp m A PA) ->
+Lemma InterpExt_Univ' n I m PF :
+  PF = (SUniv I m) ->
   m < n ->
-  InterpExt n Interp (tUniv m) PF.
+  InterpExt n I (tUniv m) PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
 Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
@@ -57,6 +109,7 @@ Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
   elim : T P / h => //.
+  - move => *. by subst.
   - hauto l:on.
   - move => *; subst.
     hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
