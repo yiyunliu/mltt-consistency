@@ -319,7 +319,7 @@ Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
 Lemma InterpExt_Eq_inv n I a b A P :
   InterpExt n I (tEq a b A) P ->
-  P = SEq a b.
+  P = SEq a b /\ wn a /\ wn b /\ wn A.
 Proof.
   move E : (tEq a b A) => T h.
   move : a b A E.
@@ -329,8 +329,9 @@ Proof.
   - move => A A0 PA hred hA0 ih a b A1 ?. subst.
     elim /Par_inv : hred=>//.
     move => hred ? ? ? a2 b2 A2 ? ? ? [] *;subst.
+    split; last by hauto lq:on rew:off ctrs:rtc.
     specialize ih with (1 := eq_refl).
-    rewrite ih.
+    move : ih => [->] *.
     fext => A. rewrite /SEq. do 2 f_equal.
     apply propositional_extensionality.
     hauto lq:on use:Par_Coherent, Coherent_symmetric, Coherent_transitive.
@@ -611,37 +612,45 @@ Proof.
   - hauto lq:on ctrs:rtc.
 Qed.
 
-Lemma adequacyU n A PA
+Lemma InterpUniv_wn_ty n A PA
+  (h : InterpUnivN n A PA) :
+  wn A.
+Proof.
+  move : n A PA h.
+  elim /Wf_nat.lt_wf_ind => n ih A PA /[dup] hPA.
+  simp InterpUniv.
+  apply InterpExt_wn_ty.
+  move => m /[dup] ?.
+  move : ih. move/[apply] => ih.
+  split.
+  - sfirstorder.
+  - rewrite /SUniv.
+    simp InterpUniv.
+    hauto l:on use:InterpExt_WNe.
+Qed.
+
+Lemma InterpUniv_adequacy n A PA
   (h : InterpUnivN n A PA)  :
   CR PA.
 Proof.
-  (* move : n A PA h. *)
-  (* (* move : h. *) *)
-  (* elim /Wf_nat.lt_wf_ind => n ih A PA. *)
-(*   (* simp InterpUniv => /adequacy. *) *)
-(*   (* apply. *) *)
-(*   (* rewrite /SUniv. *) *)
-(*   (* move => m hm. *) *)
-(*   (* rewrite /SUniv => m ?. *) *)
-(*   (* rewrite /CR. *) *)
-(*   (* split. *) *)
-(*   (* - move => B [PB ?]. *) *)
-
-(*   (* admit. *) *)
-(*   (* best use:InterpExt_WNe. *) *)
-
   move : h.
   simp InterpUniv.
-  move /adequacy.
-  apply.
-  rewrite /SUniv => m hm.
+  apply adequacy.
+  move => m ?.
   split.
-  - move => B [PB].
-    simp InterpUniv.
-    apply InterpExt_wn_ty.
-    rewrite /CR /SUniv.
-    admit.
-  - move => B wneB.
+  - hauto l:on use:InterpUniv_wn_ty unfold:SUniv.
+  - rewrite /SUniv.
+    move => A0 ?.
     simp InterpUniv.
     hauto lq:on use:InterpExt_WNe.
-Admitted.
+Qed.
+
+Lemma InterpUniv_wn n A PA
+  (h : InterpUnivN n A PA) :
+  forall a, PA a -> wn a.
+Proof. hauto q:on use:InterpUniv_adequacy unfold:wn. Qed.
+
+Lemma InterpUniv_wne n A PA
+  (h : InterpUnivN n A PA) :
+  forall a, wne a -> PA a.
+Proof. hauto q:on use:InterpUniv_adequacy unfold:wn. Qed.

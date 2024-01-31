@@ -63,6 +63,11 @@ Proof.
     + rewrite /SUniv. simpl. eauto.
 Qed.
 
+Lemma wne_if (a b c : tm) :
+  wne a -> wn b -> wn c -> wne (tIf a b c).
+Proof.
+Admitted.
+
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a A) /\
   (Wff Γ -> SemWff Γ).
@@ -131,11 +136,28 @@ Proof.
       * apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
         eauto using P_IfFalse_star.
     (* New case for when the scrutinee is neutral *)
-    + match goal with [|- _ ?a ] => have ? : wne a by best use:adequacy end .
+    + apply : InterpUniv_wne; eauto.
+      hauto q:on use:InterpUniv_adequacy, wne_if.
   - hauto l:on use:SemWt_Univ.
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
-  - hauto l:on.
-  - hauto l:on use:SemWt_Univ.
+  - rewrite /SemWt => Γ a A _ _ _ ha γ.
+    move : ha. move/[apply]. move => [m [PA [h0 h1]]] [:tr0].
+    simpl. eexists. eexists.
+    split.
+    simp InterpUniv.
+    eapply InterpExt_Eq; eauto.
+    abstract : tr0.
+    + sfirstorder use:InterpUniv_wn.
+    + done.
+    + sfirstorder use:InterpUniv_wn_ty.
+    + qauto l:on ctrs:rtc use:Coherent_reflexive inv:Par unfold:SEq.
+  - move => Γ a b A i j _ ha _ hb _ /SemWt_Univ hA.
+    apply SemWt_Univ => γ hγ.
+    have : wn (subst_tm γ a) by sfirstorder use:InterpUniv_wn.
+    have : wn (subst_tm γ b) by sfirstorder use:InterpUniv_wn.
+    have : wn (subst_tm γ A) by sfirstorder use:InterpUniv_wn_ty.
+    simp InterpUniv.
+    hauto lq:on ctrs:InterpExt.
   - move => Γ t a b p A i j C _ _ _ _ _ _ _ hp _ hC _ ht γ hγ.
     move : hp (hγ); move/[apply] => hp.
     move : ht (hγ); move/[apply]. intros (m & PA & hPA & ht).
