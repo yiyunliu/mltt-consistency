@@ -73,6 +73,27 @@ Lemma wne_j (t a b p : tm) :
 Proof.
 Admitted.
 
+Lemma wn_lam (a A : tm) : wn a -> wn A ->  wn (tAbs A a).
+Proof.
+  move => [v [hred]].
+  move : A.
+  elim:a v/hred.
+  - move => a A h [A0 [hA0]].
+    elim : A A0 /hA0.
+    + rewrite /wn.
+      move => A ?.
+      exists (tAbs A a).
+      hauto lq:on ctrs:rtc b:on.
+    + move => A0 A1 A2 h0 h1 h2 h3.
+      move /(_ h3) in h2.
+      have ? : Par a a by auto using Par_refl.
+      hauto q:on unfold:wn ctrs:Par, rtc.
+  - move => a0 a1 a2 h0 h1 ih A h wnA.
+    specialize ih with (1 := h) (2 := wnA).
+    have ? : Par A A by auto using Par_refl.
+    hauto lq:on ctrs:rtc, Par unfold:wn.
+Qed.
+
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a A) /\
   (Wff Γ -> SemWff Γ).
@@ -104,12 +125,15 @@ Proof.
     move /InterpUnivN_Fun_inv_nopf : hPPi.
     intros (PA & hPA & hTot & ?). subst.
     rewrite /ProdSpace.
-    move => a PB ha. asimpl => hPB.
-    have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
-    move /hb.
-    intros (m & PB0 & hPB0 & hPB0').
-    replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
-    qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
+    split.
+    + apply wn_lam; last by eauto using InterpUniv_wn_ty.
+      admit.
+    + move => a PB ha. asimpl => hPB.
+      have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
+      move /hb.
+      intros (m & PB0 & hPB0 & hPB0').
+      replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
+      qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
   - move => Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
     move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
@@ -117,7 +141,7 @@ Proof.
     simpl in hPi.
     move /InterpUnivN_Fun_inv_nopf : hPi. intros (PA0 & hPA0 & hTot & ?). subst.
     have ? : PA0 = PA by eauto using InterpUnivN_deterministic'. subst.
-    move  : hf (hb). move/[apply].
+    move  : hf (hb) => [_] /[apply].
     move : hTot hb. move/[apply].
     asimpl. hauto lq:on.
   - move => Γ a A B i _ hA _ /SemWt_Univ hB ? γ hγ.

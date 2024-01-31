@@ -1,8 +1,5 @@
 From WR Require Import syntax join imports.
 
-Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
-  forall a PB, PA a -> PF a PB -> PB (tApp b a).
-
 Fixpoint ne (a : tm) :=
   match a with
   | var_tm _ => true
@@ -48,8 +45,11 @@ Proof. sfirstorder ctrs:rtc. Qed.
 Lemma ne_nf (a : tm) : ne a -> nf a.
 Proof. elim : a =>//. Qed.
 
+Lemma wne_wn a : wne a -> wn a.
+Proof. sfirstorder use:ne_nf. Qed.
+
 Create HintDb nfne.
-#[export]Hint Resolve nf_wn bool_val_nf ne_nf : nfne.
+#[export]Hint Resolve nf_wn bool_val_nf ne_nf wne_wn : nfne.
 
 Lemma nf_ne_step_eq (a : tm) : (nf a || ne a) -> forall b, Par a b -> a = b.
 Proof.
@@ -88,34 +88,12 @@ Proof.
   sfirstorder use:ne_nf_renaming.
 Qed.
 
-Lemma ext_wn (a : tm) i :
-    wn (tApp a (var_tm i)) ->
-    wn a.
-Proof.
-  move E : (tApp a (var_tm i)) => a0 [v [hr hv]].
-  move : a E.
-  move : hv.
-  elim : a0 v / hr.
-  - hauto q:on inv:tm ctrs:rtc b:on db: nfne.
-  - move => a0 a1 a2 hr0 hr1 ih hnfa2.
-    move /(_ hnfa2) in ih.
-    move => a.
-    case : a0 hr0=>// => b0 b1.
-    elim /Par_inv=>//.
-    + hauto q:on inv:Par ctrs:rtc b:on.
-    + move => ? a0 A a3 b2 b3 ? ? [? ?] ? [? ?]. subst.
-      have ? : b3 = var_tm i by hauto lq:on inv:Par. subst.
-      suff : wn (tAbs A a3) by hauto lq:on unfold:wn ctrs:rtc.
-      have : wn (subst_tm ((var_tm i) ..) a3) by sfirstorder.
-      replace (subst_tm ((var_tm i) ..) a3) with (ren_tm (i..) a3).
-      move /wn_antirenaming.
-      admit.
-      substify; by asimpl.
-Admitted.
-
 Definition SBool (a : tm) := exists v, Pars a v /\ (is_bool_val v \/ ne v).
 Definition SUniv (I : nat -> tm -> (tm -> Prop) -> Prop) m A := exists PA, I m A PA.
 Definition SEq a b p := (Pars p tRefl /\ Coherent a b) \/ wne p.
+
+Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
+  wn b /\ forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
 Inductive InterpExt n (I : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Ne A : ne A -> InterpExt n I A wne
@@ -184,12 +162,10 @@ Proof.
   - hauto q:on db:nfne.
   - move => A B PA PF hA ihA hTot hRes ih.
     split.
-    + rewrite /ProdSpace => b hb.
-      have hzero : PA (var_tm var_zero) by hauto lq:on ctrs:rtc.
-      move : hTot (hzero); move/[apply]. move => [PB ?].
-      apply ext_wn with (i := var_zero).
-      hauto q:on.
-    + rewrite /ProdSpace => b wnea a PB ha hPB.
+    + rewrite /ProdSpace; tauto.
+    + rewrite /ProdSpace. move => b wnea.
+      split; first by auto with nfne.
+      move => a PB ha hPB.
       suff : wn a by hauto q:on use:wne_app. firstorder.
   - hauto lq:on db:nfne.
 Qed.
@@ -378,7 +354,9 @@ Proof.
     move /InterpExt_Fun_inv : hP.
     intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.
     have ? : PA0 = PA by sfirstorder. subst.
-    fext => b a PB ha.
+    rewrite /ProdSpace.
+    fext => b. f_equal.
+    fext =>  a PB ha.
     apply propositional_extensionality.
     hauto lq:on rew:off.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
@@ -395,7 +373,7 @@ Proof.
   move /InterpExt_Fun_inv : h. intros (PA & PF & hPA & hPF & hPF' & ?); subst.
   exists PA. repeat split => //.
   - sfirstorder.
-  - fext => b a PB ha.
+  - fext => b. rewrite /ProdSpace. f_equal. fext => a PB ha.
     apply propositional_extensionality.
     split.
     + move  : hPF ha . move /[apply]. intros (PB0 & hPB0). move => *.
@@ -532,7 +510,10 @@ Proof.
   - hauto lq:on ctrs:rtc.
   - hauto lq:on ctrs:rtc.
   - move => A B PA PF hPA ihA hPFTot hPF ihPF b0 b1 hb01.
-    rewrite /ProdSpace => hPB a PB ha hPFa.
+    rewrite /ProdSpace.
+    move =>  [] ? hPB.
+    split; first by hauto lq:on ctrs:rtc.
+    move => a PB ha hPFa.
     have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
     hauto lq:on ctrs:Par.
   - hauto lq:on.
