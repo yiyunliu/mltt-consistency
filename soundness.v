@@ -63,16 +63,6 @@ Proof.
     + rewrite /SUniv. simpl. eauto.
 Qed.
 
-Lemma wne_if (a b c : tm) :
-  wne a -> wn b -> wn c -> wne (tIf a b c).
-Proof.
-Admitted.
-
-Lemma wne_j (t a b p : tm) :
-  wn t -> wn a -> wn b -> wne p -> wne (tJ t a b p).
-Proof.
-Admitted.
-
 Lemma wn_lam (a A : tm) : wn a -> wn A ->  wn (tAbs A a).
 Proof.
   move => [v [hred]].
@@ -127,7 +117,18 @@ Proof.
     rewrite /ProdSpace.
     split.
     + apply wn_lam; last by eauto using InterpUniv_wn_ty.
-      admit.
+      have : PA (var_tm var_zero)
+        by hauto q:on ctrs:rtc use:InterpUniv_adequacy.
+      move /[dup].
+      move : hTot. move/[apply].
+      move => [PB +].
+      asimpl => ? ?.
+      move : hb.
+      rewrite /SemWt.
+      move /(_ _ ltac:(by eauto using γ_ok_cons)) => [m [PB0 [h0 h1]]].
+      set B0 := subst_tm _ _ in h0 h1.
+      apply wn_antirenaming with (ξ := 0 .: id). asimpl.
+      hauto q:on use:InterpUniv_adequacy.
     + move => a PB ha. asimpl => hPB.
       have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
       move /hb.
@@ -228,29 +229,18 @@ Proof.
   - hauto l:on.
 Qed.
 
-Lemma wt_nil_not_ne a A : Wt nil a A -> ~~ ne a.
-Proof.
-  move E : nil => Γ.
-  move : E => + h.
-  elim : Γ a A / h =>//.
-  - move => *. subst. simpl in *. lia.
-  - hauto qb:on.
-  - hauto qb:on.
-  - hauto qb:on.
-Qed.
-
-Lemma consistency a : ~Wt nil a tVoid.
+Lemma mltt_normalizing Γ a A : Wt Γ a A -> wn a /\ wn A.
 Proof.
   move => h.
   apply soundness in h.
-  rewrite /SemWt in h.
-  move : (h var_tm).
-  case.
-  rewrite /γ_ok; sauto lq:on.
-  move => /= i [PA [hPA]].
-  asimpl.
-  simp InterpUniv in hPA.
-  apply InterpExt_Void_inv in hPA; subst.
-
-  apply ha.
+  move : h.
+  rewrite /SemWt.
+  move /(_ var_tm).
+  elim.
+  - asimpl.
+    move => i [PA [? ?]].
+    firstorder using InterpUniv_adequacy, InterpUniv_wn_ty.
+  - rewrite /γ_ok.
+    move=> i ? m PA. asimpl.
+    hauto q:on ctrs:rtc use:InterpUniv_adequacy.
 Qed.

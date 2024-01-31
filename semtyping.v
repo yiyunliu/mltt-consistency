@@ -124,6 +124,10 @@ Definition CR (P : tm -> Prop) :=
   (forall a, P a -> wn a) /\
     (forall a, wne a -> P a).
 
+#[local]Ltac solve_s_rec :=
+  move => *; eapply rtc_l; eauto;
+  hauto lq:on ctrs:Par use:Par_refl.
+
 Lemma S_AppLR (a a0 b b0 : tm) :
   Pars a a0 ->
   Pars b b0 ->
@@ -133,23 +137,91 @@ Proof.
   elim : a a0 / h.
   - move => a a0 b h.
     elim : a0 b / h.
-    + sfirstorder ctrs:rtc use:Par_refl.
-    + move => b0 b1 b2 h0 h1 h2.
-      eapply rtc_l; eauto.
-      hauto lq:on ctrs:rtc,Par use:Par_refl.
-  - move => a0 a1 a2 h0 h1 ih b0 b1 h2.
-    eapply rtc_l; eauto.
-    hauto lq:on ctrs:rtc, Par use:Par_refl.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+Lemma S_If a0 a1 : forall b0 b1 c0 c1,
+    Pars a0 a1 ->
+    Pars b0 b1 ->
+    Pars c0 c1 ->
+    Pars (tIf a0 b0 c0) (tIf a1 b1 c1).
+Proof.
+  move => + + + + h.
+  elim : a0 a1 /h.
+  - move => + b0 b1 + + h.
+    elim : b0 b1 /h.
+    + move => + + c0 c1 h.
+      elim : c0 c1 /h.
+      * auto using rtc_refl.
+      * solve_s_rec.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+Lemma S_J t0 t1 : forall a0 a1 b0 b1 p0 p1,
+    Pars t0 t1 ->
+    Pars a0 a1 ->
+    Pars b0 b1 ->
+    Pars p0 p1 ->
+    Pars (tJ t0 a0 b0 p0) (tJ t1 a1 b1 p1).
+Proof.
+  move => + + + + + + h.
+  elim : t0 t1 /h; last by solve_s_rec.
+  move => + a0 a1 + +  + + h.
+  elim : a0 a1 /h; last by solve_s_rec.
+  move => + + b0 b1 + + h.
+  elim : b0 b1 /h; last by solve_s_rec.
+  move => + + + p0 p1 h.
+  elim : p0 p1 / h; last by solve_s_rec.
+  auto using rtc_refl.
+Qed.
+
+Lemma wne_j (t a b p : tm) :
+  wn t -> wn a -> wn b -> wne p -> wne (tJ t a b p).
+Proof.
+  move => [t0 [? ?]] [a0 [? ?]] [b0 [? ?]] [p0 [? ?]].
+  exists (tJ t0 a0 b0 p0).
+  hauto lq:on b:on use:S_J.
+Qed.
+
+Lemma wne_if (a b c : tm) :
+  wne a -> wn b -> wn c -> wne (tIf a b c).
+Proof.
+  move => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]].
+  exists (tIf a0 b0 c0).
+  qauto l:on use:S_If b:on.
 Qed.
 
 Lemma wne_app (a b : tm) :
   wne a -> wn b -> wne (tApp a b).
 Proof.
-  case => a0 [h00 h01].
-  case => b0 [h10 h11].
-  rewrite /wne.
+  move => [a0 [? ?]] [b0 [? ?]].
   exists (tApp a0 b0).
   hauto b:on use:S_AppLR.
+Qed.
+
+Lemma S_Pi (a a0 b b0 : tm) :
+  Pars a a0 ->
+  Pars b b0 ->
+  Pars (tPi a b) (tPi a0 b0).
+Proof.
+  move => h.
+  move : b b0.
+  elim : a a0/h.
+  - move => + b b0 h.
+    elim : b b0/h.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+Lemma wn_pi A B : wn A -> wn B -> wn (tPi A B).
+Proof.
+  move => [A0 [? ?]] [B0 [? ?]].
+  exists (tPi A0 B0).
+  hauto lqb:on use:S_Pi.
 Qed.
 
 Lemma adequacy n I (h0 : forall m, m < n -> CR (SUniv I m)) A PA
@@ -582,11 +654,15 @@ Proof.
   move => h.
   move : b0 b1 A0 A1.
   elim : a0 a1 /h.
-  - admit.
-  - move => a0 a1 a2 ih b0 b1 A0 A1 A2 A3 hr0 hr1.
-    eapply rtc_l; eauto.
-    hauto lq:on ctrs:Par use:Par_refl.
-Admitted.
+  - move => + b0 b1 + + h.
+    elim : b0 b1 /h.
+    + move => + + A0 A1 h.
+      elim : A0 A1 /h.
+      * auto using rtc_refl.
+      * solve_s_rec.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
 
 Lemma wn_eq a b A : wn a -> wn b -> wn A -> wn (tEq a b A).
 Proof.
@@ -597,9 +673,6 @@ Proof.
   - by apply S_Eq.
   - hauto lqb:on.
 Qed.
-
-Lemma wn_pi A B : wn A -> wn B -> wn (tPi A B).
-Admitted.
 
 Lemma InterpExt_wn_ty n I A PA
   (h0 : forall m, m < n -> CR (SUniv I m))
