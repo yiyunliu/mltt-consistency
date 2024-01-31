@@ -63,7 +63,7 @@ existentials).
 - [ ] Existentials
 - [ ] Alternative system with typed conversion and additional eta
 	  rules
-- [ ] Strong normalization (through Kripke semantics)
+- [x] Existence of normal form for open terms
 - [ ] Extensional model (see the `per` branch)
 - [ ] Impredicative `Prop`
 - [ ] Proof irrelevance (see the `dcoi` branch)
