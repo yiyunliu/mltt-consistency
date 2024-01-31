@@ -544,6 +544,14 @@ Proof.
   by simp InterpUniv.
 Qed.
 
+Lemma InterpUnivN_Eq_inv n a b A P :
+  InterpUnivN n (tEq a b A) P ->
+  P = SEq a b /\ wn a /\ wn b /\ wn A.
+Proof.
+  simp InterpUniv.
+  hauto l:on use:InterpExt_Eq_inv.
+Qed.
+
 Lemma InterpUnivN_Univ_inv' i j P :
   InterpUnivN i (tUniv j) P ->
   P = (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA) /\ j < i.
