@@ -204,13 +204,79 @@ Proof.
   - move => [] ξ=>//.
     eauto with par.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 [] =>// A0' B0' ξ [] *. subst.
-    move : ih0 (@eq_refl _ (ren_tm ξ A0')). move/[apply].
-    move : ih1 (@eq_refl _ (ren_tm (upRen_tm_tm ξ) B0')). move/[apply].
-    move => [B1' [? ?]]. subst.
-    move => [A1' [? ?]]. subst.
-    exists (tPi A1' B1').
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    move : ih1 => [B1' [? ?]].
+    move : ih0 => [A1' [? ?]]. subst.
+    exists (tPi A1' B1'). auto with par.
+  - move => A A1 a a1 h0 ih0 h1 ih1 [] // A0 a0 ξ [] *. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    move : ih0 => [b [? ?]].
+    move : ih1 => [B [? ?]]. subst.
+    exists (tAbs b B). simpl.
+    auto with par.
+  - move => ? a1 ? b1 h0 ih0 h1 ih1 [] // a0 b0 ξ [*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    move : ih0 => [a2 [? ?]];
+    move : ih1 => [b2 [? ?]]; subst.
+    exists (tApp a2 b2). simpl.
+    auto with par.
+  - move => ? A a0 ? b1 h0 ih0 h1 ih1 [] // a b0 ξ [*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    move : ih0 ih1 =>[+ [+ +]] [b2 [? ?]].
+    case => // A0 a1 [*]. subst.
+    asimpl.
+    exists (subst_tm  (b2..) a1). asimpl.
     eauto with par.
-Admitted.
+  - case=>//. eauto with par.
+  - case=>//. eauto with par.
+  - move => a0 a1 b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 [] // a2 b2 c2 ξ [*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    specialize ih2 with (1 := eq_refl).
+    move : ih0 ih1 ih2 => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]]. subst.
+    exists (tIf a0 b0 c0). auto with par.
+  - move => ? ? b1 ? c1 h0 ih0 h1 ih1 h2 ih2 [] // a0 b0 c0 ξ [*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    specialize ih2 with (1 := eq_refl).
+    move : ih0 ih1 ih2 => [a [? ?]] [b [? ?]] [c [? ?]]. subst.
+    have ? : a = tTrue by hauto q:on inv:tm. subst.
+    eauto with par.
+  - move => ? ? b1 ? c1 h0 ih0 h1 ih1 h2 ih2 [] // a0 b0 c0 ξ [*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    specialize ih2 with (1 := eq_refl).
+    move : ih0 ih1 ih2 => [a [? ?]] [b [? ?]] [c [? ?]]. subst.
+    have ? : a = tFalse by hauto q:on inv:tm. subst.
+    eauto with par.
+  - case=>//. eauto with par.
+  - case=>//. eauto with par.
+  - move => ? ? ? a1 b1 A1 h0 ih0 h1 ih1 h2 ih2 []// a0 b0 A0 ξ [*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    specialize ih2 with (1 := eq_refl).
+    move : ih0 ih1 ih2 => [a [? ?]] [b [? ?]] [A [? ?]]. subst.
+    exists (tEq a b A). auto with par.
+  - move => ? ? ? ? t1 a1 b1 p1 h0 ih0 h1 ih1 h2 ih2 h3 ih3 []// t0 a0 b0 p0 ξ [*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    specialize ih2 with (1 := eq_refl).
+    specialize ih3 with (1 := eq_refl).
+    move : ih0 ih1 ih2 ih3 => [t [? ?]] [a [? ?]] [b [? ?]] [p [? ?]]. subst.
+    exists (tJ t a b p). auto with par.
+  - move => ?  ? ? ? t1 a1 b1 h0 ih0 h1 ih1 h2 ih2 h3 ih3 []// t a b p ξ[*]. subst.
+    specialize ih0 with (1 := eq_refl).
+    specialize ih1 with (1 := eq_refl).
+    specialize ih2 with (1 := eq_refl).
+    specialize ih3 with (1 := eq_refl).
+    move : ih0 ih1 ih2 ih3 => [t0 [? ?]] [a0 [? ?]] [b0 [? ?]] [p0 [? ?]]. subst.
+    have ? : p0 = tRefl by hauto q:on inv:tm. subst.
+    eauto with par.
+Qed.
 
 Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Pars (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Pars a b.
