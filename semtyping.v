@@ -88,30 +88,30 @@ Proof.
   sfirstorder use:ne_nf_renaming.
 Qed.
 
-(* Lemma ext_wn (a : tm) i : *)
-(*     wn (tApp a (var_tm i)) -> *)
-(*     wn a. *)
-(* Proof. *)
-(*   move E : (tApp a (var_tm i)) => a0 [v [hr hv]]. *)
-(*   move : a E. *)
-(*   move : hv. *)
-(*   elim : a0 v / hr. *)
-(*   - hauto q:on inv:tm ctrs:rtc b:on db: nfne. *)
-(*   - move => a0 a1 a2 hr0 hr1 ih hnfa2. *)
-(*     move /(_ hnfa2) in ih. *)
-(*     move => a. *)
-(*     case : a0 hr0=>// => b0 b1. *)
-(*     elim /Par_inv=>//. *)
-(*     + hauto q:on inv:Par ctrs:rtc b:on. *)
-(*     + move => ? a0 A a3 b2 b3 ? ? [? ?] ? [? ?]. subst. *)
-(*       have ? : b3 = var_tm i by hauto lq:on inv:Par. subst. *)
-(*       suff : wn (tAbs A a3) by hauto lq:on unfold:wn ctrs:rtc. *)
-(*       have : wn (subst_tm ((var_tm i) ..) a3) by sfirstorder. *)
-(*       replace (subst_tm ((var_tm i) ..) a3) with (ren_tm (i..) a3). *)
-(*       move /wn_antirenaming. *)
-(*       admit. *)
-(*       substify; by asimpl. *)
-(* Admitted. *)
+Lemma ext_wn (a : tm) i :
+    wn (tApp a (var_tm i)) ->
+    wn a.
+Proof.
+  move E : (tApp a (var_tm i)) => a0 [v [hr hv]].
+  move : a E.
+  move : hv.
+  elim : a0 v / hr.
+  - hauto q:on inv:tm ctrs:rtc b:on db: nfne.
+  - move => a0 a1 a2 hr0 hr1 ih hnfa2.
+    move /(_ hnfa2) in ih.
+    move => a.
+    case : a0 hr0=>// => b0 b1.
+    elim /Par_inv=>//.
+    + hauto q:on inv:Par ctrs:rtc b:on.
+    + move => ? a0 A a3 b2 b3 ? ? [? ?] ? [? ?]. subst.
+      have ? : b3 = var_tm i by hauto lq:on inv:Par. subst.
+      suff : wn (tAbs A a3) by hauto lq:on unfold:wn ctrs:rtc.
+      have : wn (subst_tm ((var_tm i) ..) a3) by sfirstorder.
+      replace (subst_tm ((var_tm i) ..) a3) with (ren_tm (i..) a3).
+      move /wn_antirenaming.
+      admit.
+      substify; by asimpl.
+Admitted.
 
 Definition SBool (a : tm) := exists v, Pars a v /\ (is_bool_val v \/ ne v).
 Definition SUniv (I : nat -> tm -> (tm -> Prop) -> Prop) m A := exists PA, I m A PA.
