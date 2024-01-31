@@ -204,6 +204,17 @@ Proof.
   - hauto l:on.
 Qed.
 
+Lemma wt_nil_not_ne a A : Wt nil a A -> ~~ ne a.
+Proof.
+  move E : nil => Γ.
+  move : E => + h.
+  elim : Γ a A / h =>//.
+  - move => *. subst. simpl in *. lia.
+  - hauto qb:on.
+  - hauto qb:on.
+  - hauto qb:on.
+Qed.
+
 Lemma consistency a : ~Wt nil a tVoid.
 Proof.
   move => h.
@@ -212,9 +223,10 @@ Proof.
   move : (h var_tm).
   case.
   rewrite /γ_ok; sauto lq:on.
+  move => /= i [PA [hPA]].
   asimpl.
-  move => i [PA [hPA ha]].
   simp InterpUniv in hPA.
   apply InterpExt_Void_inv in hPA; subst.
+
   apply ha.
 Qed.
