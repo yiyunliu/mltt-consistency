@@ -82,7 +82,10 @@ Inductive Par : tm -> tm -> Prop :=
   Par a0 a1 ->
   Par b0 b1 ->
   Par p tRefl ->
-  Par (tJ t0 a0 b0 p) t1.
+  Par (tJ t0 a0 b0 p) t1
+| P_AbsEta A a0 a1 :
+  Par a0 a1 ->
+  Par (tAbs A (tApp (ren_tm shift a0) (var_tm var_zero))) a1.
 
 #[export]Hint Constructors Par : par.
 
@@ -90,6 +93,57 @@ Notation Pars := (rtc Par).
 
 Definition Coherent a0 a1 := (exists b, Pars a0 b /\ Pars a1 b).
 
+Lemma P_AbsEta' b A a0 a1 :
+  b = (tAbs A (tApp (ren_tm shift a0) (var_tm var_zero))) ->
+  Par a0 a1 ->
+  Par b a1.
+Proof. move => ->. apply P_AbsEta. Qed.
+
+(* Variant tmHead : Set := hAbs | hPi | hEq | hBool | hUniv. *)
+
+(* Definition head_form (a : tm) := *)
+(*   match a with *)
+(*   | tAbs _ _ => Some hAbs *)
+(*   | tPi _ _ => Some hPi *)
+(*   | tEq _ _ _ => Some hEq *)
+(*   | tBool => Some hBool *)
+(*   | tUniv _ => Some hUniv *)
+(*   | _ => None *)
+(*   end. *)
+
+(* Definition eq_head (a b : tmHead) := *)
+(*   match a, b with *)
+(*   | hAbs, hAbs => true *)
+(*   | hPi, hPi => true *)
+(*   | hEq, hEq => true *)
+(*   | hBool, hBool => true *)
+(*   | hUniv, hUniv => true *)
+(*   | _, _ => false *)
+(*   end. *)
+
+(* Definition par_head_preservation A B : *)
+(*   Par A B -> match (head_form A) with *)
+(*              | Some hA => match head_form B with *)
+(*                          | Some hB => eq_head hA hB *)
+(*                          | None => false *)
+(*                          end *)
+(*              | None => true *)
+(*              end. *)
+(* Proof. *)
+(*   move => h. elim : A B /h =>//. *)
+(*   move => [] //. best b:on. *)
+
+(* Check from_option. *)
+(* (* Induction needed because of AbsEta *) *)
+(* Definition par_matching_head A B : *)
+(*   Par A B -> from_option *)
+(*                (fun a => from_option (eq_head a) true (head_form B)) *)
+(*                true *)
+(*                (head_form A). *)
+(* Proof. *)
+(*   move => h. *)
+(*   elim : A B /h => //. *)
+(*   best b:on. *)
 Lemma pars_pi_inv A B C (h : Pars (tPi A B) C) :
   exists A0 B0, C = tPi A0 B0 /\ Pars A A0 /\ Pars B B0.
 Proof.
@@ -184,12 +238,34 @@ Proof. hauto lq:on use:P_AppAbs. Qed.
 Lemma par_renaming a b (ξ : fin -> fin) :
   Par a b ->
   Par (ren_tm ξ a) (ren_tm ξ b).
+Proof.
   move => h.
   move : ξ.
   elim : a b / h => /=; eauto with par.
   - move => *.
     apply : P_AppAbs'; eauto. by asimpl.
+  - move => *.
+    apply : P_AbsEta'; eauto. by asimpl.
 Qed.
+
+Lemma tm_shift_exists a :
+  forall n ξ ξ0, (forall i, i < n -> ξ i <> ξ0 i) ->
+            ren_tm ξ a = ren_tm ξ0 a -> exists b, ren_tm (Nat.add n) b = a.
+Proof.
+  elim : a.
+  - move => m n ξ ξ0 h.
+    asimpl. move => [].
+    case : (Coq.Arith.Compare_dec.lt_dec m n).
+    sfirstorder.
+    move => ? ?.
+    exists (var_tm (m - n)).
+    asimpl.
+    f_equal. lia.
+  - move => A ihA a iha n ξ ξ0 hξ [].
+    move : ihA (hξ). repeat move/[apply].
+    move => [B ?]. subst.
+    have : forall i, i < n -> (upRen_tm_tm )
+  -
 
 Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Par (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Par a b.
@@ -276,7 +352,39 @@ Proof.
     move : ih0 ih1 ih2 ih3 => [t0 [? ?]] [a0 [? ?]] [b0 [? ?]] [p0 [? ?]]. subst.
     have ? : p0 = tRefl by hauto q:on inv:tm. subst.
     eauto with par.
-Qed.
+  - move => ? ? a1 h ih [] // b [] // b0 b1 ξ [] h0 h1 h2. subst.
+    move : (h1).
+    have /[apply] /(_ (ren_tm (0 .: id))) : forall (f : tm -> tm) a b, a = b -> f a = f b by congruence.
+    asimpl => *. subst.
+    have ? : b1 = var_tm 0.
+    case : b1 h2 =>// n. asimpl => []. case.
+    case : n => //.
+    subst. move {h2}.
+
+    rename b0 into t0.
+    rename a1 into b1.
+
+    (* asimpl in h1. *)
+    specialize ih with (1 := eq_refl).
+    move : ih => [b1' [? ih]]. subst.
+    asimpl in h1.
+    have [t0' ?] : exists t0', ren_tm shift t0' = t0 by admit. subst.
+    have [b1'' ?] : exists t0', ren_tm shift t0' = b1' by admit. subst.
+    asimpl.
+    (* have [a0 ? ] : exists a0, ren_tm shift a0 = b1 by admit. *)
+    (* subst. *)
+    (* asimpl. *)
+    asimpl.
+    exists b1''; split; first reflexivity.
+    apply : P_AbsEta'; eauto.
+    asimpl in h.
+    (* apply P_AbsEta. *)
+    (* exists (ren_tm (0 ..) b1). *)
+    (* asimpl. *)
+    (* split; cycle 1. *)
+    (* apply : P_AbsEta'; eauto. *)
+    (* asimpl. *)
+Admitted.
 
 Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Pars (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Pars a b.
@@ -322,6 +430,7 @@ Proof.
   - move => *; apply : P_AppAbs'; eauto; by asimpl.
   - hauto lq:on db:par use:par_morphing_lift.
   - hauto lq:on db:par use:par_morphing_lift.
+  - move => *; apply : P_AbsEta'; eauto. by asimpl.
 Qed.
 
 Inductive good_pars_morphing : (fin -> tm) -> (fin -> tm) -> Prop :=
@@ -464,7 +573,10 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
+  - (* hauto lq:on inv:Par ctrs:Par. *)
+    move => A0 A1 a0 a1 hA ihA ha iha b0.
+    elim /Par_inv=>//; first by hauto lq:on ctrs:Par.
+    move =>hb0 A a2 a3 ha2 [] *; subst.
   - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
     elim /Par_inv; try congruence.
     + qauto l:on ctrs:Par.
@@ -473,26 +585,29 @@ Proof.
       case /(_ _ ltac:(eassumption)) : ih1 => b [? ?].
       case /(_ _ ltac:(eassumption)) : ih0 => a [? h2].
       elim /Par_inv : h2; try congruence.
-      move => ? A0 A1 a2 a4 ? ?.
-      case => *; subst.
-      exists (subst_tm (b..) a4).
-      hauto lq:on ctrs:Par use:par_cong.
+      * move => ? A0 A1 a2 a4 ? ?.
+        case => *; subst.
+        exists (subst_tm (b..) a4).
+        hauto lq:on ctrs:Par use:par_cong.
+      * admit.
   - move => a A a0 b0 b1 ? ih0 ? ih1 b2.
     elim /Par_inv; try congruence.
     + move => h a1 a2 b3 b4 ? ? [*]; subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 *].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
       elim /Par_inv : h0; try congruence.
-      move => ? A0 A1 a3 a4 ? ? [*] *; subst.
-      exists (subst_tm (b..) a4).
-      hauto lq:on use:par_cong ctrs:Par.
+      * move => ? A0 A1 a3 a4 ? ? [*] *; subst.
+        exists (subst_tm (b..) a4).
+        hauto lq:on use:par_cong ctrs:Par.
+      * admit.
     + move => ? a1 A0 a2 b3 b4 ? ? [*] *; subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 h1].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
       elim /Par_inv : h0; try congruence.
-      move => ? A1 A2 a3 a4 ? ? [*] *; subst.
-      exists (subst_tm (b..) a4).
-      hauto lq:on use:par_cong ctrs:Par inv:Par.
+      * move => ? A1 A2 a3 a4 ? ? [*] *; subst.
+        exists (subst_tm (b..) a4).
+        (*  *)
+        (* best use:par_cong ctrs:Par inv:Par. *)
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
