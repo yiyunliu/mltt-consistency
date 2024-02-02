@@ -279,7 +279,36 @@ Proof.
   - move => i _ a ξ. simpl.
     elim /Par_inv=>// h ?[] *. subst.
     exists (var_tm i). eauto with par.
-  - admit.
+  - move => A a ih c ξ.
+    elim /Par_inv=>// _.
+    + move => A0 A1 a0 a1 + + [] *. subst.
+      apply_ih ih => A0 [? ?].
+      apply_ih ih => a0 [? ?]. subst.
+      exists (tAbs A0 a0). eauto with par.
+    + move => A0 a0 a1 h0 [] ?. subst.
+      case : a ih=>// b0 b1 ih [] h1.
+      case : b1 ih =>//.
+      case => // ih _ ?. subst.
+      move  :(h1).
+      move /(f_equal (ren_tm (0 .: id))).
+      asimpl => ?. subst.
+      asimpl in h1.
+      have [b0' ?] : exists b0', ren_tm shift b0' = b0.
+      {
+        exists (ren_tm (0 .: id) b0).
+        asimpl.
+        transitivity (ren_tm (0 .: shift) b0); last by (substify; asimpl).
+        apply tm_free_ren_any with (i := 0). sfirstorder.
+        qauto l:on inv:nat.
+      }
+      subst.
+      asimpl in h0.
+      move : h0.
+      move /ih.
+      elim; cycle 1.
+      simpl. rewrite -ren_tm_size_tm. lia.
+      move => b1' [? ?]; subst.
+      exists b1'. eauto with par.
   - move => b a ih ? ξ.
     elim /Par_inv=>//.
     + move => ? a0 a1 b0 b1 + + [] *. subst.
@@ -321,108 +350,29 @@ Proof.
       apply_ih ih => c2 [? ?]. subst.
       exists (c2). eauto with par.
   - hauto lq:on dep:on inv:Par ctrs:Par.
-  - admit.
-  - admit.
+  - move => a b A ih ? ξ.
+    elim /Par_inv=>// ? ? ? ? a0 b0 A0 + + + [] *. subst.
+    apply_ih ih => a1 [? ?].
+    apply_ih ih => b1 [? ?].
+    apply_ih ih => c1 [? ?]. subst.
+    exists (tEq a1 b1 c1). eauto with par.
+  - move => t a b p ih ? ξ.
+    elim /Par_inv=>// ?.
+    + move => ? ? ? ? t0 a0 b0 p0 + + + + []*. subst.
+      apply_ih ih => t1 [? ?].
+      apply_ih ih => a1 [? ?].
+      apply_ih ih => b1 [? ?].
+      apply_ih ih => p1 [? ?]. subst.
+      exists (tJ t1 a1 b1 p1). eauto with par.
+    + move => ? ? ? ? t1 a1 b1 + + + + [] *. subst.
+      apply_ih ih => t2 [? ?].
+      apply_ih ih => a2 [? ?].
+      apply_ih ih => b2 [? ?].
+      apply_ih ih => p2 [+ +]. subst.
+      case : p2 => // _ ?.
+      exists t2. eauto with par.
   - hauto lq:on dep:on inv:Par ctrs:Par.
-  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 [] =>// A0' B0' ξ [] *. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    move : ih1 => [B1' [? ?]].
-    move : ih0 => [A1' [? ?]]. subst.
-    exists (tPi A1' B1'). auto with par.
-  - move => A A1 a a1 h0 ih0 h1 ih1 [] // A0 a0 ξ [] *. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    move : ih0 => [b [? ?]].
-    move : ih1 => [B [? ?]]. subst.
-    exists (tAbs b B). simpl.
-    auto with par.
-  - move => ? a1 ? b1 h0 ih0 h1 ih1 [] // a0 b0 ξ [*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    move : ih0 => [a2 [? ?]];
-    move : ih1 => [b2 [? ?]]; subst.
-    exists (tApp a2 b2). simpl.
-    auto with par.
-  - move => ? A a0 ? b1 h0 ih0 h1 ih1 [] // a b0 ξ [*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    move : ih0 ih1 =>[+ [+ +]] [b2 [? ?]].
-    case => // A0 a1 [*]. subst.
-    asimpl.
-    exists (subst_tm  (b2..) a1). asimpl.
-    eauto with par.
-  - case=>//. eauto with par.
-  - case=>//. eauto with par.
-  - move => a0 a1 b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 [] // a2 b2 c2 ξ [*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    specialize ih2 with (1 := eq_refl).
-    move : ih0 ih1 ih2 => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]]. subst.
-    exists (tIf a0 b0 c0). auto with par.
-  - move => ? ? b1 ? c1 h0 ih0 h1 ih1 h2 ih2 [] // a0 b0 c0 ξ [*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    specialize ih2 with (1 := eq_refl).
-    move : ih0 ih1 ih2 => [a [? ?]] [b [? ?]] [c [? ?]]. subst.
-    have ? : a = tTrue by hauto q:on inv:tm. subst.
-    eauto with par.
-  - move => ? ? b1 ? c1 h0 ih0 h1 ih1 h2 ih2 [] // a0 b0 c0 ξ [*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    specialize ih2 with (1 := eq_refl).
-    move : ih0 ih1 ih2 => [a [? ?]] [b [? ?]] [c [? ?]]. subst.
-    have ? : a = tFalse by hauto q:on inv:tm. subst.
-    eauto with par.
-  - case=>//. eauto with par.
-  - case=>//. eauto with par.
-  - move => ? ? ? a1 b1 A1 h0 ih0 h1 ih1 h2 ih2 []// a0 b0 A0 ξ [*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    specialize ih2 with (1 := eq_refl).
-    move : ih0 ih1 ih2 => [a [? ?]] [b [? ?]] [A [? ?]]. subst.
-    exists (tEq a b A). auto with par.
-  - move => ? ? ? ? t1 a1 b1 p1 h0 ih0 h1 ih1 h2 ih2 h3 ih3 []// t0 a0 b0 p0 ξ [*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    specialize ih2 with (1 := eq_refl).
-    specialize ih3 with (1 := eq_refl).
-    move : ih0 ih1 ih2 ih3 => [t [? ?]] [a [? ?]] [b [? ?]] [p [? ?]]. subst.
-    exists (tJ t a b p). auto with par.
-  - move => ?  ? ? ? t1 a1 b1 h0 ih0 h1 ih1 h2 ih2 h3 ih3 []// t a b p ξ[*]. subst.
-    specialize ih0 with (1 := eq_refl).
-    specialize ih1 with (1 := eq_refl).
-    specialize ih2 with (1 := eq_refl).
-    specialize ih3 with (1 := eq_refl).
-    move : ih0 ih1 ih2 ih3 => [t0 [? ?]] [a0 [? ?]] [b0 [? ?]] [p0 [? ?]]. subst.
-    have ? : p0 = tRefl by hauto q:on inv:tm. subst.
-    eauto with par.
-  - move => ? ? a1 h ih [] // b [] // b0 b1 ξ [] h0 h1 h2. subst.
-    move : (h1).
-    have /[apply] /(_ (ren_tm (0 .: id))) : forall (f : tm -> tm) a b, a = b -> f a = f b by congruence.
-    asimpl => *. subst.
-    have ? : b1 = var_tm 0.
-    case : b1 h2 =>// n. asimpl => []. case.
-    case : n => //.
-    subst. move {h2}.
-
-    rename b0 into t0.
-    rename a1 into b1.
-
-    (* asimpl in h1. *)
-    specialize ih with (1 := eq_refl).
-    move : ih => [b1' [? ih]]. subst.
-    asimpl in h1.
-    pose t0' := (ren_tm (0 .: id) t0).
-    have ht0' : ren_tm shift t0'  = t0.
-    { subst t0'.
-      asimpl.
-      transitivity (ren_tm (0 .: shift) t0); last by (substify; asimpl).
-      apply tm_free_ren_any with (i := 0); first by sfirstorder.
-      qauto l:on inv:nat simp+:asimpl.
-    }
-    rewrite -ht0' in ih.
-Admitted.
+Qed.
 
 Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Pars (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Pars a b.
