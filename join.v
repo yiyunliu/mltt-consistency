@@ -99,51 +99,6 @@ Lemma P_AbsEta' b A a0 a1 :
   Par b a1.
 Proof. move => ->. apply P_AbsEta. Qed.
 
-(* Variant tmHead : Set := hAbs | hPi | hEq | hBool | hUniv. *)
-
-(* Definition head_form (a : tm) := *)
-(*   match a with *)
-(*   | tAbs _ _ => Some hAbs *)
-(*   | tPi _ _ => Some hPi *)
-(*   | tEq _ _ _ => Some hEq *)
-(*   | tBool => Some hBool *)
-(*   | tUniv _ => Some hUniv *)
-(*   | _ => None *)
-(*   end. *)
-
-(* Definition eq_head (a b : tmHead) := *)
-(*   match a, b with *)
-(*   | hAbs, hAbs => true *)
-(*   | hPi, hPi => true *)
-(*   | hEq, hEq => true *)
-(*   | hBool, hBool => true *)
-(*   | hUniv, hUniv => true *)
-(*   | _, _ => false *)
-(*   end. *)
-
-(* Definition par_head_preservation A B : *)
-(*   Par A B -> match (head_form A) with *)
-(*              | Some hA => match head_form B with *)
-(*                          | Some hB => eq_head hA hB *)
-(*                          | None => false *)
-(*                          end *)
-(*              | None => true *)
-(*              end. *)
-(* Proof. *)
-(*   move => h. elim : A B /h =>//. *)
-(*   move => [] //. best b:on. *)
-
-(* Check from_option. *)
-(* (* Induction needed because of AbsEta *) *)
-(* Definition par_matching_head A B : *)
-(*   Par A B -> from_option *)
-(*                (fun a => from_option (eq_head a) true (head_form B)) *)
-(*                true *)
-(*                (head_form A). *)
-(* Proof. *)
-(*   move => h. *)
-(*   elim : A B /h => //. *)
-(*   best b:on. *)
 Lemma pars_pi_inv A B C (h : Pars (tPi A B) C) :
   exists A0 B0, C = tPi A0 B0 /\ Pars A A0 /\ Pars B B0.
 Proof.
@@ -282,18 +237,93 @@ Proof.
   - hauto lq:on rew:off.
 Qed.
 
+Definition size_tm : tm -> nat.
+  apply tm_rec.
+  exact (fun _ => 1).
+  exact (fun _ a _ b => 1 + a + b).
+  exact (fun _ a _ b => 1 + a + b).
+  exact (fun _ a _ b => 1 + a + b).
+  exact 1.
+  exact (fun _ => 1).
+  exact 1.
+  exact 1.
+  exact (fun _ a _ b _ c => 1 + a + b + c).
+  exact 1.
+  exact (fun _ a _ b _ c => 1 + a + b + c).
+  exact (fun _ a _ b _ c _ d => 1 + a + b + c + d).
+  exact 1.
+Defined.
+
+Lemma ren_tm_size_tm a ξ : size_tm a = size_tm (ren_tm ξ a).
+Proof. elim : a ξ; scongruence. Qed.
+
+Lemma induction_size_tm_lt
+  : forall P : tm -> Prop,
+       (forall x : tm, (forall y : tm, size_tm y < size_tm x -> P y) -> P x) ->
+       forall a : tm, P a.
+Proof.
+  have := well_founded_ltof  tm size_tm.
+  move => + + + a.
+  move /(_ a). elim; hauto lq:on.
+Qed.
+
+Derive Inversion Par_inv with (forall a b, Par a b).
+
+Local Ltac apply_ih ih := move /ih; elim; last by (simpl; lia).
+
 Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Par (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Par a b.
 Proof.
-  move Ea : (ren_tm ξ a) h => a0 h.
-  move : a ξ Ea.
-  elim : a0 b0 / h.
-  - move => i [] ξ=>//.
-    eauto with par.
-  - move => i [] ξ=>//.
-    eauto with par.
-  - move => [] ξ=>//.
-    eauto with par.
+  elim /induction_size_tm_lt : a b0 ξ h.
+  case => //.
+  - move => i _ a ξ. simpl.
+    elim /Par_inv=>// h ?[] *. subst.
+    exists (var_tm i). eauto with par.
+  - admit.
+  - move => b a ih ? ξ.
+    elim /Par_inv=>//.
+    + move => ? a0 a1 b0 b1 + + [] *. subst.
+      apply_ih ih => b0 [? ?].
+      apply_ih ih => b2 [? ?]. subst.
+      exists (tApp b0 b2). hauto lq:on ctrs:Par.
+    + move => ? a0 A a1 b0 b1 + + [] *. subst.
+      apply_ih ih => t0 [+ +]. case : t0=>// A0 t0 [] ? ? ?. subst.
+      apply_ih ih => t1 [? ?]. subst.
+      exists (subst_tm (t1..) t0). split; [by asimpl | eauto using P_AppAbs].
+  - move => A B ih? ξ.
+    elim /Par_inv => // ? A0 A1 B0 B1 + + [] *; subst.
+    apply_ih ih => A0 [? ?].
+    apply_ih ih => B0 [? ?]. subst.
+    exists (tPi A0 B0). eauto with par.
+  - hauto lq:on dep:on inv:Par ctrs:Par.
+  - move => n _ ? ?.
+    elim /Par_inv=>//.
+    move => *. subst. eauto with par.
+  - hauto lq:on dep:on inv:Par ctrs:Par.
+  - hauto lq:on dep:on inv:Par ctrs:Par.
+  - move => a b c ih ? ξ.
+    elim /Par_inv=>// ?.
+    + move => a0 a1 b0 b1 c0 c1 + + + [] *. subst.
+      apply_ih ih =>a2 [? ?].
+      apply_ih ih =>b2 [? ?].
+      apply_ih ih =>c2 [? ?]. subst.
+      exists (tIf a2 b2 c2). eauto with par.
+    + move => a0 b0 b1 c0 c1 + + + [] *. subst.
+      apply_ih ih => a2 [? ?].
+      have ? : a2 = tTrue by hauto q:on drew:off inv:tm.
+      apply_ih ih => b2 [? ?].
+      apply_ih ih => c2 [? ?]. subst.
+      exists (b2). eauto with par.
+    + move => a0 b0 b1 c0 c1 + + + [] *. subst.
+      apply_ih ih => a2 [? ?].
+      have ? : a2 = tFalse by hauto q:on drew:off inv:tm.
+      apply_ih ih => b2 [? ?].
+      apply_ih ih => c2 [? ?]. subst.
+      exists (c2). eauto with par.
+  - hauto lq:on dep:on inv:Par ctrs:Par.
+  - admit.
+  - admit.
+  - hauto lq:on dep:on inv:Par ctrs:Par.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 [] =>// A0' B0' ξ [] *. subst.
     specialize ih0 with (1 := eq_refl).
     specialize ih1 with (1 := eq_refl).
@@ -568,8 +598,6 @@ Proof. hauto l:on use:par_morphing_star, Par_refl. Qed.
 Lemma Coherent_subst_star a0 a1 (h : Coherent a0 a1) (ξ : fin -> tm) :
   Coherent (subst_tm ξ a0) (subst_tm ξ a1).
 Proof. hauto lq:on use:Coherent_morphing, Par_refl. Qed.
-
-Derive Inversion Par_inv with (forall a b, Par a b).
 
 Lemma par_confluent : diamond Par.
 Proof.
