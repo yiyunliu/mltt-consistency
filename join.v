@@ -253,6 +253,27 @@ Qed.
 (* show that forall i ξ ξ0, if ren_tm ξ a = ren_tm ξ0 a, then ξ i <> ξ0 i -> i in fv(a) *)
 (* if fv(a) in range(ξ), then exists b, ren_tm ξ a = b *)
 
+Definition tm_i_free a i := exists ξ ξ0, ξ i <> ξ0 i /\ ren_tm ξ a = ren_tm ξ0 a.
+
+(* Lemma ξ_constraint_classic (ξ0 ξ1 : fin -> fin) i : *)
+(*   (forall j, ξ0 j <> ξ1 j -> i = j) <-> *)
+(*   (forall j, i <> j -> ξ0 j = ξ1 j). *)
+(* Proof. *)
+(* Admitted. *)
+
+Lemma tm_free_ren_any a i :
+  tm_i_free a i ->
+  forall ξ0 ξ1, (forall j, i <> j -> ξ0 j = ξ1 j) ->
+             ren_tm ξ0 a = ren_tm ξ1 a.
+Proof.
+  rewrite /tm_i_free.
+  move => [+ [+ [+ +]]].
+  elim : a i=>//.
+  - hauto q:on.
+Admitted.
+
+
+
 Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Par (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Par a b.
 Proof.
@@ -354,6 +375,32 @@ Proof.
     specialize ih with (1 := eq_refl).
     move : ih => [b1' [? ih]]. subst.
     asimpl in h1.
+    have : tm_i_free t0 0 by sfirstorder.
+    have : ren_tm (0 .: shift) t0 = ren_tm (1 .: shift) t0.
+    apply tm_free_ren_any with (i := 0); eauto.
+    sfirstorder.
+    qauto l:on inv:nat.
+    replace (ren_tm (0 .: shift) t0) with t0; last by (substify; asimpl).
+    move => /[dup] ?.
+  (* t0 = t0 ⟨1 .: ↑⟩ -> *)
+    set t := ren_tm (1 .: _) _.
+    set q := ren_tm (0 .: id) t.
+    have : ren_tm shift q = t0.
+    subst q.
+    subst t.
+    by asimpl.
+    move => hq _ ?.
+    exists q.
+    split; cycle 1.
+    rewrite <- hq.
+    apply P_AbsEta. apply Par_refl.
+
+    subst t0.
+    subst q.
+    asimpl.
+    asimpl.
+    substify.
+    asimpl.
     have [t0' ?] : exists t0', ren_tm shift t0' = t0 by admit. subst.
     have [b1'' ?] : exists t0', ren_tm shift t0' = b1' by admit. subst.
     asimpl.
