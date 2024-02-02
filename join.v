@@ -248,24 +248,10 @@ Proof.
     apply : P_AbsEta'; eauto. by asimpl.
 Qed.
 
-Lemma tm_shift_exists a :
-  forall n ξ ξ0, (forall i, i < n -> ξ i <> ξ0 i) ->
-            ren_tm ξ a = ren_tm ξ0 a -> exists b, ren_tm (Nat.add n) b = a.
-Proof.
-  elim : a.
-  - move => m n ξ ξ0 h.
-    asimpl. move => [].
-    case : (Coq.Arith.Compare_dec.lt_dec m n).
-    sfirstorder.
-    move => ? ?.
-    exists (var_tm (m - n)).
-    asimpl.
-    f_equal. lia.
-  - move => A ihA a iha n ξ ξ0 hξ [].
-    move : ihA (hξ). repeat move/[apply].
-    move => [B ?]. subst.
-    have : forall i, i < n -> (upRen_tm_tm )
-  -
+(* Idea: Show that if a renaming is surjective w.r.t the term, then there exists an inverse  *)
+(* define sets of free variables *)
+(* show that forall i ξ ξ0, if ren_tm ξ a = ren_tm ξ0 a, then ξ i <> ξ0 i -> i in fv(a) *)
+(* if fv(a) in range(ξ), then exists b, ren_tm ξ a = b *)
 
 Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Par (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Par a b.
