@@ -248,18 +248,12 @@ Proof.
     apply : P_AbsEta'; eauto. by asimpl.
 Qed.
 
-(* Idea: Show that if a renaming is surjective w.r.t the term, then there exists an inverse  *)
-(* define sets of free variables *)
-(* show that forall i ξ ξ0, if ren_tm ξ a = ren_tm ξ0 a, then ξ i <> ξ0 i -> i in fv(a) *)
-(* if fv(a) in range(ξ), then exists b, ren_tm ξ a = b *)
-
 Definition tm_i_free a i := exists ξ ξ0, ξ i <> ξ0 i /\ ren_tm ξ a = ren_tm ξ0 a.
 
-(* Lemma ξ_constraint_classic (ξ0 ξ1 : fin -> fin) i : *)
-(*   (forall j, ξ0 j <> ξ1 j -> i = j) <-> *)
-(*   (forall j, i <> j -> ξ0 j = ξ1 j). *)
-(* Proof. *)
-(* Admitted. *)
+Lemma subst_differ_one_ren_up i ξ0 ξ1 :
+  (forall j, i <> j -> ξ0 j = ξ1 j) ->
+  (forall j, S i <> j -> upRen_tm_tm ξ0 j =  upRen_tm_tm ξ1 j).
+Proof. qauto l:on inv:nat simp+:asimpl. Qed.
 
 Lemma tm_free_ren_any a i :
   tm_i_free a i ->
@@ -270,9 +264,23 @@ Proof.
   move => [+ [+ [+ +]]].
   elim : a i=>//.
   - hauto q:on.
-Admitted.
-
-
+  - move => A ihA a iha i ρ0 ρ1 hρ [] => ? h ξ0 ξ1 hξ /=.
+    f_equal; first by eauto.
+    move /subst_differ_one_ren_up in hξ.
+    move /(_ (S i)) in iha.
+    move : iha h; move/[apply].
+    apply=>//. asimpl. sfirstorder.
+  - hauto lq:on rew:off.
+  - move => A ihA a iha i ρ0 ρ1 hρ [] => ? h ξ0 ξ1 hξ /=.
+    f_equal; first by eauto.
+    move /subst_differ_one_ren_up in hξ.
+    move /(_ (S i)) in iha.
+    move : iha h; move/[apply].
+    apply=>//. asimpl. sfirstorder.
+  - hauto lq:on rew:off.
+  - hauto lq:on rew:off.
+  - hauto lq:on rew:off.
+Qed.
 
 Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : Par (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Par a b.
@@ -375,48 +383,15 @@ Proof.
     specialize ih with (1 := eq_refl).
     move : ih => [b1' [? ih]]. subst.
     asimpl in h1.
-    have : tm_i_free t0 0 by sfirstorder.
-    have : ren_tm (0 .: shift) t0 = ren_tm (1 .: shift) t0.
-    apply tm_free_ren_any with (i := 0); eauto.
-    sfirstorder.
-    qauto l:on inv:nat.
-    replace (ren_tm (0 .: shift) t0) with t0; last by (substify; asimpl).
-    move => /[dup] ?.
-  (* t0 = t0 ⟨1 .: ↑⟩ -> *)
-    set t := ren_tm (1 .: _) _.
-    set q := ren_tm (0 .: id) t.
-    have : ren_tm shift q = t0.
-    subst q.
-    subst t.
-    by asimpl.
-    move => hq _ ?.
-    exists q.
-    split; cycle 1.
-    rewrite <- hq.
-    apply P_AbsEta. apply Par_refl.
-
-    subst t0.
-    subst q.
-    asimpl.
-    asimpl.
-    substify.
-    asimpl.
-    have [t0' ?] : exists t0', ren_tm shift t0' = t0 by admit. subst.
-    have [b1'' ?] : exists t0', ren_tm shift t0' = b1' by admit. subst.
-    asimpl.
-    (* have [a0 ? ] : exists a0, ren_tm shift a0 = b1 by admit. *)
-    (* subst. *)
-    (* asimpl. *)
-    asimpl.
-    exists b1''; split; first reflexivity.
-    apply : P_AbsEta'; eauto.
-    asimpl in h.
-    (* apply P_AbsEta. *)
-    (* exists (ren_tm (0 ..) b1). *)
-    (* asimpl. *)
-    (* split; cycle 1. *)
-    (* apply : P_AbsEta'; eauto. *)
-    (* asimpl. *)
+    pose t0' := (ren_tm (0 .: id) t0).
+    have ht0' : ren_tm shift t0'  = t0.
+    { subst t0'.
+      asimpl.
+      transitivity (ren_tm (0 .: shift) t0); last by (substify; asimpl).
+      apply tm_free_ren_any with (i := 0); first by sfirstorder.
+      qauto l:on inv:nat simp+:asimpl.
+    }
+    rewrite -ht0' in ih.
 Admitted.
 
 Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
