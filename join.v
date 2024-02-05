@@ -562,7 +562,10 @@ Proof.
   - (* hauto lq:on inv:Par ctrs:Par. *)
     move => A0 A1 a0 a1 hA ihA ha iha b0.
     elim /Par_inv=>//; first by hauto lq:on ctrs:Par.
+    (* Abs eta *)
     move =>hb0 A a2 a3 ha2 [] *; subst.
+    elim /Par_inv : ha =>//.
+    +
   - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
     elim /Par_inv; try congruence.
     + qauto l:on ctrs:Par.
