@@ -57,6 +57,29 @@ Proof.
     hauto lq:on ctrs:rtc.
 Qed.
 
+Lemma nf_renaming (a : tm) ξ : nf a -> nf (ren_tm ξ a).
+Proof.
+  rewrite /nf => h ? /Par_antirenaming.
+  move => [b [? /h ?]]. by subst.
+Qed.
+
+Lemma nf_antirenaming (a : tm) ξ : nf (ren_tm ξ a) -> nf a.
+Proof.
+  rewrite /nf.
+  move => h b hr.
+  (* move : par_renaming. move/[apply] /(_ ξ). *)
+  move : ξ h.
+  elim : a b / hr => //.
+  - move => A0 A1 B0 B1 hA ihA hB ihB ξ h.
+    f_equal.
+    + apply (ihA ξ).
+      move => A' hA'.
+      move /(_ (tPi A' (ren_tm (upRen_tm_tm ξ) B0)) ltac:(hauto lq:on use:Par_refl ctrs:Par)) in h.
+      scongruence.
+    + apply (ihB (upRen_tm_tm ξ)).
+
+
+
 Lemma ne_nf_renaming (a : tm) :
   forall (ξ : nat -> nat),
     (ne a <-> ne (ren_tm ξ a)) /\ (nf a <-> nf (ren_tm ξ a)).
