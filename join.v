@@ -637,23 +637,18 @@ Proof.
     + move => h2 a1 a2 h3 [?] ?. subst.
       move : h3.
       elim /Par_inv=>//.
-
-  (* ------- old proofs ----------------- *)
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - move => a b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 b2.
-    elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
-  - move => a b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 b2.
-    elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - move => t0 a0 b0 p t1 a1 b1 ht iht ha iha hb ihb hp ihp ?.
-    elim /Par_inv=> //.
-    + hauto q:on  ctrs:Par inv:Par.
-    + hauto q:on  ctrs:Par.
+      * move => h4 a1 a3 b0 b1 h5 + [] *. subst.
+        move /par_var_eq => ?. subst.
+        move /Par_antirenaming : h5 => [a3' [? +]]. subst.
+        move : h1. apply_ih' ih => c [? ?].
+        eauto with par.
+      * move => h4 a1 a3 b0 b1 h5 + [] *. subst.
+        move /par_var_eq => ?. subst.
+        move / Par_antirenaming : h5 => [+ []].
+        case => ///= a3' [?] h6. subst.
+        asimpl. move : h1 h6. apply_ih' ih => c [? ?].
+        eauto with par.
+    + admit.
 Admitted.
 
 Lemma pars_confluent : confluent Par.
