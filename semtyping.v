@@ -1,5 +1,7 @@
 From WR Require Import syntax join imports.
-
+(* The semantic definition for function is in sufficient for eta reduction *)
+(* λ 1 0 reduces to 0 but (λ 1 0) 0 reduces to a neutral term *)
+(* but maybe nf and ne doesn't have to change thanks to facotrization of eta rules? *)
 Definition nf a := forall b, Par a b -> a = b.
 
 Fixpoint ne (a : tm) :=
