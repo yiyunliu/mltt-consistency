@@ -2,23 +2,37 @@ From WR Require Import syntax join imports.
 (* The semantic definition for function is in sufficient for eta reduction *)
 (* λ 1 0 reduces to 0 but (λ 1 0) 0 reduces to a neutral term *)
 (* but maybe nf and ne doesn't have to change thanks to facotrization of eta rules? *)
-Definition nf a := forall b, Par a b -> a = b.
-
 Fixpoint ne (a : tm) :=
   match a with
-  | var_tm _ => True
-  | tApp a b => ne a /\ nf b
-  | tAbs _ => False
-  | tPi A B => False
-  | tVoid => False
-  | tJ t a b p => nf t /\ nf a /\ nf b /\ ne p
-  | tUniv _ => False
-  | tTrue => False
-  | tFalse => False
-  | tIf a b c => ne a /\ nf b /\ nf c
-  | tBool => False
-  | tEq a b A => False
-  | tRefl => False
+  | var_tm _ => true
+  | tApp a b => ne a && nf b
+  | tAbs _ => false
+  | tPi A B => false
+  | tVoid => false
+  | tJ t a b p => nf t && nf a && nf b && ne p
+  | tUniv _ => false
+  | tTrue => false
+  | tFalse => false
+  | tIf a b c => ne a && nf b && nf c
+  | tBool => false
+  | tEq a b A => false
+  | tRefl => false
+  end
+with nf (a : tm) :=
+  match a with
+  | var_tm _ => true
+  | tApp a b => ne a && nf b
+  | tAbs a => nf a
+  | tPi A B => nf A && nf B
+  | tVoid => true
+  | tJ t a b p => nf t && nf a && nf b && ne p
+  | tUniv _ => true
+  | tTrue => true
+  | tFalse => true
+  | tIf a b c => ne a && nf b && nf c
+  | tBool => true
+  | tEq a b A => nf a && nf b && nf A
+  | tRefl => true
   end.
 
 Definition wn (a : tm) := exists b, Pars a b /\ nf b.
@@ -31,9 +45,7 @@ Lemma nf_wn v : nf v -> wn v.
 Proof. sfirstorder ctrs:rtc. Qed.
 
 Lemma ne_nf (a : tm) : ne a -> nf a.
-Proof.
-  elim : a =>//; hauto q:on unfold:nf inv:Par.
-Qed.
+Proof. elim : a =>//; hauto q:on unfold:nf inv:Par. Qed.
 
 Lemma wne_wn a : wne a -> wn a.
 Proof. sfirstorder use:ne_nf. Qed.
@@ -47,11 +59,13 @@ Proof. sfirstorder use:ne_nf. Qed.
 Lemma nf_step_eq (a : tm) : nf a -> forall b, Par a b -> a = b.
 Proof. by rewrite /nf. Qed.
 
+(* If nf a, a => b, then size b < size a *)
 Lemma preservation_wn (a : tm) : wn a -> forall b, Par a b -> wn b.
 Proof.
   rewrite /wn. move => [v [hv]].
   elim : a v / hv.
   - move => v hv b *.
+    (* replace by a proper preservation lemma *)
     have ? : v = b by sfirstorder use:nf_step_eq. subst.
     eauto using rtc_refl.
   - move => a0 a1 a2 hr0 hr1 /[apply] h a1' hr'.
@@ -117,8 +131,6 @@ Inductive InterpExt n (I : nat -> tm -> (tm -> Prop) -> Prop) : tm -> (tm -> Pro
 | InterpExt_Void : InterpExt n I tVoid wne
 | InterpExt_Bool : InterpExt n I tBool SBool
 | InterpExt_Fun A B PA (PF : tm -> (tm -> Prop) -> Prop) :
-  nf A ->
-  nf B ->
   InterpExt n I A PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
   (forall a PB, PF a PB -> InterpExt n I (subst_tm (a..) B) PB) ->
