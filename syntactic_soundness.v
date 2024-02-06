@@ -89,13 +89,13 @@ Proof.
   qauto l:on use:Coherent_univ_inj, Wt_Pi_inv.
  Qed.
 
-Lemma Wt_Abs_inv Γ A a T (h : Wt Γ (tAbs A a) T) :
+Lemma Wt_Abs_inv Γ A a T (h : Wt Γ (tAbs a) T) :
   exists B i, Wt Γ (tPi A B) (tUniv i) /\
          Wt (A :: Γ) a B /\
          Coherent (tPi A B) T /\
          exists i, (Wt Γ T (tUniv i)).
 Proof.
-  move E : (tAbs A a) h => a0 h.
+  move E : (tAbs a) h => a0 h.
   move : A a E.
   elim : Γ a0 T / h => //.
   - hauto lq:on use:Coherent_reflexive.

@@ -545,65 +545,100 @@ Lemma Coherent_subst_star a0 a1 (h : Coherent a0 a1) (ξ : fin -> tm) :
   Coherent (subst_tm ξ a0) (subst_tm ξ a1).
 Proof. hauto lq:on use:Coherent_morphing, Par_refl. Qed.
 
+Local Ltac apply_ih' ih :=
+  move :(ih); repeat move/[apply]; elim;
+  last by (simpl; rewrite -?ren_tm_size_tm; lia).
+
+Lemma par_var_eq i a : Par (var_tm i) a -> a = var_tm i.
+Proof. elim /Par_inv=>//. Qed.
+
 Lemma par_confluent : diamond Par.
 Proof.
   rewrite /diamond.
-  move => a b b0 h.
-  move : b0.
-  elim : a b / h.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - (* hauto lq:on inv:Par ctrs:Par. *)
-    move => a0 a1 ha iha b0.
-    elim /Par_inv=>//; first by hauto lq:on ctrs:Par.
-    (* Abs eta *)
-    move =>hb0 a2 a3 ha2 [] *; subst.
-    elim /Par_inv : ha =>//.
-    + move => ha2' a0 a3 b1 b2 + + [] ha2''? ?; subst.
-      move /[swap].
-      elim /Par_inv => // hz ? [] ? ?. subst => {hz}.
-      move /Par_antirenaming => [a3' [? ?]]. subst.
-      have [d [ ? ?]] : exists c, Par b0 c /\ Par a3' c by admit.
-      exists d. eauto with par.
-    + move => ha2' a0 a3 b1 b2 + + [] *. subst.
-      move /Par_antirenaming.
-      move => [+ []]. case=>// c [? hc]. subst.
-      elim /Par_inv => // hz ? [] ? ?. subst => {hz}.
-      asimpl in ha2'.
-      admit.
-  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
+  elim /induction_size_tm_lt.
+  move => a ih b b0.
+  elim /Par_inv.
+  - hauto lq:on rew:off inv:Par ctrs:Par.
+  - hauto lq:on rew:off inv:Par ctrs:Par.
+  - hauto lq:on rew:off inv:Par ctrs:Par.
+  - move => h A0 A1 B0 B1 hA0 hB0 ? ?. subst.
+    elim /Par_inv=>// => h0 A2 A3 B2 B3 + + [] *. subst.
+    move : hA0. apply_ih' ih => A [? ?].
+    move : hB0. apply_ih' ih => B [].
+    eauto with par.
+  - move => h0 a0 a1 h1 ? ?. subst.
     elim /Par_inv=>//.
-    + qauto l:on ctrs:Par.
-    + move => happ a2 a3 b3 b4 ha hb.
-      case => *; subst.
-      case /(_ _ ltac:(eassumption)) : ih1 => b [? ?].
-      case /(_ _ ltac:(eassumption)) : ih0 => a [? +].
-      elim /Par_inv => //.
-      * move => ? a2 a4 ? [] *. subst.
-        exists (subst_tm (b..) a4).
-        hauto lq:on ctrs:Par use:par_cong.
-      * move => h a2 a4 ? [] *. subst.
+    + move => h2 a2 a3 + [] *. subst.
+      move : h1. apply_ih' ih => + [].
+      eauto with par.
+    + move => h2 a2 a3 h3 [] *. subst.
+      elim /Par_inv : h1=>//.
+      * move => h4 a0 a3 b1 b2 h5 + [] *. subst.
+        move /par_var_eq =>?. subst.
+        move /Par_antirenaming : h5 => [a3' [? +]]. subst.
+        move : h3. apply_ih' ih => + [].
+        eauto with par.
+      * move => h4 a0 a3 b1 b2 + + [] *. subst.
+        move /Par_antirenaming => [] + [].
+        case =>// a3' [] ?. subst=> + /par_var_eq ?. subst.
+        asimpl in h4.
+        move : h3. apply_ih' ih => + []. eauto with par.
+  - move => h0 a0 a1 b1 b2 h1 h2 ? ?. subst.
+    elim /Par_inv =>//.
+    + move => h3 a2 a3 b3 b4 + + [] *. subst.
+      move : h1. apply_ih' ih => a [? ?].
+      move : h2. apply_ih' ih => b [+ +].
+      eauto with par.
+    + move => h3 a2 a3 b3 b4 + + [] *. subst.
+      move : h1. apply_ih' ih => a [h4 h5].
+      move : h2. apply_ih' ih => b [h6 h7].
+      elim /Par_inv : h5=>//.
+      * hauto lq:on rew:off use:par_cong ctrs:Par.
+      * move => h8 a2 a4 h9 [] *. subst.
+        asimpl in h3.
+        eauto with par.
+  - move => h0 a0 a1 b1 b2 h1 h2 ? ?. subst.
+    elim /Par_inv =>//.
+    + move => h3 a2 a3 b3 b4 + + [] *. subst.
+      move : h1. apply_ih' ih => a [h4 h5].
+      move : h2. apply_ih' ih => b [? ?] {ih}.
+      move : h4. elim /Par_inv=>//.
+      * move => h6 a2 a4 h7 [] ? ?. subst.
+        hauto lq:on rew:off use:par_cong ctrs:Par.
+      * move => h6 a2 a4 h7 [] *. subst.
+        asimpl in h0.
+        eauto with par.
+    + move => h3 a2 a3 b3 b4 + + [] *. subst.
+      move : h1. apply_ih' ih => a [h4 h5].
+      move : h2. apply_ih' ih => b [h00 h01].
+      elim /Par_inv : h4 =>//; elim /Par_inv : h5 => //.
+      * hauto lq:on rew:off use:par_cong ctrs:Par.
+      * move => ? a2 a4 ? [] ? ? ? a5 a6 ? [] *. subst.
+        asimpl in h3.
+        eauto using par_cong with par.
+      * move => ? a2 a4 ? [?] ? ? a5 a6 ? [] *. subst.
         asimpl.
-        hauto lq:on ctrs:Par.
-  - move => a a0 b0 b1 ? ih0 ? ih1 b2.
-    elim /Par_inv => //.
-    + move => h a1 a2 b3 b4 ? ? [*]; subst.
-      case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 *].
-      case /(_ _ ltac:(eassumption)) : ih1 => b [*].
-      elim /Par_inv : h0=>//.
-      * move => ? a3 a4 ? ? [*] *; subst.
-        exists (subst_tm (b..) a4).
-        hauto lq:on use:par_cong ctrs:Par.
-      * move => h0 a3 a4 h1 [] *. subst.
+        eauto using par_cong with par.
+      * move => ? a2 a4 ? [?] ? ? a5 a6 ? [] *. subst.
         asimpl.
-        hauto lq:on ctrs:Par.
-    + move => ? a1 a2 b3 b4 ? ? [*] *. subst.
-      case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 h1].
-      case /(_ _ ltac:(eassumption)) : ih1 => b [*].
-      elim /Par_inv : h0=>//; elim /Par_inv : h1 => //;
-        hauto lq:on use:par_cong ctrs:Par simp+:asimpl .
+        eauto using par_cong with par.
+  - hauto lq:on rew:off inv:Par ctrs:Par.
+  - hauto lq:on rew:off inv:Par ctrs:Par.
+  - admit.
+  - admit.
+  - admit.
+  - hauto lq:on rew:off inv:Par ctrs:Par.
+  - hauto lq:on rew:off inv:Par ctrs:Par.
+  - admit.
+  - admit.
+  - admit.
+  - move => h0 a0 a1 h1 ? ?. subst.
+    elim /Par_inv=>//.
+    + move => h2 a1 a2 h3 [?] ?. subst.
+      move : h3.
+      elim /Par_inv=>//.
+
+  (* ------- old proofs ----------------- *)
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
