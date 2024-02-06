@@ -1,49 +1,37 @@
 From WR Require Import syntax join imports.
 
+Definition nf a := forall b, Par a b -> a = b.
+
 Fixpoint ne (a : tm) :=
   match a with
-  | var_tm _ => true
-  | tApp a b => ne a && nf b
-  | tAbs _ => false
-  | tPi A B => false
-  | tVoid => false
-  | tJ t a b p => nf t && nf a && nf b && ne p
-  | tUniv _ => false
-  | tTrue => false
-  | tFalse => false
-  | tIf a b c => ne a && nf b && nf c
-  | tBool => false
-  | tEq a b A => false
-  | tRefl => false
-  end
-with nf (a : tm) :=
-  match a with
-  | var_tm _ => true
-  | tApp a b => ne a && nf b
-  | tAbs a => nf a
-  | tPi A B => nf A && nf B
-  | tVoid => true
-  | tJ t a b p => nf t && nf a && nf b && ne p
-  | tUniv _ => true
-  | tTrue => true
-  | tFalse => true
-  | tIf a b c => ne a && nf b && nf c
-  | tBool => true
-  | tEq a b A => nf a && nf b && nf A
-  | tRefl => true
+  | var_tm _ => True
+  | tApp a b => ne a /\ nf b
+  | tAbs _ => False
+  | tPi A B => False
+  | tVoid => False
+  | tJ t a b p => nf t /\ nf a /\ nf b /\ ne p
+  | tUniv _ => False
+  | tTrue => False
+  | tFalse => False
+  | tIf a b c => ne a /\ nf b /\ nf c
+  | tBool => False
+  | tEq a b A => False
+  | tRefl => False
   end.
 
 Definition wn (a : tm) := exists b, Pars a b /\ nf b.
 Definition wne (a : tm) := exists b, Pars a b /\ ne b.
 
 Lemma bool_val_nf v : is_bool_val v -> nf v.
-Proof. hauto lq: on inv: tm unfold:is_bool_val. Qed.
+Proof. case : v =>// _; hauto lq:on unfold:nf inv:Par. Qed.
 
 Lemma nf_wn v : nf v -> wn v.
 Proof. sfirstorder ctrs:rtc. Qed.
 
 Lemma ne_nf (a : tm) : ne a -> nf a.
-Proof. elim : a =>//. Qed.
+Proof.
+  elim : a =>//; hauto q:on unfold:nf inv:Par.
+Qed.
 
 Lemma wne_wn a : wne a -> wn a.
 Proof. sfirstorder use:ne_nf. Qed.
@@ -51,25 +39,18 @@ Proof. sfirstorder use:ne_nf. Qed.
 Create HintDb nfne.
 #[export]Hint Resolve nf_wn bool_val_nf ne_nf wne_wn : nfne.
 
-Lemma nf_ne_step_eq (a : tm) : (nf a || ne a) -> forall b, Par a b -> a = b.
-Proof.
-  move => + b h.
-  elim : a b /h=>///=;
-    hauto lq:on inv:Par rew:off lqb:on db:nfne.
-Qed.
-
 Lemma ne_step_eq (a : tm) : ne a -> forall b, Par a b -> a = b.
-Proof. sfirstorder use:nf_ne_step_eq b:on. Qed.
+Proof. sfirstorder use:ne_nf. Qed.
 
 Lemma nf_step_eq (a : tm) : nf a -> forall b, Par a b -> a = b.
-Proof. sfirstorder use:nf_ne_step_eq b:on. Qed.
+Proof. by rewrite /nf. Qed.
 
 Lemma preservation_wn (a : tm) : wn a -> forall b, Par a b -> wn b.
 Proof.
   rewrite /wn. move => [v [hv]].
   elim : a v / hv.
   - move => v hv b *.
-    have ? : v = b by sfirstorder use:nf_ne_step_eq b:on. subst.
+    have ? : v = b by sfirstorder use:nf_step_eq. subst.
     eauto using rtc_refl.
   - move => a0 a1 a2 hr0 hr1 /[apply] h a1' hr'.
     move : par_confluent hr0 hr'. repeat move/[apply].
