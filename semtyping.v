@@ -74,10 +74,18 @@ Proof.
     f_equal.
     + apply (ihA ξ).
       move => A' hA'.
-      move /(_ (tPi A' (ren_tm (upRen_tm_tm ξ) B0)) ltac:(hauto lq:on use:Par_refl ctrs:Par)) in h.
-      scongruence.
-    + apply (ihB (upRen_tm_tm ξ)).
-
+      move /(_ (tPi A' (ren_tm (upRen_tm_tm ξ) B0))) in h.
+      hauto lq:on rew:off use:Par_refl ctrs:Par.
+    + apply (ihB (upRen_tm_tm ξ)) => B' hB'.
+      move /(_ (tPi (ren_tm ξ A0) B')  ) in h.
+      hauto lq:on rew:off use:Par_refl ctrs:Par.
+  - move => a0 a1 ha iha ξ nfh.
+    f_equal. apply iha with (ξ := upRen_tm_tm ξ).
+    move => b.
+    move /(_ (tAbs b)) in nfh.
+    hauto lq:on rew:off use:Par_refl ctrs:Par.
+  - admit.
+  -
 
 
 Lemma ne_nf_renaming (a : tm) :
