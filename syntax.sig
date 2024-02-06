@@ -1,7 +1,7 @@
 tm : Type
 nat : Type
 
-tAbs : tm -> (tm -> tm) -> tm
+tAbs : (tm -> tm) -> tm
 tApp : tm -> tm -> tm
 tPi : tm -> (tm -> tm) -> tm
 tVoid : tm

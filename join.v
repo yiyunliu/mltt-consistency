@@ -1,5 +1,4 @@
 From WR Require Import syntax imports.
-Require Export Setoid.
 
 Definition is_bool_val a :=
   match a with
@@ -23,18 +22,17 @@ Inductive Par : tm -> tm -> Prop :=
   Par B0 B1 ->
   (* --------------------- *)
   Par (tPi A0 B0) (tPi A1 B1)
-| P_Abs A0 A1 a0 a1 :
-  Par A0 A1 ->
+| P_Abs a0 a1 :
   Par a0 a1 ->
   (* -------------------- *)
-  Par (tAbs A0 a0) (tAbs A1 a1)
+  Par (tAbs a0) (tAbs a1)
 | P_App a0 a1 b0 b1 :
   Par a0 a1 ->
   Par b0 b1 ->
   (* ------------------------- *)
   Par (tApp a0 b0) (tApp a1 b1)
-| P_AppAbs a A a0 b0 b1 :
-  Par a (tAbs A a0) ->
+| P_AppAbs a a0 b0 b1 :
+  Par a (tAbs a0) ->
   Par b0 b1 ->
   (* ---------------------------- *)
   Par (tApp a b0) (subst_tm (b1..) a0)
@@ -83,9 +81,9 @@ Inductive Par : tm -> tm -> Prop :=
   Par b0 b1 ->
   Par p tRefl ->
   Par (tJ t0 a0 b0 p) t1
-| P_AbsEta A a0 a1 :
+| P_AbsEta a0 a1 :
   Par a0 a1 ->
-  Par (tAbs A (tApp (ren_tm shift a0) (var_tm var_zero))) a1.
+  Par (tAbs (tApp (ren_tm shift a0) (var_tm var_zero))) a1.
 
 #[export]Hint Constructors Par : par.
 
@@ -93,8 +91,8 @@ Notation Pars := (rtc Par).
 
 Definition Coherent a0 a1 := (exists b, Pars a0 b /\ Pars a1 b).
 
-Lemma P_AbsEta' b A a0 a1 :
-  b = (tAbs A (tApp (ren_tm shift a0) (var_tm var_zero))) ->
+Lemma P_AbsEta' b a0 a1 :
+  b = (tAbs (tApp (ren_tm shift a0) (var_tm var_zero))) ->
   Par a0 a1 ->
   Par b a1.
 Proof. move => ->. apply P_AbsEta. Qed.
@@ -136,9 +134,9 @@ Proof. hauto lq:on rew:off inv:rtc use:pars_univ_inv. Qed.
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
-Lemma P_AppAbs_cbn (A a b b0 : tm) :
+Lemma P_AppAbs_cbn (a b b0 : tm) :
   b0 = subst_tm (b..) a ->
-  Par (tApp (tAbs A a) b) b0.
+  Par (tApp (tAbs a) b) b0.
 Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
 
 Lemma P_IfTrue_star a b c :
@@ -182,9 +180,9 @@ Proof.
     apply P_J; sfirstorder use:Par_refl.
 Qed.
 
-Lemma P_AppAbs' a A a0 b0 b b1 :
+Lemma P_AppAbs' a a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
-  Par a (tAbs A a0) ->
+  Par a (tAbs a0) ->
   Par b0 b1 ->
   (* ---------------------------- *)
   Par (tApp a b0) b.
@@ -219,9 +217,8 @@ Proof.
   move => [+ [+ [+ +]]].
   elim : a i=>//.
   - hauto q:on.
-  - move => A ihA a iha i ρ0 ρ1 hρ [] => ? h ξ0 ξ1 hξ /=.
-    f_equal; first by eauto.
-    move /subst_differ_one_ren_up in hξ.
+  - move => a iha i ρ0 ρ1 hρ [] => h ξ0 ξ1 hξ /=.
+    f_equal. move /subst_differ_one_ren_up in hξ.
     move /(_ (S i)) in iha.
     move : iha h; move/[apply].
     apply=>//. asimpl. sfirstorder.
@@ -240,7 +237,7 @@ Qed.
 Definition size_tm : tm -> nat.
   apply tm_rec.
   exact (fun _ => 1).
-  exact (fun _ a _ b => 1 + a + b).
+  exact (fun _ a => 1 + a).
   exact (fun _ a _ b => 1 + a + b).
   exact (fun _ a _ b => 1 + a + b).
   exact 1.
@@ -279,13 +276,12 @@ Proof.
   - move => i _ a ξ. simpl.
     elim /Par_inv=>// h ?[] *. subst.
     exists (var_tm i). eauto with par.
-  - move => A a ih c ξ.
+  - move => a ih c ξ.
     elim /Par_inv=>// _.
-    + move => A0 A1 a0 a1 + + [] *. subst.
-      apply_ih ih => A0 [? ?].
+    + move => a0 a1 + [] *. subst.
       apply_ih ih => a0 [? ?]. subst.
-      exists (tAbs A0 a0). eauto with par.
-    + move => A0 a0 a1 h0 [] ?. subst.
+      exists (tAbs a0). eauto with par.
+    + move => a0 a1 h0 [].
       case : a ih=>// b0 b1 ih [] h1.
       case : b1 ih =>//.
       case => // ih _ ?. subst.
@@ -315,8 +311,8 @@ Proof.
       apply_ih ih => b0 [? ?].
       apply_ih ih => b2 [? ?]. subst.
       exists (tApp b0 b2). hauto lq:on ctrs:Par.
-    + move => ? a0 A a1 b0 b1 + + [] *. subst.
-      apply_ih ih => t0 [+ +]. case : t0=>// A0 t0 [] ? ? ?. subst.
+    + move => ? a0 a1 b0 b1 + + [] *. subst.
+      apply_ih ih => t0 [+ +]. case : t0=>// t0 [] ? ?. subst.
       apply_ih ih => t1 [? ?]. subst.
       exists (subst_tm (t1..) t0). split; [by asimpl | eauto using P_AppAbs].
   - move => A B ih? ξ.
@@ -560,43 +556,54 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - (* hauto lq:on inv:Par ctrs:Par. *)
-    move => A0 A1 a0 a1 hA ihA ha iha b0.
+    move => a0 a1 ha iha b0.
     elim /Par_inv=>//; first by hauto lq:on ctrs:Par.
     (* Abs eta *)
-    move =>hb0 A a2 a3 ha2 [] *; subst.
+    move =>hb0 a2 a3 ha2 [] *; subst.
     elim /Par_inv : ha =>//.
-    +
+    + move => ha2' a0 a3 b1 b2 + + [] ha2''? ?; subst.
+      move /[swap].
+      elim /Par_inv => // hz ? [] ? ?. subst => {hz}.
+      move /Par_antirenaming => [a3' [? ?]]. subst.
+      have [d [ ? ?]] : exists c, Par b0 c /\ Par a3' c by admit.
+      exists d. eauto with par.
+    + move => ha2' a0 a3 b1 b2 + + [] *. subst.
+      move /Par_antirenaming.
+      move => [+ []]. case=>// c [? hc]. subst.
+      elim /Par_inv => // hz ? [] ? ?. subst => {hz}.
+      asimpl in ha2'.
+      admit.
   - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
-    elim /Par_inv; try congruence.
+    elim /Par_inv=>//.
     + qauto l:on ctrs:Par.
-    + move => ? a2 A a3 b3 b4 ? ?.
+    + move => happ a2 a3 b3 b4 ha hb.
       case => *; subst.
       case /(_ _ ltac:(eassumption)) : ih1 => b [? ?].
-      case /(_ _ ltac:(eassumption)) : ih0 => a [? h2].
-      elim /Par_inv : h2; try congruence.
-      * move => ? A0 A1 a2 a4 ? ?.
-        case => *; subst.
+      case /(_ _ ltac:(eassumption)) : ih0 => a [? +].
+      elim /Par_inv => //.
+      * move => ? a2 a4 ? [] *. subst.
         exists (subst_tm (b..) a4).
         hauto lq:on ctrs:Par use:par_cong.
-      * admit.
-  - move => a A a0 b0 b1 ? ih0 ? ih1 b2.
-    elim /Par_inv; try congruence.
+      * move => h a2 a4 ? [] *. subst.
+        asimpl.
+        hauto lq:on ctrs:Par.
+  - move => a a0 b0 b1 ? ih0 ? ih1 b2.
+    elim /Par_inv => //.
     + move => h a1 a2 b3 b4 ? ? [*]; subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 *].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
-      elim /Par_inv : h0; try congruence.
-      * move => ? A0 A1 a3 a4 ? ? [*] *; subst.
+      elim /Par_inv : h0=>//.
+      * move => ? a3 a4 ? ? [*] *; subst.
         exists (subst_tm (b..) a4).
         hauto lq:on use:par_cong ctrs:Par.
-      * admit.
-    + move => ? a1 A0 a2 b3 b4 ? ? [*] *; subst.
+      * move => h0 a3 a4 h1 [] *. subst.
+        asimpl.
+        hauto lq:on ctrs:Par.
+    + move => ? a1 a2 b3 b4 ? ? [*] *. subst.
       case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 h1].
       case /(_ _ ltac:(eassumption)) : ih1 => b [*].
-      elim /Par_inv : h0; try congruence.
-      * move => ? A1 A2 a3 a4 ? ? [*] *; subst.
-        exists (subst_tm (b..) a4).
-        (*  *)
-        (* best use:par_cong ctrs:Par inv:Par. *)
+      elim /Par_inv : h0=>//; elim /Par_inv : h1 => //;
+        hauto lq:on use:par_cong ctrs:Par simp+:asimpl .
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
@@ -612,7 +619,7 @@ Proof.
     elim /Par_inv=> //.
     + hauto q:on  ctrs:Par inv:Par.
     + hauto q:on  ctrs:Par.
-Qed.
+Admitted.
 
 Lemma pars_confluent : confluent Par.
 Proof.

@@ -4,7 +4,7 @@ Fixpoint ne (a : tm) :=
   match a with
   | var_tm _ => true
   | tApp a b => ne a && nf b
-  | tAbs _ _ => false
+  | tAbs _ => false
   | tPi A B => false
   | tVoid => false
   | tJ t a b p => nf t && nf a && nf b && ne p
@@ -20,7 +20,7 @@ with nf (a : tm) :=
   match a with
   | var_tm _ => true
   | tApp a b => ne a && nf b
-  | tAbs A a => nf A && nf a
+  | tAbs a => nf a
   | tPi A B => nf A && nf B
   | tVoid => true
   | tJ t a b p => nf t && nf a && nf b && ne p
