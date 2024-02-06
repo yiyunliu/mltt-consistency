@@ -634,25 +634,14 @@ Qed.
 #[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
 
 Lemma InterpExt_Fun_nopf n I A B PA  :
-  wn A ->
-  wn B ->
   InterpExt n I A PA ->
   (forall a, PA a -> exists PB, InterpExt n I (subst_tm (a..) B) PB) ->
   InterpExt n I (tPi A B) (ProdSpace PA (fun a => InterpExt n I (subst_tm (a..) B))).
 Proof.
-  move => [vA [? ?]] [vB [? ?]].
-  have ? : forall a, Pars (subst_tm (a..) B) (subst_tm (a..) vB)
-      by eauto using par_subst_star.
-  move => hPA hPB.
-  have ? : InterpExt n I vA PA by eauto using InterpExt_preservation_star.
-  apply InterpExt_back_preservation_star with (B := tPi vA vB);
-    last by eauto using S_Pi.
-  apply InterpExt_Fun; eauto using InterpExt_preservation_star.
+  move => h0 h1. apply InterpExt_Fun =>//.
 Qed.
 
 Lemma InterpUnivN_Fun n A B PA :
-  wn A ->
-  wn B ->
   InterpUnivN n A PA ->
   (forall a, PA a -> exists PB, InterpUnivN n (subst_tm (a..) B) PB) ->
   InterpUnivN n (tPi A B) (ProdSpace PA (fun a => InterpUnivN n (subst_tm (a..) B))).
@@ -812,3 +801,15 @@ Lemma InterpUniv_wne n A PA
   (h : InterpUnivN n A PA) :
   forall a, wne a -> PA a.
 Proof. hauto q:on use:InterpUniv_adequacy unfold:wn. Qed.
+
+Lemma InterpUnivN_Eq n a b A:
+  wn a -> wn b -> wn A ->
+  InterpUnivN n (tEq a b A) (SEq a b).
+Proof.
+  move => [va [? ?]] [vb [? ?]] [vA [? ?]].
+  have ? : InterpUnivN n (tEq va vb vA) (SEq va vb)
+    by hauto lq:on ctrs:InterpExt rew:db:InterpUniv.
+  have ? : Pars (tEq a b A) (tEq va vb vA) by auto using S_Eq.
+  have : InterpUnivN n (tEq a b A) (SEq va vb) by eauto using InterpUnivN_back_preservation_star.
+  move /[dup] /InterpUnivN_Eq_inv. move => [?]. congruence.
+Qed.

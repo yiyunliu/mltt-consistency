@@ -63,27 +63,6 @@ Proof.
     + rewrite /SUniv. simpl. eauto.
 Qed.
 
-Lemma wn_lam (a A : tm) : wn a -> wn A ->  wn (tAbs A a).
-Proof.
-  move => [v [hred]].
-  move : A.
-  elim:a v/hred.
-  - move => a A h [A0 [hA0]].
-    elim : A A0 /hA0.
-    + rewrite /wn.
-      move => A ?.
-      exists (tAbs A a).
-      hauto lq:on ctrs:rtc b:on.
-    + move => A0 A1 A2 h0 h1 h2 h3.
-      move /(_ h3) in h2.
-      have ? : Par a a by auto using Par_refl.
-      hauto q:on unfold:wn ctrs:Par, rtc.
-  - move => a0 a1 a2 h0 h1 ih A h wnA.
-    specialize ih with (1 := h) (2 := wnA).
-    have ? : Par A A by auto using Par_refl.
-    hauto lq:on ctrs:rtc, Par unfold:wn.
-Qed.
-
 Theorem soundness Γ :
   (forall a A, Wt Γ a A -> SemWt Γ a A) /\
   (Wff Γ -> SemWff Γ).
@@ -115,26 +94,12 @@ Proof.
     move /InterpUnivN_Fun_inv_nopf : hPPi.
     intros (PA & hPA & hTot & ?). subst.
     rewrite /ProdSpace.
-    split.
-    + apply wn_lam; last by eauto using InterpUniv_wn_ty.
-      have : PA (var_tm var_zero)
-        by hauto q:on ctrs:rtc use:InterpUniv_adequacy.
-      move /[dup].
-      move : hTot. move/[apply].
-      move => [PB +].
-      asimpl => ? ?.
-      move : hb.
-      rewrite /SemWt.
-      move /(_ _ ltac:(by eauto using γ_ok_cons)) => [m [PB0 [h0 h1]]].
-      set B0 := subst_tm _ _ in h0 h1.
-      apply wn_antirenaming with (ξ := 0 .: id). asimpl.
-      hauto q:on use:InterpUniv_adequacy.
-    + move => a PB ha. asimpl => hPB.
-      have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
-      move /hb.
-      intros (m & PB0 & hPB0 & hPB0').
-      replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
-      qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
+    move => a PB ha. asimpl => hPB.
+    have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
+    move /hb.
+    intros (m & PB0 & hPB0 & hPB0').
+    replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
+    qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
   - move => Γ f A B b _ ihf _ ihb γ hγ.
     rewrite /SemWt in ihf ihb.
     move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
@@ -142,7 +107,7 @@ Proof.
     simpl in hPi.
     move /InterpUnivN_Fun_inv_nopf : hPi. intros (PA0 & hPA0 & hTot & ?). subst.
     have ? : PA0 = PA by eauto using InterpUnivN_deterministic'. subst.
-    move  : hf (hb) => [_] /[apply].
+    move  : hf (hb) => /[apply].
     move : hTot hb. move/[apply].
     asimpl. hauto lq:on.
   - move => Γ a A B i _ hA _ /SemWt_Univ hB ? γ hγ.
@@ -171,23 +136,17 @@ Proof.
   - hauto l:on use:SemWt_Univ.
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
   - rewrite /SemWt => Γ a A _ _ _ ha γ.
-    move : ha. move/[apply]. move => [m [PA [h0 h1]]] [:tr0].
-    simpl. exists 0. eexists.
-    split.
-    simp InterpUniv.
-    eapply InterpExt_Eq; eauto.
-    abstract : tr0.
-    + sfirstorder use:InterpUniv_wn.
-    + done.
-    + sfirstorder use:InterpUniv_wn_ty.
+    move : ha. move/[apply]. move => [m [PA [h0 h1]]].
+    exists 0, (SEq (subst_tm γ a) (subst_tm γ a)).
+    split => /=.
+    + hauto l:on use:InterpUniv_adequacy, InterpUniv_wn_ty, InterpUnivN_Eq unfold:CR.
     + qauto l:on ctrs:rtc use:Coherent_reflexive inv:Par unfold:SEq.
   - move => Γ a b A i j _ ha _ hb _ /SemWt_Univ hA.
     apply SemWt_Univ => γ hγ.
     have : wn (subst_tm γ a) by sfirstorder use:InterpUniv_wn.
     have : wn (subst_tm γ b) by sfirstorder use:InterpUniv_wn.
     have : wn (subst_tm γ A) by sfirstorder use:InterpUniv_wn_ty.
-    simp InterpUniv.
-    hauto lq:on ctrs:InterpExt.
+    eauto using InterpUnivN_Eq.
   - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht γ hγ.
     move : hp (hγ); move/[apply] => /=. intros (m & PA & hPA & hp).
     move  /InterpUnivN_Eq_inv : hPA. intros (-> & ? & ? & ?).
@@ -216,7 +175,7 @@ Proof.
       case.
       * eapply γ_ok_cons with (i := 0).
         asimpl.
-        simp InterpUniv. apply InterpExt_Eq; eauto.
+        apply InterpUnivN_Eq; eauto.
         right. auto.
         move : hb (hγ). move/[apply].
         move => [i0 [PA0 hb0]].
