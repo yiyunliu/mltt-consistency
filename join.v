@@ -549,6 +549,9 @@ Local Ltac apply_ih' ih :=
   move :(ih); repeat move/[apply]; elim;
   last by (simpl; rewrite -?ren_tm_size_tm; lia).
 
+Local Ltac apply_ih'' ih :=
+  move /ih; move /(_ ltac:(simpl; lia)).
+
 Lemma par_var_eq i a : Par (var_tm i) a -> a = var_tm i.
 Proof. elim /Par_inv=>//. Qed.
 
@@ -624,14 +627,26 @@ Proof.
         eauto using par_cong with par.
   - hauto lq:on rew:off inv:Par ctrs:Par.
   - hauto lq:on rew:off inv:Par ctrs:Par.
-  - admit.
-  - admit.
-  - admit.
+  - move => h0 a0 a1 b1 b2 c0 c1 + + + ? ?. subst.
+    apply_ih'' ih => iha. apply_ih'' ih => ihb. apply_ih'' ih => ihc.
+    hauto lq:on ctrs:Par inv:Par.
+  - move => h a0 b1 b2 c0 c1 + + + ? ?. subst.
+    do 3 (apply_ih'' ih => ?). move {ih}.
+    hauto q:on ctrs:Par inv:Par.
+  - move => h a0 b1 b2 c0 c1 + + + ? ?. subst.
+    do 3 (apply_ih'' ih => ?). move {ih}.
+    hauto q:on ctrs:Par inv:Par.
   - hauto lq:on rew:off inv:Par ctrs:Par.
   - hauto lq:on rew:off inv:Par ctrs:Par.
-  - admit.
-  - admit.
-  - admit.
+  - move => h a0 a1 A0 a2 b3 A1 + + + ? ?. subst.
+    do 3 (apply_ih'' ih => ?).
+    hauto lq:on rew:off inv:Par ctrs:Par.
+  - move => h1 t0 a0 b1 p0 t1 a1 b2 p1 + + + + ? ? +. subst.
+    do 4 (apply_ih'' ih => ?).
+    hauto lq:on rew:off inv:Par ctrs:Par.
+  - move => h t0 a0 b1 p t1 a1 b2 + + + + ? ?. subst.
+    do 4 (apply_ih'' ih => ?).
+    hauto lq:on rew:off inv:Par ctrs:Par.
   - move => h0 a0 a1 h1 ? ?. subst.
     elim /Par_inv=>//.
     + move => h2 a1 a2 h3 [?] ?. subst.
@@ -648,8 +663,11 @@ Proof.
         case => ///= a3' [?] h6. subst.
         asimpl. move : h1 h6. apply_ih' ih => c [? ?].
         eauto with par.
-    + admit.
-Admitted.
+    + move => h2 a1 a2 h3 [] + ?. subst.
+      move/(f_equal (ren_tm (0 .: id))).
+      asimpl => ?. subst.
+      move : h1 h3. apply_ih' ih. eauto.
+Qed.
 
 Lemma pars_confluent : confluent Par.
 Proof.
