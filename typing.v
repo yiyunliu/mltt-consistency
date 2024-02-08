@@ -48,12 +48,13 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   (* --------- *)
   Wt Γ tFalse tBool
 
-| T_If a b c A :
+| T_If a b c A i :
+  Wt (tBool :: Γ) A (tUniv i) ->
   Wt Γ a tBool ->
-  Wt Γ b A ->
-  Wt Γ c A ->
+  Wt Γ b (subst_tm (tTrue..) A) ->
+  Wt Γ c (subst_tm (tFalse..) A) ->
   (* ------------ *)
-  Wt Γ (tIf a b c) A
+  Wt Γ (tIf a b c) (subst_tm (a..) A)
 
 | T_Bool i :
   Wff Γ ->

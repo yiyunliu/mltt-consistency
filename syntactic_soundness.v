@@ -16,6 +16,16 @@ Proof.
       by asimpl.
 Qed.
 
+Lemma T_If' Γ t a b c A i :
+  t = (subst_tm (a..) A) ->
+  Wt (tBool :: Γ) A (tUniv i) ->
+  Wt Γ a tBool ->
+  Wt Γ b (subst_tm (tTrue..) A) ->
+  Wt Γ c (subst_tm (tFalse..) A) ->
+  (* ------------ *)
+  Wt Γ (tIf a b c) t.
+Proof. move =>> ->. eauto using T_If. Qed.
+
 Lemma T_App' Γ a A B0 B b :
   B0 = (subst_tm (b..) B) ->
   Wt Γ a (tPi A B) ->
@@ -134,6 +144,18 @@ Proof.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - qauto l:on ctrs:Wt use:Coherent_renaming.
+  - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
+    apply  T_If' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
+    + by asimpl.
+    + apply ihA. by apply good_renaming_up.
+      apply wff_cons with (i := 0); qauto l:on ctrs:Wt.
+    + hauto l:on.
+    + set q := (subst_tm _ _).
+      replace q with (ren_tm ξ (subst_tm (tTrue..) A)); auto.
+      subst q; by asimpl.
+    + set q := (subst_tm _ _).
+      replace q with (ren_tm ξ (subst_tm (tFalse..) A)); auto.
+      subst q; by asimpl.
   - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     rewrite -renaming_Syn_helper.
@@ -225,6 +247,19 @@ Proof.
     hauto q:on use:good_morphing_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - hauto q:on ctrs:Wt use:Coherent_subst_star.
+  - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ρ hρ hΔ /=.
+    have ? : Wff (tBool :: Δ) by apply wff_cons with (i := 0); eauto using T_Bool.
+    apply T_If' with (A := subst_tm (up_tm_tm ρ) A) (i := i); first by asimpl.
+    + hauto lq:on ctrs:Wt use:good_morphing_up.
+    + hauto l:on.
+    + set q := subst_tm (tTrue..) _.
+      replace q with (subst_tm ρ (subst_tm (tTrue..) A)).
+      hauto l:on.
+      subst q; by asimpl.
+    + set q := subst_tm (tFalse..) _.
+      replace q with (subst_tm ρ (subst_tm (tFalse..) A)).
+      hauto l:on.
+      subst q; by asimpl.
   - move => Γ t a b p A i j C ha iha hb ihb hA ihA  hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     have ? : Wt Δ (subst_tm ξ a) (subst_tm ξ A) by hauto l:on.
@@ -268,6 +303,9 @@ Proof.
   - inversion 1.
     hauto l:on use:dep_ith_shift,good_renaming_truncate, renaming_Syn.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
+  - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc.
+    exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
+    eauto using subst_Syn.
   - hauto lq:on use:T_UnivSuc db:wff.
   - move => Γ t a b p A i j C ha iha hb ihb hA ihA hp ihp hC ihC ht iht.
     exists i. change (tUniv i) with (subst_tm (p .: b..) (tUniv i)).
@@ -303,16 +341,20 @@ Qed.
 
 Lemma Wt_If_inv Γ a b c T (h : Wt Γ (tIf a b c) T) :
   exists A, Wt Γ a tBool /\
-         Wt Γ b A /\
-         Wt Γ c A /\
-         Coherent A T /\
+         Wt Γ b (subst_tm (tTrue..) A) /\
+         Wt Γ c (subst_tm (tFalse..) A) /\
+         Coherent (subst_tm (a..) A) T /\
          exists i, Wt Γ T (tUniv i).
 Proof.
   move E : (tIf a b c) h => a0 h.
   move : a b c E.
   elim : Γ a0 T / h => //.
   - hauto lq:on rew:off use:Coherent_transitive.
-  - qauto l:on use:Coherent_reflexive, Wt_regularity.
+  - move => Γ a b c A i hA _ ha _ hb _ hc _ ? ? ?[*]. subst.
+    exists A. repeat split=>//.
+    + apply Coherent_reflexive.
+    + exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
+      eauto using subst_Syn.
 Qed.
 
 Lemma Wt_Eq_inv Γ a b A U (h : Wt Γ (tEq a b A) U) :
@@ -474,7 +516,11 @@ Proof.
       apply Coherent_morphing.
       * by apply Coherent_symmetric.
       * case; [by asimpl | sfirstorder use:Par_refl].
-  - hauto q:on use:Wt_If_inv ctrs:Wt.
+  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_If_inv.
+    move => [A0][ha0][hb0][hc0][hC][i]hA.
+    admit.
+
+
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - move => a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ A /Wt_Eq_inv.
@@ -523,7 +569,7 @@ Proof.
     apply coherent_cong; first by auto.
     apply coherent_cong; last by apply Coherent_reflexive.
     apply Coherent_reflexive.
-Qed.
+Admitted.
 
 Definition is_value (a : tm) :=
   match a with

@@ -116,20 +116,34 @@ Proof.
     qauto l:on use:InterpUnivN_Coherent unfold:SemWt.
   - hauto l:on.
   - hauto l:on.
-  - rewrite /SemWt => Γ a b c A _ ha _ hb _ hc γ hγ.
-    case /(_ γ hγ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
-    case /(_ γ hγ) : hb => j [PA [hPA hb']].
-    case /(_ γ hγ) : hc => k [PB [hPB hc']].
-    have ? : PA = PB by hauto lq:on rew:off use:InterpUnivN_deterministic'.
-    subst.
-    exists j, PB; split; auto.
-    simpl.
+  - rewrite /SemWt => Γ a b c A i _ /SemWt_Univ hA _ ha _ hb _ hc γ hγ.
+    case /(_ γ hγ) : ha => ? [PBool [hPBool ha']]; subst.
+    have hγ' : γ_ok (tBool :: Γ) (subst_tm γ a .: γ) by eauto using γ_ok_cons.
+    move /InterpUnivN_Bool_inv : hPBool => ?. subst.
+    case /(_ γ hγ) : hb => ia [PA [hPA hb']].
+    case /(_ γ hγ) : hc => ib [PB [hPB hc']].
+    move : hA hγ'; move/[apply]. move  => [PA0 hPA0].
+    exists i, PA0.
+    split; first by asimpl.
     case : ha' => v [hred hv].
+    asimpl in *.
     case : v hred hv => // ha0 _.
-    + apply (InterpUnivN_back_clos_star j) with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
-      eauto using P_IfTrue_star.
-    + apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
-      eauto using P_IfFalse_star.
+    + move => [:t].
+      apply (InterpUnivN_back_clos_star i) with (A := (subst_tm (tTrue .: γ) A)) (b := (subst_tm γ b)) => //.
+      abstract : t.
+      apply InterpUnivN_preservation_star with (B := subst_tm (tTrue .: γ) A) in hPA0=>//.
+      hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, good_pars_morphing_ext.
+      by apply P_IfTrue_star.
+      suff : PA = PA0 by congruence.
+      hauto lq:on use:InterpUnivN_deterministic'.
+    + move => [:t].
+      apply (InterpUnivN_back_clos_star i) with (A := (subst_tm (tFalse .: γ) A)) (b := (subst_tm γ c)) => //.
+      abstract : t.
+      apply InterpUnivN_preservation_star with (B := subst_tm (tFalse .: γ) A) in hPA0=>//.
+      hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, good_pars_morphing_ext.
+      by apply P_IfFalse_star.
+      suff : PB = PA0 by congruence.
+      hauto lq:on use:InterpUnivN_deterministic'.
   - hauto l:on use:SemWt_Univ.
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
   - hauto l:on.
