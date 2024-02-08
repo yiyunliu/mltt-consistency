@@ -460,7 +460,7 @@ Proof.
     hauto q:on ctrs:Par inv:nat simp:asimpl.
   - move => a A a0 b0 b1 haa0 iha hbb0 ihb Γ A0 /Wt_App_inv.
     intros (A1 & B & ha & hb0 & hCoherent & i & hA0).
-    have /iha /Wt_Abs_inv := ha; intros (B0 & k & hPi & ha0 & hCoherent' & j & hPi').
+    have /Wt_Abs_inv := ha; intros (B0 & k & hPi & ha0 & hCoherent' & j & hPi').
     case /Coherent_pi_inj : hCoherent' => *.
     case /Wt_Pi_Univ_inv : hPi => *.
     move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
@@ -474,7 +474,7 @@ Proof.
       apply Coherent_morphing.
       * by apply Coherent_symmetric.
       * case; [by asimpl | sfirstorder use:Par_refl].
-  - hauto lq:on use:Wt_If_inv ctrs:Wt.
+  - hauto q:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - move => a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ A /Wt_Eq_inv.
@@ -510,21 +510,19 @@ Proof.
       apply Par_Coherent.
       apply par_morphing; last by apply Par_refl.
       hauto lq:on inv:nat use:Par_refl.
-  - move => t0 a0 b0 p t1 a1 b1 ht iht ha iha hb ihb hp ihp Γ U /Wt_J_inv.
+  - move => t0 a b t1 ht iht Γ U /Wt_J_inv.
     intros (A & C & i & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (k & hU')).
-    move : ihp (hp0). move/[apply] => hRefl.
     apply iht.
     move : T_Conv ht0. move/[apply]. apply; eauto.
     apply : Coherent_transitive;eauto.
-    have ? : Coherent a0 b0 by eauto using Wt_Refl_Coherent.
-    replace (subst_tm (tRefl .: a0..) C)
-      with (subst_tm (a0..)(subst_tm (tRefl..) C)); last by asimpl.
-    replace (subst_tm (p .: b0..) C)
-      with (subst_tm (b0..)(subst_tm ((ren_tm shift p)..) C)); last by asimpl.
+    have ? : Coherent a b by eauto using Wt_Refl_Coherent.
+    replace (subst_tm (tRefl .: a..) C)
+      with (subst_tm (a..)(subst_tm (tRefl..) C)); last by asimpl.
+    replace (subst_tm (tRefl .: b..) C)
+      with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl.
     apply coherent_cong; first by auto.
     apply coherent_cong; last by apply Coherent_reflexive.
-    change tRefl with (ren_tm shift tRefl).
-    hauto lq:on ctrs:rtc use:Coherent_renaming.
+    apply Coherent_reflexive.
 Qed.
 
 Definition is_value (a : tm) :=
