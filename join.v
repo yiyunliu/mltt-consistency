@@ -34,10 +34,10 @@ Inductive Par : tm -> tm -> Prop :=
   (* ------------------------- *)
   Par (tApp a0 b0) (tApp a1 b1)
 | P_AppAbs a A a0 b0 b1 :
-  Par a (tAbs A a0) ->
+  Par a a0 ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp a b0) (subst_tm (b1..) a0)
+  Par (tApp (tAbs A a) b0) (subst_tm (b1..) a0)
 | P_True :
   (* ------- *)
   Par tTrue tTrue
@@ -50,18 +50,14 @@ Inductive Par : tm -> tm -> Prop :=
   Par c0 c1 ->
   (* ---------- *)
   Par (tIf a0 b0 c0) (tIf a1 b1 c1)
-| P_IfTrue a b0 b1 c0 c1 :
-  Par a tTrue ->
+| P_IfTrue b0 b1 c0 :
   Par b0 b1 ->
+  (* ---------- *)
+  Par (tIf tTrue b0 c0) b1
+| P_IfFalse b0 c0 c1 :
   Par c0 c1 ->
   (* ---------- *)
-  Par (tIf a b0 c0) b1
-| P_IfFalse a b0 b1 c0 c1 :
-  Par a tFalse ->
-  Par b0 b1 ->
-  Par c0 c1 ->
-  (* ---------- *)
-  Par (tIf a b0 c0) c1
+  Par (tIf tFalse b0 c0) c1
 | P_Bool :
   Par tBool tBool
 | P_Refl :
@@ -77,12 +73,9 @@ Inductive Par : tm -> tm -> Prop :=
   Par b0 b1 ->
   Par p0 p1 ->
   Par (tJ t0 a0 b0 p0) (tJ t1 a1 b1 p1)
-| P_JRefl t0 a0 b0 p t1 a1 b1 :
+| P_JRefl t0 a b t1 :
   Par t0 t1 ->
-  Par a0 a1 ->
-  Par b0 b1 ->
-  Par p tRefl ->
-  Par (tJ t0 a0 b0 p) t1.
+  Par (tJ t0 a b tRefl) t1.
 
 #[export]Hint Constructors Par : par.
 
@@ -138,7 +131,8 @@ Lemma P_IfTrue_star a b c :
   move E : tTrue => v h.
   move : E.
   elim : a v / h.
-  - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.
+  - move => *. subst.
+    apply rtc_once. apply P_IfTrue. apply Par_refl.
   - move => a a0 a1 h0 h1 h2 ?; subst.
     move /(_ eq_refl) in h2.
     apply : rtc_transitive; eauto.
@@ -151,7 +145,8 @@ Lemma P_IfFalse_star a b c :
   move E : tFalse => v h.
   move : E.
   elim : a v / h.
-  - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.
+  - move => *. subst.
+    apply rtc_once. apply P_IfFalse. apply Par_refl.
   - move => a a0 a1 h0 h1 h2 ?; subst.
     move /(_ eq_refl) in h2.
     apply : rtc_transitive; eauto.
@@ -166,7 +161,8 @@ Proof.
   move E : tRefl => v h.
   move : E.
   elim : p v / h.
-  - hauto lq:on ctrs:Par use:Par_refl, @rtc_once.
+  - move => *. subst.
+    apply rtc_once. apply P_JRefl. apply Par_refl.
   - move => x y z h0 h1 ih ?; subst.
     move /(_ ltac:(done)) in ih.
     apply : rtc_l; eauto.
@@ -175,10 +171,10 @@ Qed.
 
 Lemma P_AppAbs' a A a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
-  Par a (tAbs A a0) ->
+  Par a a0 ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp a b0) b.
+  Par (tApp (tAbs A a) b0) b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
 Lemma par_renaming a b (ξ : fin -> fin) :
@@ -217,11 +213,12 @@ Lemma par_morphing a b (ξ0 ξ1 : fin -> tm)
 Proof.
   move => h0.
   move : ξ0 ξ1 h.
-  elim : a b / h0 => /=; eauto with par.
+  elim : a b / h0; try solve [simpl; eauto with par].
   - hauto lq:on db:par use:par_morphing_lift.
   - hauto lq:on db:par use:par_morphing_lift.
-  - move => *; apply : P_AppAbs'; eauto; by asimpl.
-  - hauto lq:on db:par use:par_morphing_lift.
+  - move => a A a0 b0 b1 h0 ih0 h1 ih1 ξ0 ξ h /=.
+    apply P_AppAbs' with (a0 := subst_tm (up_tm_tm ξ) a0) (b1 := subst_tm ξ b1).
+    by asimpl. hauto l:on use:par_renaming inv:nat. eauto.
   - hauto lq:on db:par use:par_morphing_lift.
 Qed.
 
@@ -355,61 +352,35 @@ Proof. hauto lq:on use:Coherent_morphing, Par_refl. Qed.
 
 Derive Inversion Par_inv with (forall a b, Par a b).
 
-Lemma par_confluent : diamond Par.
+(* Takahashi translation *)
+Function tstar (a : tm) :=
+  match a with
+  | var_tm i => a
+  | tUniv _ => a
+  | tVoid => a
+  | tPi A B => tPi (tstar A) (tstar B)
+  | tAbs A a => tAbs (tstar A) (tstar a)
+  | tApp (tAbs A a) b => subst_tm ((tstar b)..) (tstar a)
+  | tApp a b => tApp (tstar a) (tstar b)
+  | tTrue => tTrue
+  | tFalse => tFalse
+  | tIf tTrue b c => tstar b
+  | tIf tFalse b c => tstar c
+  | tIf a b c => tIf (tstar a) (tstar b) (tstar c)
+  | tBool => tBool
+  | tRefl => tRefl
+  | tEq a b A => tEq (tstar a) (tstar b) (tstar A)
+  | tJ t a b tRefl => tstar t
+  | tJ t a b p => tJ (tstar t) (tstar a) (tstar b) (tstar p)
+  end.
+
+Lemma par_triangle a : forall b, Par a b ->  Par b (tstar a).
 Proof.
-  rewrite /diamond.
-  move => a b b0 h.
-  move : b0.
-  elim : a b / h.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 b2.
-    elim /Par_inv; try congruence.
-    + qauto l:on ctrs:Par.
-    + move => ? a2 A a3 b3 b4 ? ?.
-      case => *; subst.
-      case /(_ _ ltac:(eassumption)) : ih1 => b [? ?].
-      case /(_ _ ltac:(eassumption)) : ih0 => a [? h2].
-      elim /Par_inv : h2; try congruence.
-      move => ? A0 A1 a2 a4 ? ?.
-      case => *; subst.
-      exists (subst_tm (b..) a4).
-      hauto lq:on ctrs:Par use:par_cong.
-  - move => a A a0 b0 b1 ? ih0 ? ih1 b2.
-    elim /Par_inv; try congruence.
-    + move => h a1 a2 b3 b4 ? ? [*]; subst.
-      case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 *].
-      case /(_ _ ltac:(eassumption)) : ih1 => b [*].
-      elim /Par_inv : h0; try congruence.
-      move => ? A0 A1 a3 a4 ? ? [*] *; subst.
-      exists (subst_tm (b..) a4).
-      hauto lq:on use:par_cong ctrs:Par.
-    + move => ? a1 A0 a2 b3 b4 ? ? [*] *; subst.
-      case /(_ _ ltac:(eassumption)) : ih0 => a1 [h0 h1].
-      case /(_ _ ltac:(eassumption)) : ih1 => b [*].
-      elim /Par_inv : h0; try congruence.
-      move => ? A1 A2 a3 a4 ? ? [*] *; subst.
-      exists (subst_tm (b..) a4).
-      hauto lq:on use:par_cong ctrs:Par inv:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - move => a b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 b2.
-    elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
-  - move => a b0 b1 c0 c1 h0 ih0 h1 ih1 h2 ih2 b2.
-    elim /Par_inv => //; hauto depth:3 lq:on rew:off inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - hauto lq:on inv:Par ctrs:Par.
-  - move => t0 a0 b0 p t1 a1 b1 ht iht ha iha hb ihb hp ihp ?.
-    elim /Par_inv=> //.
-    + hauto q:on  ctrs:Par inv:Par.
-    + hauto q:on  ctrs:Par.
+  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,par_cong ctrs:Par.
 Qed.
+
+Lemma par_confluent : diamond Par.
+Proof. hauto lq:on use:par_triangle unfold:diamond. Qed.
 
 Lemma pars_confluent : confluent Par.
 Proof.
