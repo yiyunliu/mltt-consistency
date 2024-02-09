@@ -136,8 +136,8 @@ context of simply typed lambda calculus and System F, a streamlined
 presentation of proof by logical relation for a dependently language
 is lacking in comparison. In this paper, I present a short
 consistency proof for a dependently typed language that contains a
-rich set of features, including an infinite and cumulative universe
-hierarchy, natural numbers, and an intensional identity type. We have
+rich set of features, including an infinite cumulative universe
+hierarchy, booleans, and an intensional identity type. We have
 fully mechanized the consistency proof using the Coq proof assistant
 in under 1000 lines of code.
 \end{abstract}
@@ -161,20 +161,94 @@ in under 1000 lines of code.
 % properties about a type system. As a programming language, we may care
 % about type soundness, which states that a well-typed never gets stuck
 % during evaluation.
-When a type system is used as a program logic where terms encode proofs, we
-want our type system to be logically consistent, meaning
-that the empty type is not inhabited.
+When a dependently type system is used as a program logic where terms
+encode proofs, we want our type system to be logically consistent,
+meaning that the empty type is not inhabited.
+
+The consistency proofs of various dependently typed systems, including Martin-Lof's
+type theory and the Calculus of Constructions, have long been
+available in the literature. In particular, recent works such as \citet{nbeincoq},
+\citet{decagda}, and \citet{martin-lof-a-la-coq} mechanize stronger
+results related to the decidability of type conversion or type
+checking of dependently typed systems, from which consistency can be
+derived as a corollary. The underlying technique of the forementioned
+works is proof by logical relation,
+which involves interpreting types as reducibility predicates,
+representing sets of terms satisfying certain properties with respect
+to the reduction relation. While the proof technique and the
+consistency result for dependent types are both well-established,
+there is a severe lack of rigorous and accessible material that shows
+how proof by logical relation can be applied to dependently typed
+systems.
+Introductory materials about logical relations such as
+\citet{skorstengaard2019introduction}, \citet{harper2016practical}
+start from logical relations for simply typed languages, and
+eventually extend the technique to build a relational model for System
+F in order to derive
+parametricity. \citet{harperkripke} gives a gentle introduction on how
+logical relations for closed terms can be extended to talk about open
+terms so we can derive properties such as normalization for well-typed
+open terms. In short, the introductory texts about logical relations
+cover systems and properties with varying degrees of complexity, from
+simply typed to polymorphicly typed, logical predicate to logical
+equivalence, closed terms to open terms. The glaring gap here is the
+lack of fully dependently typed systems where computations may appear
+at the type-level. In fact, it is far from obvious why proof by
+logical relation is even applicable to dependent types, since the type
+may very well-be a computation that is yet to be evaluated.
+While it is assuring that proof by logical relations for dependent
+types is available in mechanized forms, % the key to address the
+% complexities of dependent types is obscured in
+\citet{nbeincoq,decagda,martin-lof-a-la-coq} all involve relational,
+Kripke-style models that obscure the underlying technique of applying
+proof by logical relation to dependent types. In fact, the
+complexivity is self-evident from the size of their code base. For
+example, \citet{nbeincoq} involves 22 thousand lines of Coq code.
+
+The goal of this paper is to give a tutorial on proof by logical relation for
+dependent types in a simple and digestable format. % The language specification will
+% be given in Section~\ref{sec:spec}.
+The system we present is small but not minimal. We want to cover
+features that would require more interesting treatments under
+dependent types without introducing complexities that would have
+existed in its simply typed variant. We choose boolean
+types over natural numbers as our base type for simplicity, but include an
+intensional identity type in our type system as the interpretation
+of identity types requires extra side conditions that are not present
+in other types. Unlike \citet{nbeincoq,decagda,martin-lof-a-la-coq}
+but similar to \citet{anand2014towards}, we include an infinite
+hierarchy of universes since we want to not only have at least one
+predicative universe level to support type-level computations, but
+also avoid the unnecessary code duplication pointed out by
+\citet{nbeincoq}.
+We choose consistency as the property of interest since it is the one
+of the easiest metatheoretic property that requires proof by logical
+relation.
+
+Our consistency proof is short and fully mechanized. The proof scripts
+involve less than 1000 lines of Coq code. Furthermore, the mechanized
+proof closely corresponds to the informal
+
+
+% A naive attempt at proving consistency through induction over the
+% typing derivation would fail since the inductive hypothesis is not
+% strong enough to derive the consistency result. Instead, one typically
+% relies on the technique referred to as proof by logical relation to
+% interpret types as reducibility predicates to strengthen the inductive
+% hypothesis.
+
+
+
+
 This paper is specifically
 about establishing logical consistency for a fully dependently typed
 system with an infinite universe hierarchy and support for large
-elimination. % The type system, presented in Section~\ref{sec:spec}, is
+elimination . % The type system, presented in Section~\ref{sec:spec}, is
 % most similar to Martin-Lof's predicate type theory with the minor
 % difference that type conversion is based on untyped equality.
 
-The proof of various dependently typed systems, including Martin-Lof's
-type theory, has long been
-established in the literature and therefore the consistency result of
-this paper is not novel. Rather,
+
+Rather,
 our goal is to present the proof in a form that is digestable by a
 working type theorist and can be more readily mechanized in a proof
 assistant. Compared to existing efforts at mechanizing logical
