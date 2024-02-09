@@ -344,6 +344,7 @@ Lemma Wt_If_inv Γ a b c T (h : Wt Γ (tIf a b c) T) :
          Wt Γ b (subst_tm (tTrue..) A) /\
          Wt Γ c (subst_tm (tFalse..) A) /\
          Coherent (subst_tm (a..) A) T /\
+         (exists j, Wt (tBool :: Γ) A (tUniv j)) /\
          exists i, Wt Γ T (tUniv i).
 Proof.
   move E : (tIf a b c) h => a0 h.
@@ -353,6 +354,8 @@ Proof.
   - move => Γ a b c A i hA _ ha _ hb _ hc _ ? ? ?[*]. subst.
     exists A. repeat split=>//.
     + apply Coherent_reflexive.
+    + exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
+      eauto using subst_Syn.
     + exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
       eauto using subst_Syn.
 Qed.
@@ -517,10 +520,11 @@ Proof.
       * by apply Coherent_symmetric.
       * case; [by asimpl | sfirstorder use:Par_refl].
   - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_If_inv.
-    move => [A0][ha0][hb0][hc0][hC][i]hA.
-    admit.
-
-
+    move => [A0][ha0][hb0][hc0][hC][[i hA0]][j hAj].
+    apply : T_Conv. apply T_If with (i := i); eauto. eauto.
+    transitivity (subst_tm (a0..) A0)=>//.
+    symmetry.
+    apply Coherent_morphing. reflexivity. hauto lq:on inv:nat.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - move => a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ A /Wt_Eq_inv.
