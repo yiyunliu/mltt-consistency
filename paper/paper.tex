@@ -214,21 +214,19 @@ The goal of this paper is to give a tutorial on proof by logical relation for
 dependent types in a simple and digestable format. % The language specification will
 % be given in Section~\ref{sec:spec}.
 The system we present is small but not minimal. We want to cover
-features that would require more interesting treatments under
-dependent types without introducing complexities that would have
-existed in its simply typed variant. We choose boolean
+features that are only available or require special treatments under
+dependent types%  without introducing complexities that would have
+% existed in its simply typed variant
+. We choose boolean
 types over natural numbers as our base type for simplicity, but include an
 intensional identity type in our type system as the interpretation
-of identity types requires extra side conditions that are not present
-in other types. Unlike \citet{nbeincoq,decagda,martin-lof-a-la-coq}
+of identity types requires an extra side condition that is needed for
+indexed family of types. Unlike \citet{nbeincoq,decagda,martin-lof-a-la-coq}
 but similar to \citet{anand2014towards}, we include an infinite
 hierarchy of universes since we want to not only have at least one
 predicative universe level to support type-level computations, but
 also avoid the unnecessary code duplication pointed out by
 \citet{nbeincoq}.
-We choose consistency as the property of interest since it is the one
-of the easiest metatheoretic property that requires proof by logical
-relation.
 
 Our consistency proof is short and fully mechanized. The proof scripts
 involve less than 1000 lines of Coq code. In fact, what is even more
@@ -263,11 +261,13 @@ general mathematics background.
 In Section~\ref{sec:logrelmech}, we discuss the details about our
 mechanization, including our use of existing libraries such as
 Autosubst for handling bindings and CoqHammer for general-purpose
-automation. In Section~\ref{sec:discuss}, we show that extensions such
+automation. In Section~\ref{sec:discuss}, we extend our logical
+relation to prove the stronger property that every well-typed term
+has a normal form. Most interestingly, we show that extensions such
 as $\eta$ rules for functions and normalization for open terms are
-more or less orthogonal to the fact that the language is dependently
-typed. In our mechanized proof of said extensions, the overall
-structure of the logical relation is preserved, and the additional
+mostly orthogonal to the fact that the language is dependently
+typed. In our mechanized proof, the overall
+structure of the logical relation remains unchanged, and the additional
 proof obligations are mostly related to properties about the untyped
 lambda calculus, all of which can be derived through syntactic
 means.
@@ -437,15 +437,20 @@ dependent type theory whose logical consistency will be proven in
 Section~\ref{sec:logrelproof}. For concision, we refer to this system
 as \lang.
 
-The syntax of \lang can be found in Figure~\ref{fig:syntax}. To help
-the reader understand the binding structure of the terms, we annotate
-the terms with their DeBruijn depth. For example, ....
- We use
-the unscoped DeBruijn representation to leave less ambiguity for the
-formulation of the system and simplify the reasoning about binders.
-Figure~\ref{fig:auxdef} shows the auxiliary definitions over the term
-syntax, including renaming, substitution, and operations over
-the typing context or substitution.
+The syntax of \lang can be found in Figure~\ref{fig:syntax}. We will use
+the unscoped de Bruijn representation for the rest of the paper,
+adopting notations from \citet{autosubst2}, summarized in Figure~\ref{fig:auxdef}.
+Without providing
+the full definition of the renaming and substitution functions, it is
+impossible to tell the binding structure from the syntax
+alone. Therefore, we annotate the syntax in Figure~\ref{fig:syntax}
+with the de Bruijn depth of each term, though we note that the
+syntax we work with is unscoped and the choice does matter when
+we extend our logical relation to open terms in Section~\ref{sec:discuss}.
+
+% Figure~\ref{fig:auxdef} shows the auxiliary definitions over the term
+% syntax, including renaming, substitution, and operations over
+% the typing context or substitution.
 As a
 dependent type theory, terms and types are collapsed into the same
 syntactic category. Dependent functions take the form $[[Pi A B]]$ and
@@ -473,7 +478,14 @@ and $[[b]]$ are coherent if they can eventually reduce to some common
 term $[[c]]$ through parallel reduction. The symmetric notation of
 coherence suggests that it is an equivalence relation, and in fact, we
 will use coherence as the equational theory for our type conversion
-rule. Now, we prove that coherence is indeed an equivalence relation.
+rule.
+
+We sketch out some key properties about coherence without giving their
+proofs. Our technique for establishing those results is based on
+\citet{takahashi-parallel-reduction} and a modern exposition can be
+found in \citet{plfa22.08}.
+
+Now, we prove that coherence is indeed an equivalence relation.
 
 First, we show that coherence is reflexive through the following
 sequence of lemmas.

@@ -1,4 +1,4 @@
-PDFLATEX = pdflatex -shell-escape
+PDFLATEX = xelatex -shell-escape
 BIBTEX = bibtex
 OTT = ott
 OTT_FLAGS := -tex_wrap false -tex_show_meta false -picky_multiple_parses false -merge true
@@ -16,7 +16,7 @@ paper-output.pdf : paper-output.tex
 	$(PDFLATEX) paper-output.tex
 
 spec-out.pdf : spec-out.tex
-	pdflatex -interaction nonstopmode spec-out.tex
+	$(PDFLATEX) -interaction nonstopmode spec-out.tex
 
 spec-out.tex : rules.tex spec.tex
 	$(OTT) $(OTT_FLAGS) -i spec.ott -tex_filter spec.tex spec-out.tex
