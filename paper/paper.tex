@@ -471,7 +471,7 @@ is $[[true]]$ or $[[false]]$.
 
 Figure~\ref{fig:par} shows the definition of the parallel reduction
 relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
-represent its transitive closure, which in turn allows us to define
+represent its transitive and reflexive closure, which in turn allows us to define
 the coherence relation $[[a <=> b]]$.
 We say that two terms $[[a]]$
 and $[[b]]$ are coherent if they can eventually reduce to some common
@@ -482,8 +482,10 @@ rule.
 
 We sketch out some key properties about coherence without giving their
 proofs. Our technique for establishing those results is based on
-\citet{takahashi-parallel-reduction} and a modern exposition can be
-found in \citet{plfa22.08}.
+\citet{takahashi-parallel-reduction} and a modern exposition of the
+same technique can be found in \citet{plfa22.08}.
+
+TODO: remove the lengthy discussion below
 
 Now, we prove that coherence is indeed an equivalence relation.
 
@@ -581,13 +583,26 @@ This concludes the proof that coherence is an equivalence relation.
   transitivity and therefore is an equivalence relation.
 \end{lemma}
 
-We note that a more conventional presentation of
-\rref{T-Conv} would instead use full beta reduction as the base for
-the definition of coherence. However, since full beta reduction
-doesn't satisfy the diamond property, one typically needs parallel
-reduction as an auxilliary definition to derive the confluence of full
-beta reduction. Our formulation of \lang through parallel reduction
-is slightly more economical.
+Figure~\ref{fig:typing} gives the full typing rules for
+\lang{}. \Rref{T-Conv} uses the definition of coherence from earlier
+for type conversion. The use of an untyped relation for type
+conversion makes our formulation slightly different from languages
+such as MLTT, where the judgmental equality typically takes the form
+TODO, where terms ... and ... are known to be well-typed. The
+equivalence of such systems and a system that uses untyped equality
+are explored in detail in ...
+
+Without fancy eta laws, it is easy to embed a typed language into an
+untyped language.
+
+
+% We note that a more conventional presentation of
+% \rref{T-Conv} would instead use full beta reduction as the base for
+% the definition of coherence. However, since full beta reduction
+% doesn't satisfy the diamond property, one typically needs parallel
+% reduction as an auxilliary definition to derive the confluence of full
+% beta reduction. Our formulation of \lang through parallel reduction
+% is slightly more economical.
 
 \section{Logical Relation}
 \label{sec:logreldep}
