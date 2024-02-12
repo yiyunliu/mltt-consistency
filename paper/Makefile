@@ -9,7 +9,7 @@ paper-output.tex: paper.tex rules.tex
 	$(OTT) $(OTT_FLAGS) -i spec.ott -tex_filter paper.tex paper-output.tex
 	perl -i -ne 'print unless m/^%/' paper-output.tex
 
-paper-output.pdf : paper-output.tex
+paper-output.pdf : paper-output.tex refs.bib
 	$(PDFLATEX) paper-output.tex
 	$(BIBTEX) paper-output
 	$(PDFLATEX) paper-output.tex

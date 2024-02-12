@@ -353,8 +353,10 @@ proofs for dependent types.
                   & \mbox{function types, abstractions, applications} \\
             & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J t a b p]]
                   & \mbox{equality types, reflexivity proof, J eliminator} \\
-            & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ |\  [[if a b0 b1]]
-                  & \mbox{boolean type, true, false, if} \\ \\
+            & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ % |\  [[if a b0 b1]]
+                  & \mbox{boolean type, true, false} \\
+            & |   & [[if a b0 b1]]
+                  & \mbox{if} \\ \\
 \mathit{Renaming}\\
 [[xi]] & \in & [[SNat -> SNat]] & \\ \\
 \mathit{Substitution}\\
@@ -365,71 +367,55 @@ proofs for dependent types.
   \label{fig:syntax}
 \end{figure}
 
-\begin{figure}[h]
-    \[
-      \begin{array}{lll}
-        \mathit{Curried\ Addition} \\
-        add(n) & := & m \mapsto n + m \\ \\
-        \mathit{Extension ([[xi]])} \\
-        [[(xi .: j) 0]]  & := & 0 \\
-        [[(xi .: j) Suc i]]  & := & [[xi j]] \\ \\
+% \begin{figure}[h]
+%     \[
+%       \begin{array}{lll}
+%         \mathit{Curried\ Addition} \\
+%         add(n) & := & m \mapsto n + m \\ \\
+%         \mathit{Extension ([[xi]])} \\
+%         [[(xi .: j) 0]]  & := & 0 \\
+%         [[(xi .: j) Suc i]]  & := & [[xi j]] \\ \\
 
-        \mathit{Extension ([[rho]])} \\
-        [[(rho .: a) 0]]  & := & [[a]] \\
-        [[(rho .: a) Suc i]]  & := & [[rho i]] \\ \\
+%         \mathit{Extension ([[rho]])} \\
+%         [[(rho .: a) 0]]  & := & [[a]] \\
+%         [[(rho .: a) Suc i]]  & := & [[rho i]] \\ \\
 
-        \mathit{Up ([[xi]])} \\
-        [[up xi]] & := & (add(1) \circ [[xi]]) , 0 \\ \\
+%         \mathit{Up ([[xi]])} \\
+%         [[up xi]] & := & (add(1) \circ [[xi]]) , 0 \\ \\
 
-        \mathit{Renaming} \\
-        [[i {xi}]] & := & [[xi i]] \\
-        [[(Set i) {xi}]] & := & [[Set i]] \\
-        [[Void {xi}]] & := & [[Void]]\\
-        [[(Pi A B) {xi}]] & := & [[Pi A{xi} B{up xi}]] \\
-        [[(\ A a) {xi}]] & := & [[\ A {xi} (#a {up xi}#)]] \\
-        [[(a b) {xi}]] & := & [[a {xi} (# b {xi} #)]] \\
-        [[Bool {xi}]] & := & [[Bool]] \\
-        [[true {xi}]] & := & [[true]] \\
-        [[false {xi}]] & := & [[false]] \\
-        [[(if a b0 b1) {xi}]] & := & [[if a{xi} b0{xi} b1{xi}]] \\
-        [[(a ~ b : A) {xi}]] & := & [[ a{xi} ~ b{xi} : A{xi}]] \\
-        [[refl {xi}]] & := & [[refl]] \\
-        [[(J t a b p ) {xi}]] & := & [[J t {xi} a {xi} b {xi} p{xi}]] \\ \\
+%         \mathit{Renaming} \\
+%         [[i {xi}]] & := & [[xi i]] \\
+%         [[(Set i) {xi}]] & := & [[Set i]] \\
+%         [[Void {xi}]] & := & [[Void]]\\
+%         [[(Pi A B) {xi}]] & := & [[Pi A{xi} B{up xi}]] \\
+%         [[(\ A a) {xi}]] & := & [[\ A {xi} (#a {up xi}#)]] \\
+%         [[(a b) {xi}]] & := & [[a {xi} (# b {xi} #)]] \\
+%         [[Bool {xi}]] & := & [[Bool]] \\
+%         [[true {xi}]] & := & [[true]] \\
+%         [[false {xi}]] & := & [[false]] \\
+%         [[(if a b0 b1) {xi}]] & := & [[if a{xi} b0{xi} b1{xi}]] \\
+%         [[(a ~ b : A) {xi}]] & := & [[ a{xi} ~ b{xi} : A{xi}]] \\
+%         [[refl {xi}]] & := & [[refl]] \\
+%         [[(J t a b p ) {xi}]] & := & [[J t {xi} a {xi} b {xi} p{xi}]] \\ \\
 
-        \mathit{Shift} \\
-        [[up n A]] & := & A \langle add(n) \rangle \\ \\
+%         \mathit{Shift} \\
+%         [[up n A]] & := & A \langle add(n) \rangle \\ \\
 
-        \mathit{Shift\ one} \\
-        [[up1 A]] & := & \uparrow^1 [[A]] \\ \\
+%         \mathit{Shift\ one} \\
+%         [[up1 A]] & := & \uparrow^1 [[A]] \\ \\
 
-        \mathit{Lookup} \\
-        [[(G ++ A) 0]] & := &  [[A]] \\
-        [[(G ++ A) Suc i]] & := & [[G i]] \\ \\
+%         \mathit{Lookup} \\
+%         [[(G ++ A) 0]] & := &  [[A]] \\
+%         [[(G ++ A) Suc i]] & := & [[G i]] \\ \\
 
-        \mathit{Drop} \\
-        [[drop 0 G]] & := & [[G]] \\
-        [[drop Suc i (#G ++ A#)]] & := & [[drop i G]] \\ \\
-      \end{array}
-    \]
-  \caption{Auxiliary Functions over Syntax}
-  \label{fig:auxdef}
-\end{figure}
-
-
-\begin{figure}[h]
-\drules[P]{$[[a => b]]$}{Parallel Reduction}{Var, Set, Void, Pi, Abs, App, AppAbs, True, False, If, IfTrue, IfFalse, Bool, Eq, Refl, J, JRefl}
-\drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{One, Step}
-\drules[C]{$[[a <=> b]]$}{Coherence}{Intro}
-\caption{Parallel reduction and coherence}
-\label{fig:par}
-\end{figure}
-
-\begin{figure}[h]
-\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
-\drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv, Refl, J, Bool, True, False, If, Void}
-\caption{Syntactic typing for \lang}
-\label{fig:typing}
-\end{figure}
+%         \mathit{Drop} \\
+%         [[drop 0 G]] & := & [[G]] \\
+%         [[drop Suc i (#G ++ A#)]] & := & [[drop i G]] \\ \\
+%       \end{array}
+%     \]
+%   \caption{Auxiliary Functions over Syntax}
+%   \label{fig:auxdef}
+% \end{figure}
 
 
 In this section, we present the dynamics and statics of the
@@ -469,6 +455,18 @@ example, the function $[[\ Bool if 0 Bool Bool -> Bool]]$ returns
 either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
 is $[[true]]$ or $[[false]]$.
 
+\begin{figure}[h]
+\begin{minipage}{0.9\textwidth}
+\drules[P]{$[[a => b]]$}{Parallel Reduction}{Var, Set, Void, Pi, Abs, App, AppAbs, True, False, If, IfTrue, IfFalse,
+  Bool, Eq, Refl, J, JRefl}
+\drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{One, Step}
+\drules[C]{$[[a <=> b]]$}{Coherence}{Intro}
+\end{minipage}
+\caption{Parallel reduction and coherence}
+\label{fig:par}
+\end{figure}
+
+
 Figure~\ref{fig:par} shows the definition of the parallel reduction
 relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
 represent its transitive and reflexive closure, which in turn allows us to define
@@ -476,59 +474,19 @@ the coherence relation $[[a <=> b]]$.
 We say that two terms $[[a]]$
 and $[[b]]$ are coherent if they can eventually reduce to some common
 term $[[c]]$ through parallel reduction. The symmetric notation of
-coherence suggests that it is an equivalence relation, and in fact, we
-will use coherence as the equational theory for our type conversion
-rule.
+coherence suggests that it is an equivalence relation.% , and in fact, we
+% will use coherence as the equational theory for our type conversion
+% rule.
 
-We sketch out some key properties about coherence without giving their
-proofs. Our technique for establishing those results is based on
-\citet{takahashi-parallel-reduction} and a modern exposition of the
-same technique can be found in \citet{plfa22.08}.
-
-TODO: remove the lengthy discussion below
-
-Now, we prove that coherence is indeed an equivalence relation.
-
-First, we show that coherence is reflexive through the following
-sequence of lemmas.
+We sketch out some key properties about parallel reduction and
+coherence without giving their proofs. Our technique for establishing
+those results is based on \citet{takahashi-parallel-reduction} and a
+modern exposition of the same technique can be found in
+\citet{plfa22.08}.
 \begin{lemma}[Par Refl\footnote{\dotv{join.v}{Par\_refl}}]
   \label{lemma:parrefl}
   For all terms $[[a]]$, $[[a => a]]$.
 \end{lemma}
-
-\begin{lemma}[Pars refl]
-  \label{lemma:parsrefl}
-  For all terms $[[a]]$, $[[a =>+ a]]$.
-\end{lemma}
-
-\begin{lemma}[Coherence refl\footnote{\dotv{join.v}{Coherent\_reflexive}}]
-  \label{lemma:coherencerefl}
-  For all terms $[[a]]$, $[[a <=> a]]$.
-\end{lemma}
-
-Lemma~\ref{lemma:parrefl} can be proven by structural induction over
-the term $[[a]]$. Lemmas~\ref{lemma:parsrefl} and \ref{lemma:coherencerefl}
-immediately follow as corollaries of Lemma~\ref{lemma:parrefl}.
-
-The reflexivity of parallel reduction enables us to embed rules from
-call-by-name semantics into parallel reduction, as the following lemma
-shows.
-\begin{lemma}[Par AbsCbn\footnote{\dotv{join.v}{P\_AppAbs\_cbn}}] For all $[[A]], [[a]],$ and $[[b]]$,
-  \label{lemma:parabscbn}
-  $[[(\ A a) b => b {a}]]$
-\end{lemma}
-\begin{proof}
-  Immediate from Lemma~\ref{lemma:parrefl} and \rref{P-AppAbs}.
-\end{proof}
-
-Symmetry of coherence immediately falls from its definition.
-\begin{lemma}[Coherence sym\footnote{\dotv{join.v}{Coherent\_symmetric}}]
-  \label{lemma:coherencesym}
-  If $[[a <=> b]]$, then $[[b <=> a]]$.
-\end{lemma}
-
-Before we can prove transitivity, we need to show that parallel
-reduction satisfies the diamond property.
 \begin{lemma}[Par cong\footnote{\dotv{join.v}{par\_cong}}]
   \label{lemma:parcong}
   If $[[a0 => a1]]$ and $[[b0 => b1]]$, then $[[a0 { b0 } => a1 { b1 }]]$.
@@ -538,62 +496,165 @@ reduction satisfies the diamond property.
   If $[[a => b0]]$ and $[[a => b1]]$, then there exists some term
   $[[c]]$ such that $[[b0 => c]]$ and $[[b1 => c]]$.
 \end{lemma}
-The congruence property (Lemma~\ref{lemma:parcong}) can be proven by
-structural induction over the derivation of $[[a0 => a1]]$.
-Likewise, Lemma~\ref{lemma:pardiamond} can be proven by structural induction
-over the derivation of $[[a => b0]]$. The \rref{P-AppAbs} case requires
-the use of Lemma~\ref{lemma:parcong}.
-
-From Lemma~\ref{lemma:parcong} and \ref{lemma:parrefl}, we recover the
-single substitution property as a simple corollary.
-\begin{corollary}[Par subst\footnote{\dotv{join.v}{par\_subst}}]
-  \label{lemma:parsubst}
-  If $[[a0 => a1]]$, then $[[a0 {b} => a1 {b}]]$ for arbitrary $[[b]]$.
-\end{corollary}
-
-
-A relation that satisfies the
-diamond property must also be confluent, meaning that its transitive
-and reflexive closure is confluent.
-\begin{lemma}[Par confluent\footnote{\dotv{join.v}{pars\_confluent}}]
-  \label{lemma:parconfluent}
-  If $[[a =>+ b0]]$ and $[[a =>+ b1]]$, then there exists some term
-  $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$.
+\begin{lemma}[Coherence refl\footnote{\dotv{join.v}{Coherent\_reflexive}}]
+  \label{lemma:coherencerefl}
+  For all terms $[[a]]$, $[[a <=> a]]$.
 \end{lemma}
-While $[[a =>+ b]]$ is defined as the transitive closure of $[[a => b]]$,
-it coincides with the transitive and reflexive closure of $[[a => b]]$ since $[[a
-=> b]]$ is reflexive (Lemma~\ref{lemma:parrefl}).
-
-The transitivity of the coherence relation follows as a corollary of
-Lemma~\ref{lemma:parconfluent}.
+\begin{lemma}[Coherence sym\footnote{\dotv{join.v}{Coherent\_symmetric}}]
+  \label{lemma:coherencesym}
+  If $[[a <=> b]]$, then $[[b <=> a]]$.
+\end{lemma}
 \begin{lemma}[Coherence trans\footnote{\dotv{join.v}{Coherent\_transitive}}]
   \label{lemma:coherencetrans}
   If $[[a0 <=> a1]]$ and $[[a1 <=> a2]]$, then $[[a0 <=> a2]]$.
 \end{lemma}
-By the definition of coherence, there exists some term $[[b]]$ such that $[[a0 =>+ b0]]$,
-$[[a1 =>+ b0]]$ and some term $[[b1]]$ such that $[[a1 =>+ b1]]$ and
-$[[a2 =>+ b1]]$. By Lemma~\ref{lemma:parconfluent}, there exists some
-term $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$. It sufficies
-to show that $[[a0 =>+ c]]$ and $[[a2 =>+ c]]$, both of which
-trivially hold since the transitive closure $[[a =>+ b]]$ is transitive.
-This concludes the proof that coherence is an equivalence relation.
-\begin{lemma}[Coherence Equivalence]
-  \label{lemma:coherenceequiv}
-  The relation $[[a <=> b]]$ satisfies reflexivity, symmetry, and
-  transitivity and therefore is an equivalence relation.
-\end{lemma}
+
+From Lemma~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
+\ref{lemma:coherencetrans}, we conclude that coherence is indeed an
+equivalence relation. It is then trivial to derive that coherence is
+exactly the same as the untyped $\beta$-equivalence.
+
+% TODO: remove the lengthy discussion below
+
+% Now, we prove that coherence is indeed an equivalence relation.
+
+% First, we show that coherence is reflexive through the following
+% sequence of lemmas.
+
+
+% Lemma~\ref{lemma:parrefl} can be proven by structural induction over
+% the term $[[a]]$. Lemmas~\ref{lemma:parsrefl} and \ref{lemma:coherencerefl}
+% immediately follow as corollaries of Lemma~\ref{lemma:parrefl}.
+
+% The reflexivity of parallel reduction enables us to embed rules from
+% call-by-name semantics into parallel reduction, as the following lemma
+% shows.
+% \begin{lemma}[Par AbsCbn\footnote{\dotv{join.v}{P\_AppAbs\_cbn}}] For all $[[A]], [[a]],$ and $[[b]]$,
+%   \label{lemma:parabscbn}
+%   $[[(\ A a) b => b {a}]]$
+% \end{lemma}
+% \begin{proof}
+%   Immediate from Lemma~\ref{lemma:parrefl} and \rref{P-AppAbs}.
+% \end{proof}
+
+% Symmetry of coherence immediately falls from its definition.
+
+% Before we can prove transitivity, we need to show that parallel
+% reduction satisfies the diamond property.
+
+
+% The congruence property (Lemma~\ref{lemma:parcong}) can be proven by
+% structural induction over the derivation of $[[a0 => a1]]$.
+% Likewise, Lemma~\ref{lemma:pardiamond} can be proven by structural induction
+% over the derivation of $[[a => b0]]$. The \rref{P-AppAbs} case requires
+% the use of Lemma~\ref{lemma:parcong}.
+
+% From Lemma~\ref{lemma:parcong} and \ref{lemma:parrefl}, we recover the
+% single substitution property as a simple corollary.
+% \begin{corollary}[Par subst\footnote{\dotv{join.v}{par\_subst}}]
+%   \label{lemma:parsubst}
+%   If $[[a0 => a1]]$, then $[[a0 {b} => a1 {b}]]$ for arbitrary $[[b]]$.
+% \end{corollary}
+
+
+% A relation that satisfies the
+% diamond property must also be confluent, meaning that its transitive
+% and reflexive closure is confluent.
+% \begin{lemma}[Par confluent\footnote{\dotv{join.v}{pars\_confluent}}]
+%   \label{lemma:parconfluent}
+%   If $[[a =>+ b0]]$ and $[[a =>+ b1]]$, then there exists some term
+%   $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$.
+% \end{lemma}
+% While $[[a =>+ b]]$ is defined as the transitive closure of $[[a => b]]$,
+% it coincides with the transitive and reflexive closure of $[[a => b]]$ since $[[a => b]]$ is reflexive (Lemma~\ref{lemma:parrefl}).
+
+% The transitivity of the coherence relation follows as a corollary of
+% Lemma~\ref{lemma:parconfluent}.
+% By the definition of coherence, there exists some term $[[b]]$ such that $[[a0 =>+ b0]]$,
+% $[[a1 =>+ b0]]$ and some term $[[b1]]$ such that $[[a1 =>+ b1]]$ and
+% $[[a2 =>+ b1]]$. By Lemma~\ref{lemma:parconfluent}, there exists some
+% term $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$. It sufficies
+% to show that $[[a0 =>+ c]]$ and $[[a2 =>+ c]]$, both of which
+% trivially hold since the transitive closure $[[a =>+ b]]$ is transitive.
+% This concludes the proof that coherence is an equivalence relation.
+% \begin{lemma}[Coherence Equivalence]
+%   \label{lemma:coherenceequiv}
+%   The relation $[[a <=> b]]$ satisfies reflexivity, symmetry, and
+%   transitivity and therefore is an equivalence relation.
+% \end{lemma}
+
+\begin{figure}[ht]
+\begin{minipage}{0.9\textwidth}
+\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
+\drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv, Refl, J, Bool, True, False, If, Void}
+\end{minipage}
+\caption{Syntactic typing for \lang}
+\label{fig:typing}
+\end{figure}
 
 Figure~\ref{fig:typing} gives the full typing rules for
 \lang{}. \Rref{T-Conv} uses the definition of coherence from earlier
-for type conversion. The use of an untyped relation for type
-conversion makes our formulation slightly different from languages
-such as MLTT, where the judgmental equality typically takes the form
-TODO, where terms ... and ... are known to be well-typed. The
-equivalence of such systems and a system that uses untyped equality
-are explored in detail in ...
+as our equality judgment for type conversion. The use of an untyped
+relation for type conversion makes our formulation slightly different
+from languages such as MLTT, where the judgmental equality typically
+takes the form $\Gamma \vdash a \equiv b : A$, which implies $[[G |- a :
+A]]$ and $[[G |- b : A]]$, the well-typedness of $[[a]]$ and $[[b]]$.
+\citet{siles2012pure} shows the equivalence of Barendregt's
+Pure Type System~\citep{barendregt1991introduction}, which employs
+untyped equality, and its variant that uses typed judgmental
+equality. Furthermore, it is trivial to embed a system with judgmental
+equality to a system with untyped equality by erasing typing
+information. As a result, it is easy to port our consistency result from our
+type system to a variant with typed judgmental equality
+as long as the typed system does not include $\eta$ laws
+that would require type annotations (e.g. the $\eta$-law for unit
+types) and we discuss in Section~\ref{sec:discuss} how we can extend
+our proof to handle those rules.
 
-Without fancy eta laws, it is easy to embed a typed language into an
-untyped language.
+Working with a system with untyped equality has the huge benefit that
+the confluence result for untyped parallel reduction
+(Lemma~\ref{lemma:pardiamond}) is easily derivable without having to
+resort to the complex syntatic (resp. semantic) technique from
+\citet{siles2012pure} (resp. \citet{decagda}) to resolve
+the circularity of subject reduction and $\Pi$-injectivity described
+in \citet{siles2012pure}. Section~\ref{sec:discuss} explains how we
+can generalize our technique to include $\eta$-law for functions and
+show the existence of normal form for well-typed (open and closed)
+terms, achieving a similar level of expressiveness of the type system
+and strength of metatheoretic property as \citet{decagda}.
+
+Finally, since our system has an infinite universe hierarchy, we can
+present the system à la Russell by using the same judgment form $[[G
+|- a : A]]$ regardless of whether $[[a]]$ is a term or a type. There
+is therefore no need to distinguish between big types and small types
+and duplicate our typing specification.
+
+% , the
+% statement that $\Gamma \vdash [[Pi A0 B0]] \equiv [[Pi A1 B1]]$
+% implies $\Gamma \vdash [[A0]] \equiv [[A1]]$ and
+% $\Gamma, [[A0]]\vdash [[B0]] \equiv [[B1]]$.
+
+
+
+% working with a system with untyped equality not only preserves the
+% same level of generality,
+% Of course,
+% but also enables us to derive confluence
+% (Lemma~\ref{lemma:parconfluent}) early on without having to use the
+% intricate techniques from \citet{lemma:}
+
+
+
+
+
+
+
+% TODO, where terms ... and ... are known to be
+% well-typed. The equivalence of such systems and a system that uses
+% untyped equality are explored in detail in ...
+
+% Without fancy eta laws, it is easy to embed a typed language into an
+% untyped language.
 
 
 % We note that a more conventional presentation of
@@ -649,8 +710,28 @@ the parameter $[[I]]$ of $[[Interp I i A S]]$ takes only natural
 numbers strictly less than $[[i]]$ as its input).
 The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
 level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
-$[[S]]$. For the
-majority of the properties we are about to prove in this section, we
+$[[S]]$.
+
+By unfolding the definition from Figure~\ref{fig:logrelrec}, we can
+now show that the same introduction rules for $[[Interp I i A S]]$ is
+admissible for $[[InterpR i A S]]$. We give as example TODO:
+
+In most informal presentations, instead of defining the logical
+relation in two steps as we have shown above, the rules for $[[InterpR
+i A S]]$ is given directly, with the implicit understanding of
+inductive definitions nested inside a recursive function. We choose
+the more explicit definition not only because it is directly definable
+in existing proof assistants where inductive definitions must appear
+at the top level, but also because it makes clear the induction
+principle we are allowed to use when reasoning about $[[InterpR i A
+S]]$.
+
+The most general format of the induction principle over $[[InterpR i A
+S]]$ is first by strong induction over the universe level $[[i]]$
+followed by structural induction over $[[Interp I i A S]]$. As
+examples, ... (\rref{I-Set} and \rref{I-Red}).
+
+For the majority of the properties we are about to prove in this section, we
 do not need any information about the parameterized function $[[I]]$.
 Each property about $[[InterpR i A S]]$ follows as a corollary of
 a property about $[[Interp I i A S]]$ with no or few assumptions imposed on
@@ -658,7 +739,70 @@ $[[I]]$. As a result, we usually state our lemmas in terms of
 $[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
 A S]]$.
 
-For the rest of the section, we establish some important facts about
+To derive consistency, it suffices to restrict $[[S]]$ to the set of
+terms to reduce to closed terms. \Rref{I-Void, I-Bool} are
+unsurprising; when considering only closed terms, the empty type
+should not be inhabited and therefore corresponds to the empty set,
+whereas the boolean type is semantically inhabited by terms that
+evaluate to the boolean values $[[true]]$ or $[[false]]$. \Rref{I-Eq}
+says that an equality type $[[a ~ b : A]]$ corresonds to the
+set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ holds and
+otherwise corresponds to the empty set. Side conditions like $[[a <=>
+b]]$ are typically required for indexed types, of which equality types
+are an instance.
+
+\Rref{I-Pi} is the most interesting. The precondition consists of a
+mysterious function $[[F]]$ that takes an element from the set $[[S]]$, the interpretation
+of the type $[[A]]$, and returns a subset of terms. $[[F]]$ is further
+subject to the constraint that $[[forall a, (# a in S implies Interp I
+i B { a } F a #)]]$. Ignoring the content below the horizontal bar of
+the derivation, the statements from the precondition are equivalent to
+the conjunction of the following statements:
+\begin{itemize}
+\item $[[Interp I i A S]]$
+\item $\forall [[a]], \text{ if }[[a in S]]\text{, then } \exists
+  [[S0]]\text{, } [[Interp I i B { a } S0 ]] $
+\end{itemize}
+In general, let $R$ be a binary relation over the sets $[[A]]$ and
+$[[B]]$, it easy to verify that the following equivalence:
+\[\forall a \in A, \exists b \in B \text{ such that } (a,b) \in R
+  \iff \exists F \in A \rightarrow B \text, \forall a \in A, (a, F(a))
+  \in R\]
+
+The left-hand side is equivalent to the right-hand side, but has no
+mentioning of any functions. In the context of \rref{I-Pi}, through
+the equivalence, we can more easily tell what's happening: $[[Pi A
+B]]$ has a semantic interpretation of $[[A]]$ can be semantically
+interpreted as the set $[[S]]$, and for all terms $[[a in S]]$, the
+type $[[B {a}]]$, obtained by substituing $[[a]]$ into the output type
+$[[B]]$, has a semantic interpretation.
+
+If we look at $[[Interp I i Pi A B { b | forall a, (# a in S implies b
+  a in F a #) }]]$, the conclusion of \rref{I-Pi}, we see why the
+presentation with an explicit $[[F in S -> PowerSet STm]]$ is
+useful. We want to state the fact that $[[B {a}]]$ has a semantic
+interpretation of some set $[[S0]]$, but we also want to refer to the
+set $[[S0]]$ when we talk about the set that $[[Pi A B]]$ corresponds
+to. If we used the alternative representation of the preconditions, we
+would be forced to define our logical relation in the following way.
+
+TODO: put the wrong logical relation that violates ...
+
+Unfortunately, both versions not only violate the syntactic strict
+positivity constraint required in proof assistants, but
+are in fact genuinely not monotone over the domain of
+relations.
+Intuitively, the failure of monotonicity stems from the fact
+that the witness picked in the precondition is not necessarily the
+same witness being referred to in the post condition. While it might
+be possible to restrict the domain with additional constraints such as
+functionality and inversion properties, we opt for our current
+skolemized formulation of \rref{I-Pi} so we immediately obtain a
+well-defined inductive relation and a usable induction principle. The
+more intuitive introduction rules can be later shown to be admissible
+a posteriori.
+
+In the rest of the section, we establish some important facts about
 the logical relation that will be useful for proving fundamental theorem
 in Section~\ref{sec:logrelproof}.
 
@@ -707,8 +851,7 @@ principles.
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
     \end{itemize}
-    The properties above are exactly the preconditions needed to apply
-    \rref{I-Pi} for $[[Pi A B]]$ to finish off the proof.
+    These properties are exactly what's required in the conclusion.
   \end{description}
 \end{proof}
 
@@ -739,8 +882,7 @@ usual forward direction too.
     $[[a <=> b]]$ if and only if $[[a0 <=> b0]]$. By definition, from
     $[[a => a0]]$ and $[[b => b0]]$, we derive $[[a <=> a0]]$ and $[[b
     <=> b0]]$. The result then immediately follows from the fact that
-    coherence is an equivalence relation
-    (Lemma~\ref{lemma:coherenceequiv}).
+    coherence is an equivalence relation.
   \item[\Rref{I-Pi}:] There exists $[[S]]$ and $[[F]]$
     such that:
     \begin{itemize}
@@ -775,7 +917,7 @@ usual forward direction too.
 From Lemma~\ref{lemma:interppreservation} and \rref{I-Red}, we can easily
 derive the following corollary that two coherent types have the same
 interpretation.
-\begin{corollary}[Logical Relation for Coherent Types\footnote{\dotv{semtyping.v}{InterpUnivN\_Coherent}}]
+\begin{corollary}[Irrelevance of logical relation\footnote{\dotv{semtyping.v}{InterpUnivN\_Coherent}}]
   \label{lemma:logrelcoherence}
   If $[[Interp I i A S]]$ and $[[A <=> B]]$, then $[[Interp I i B S]]$.
 \end{corollary}
@@ -983,7 +1125,7 @@ work with.
   typing, it suffices to show that there exists some $[[j]]$ and
   $[[S0]]$ such that  $[[InterpR j Set i S0]]$ and $[[A {rho} in
   S0]]$.
-  Pick $[[S i]]$ for $[[j]]$ and $[[ { A | exists S , InterpR i A S }
+  Pick $[[Suc i]]$ for $[[j]]$ and $[[ { A | exists S , InterpR i A S }
   ]]$ for $[[S0]]$ and it's trivial to verify the conditions hold.
 \end{proof}
 
@@ -1139,12 +1281,76 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
 
 \section{Mechanization}
 \label{sec:logrelmech}
-The Coq mechanization follows an almost identical structure as the
-proofs presented in Section~\ref{sec:logrelproof}. The inductive
+
+\subsection{Artifacts Specific to Coq}
+In this section, we discuss the Coq encoding of the definitions and proofs presented
+in Section~\ref{sec:logrelproof}  and the artifacts that are
+specific to Coq and may not appear in other proof assistants.
+
+The powerset $[[PowerSet STm]]$ is encoded as the type \texttt{tm ->
+Prop}, a predicate over \lang{} terms.
+The inductive
 definition of the logical relation in Figure~\ref{fig:logrel} requires
 the impredicativity of Coq's \texttt{Prop} sort since in \rref{I-Pi},
 the function $[[F]]$ can be later instantiated into the logical
 relation itself (e.g. in the proof of Lemma~\ref{lemma:piintroalt}).
+
+In Coq, there is a distinction between computable functions and
+relations that can later be proven to be functional. The former can be
+viewed as a strict subset of the latter in axiom-free Coq. To be more
+precise, given a relation \texttt{R : A -> B -> Prop} subject to the
+totality and functionality constraints ($\forall$ \texttt{a} $\in$
+\texttt{A}, there exists a unique \texttt{b} $\in$ \texttt{B} such
+that \texttt{R a b} is inhabited), we do not immediately obtain a function
+\texttt{F : A -> B} such that $\forall$ \texttt{a} $\in$ \texttt{A},
+\texttt{R a (F a)} is inhabited. However, the functional side
+conditions of a relation is clunky to express and tend to block
+automation. A simple workaround is to assume the choice axiom, which
+is known to be consistent and allows us to induce a function \texttt{F
+: A -> B} once we have shown the relation \texttt{R : A -> B -> Prop}
+is functional. This approach would make our Coq development match
+the text version of our proof from Section~\ref{sec:logrelproof} more
+closely.
+
+However, we choose instead an axiom-free workaround and define
+\rref{T-Pi} as follows in our Coq mechanization.
+
+Instead of constraining \texttt{F} to be a function or a functional
+relation, we leave \texttt{F} as an unrestricted relation that is
+total on input from the set $[[S]]$ and ...TODO...
+
+This formulation allows us to derive Lemma~\ref{lemma:piintroalt}
+before we even show that our logical relation is
+functional/deterministic, but does not affect the proof structure
+otherwise. We choose to keep the discrepancy since the skolemization
+process is typically expressed in terms of function symbols rather
+than relation symbols.
+
+\subsection{Automation}
+\label{sec:automation}
+Our Coq mechanization heavily uses automation, though instead of
+defining custom tactics, we rely mostly on off-the-shelf tools such as
+Autosubst 2 and CoqHammer.
+
+We use the Autosubst 2 framework to specify our syntax in HOAS and
+produce Coq syntax files in de Bruijn representation. Additionallly,
+Autosubst 2 provides a powerful tactic \texttt{asimpl} which
+can be used to prove the equivalence of two terms constructed using
+the primitive operators provided by the framework. Instead of
+examining carefully the freeness conditions of variables to decide
+which rewriting lemma to invoke, reasoning about substitution with
+Autosubst 2 boils down to reducing the problem to a goal of the
+
+
+
+
+\section{Discussion}
+\label{sec:discuss}
+
+\subsection{Use of Impredicativity}
+
+\subsection{Toward Function $\eta$-laws and Decidability of Type Conversion}
+
 
 \section{Related Work}
 \label{sec:relatedwork}
