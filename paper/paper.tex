@@ -47,6 +47,7 @@
 %%
 \documentclass[acmsmall]{acmart}
 \usepackage{ottalt}
+\usepackage{minted}
 \usepackage{xspace}
 \usepackage[para]{footmisc}
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
@@ -1336,21 +1337,47 @@ We use the Autosubst 2 framework to specify our syntax in HOAS and
 produce Coq syntax files in de Bruijn representation. Additionallly,
 Autosubst 2 provides a powerful tactic \texttt{asimpl} which
 can be used to prove the equivalence of two terms constructed using
-the primitive operators provided by the framework. Instead of
-examining carefully the freeness conditions of variables to decide
-which rewriting lemma to invoke, reasoning about substitution with
-Autosubst 2 boils down to reducing the problem to a goal of the
+the primitive operators provided by the framework. This greatly
+simplifies the reasoning about substitution in our development as
+almost all substitution related properties are immediately discharged
+by \texttt{asimpl} without having to manually prove or even directly invoke any
+substitution related lemmas.
 
+For other automation tasks that are not specific to binding, we use
+the powerful \texttt{sauto} tactic provided by CoqHammer to write
+short and declarative proofs. For example, here is a one-line proof of
+the triangle property about parallel reduction, from which the diamond
+property (Lemma~\ref{lemma:pardiamond}) follows as a corollary.
+\begin{minted}{coq}
+Lemma par_triangle a : forall b, Par a b ->  Par b (tstar a).
+Proof.
+  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,par_cong ctrs:Par.
+Qed.
+\end{minted}
+In prose, the triangle property can be proven by induction over the
+graph of the \texttt{tstar} function, which stands for the Takahashi
+translation~\citep{takahashi-parallel-reduction}. \texttt{inv:Par} and
+\texttt{ctrs:Par} says that the proof involves inverting and
+constructing of the derivations of parallel
+reduction. The option \texttt{use:Par\_refl,par\_cong} says that the proof would
+require the reflexivity and congruence properties of parallel
+reduction that we have shown earlier.
 
-
-
+The automation here not only gives us a proof that is shorter and more
+resiliant to changes in definition, but also gives useful
+documentation for readers who wish to understand how the underlying
+proof works since the automation tactic is guaranteed to not use
+lemmas that are not specified in the \texttt{use} flag.
 \section{Discussion}
 \label{sec:discuss}
 
 \subsection{Use of Impredicativity}
 
-\subsection{Toward Function $\eta$-laws and Decidability of Type Conversion}
-
+\subsection{Toward Decidability of Type Conversion and $\eta$ laws}
+In this section, we sketch out how the logical relation can be extended
+show the existence of $\beta\eta$ normal forms for well-typed terms.
+In other words, our goal is to show that the following property holds
+in our system.
 
 \section{Related Work}
 \label{sec:relatedwork}
