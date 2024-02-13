@@ -256,16 +256,14 @@ recursion~\citep{induction-recursion}, a scheme in which logical
 relation for dependent types is typically defined~\citep{todo}, we opt
 for a direct explanation in informal language of sets, where
 impredicativity manifests in the form of second-order logical
-formulas and thus more intuitive to understand for readers with some
+formulas and thus more intuitive to understand for readers with
 general mathematics background.
 
-In Section~\ref{sec:logrelmech}, we discuss the details about our
-mechanization, including our use of existing libraries such as
-Autosubst for handling bindings and CoqHammer for general-purpose
-automation. In Section~\ref{sec:discuss}, we extend our logical
+In Section~\ref{sec:extension}, we extend our logical
 relation to prove the stronger property that every well-typed term
-has a normal form. Most interestingly, we show that extensions such
-as $\eta$ rules for functions and normalization for open terms are
+has a normal form. Most interestingly, we find that extending the
+language with
+$\eta$ rule for functions and the metatheoretic result to normalization for open terms are
 mostly orthogonal to the fact that the language is dependently
 typed. In our mechanized proof, the overall
 structure of the logical relation remains unchanged, and the additional
@@ -277,6 +275,15 @@ proof by logical relation for dependent types, we can factor out the
 complexities of an extension the are not specifically related to dependent
 types; such an extension, if desired, may be studied in the context of
 a simply typed language and later ported into a dependently typed setting.
+
+In Section~\ref{sec:logrelmech}, we discuss the details about our
+mechanization, including our use of existing libraries such as
+Autosubst for handling bindings and CoqHammer for general-purpose
+automation.
+
+Finally, in Section~\ref{sec:relatedwork}, we discuss how our proof
+relates to existing proofs by logical relations for dependent types in
+the literature.
 
 We hope our success at creating a short and mechanized proof for a
 relatively feature-complete language will encourage future researchers
@@ -1254,7 +1261,7 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
 \end{proof}
 
 \begin{theorem}[The Fundamental Theorem\footnote{\dotv{soundness.v}{soundness}}]
-  \label{theorem:soundness}
+  \label{theorem:soundness}\leavevmode
   \begin{itemize}
   \item If $[[G |- a : A]]$, then $[[G |= a : A]]$.
   \item If $[[|- G]]$, then $[[|= G]]$.
@@ -1281,42 +1288,86 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
 \end{proof}
 
 \section{Toward Decidability of Type Conversion and $\eta$ laws}
+\label{sec:extension}
+\begin{figure}[h]
+  \[
+    \begin{array}{lcl}
+      % \beta\text{-}\mathit{neutral\ terms}\\
+      [[e]] & ::= & [[i]]\ |\ [[e f]]\ |\ [[J e f f f]]\ |\ [[if e f
+                    f]] \\ \\
+      % \beta\text{-}\mathit{normal\ terms} \\
+      [[f]] & ::= & [[e]]\ |\ [[Set i]]\ |\ [[Void]]\ |\ [[Pi f f]]\
+                    |\ [[f ~ f : f]]\\
+            & |   & [[\\ f]]\ |\ [[refl]]\ |\ [[Bool]]\ |\ [[true]]\ |\ [[false]]
+    \end{array}
+  \]
+  \caption{$\beta$-neutral and normal forms}
+  \label{fig:nenf}
+\end{figure}
+\begin{figure}[h]
+  \caption{Extended logical relation}
+  \label{fig:logrelopen}
+\end{figure}
+
 In this section, we sketch out how the logical relation from
 Section~\ref{sec:logreldep} can be extended show the existence of
-$\beta\eta$ normal forms for (open and closed) well-typed terms.
-
-The updated logical relation and its auxiliary definitions are shown
-in Figure~\ref{fig:logrelopen}. When extend parallel reduction to
-include $\eta$ reduction for functions. This effectively adds $\eta$
-laws for functions to our equational theory since coherence, the
-untyped relation used for type conversion, is built on top of parallel
-reduction.
-
-We can recover the same confluence result about parallel reduction
-using the standard techniques from \citet{barendregt, takahashi},
-though specifically for the de Bruijn representation, we need the
-following anti-renaming lemma about parallel reduction:
+$\beta\eta$ normal forms for (open and closed) well-typed terms. We
+first extend parallel reduction to include $\eta$ reduction for
+functions.
+\begin{center}
+  \drule[width=2.5in]{P-AbsEta}
+\end{center}
+\Rref{P-AbsEta} effectively adds $\eta$ laws for functions to our
+equational theory since coherence, the untyped relation used for type
+conversion, is built on top of parallel reduction. We can recover the
+same confluence result about parallel reduction using the standard
+techniques from \citet{barendregt:lambda-calculi-with-types,
+takahashi-parallel-reduction}, though specifically for the de Bruijn
+representation, we need the following anti-renaming lemma about
+parallel reduction.
 \begin{lemma}[Par anti-renaming]
-  \label{lemma:parantirenaming}
-  If $[[a {xi} => b0]]$, then there exists some $[[b]]$ such that
-  $[[b {xi} = b0]]$ and $[[a => b]]$.
+  \label{lemma:parantirenaming} If $[[a { xi } => b0]]$, then there
+exists some $[[b]]$ such that $[[b { xi } = b0]]$ and $[[a => b]]$.
 \end{lemma}
 
 
+
+The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the neutral terms
+and normal forms with respect to $\beta$-reduction, but can still take
+$\eta$ reduction steps. We sometimes use the judgment forms $[[ne a]]$
+and $[[nf a]]$ to indicate that there exists $[[e]]$ or $[[f]]$ such
+that $[[a = e]]$ or $[[a = f]]$.
+
+We can show that parallel reduction preserves $\beta$-normal and
+neutral forms.
+\begin{lemma}[Par preserves $\beta$-neutral and normal forms]
+  \label{lemma:parnenf}
+  If $[[a => b]]$, then
+  \begin{itemize}
+  \item $[[ne a]]$ implies $[[ne b]]$
+  \item $[[nf a]]$ implies $[[nf b]]$
+  \end{itemize}
+\end{lemma}
+This lemma is mainly to show that \rref{P-AbsEta} does not introduce
+any new $\beta$ redex because $\eta$ reduction is the only real step
+we can take.
+
+The predicates $[[wne a]]$ and $[[wn
+a]]$ describe terms that can evaluate into $\beta$-neutral or
+$\beta$-normal form through parallel reduction and are defined as
+follows.
+\[ [[wne a]] \iff \exists [[e]], [[a =>+ e]] \]
+\[ [[wn a]] \iff \exists [[f]], [[a =>+ f]] \]
+
+The updated logical relation and its auxiliary definitions are shown
+in Figure~\ref{fig:logrelopen}.
+
 % The idea of a term blocked from $\beta$ reduction is
-% captured by $[[ne]]$, the set of neutral terms. We augment the
+% captured by $[[e]]$, the set of neutral terms. We augment the
 % interpretation of booleans and the empty types with terms that
 % evaluate to neutral terms. Furthermore, types that are neutral terms
 % can also be assigned a meaning since they may be inhabited by other
 % neutral terms.
-The syntactic forms $[[ne]]$ and $[[nf]]$ capture the neutral terms
-and normal forms with respect to $\beta$-reduction, but can still take
-$\eta$ reduction steps. Furthermore, we can show that parallel
-preserves $[[ne]]$ and $[[nf]]$.
-
-The predicates $[[wne a]]$ and $[[wn
-a]]$ describe terms that can evaluate into $\beta$-neutral or
-$\beta$-normal form through parallel reduction.
 
 In the definition of the logical relation, we omit the rules for
 the function and universe cases since they remain identical to the
@@ -1391,7 +1442,7 @@ Let us first start with some auxiliary lemmas and definitions.
 
 \begin{lemma}[$CR$ for interpreted sets]
   \label{lemma:crel}
-  If $[[I]] \in CR$ and $[[Interp I i A S]]$, then $[[S]] \in CR$.
+  If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[S]] \in CR$.
 \end{lemma}
 \begin{proof}
   By induction over the derivation of $[[Interp I i A S]]$. The base
@@ -1417,7 +1468,7 @@ Let us first start with some auxiliary lemmas and definitions.
 
 \begin{lemma}[$CR_2$ for type]
   \label{lemma:cr2ty}
-  If $[[I]] \in CR$ and $[[Interp I i A S]]$, then $[[wn A]]$ holds.
+  If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[wn A]]$ holds.
 \end{lemma}
 \begin{proof}
   By induction over the derivation of $[[Interp I i A S]]$. The
@@ -1444,29 +1495,89 @@ Let us first start with some auxiliary lemmas and definitions.
 The formulation of the valuation and semantic well-typedness from
 Figure~\ref{fig:semtyping} and the fundamental lemma remains
 unchanged.
-
 The proof of the fundamental lemma is still carried out by induction
 over the typing derivation, where the additional neutral term related
-cases are handled by Lemmas\ref{lemma:cr2tyrec} and
+cases are handled by Lemmas~\ref{lemma:cr2tyrec} and
 \ref{lemma:crelrec}.
 
 The normalization property then follows as a corollary of the
 fundamental theorem.
-\begin{theorem}[Existence of $\beta$-normal form]
+\begin{corollary}[Existence of $\beta$-normal form]
+  \label{corollary:exbetanf}
   If $[[G |- a : A]]$, then $[[wn a]]$ and $[[wn A]]$.
-\end{theorem}
+\end{corollary}
 \begin{proof}
   By the fundamental lemma, we know that $[[G |= a : A]]$. That is,
   for all $[[rho |= G]]$, there exists some $[[i]]$ and $[[S]]$ such
   that $[[InterpR i A {rho} S]]$ and $[[a {rho} in S]]$.
-  We pick the valuation $[[rho]]$ as the term constructor that injects
-  natural numbers as variables. This is
-  allowed since Lemma~\ref{lemma:crelrec} says neutral terms
-  semantically inhabit any type.
+  We pick the valuation $[[rho]](i) = i$, which injects
+  natural numbers as term variables. This is
+  allowed since Lemma~\ref{lemma:crelrec} says neutral terms,
+  including variables, semantically inhabit any $[[S0]]$ where
+  $[[S0]]$ is the interpretation of some type. With our choice of
+  $[[rho]]$, we have $[[A {rho} = A]]$ and $[[a {rho} = a]]$. Then we
+  know that $[[InterpR i A S]]$ and $[[a in S]]$ for some $[[i]]$ and
+  $[[S]]$. By Lemmas~\ref{lemma:crelrec} and \ref{lemma:cr2tyrec}, we
+  conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
 \end{proof}
+From Corollary~\ref{corollary:exbetanf}, we can show that there exists
+$\beta\eta$-normal forms for well-typed terms, since $\eta$ reduction
+preserves $\beta$-normal form (implied by Lemma~\ref{lemma:parnenf})
+and also strictly decreases the size of the term.
+
+Due to the non-deterministic nature of parallel reduction, we need to
+take a few more steps to convert the existence of $\beta\eta$-normal
+form into a decision procedure for type conversion. More specifically,
+we can show that a deterministic evaluation strategy such as
+leftmost-outermost reduction can always find the $\beta\eta$-normal
+form if there exists one. However, we omit such proofs since they can
+can be formulated on untyped lambda terms and thus orthogonal to the
+specifics of dependently typed systems. Instead, we redirect readers
+to \citet{factorization-essentially, takahashi-parallel-reduction} for
+the details.
+
+Finally, we want to point out that
+Lemmas~\ref{lemma:cr1ty},~\ref{lemma:cr2tyrec}, and
+\ref{lemma:crelrec}, often referred to as adequacy of the logical
+relation, are in fact required in the normalization proof for simply
+typed languages~\citep{abel2019poplmark}. In the simply typed
+scenario, adequacy needs to be proven before the fundamental theorem
+so we can handle rules such as \rref{T-If} where the scrutinee is a
+neutral term. In a simply typed setting, Lemma~\ref{lemma:extwn} is
+used in the exact same way to show that lambda terms are themselves
+normalizing as we have done in Lemma~\ref{lemma:crel}.
+
+Dependent types make the proof slightly more complicated
+as we also need to know that every type has a normal form. Whereas the
+$CR_1$ property for types (Lemma~\ref{lemma:cr1ty}) is directly
+derivable, the $CR_2$ property for types (Lemma~\ref{lemma:cr2ty})
+requires the $CR_1$ property about the interpreted sets
+(Lemma~\ref{lemma:crel}).
+
+Overall, despite the dependently typed setting,
+the extension of our logical relation to prove normalization of open
+\emph{and} closed terms closely mirrors the progression from
+normalization of closed terms~\citep{harpertait} to normalization of
+open terms~\citep{harperkripke} in the simply typed lambda calculus.
+It is in fact reassuring that once we have laid the foundational
+technique for handling dependent types in our logical relation, the
+further extensions more or less boil down to properties that can be
+derived through syntactic means, which tend to not get in the way of
+Gödel's second incompleteness theorem.
 
 \section{Mechanization}
 \label{sec:logrelmech}
+\begin{figure}[h]
+  TODO
+  \caption{Statistics of the Coq Development}
+  \label{fig:linecount}
+\end{figure}
+
+
+Figure~\ref{fig:linecount} shows the statics of our
+development, including the base consistency proof from
+Section~\ref{sec:logreldep} and \ref{sec:logrelproof} and the
+extension from Section~\ref{sec:extension}.
 
 \subsection{Artifacts Specific to Coq}
 In this section, we discuss the Coq encoding of the definitions and proofs presented
@@ -1541,18 +1652,20 @@ Qed.
 \end{minted}
 In prose, the triangle property can be proven by induction over the
 graph of the \texttt{tstar} function, which stands for the Takahashi
-translation~\citep{takahashi-parallel-reduction}. \texttt{inv:Par} and
+translation~\citep{takahashi-parallel-reduction}. Options \texttt{inv:Par} and
 \texttt{ctrs:Par} says that the proof involves inverting and
 constructing of the derivations of parallel
-reduction. The option \texttt{use:Par\_refl,par\_cong} says that the proof would
-require the reflexivity and congruence properties of parallel
-reduction that we have shown earlier.
+reduction. The option \texttt{use:Par\_refl,par\_cong} allows the
+automation tactic to use
+the reflexivity and congruence properties of parallel
+reduction as lemmas.
 
 The automation here not only gives us a proof that is shorter and more
 resiliant to changes in definition, but also gives useful
 documentation for readers who wish to understand how the underlying
 proof works since the automation tactic is guaranteed to not use
-lemmas that are not specified in the \texttt{use} flag.
+lemmas or invert derivations that are not specified in the
+\texttt{use} or \texttt{inv} flag.
 \section{Discussion}
 \label{sec:discuss}
 

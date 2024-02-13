@@ -42,7 +42,7 @@ rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
     {{ tex \Uparrow [[rho]]}}
   | [ A ]         :: :: one
 
-tm, a , b , c, t, p, A, B, C, ne, nf :: 'a_' ::= {{ com terms and types }}
+tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
     {{ tex - }}
   | i :: :: Var
@@ -99,7 +99,7 @@ context, G {{ tex \Gamma }} :: 'ctx_' ::= {{ com contexts }}
 					  {{ coq list ( atom * (grade * tm) ) }}
    | drop n G        ::    :: Drop {{ tex [[G]] \downarrow_{[[n]]} }}
    | empty           ::    :: Empty       {{ coq nil }}
-   | A               :: M   :: One
+%   | A               :: M   :: One
    | G ++ A          ::   :: Append      {{ tex [[G]], [[A]] }}
    | ( G )           :: M  :: Paren       {{ coq ([[G]]) }}
    | (# G #)           :: M  :: SecretParen {{ tex [[G]] }}
@@ -179,9 +179,11 @@ formula :: 'formula_' ::=
   | (# formula  #)            ::   :: HParen
     {{ tex [[formula]] }}
   | S1 = S2                   ::   :: SetEq
+  | ne a                      ::   :: Ne
+  | nf a                      ::   :: Nf
   | wn a                      ::   :: Wn
   | wne a                     ::   :: Wne
-
+  | a = b                     ::   :: TmEq
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -275,6 +277,10 @@ b0 => b1
 p => refl
 -------------------- :: JRefl
 J t0 a0 b0 p => t1
+
+a => a0
+----------------------- :: AbsEta
+(# \\ ( ( up1 a ) 0 ) #) => a0
 
 
 defns
