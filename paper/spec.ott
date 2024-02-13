@@ -42,7 +42,7 @@ rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
     {{ tex \Uparrow [[rho]]}}
   | [ A ]         :: :: one
 
-tm, a , b , c, t, p, A, B, C :: 'a_' ::= {{ com terms and types }}
+tm, a , b , c, t, p, A, B, C, ne, nf :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
     {{ tex - }}
   | i :: :: Var
@@ -179,6 +179,8 @@ formula :: 'formula_' ::=
   | (# formula  #)            ::   :: HParen
     {{ tex [[formula]] }}
   | S1 = S2                   ::   :: SetEq
+  | wn a                      ::   :: Wn
+  | wne a                     ::   :: Wne
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

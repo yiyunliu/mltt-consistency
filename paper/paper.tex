@@ -1280,6 +1280,191 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
   Immediate from Theorem~\ref{theorem:soundness} and the $[[Void]]$ case of Lemma~\ref{lemma:interpinv}.
 \end{proof}
 
+\section{Toward Decidability of Type Conversion and $\eta$ laws}
+In this section, we sketch out how the logical relation from
+Section~\ref{sec:logreldep} can be extended show the existence of
+$\beta\eta$ normal forms for (open and closed) well-typed terms.
+
+The updated logical relation and its auxiliary definitions are shown
+in Figure~\ref{fig:logrelopen}. When extend parallel reduction to
+include $\eta$ reduction for functions. This effectively adds $\eta$
+laws for functions to our equational theory since coherence, the
+untyped relation used for type conversion, is built on top of parallel
+reduction.
+
+We can recover the same confluence result about parallel reduction
+using the standard techniques from \citet{barendregt, takahashi},
+though specifically for the de Bruijn representation, we need the
+following anti-renaming lemma about parallel reduction:
+\begin{lemma}[Par anti-renaming]
+  \label{lemma:parantirenaming}
+  If $[[a {xi} => b0]]$, then there exists some $[[b]]$ such that
+  $[[b {xi} = b0]]$ and $[[a => b]]$.
+\end{lemma}
+
+
+% The idea of a term blocked from $\beta$ reduction is
+% captured by $[[ne]]$, the set of neutral terms. We augment the
+% interpretation of booleans and the empty types with terms that
+% evaluate to neutral terms. Furthermore, types that are neutral terms
+% can also be assigned a meaning since they may be inhabited by other
+% neutral terms.
+The syntactic forms $[[ne]]$ and $[[nf]]$ capture the neutral terms
+and normal forms with respect to $\beta$-reduction, but can still take
+$\eta$ reduction steps. Furthermore, we can show that parallel
+preserves $[[ne]]$ and $[[nf]]$.
+
+The predicates $[[wne a]]$ and $[[wn
+a]]$ describe terms that can evaluate into $\beta$-neutral or
+$\beta$-normal form through parallel reduction.
+
+In the definition of the logical relation, we omit the rules for
+the function and universe cases since they remain identical to the
+original version in Figure~\ref{fig:logrel}.
+The changes to \rref{I-Bool} and \rref{I-Void} follow the exact same pattern.
+An open term of type $[[Bool]]$ does
+not necessarily reduce to $[[true]]$ or $[[false]]$, but may reduce to
+a variable, or more generally, a neutral term. Likewise, the
+$[[Void]]$ type, while remains uninhabited under an empty context, may
+be inherited by the set of neutral terms when there is a variable in
+the context that allows us to inhabit $[[Void]]$.
+
+The rule for equality type $[[a ~ b : A]]$ is augmented with the preconditions that
+$[[a]]$, $[[b]]$, and $[[A]]$ are all in their normal forms since
+otherwise our model would include equality types that are themselves
+not normalizing. Furthermore, the side condition $[[a <=> b]]$ is only
+available when the equality proof reduces to $[[refl]]$. If the proof
+term reduces to a neutral term, then there is nothing we can learn
+about the relationship between $[[a]]$ and $[[b]]$.
+
+Finally, in a
+non-empty context, a type itself may evaluate to a neutral term and in
+turn can only inhabited by neutral terms, thus the addition of \rref{I-Ne}.
+
+Interestingly, all the properties we have shown in
+Section~\ref{sec:logreldep} and \ref{sec:logrelproof} up to the
+fundamental lemma can be proven in the exact same order, where the new
+cases related due to \rref{I-Ne} and the augmentation of neutral terms
+to \rref{I-Void, I-Eq, I-Bool} can be immediately discharged by
+Lemma~\ref{lemma:parnenf}.
+
+Before we can prove the fundamental theorem and derive the
+normalization property as its corollary, we need to additionally
+formulate and prove the adequacy property.
+
+Let us first start with some auxiliary lemmas and definitions.
+\begin{lemma}[Ext Wn]
+  \label{lemma:extwn}
+  If $[[wn a i]]$, then $[[wn a]]$.
+\end{lemma}
+\begin{proof}
+  By induction over the length of the reduction sequence in $[[wn a
+  i]]$. The proof relies on Lemma~\ref{lemma:parantirenaming} and
+  \ref{lemma:parnenf}.
+\end{proof}
+
+\begin{lemma}[wne wn]
+  \label{lemma:wnewn}
+  If $[[wne a]]$ and $[[wn b]]$, then $[[wne a b]]$.
+\end{lemma}
+\begin{proof}
+  Immediate by lexicographical induction over the length of the reduction sequences in
+  $[[wne a]]$ and $[[wn b]]$.
+\end{proof}
+
+\begin{definition}[CR]
+  Let $[[S]]$ be a set of lambda terms. We say that
+  \begin{itemize}
+  \item $[[S]] \in CR_1$ if $[[wne a implies a in S]]$
+  \item $[[S]] \in CR_2$ if $[[a in S implies wn a]]$
+  \item $[[S]] \in CR$ if $[[S]] \in CR_1$ and $[[S]] \in CR_2$
+  \end{itemize}
+\end{definition}
+
+\begin{lemma}[$CR_1$ for type]
+  \label{lemma:cr1ty}
+  If $[[wne A]]$, then we have $[[Interp I i A {a | wne a }]]$.
+\end{lemma}
+\begin{proof}
+  Immediately from \rref{I-Ne} and \rref{I-Par}.
+\end{proof}
+
+\begin{lemma}[$CR$ for interpreted sets]
+  \label{lemma:crel}
+  If $[[I]] \in CR$ and $[[Interp I i A S]]$, then $[[S]] \in CR$.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $[[Interp I i A S]]$. The base
+  cases are all immediate.
+
+  In the function case ($[[Pi A B]]$), we use the induction
+  hypothesis to show that variables, which are special cases of
+  neutral terms, semantically inhabit the input type $[[A]]$. We apply the
+  function to an arbitrary variable and we can then use
+  Lemma~\ref{lemma:extwn} to conclude the $CR_2$ property.
+
+  To show
+  the $CR_1$ property, we need to prove that given a neutral term $[[b]]$
+  such that $[[wne b]]$,
+  and a term $[[a]]$ that semantically inhabits $[[A]]$, $[[b a]]$ gives
+  us a term that semantically inhabits $[[B {a}]]$. From the induction
+  hypothesis, $[[A]]$ also satisfies $CR_2$ and therefore $[[wn a]]$
+  holds. By Lemma~\ref{lemma:wnewn}, we have $[[wne b a]]$. By $CR_2$
+  from the induction hypothesis, since every term that evaluates to
+  some neutral form semantically inhabits $[[B {a}]]$. Done.
+\end{proof}
+
+
+\begin{lemma}[$CR_2$ for type]
+  \label{lemma:cr2ty}
+  If $[[I]] \in CR$ and $[[Interp I i A S]]$, then $[[wn A]]$ holds.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $[[Interp I i A S]]$. The
+  function case uses Lemma~\ref{lemma:crel} and Lemma~\ref{lemma:extwn}.
+\end{proof}
+
+\begin{lemma}[$CR_2$ for types (Rec)]
+  \label{lemma:cr2tyrec}
+  If $[[InterpR i A S]]$, then $[[wn A]]$.
+\end{lemma}
+\begin{proof}
+  By strong induction over $[[i]]$ and Lemma~\ref{lemma:cr2ty}.
+\end{proof}
+
+\begin{lemma}[$CR$ for terms (Rec)]
+  \label{lemma:crelrec}
+  If $[[InterpR i A S]]$, then $[[S]] \in CR$.
+\end{lemma}
+\begin{proof}
+  After unfolding the definition of $[[InterpR i A S]]$, trivial by
+  Lemma~\ref{lemma:cr2ty}, \ref{lemma:crel} and \ref{lemma:cr1ty}.
+\end{proof}
+
+The formulation of the valuation and semantic well-typedness from
+Figure~\ref{fig:semtyping} and the fundamental lemma remains
+unchanged.
+
+The proof of the fundamental lemma is still carried out by induction
+over the typing derivation, where the additional neutral term related
+cases are handled by Lemmas\ref{lemma:cr2tyrec} and
+\ref{lemma:crelrec}.
+
+The normalization property then follows as a corollary of the
+fundamental theorem.
+\begin{theorem}[Existence of $\beta$-normal form]
+  If $[[G |- a : A]]$, then $[[wn a]]$ and $[[wn A]]$.
+\end{theorem}
+\begin{proof}
+  By the fundamental lemma, we know that $[[G |= a : A]]$. That is,
+  for all $[[rho |= G]]$, there exists some $[[i]]$ and $[[S]]$ such
+  that $[[InterpR i A {rho} S]]$ and $[[a {rho} in S]]$.
+  We pick the valuation $[[rho]]$ as the term constructor that injects
+  natural numbers as variables. This is
+  allowed since Lemma~\ref{lemma:crelrec} says neutral terms
+  semantically inhabit any type.
+\end{proof}
+
 \section{Mechanization}
 \label{sec:logrelmech}
 
@@ -1373,11 +1558,6 @@ lemmas that are not specified in the \texttt{use} flag.
 
 \subsection{Use of Impredicativity}
 
-\subsection{Toward Decidability of Type Conversion and $\eta$ laws}
-In this section, we sketch out how the logical relation can be extended
-show the existence of $\beta\eta$ normal forms for well-typed terms.
-In other words, our goal is to show that the following property holds
-in our system.
 
 \section{Related Work}
 \label{sec:relatedwork}
