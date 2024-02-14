@@ -199,7 +199,7 @@ equivalence, closed terms to open terms.
 
 The glaring gap here is the
 lack of fully dependently typed systems where computations may appear
-at the type-level. In fact, it is far from obvious why proof by
+at the type-level. It is far from obvious why proof by
 logical relation is even applicable to dependent types, since the type
 may very well-be a computation that is yet to be evaluated.
 While it is assuring that proof by logical relations for dependent
@@ -207,7 +207,7 @@ types is available in mechanized forms, % the key to address the
 % complexities of dependent types is obscured in
 \citet{nbeincoq,decagda,martin-lof-a-la-coq} all involve relational,
 Kripke-style models that obscure the technique for addressing
-type-level computation. In fact, the added complexivity is evident
+type-level computation. The added complexivity is evident
 from the size of their code base. For example, \citet{nbeincoq}
 involves 22 thousand lines of Coq code.
 
@@ -467,13 +467,12 @@ is $[[true]]$ or $[[false]]$.
 \begin{minipage}{0.9\textwidth}
 \drules[P]{$[[a => b]]$}{Parallel Reduction}{Var, Set, Void, Pi, Abs, App, AppAbs, True, False, If, IfTrue, IfFalse,
   Bool, Eq, Refl, J, JRefl}
-\drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{One, Step}
+\drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{Refl, Step}
 \drules[C]{$[[a <=> b]]$}{Coherence}{Intro}
 \end{minipage}
 \caption{Parallel reduction and coherence}
 \label{fig:par}
 \end{figure}
-
 
 Figure~\ref{fig:par} shows the definition of the parallel reduction
 relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
@@ -482,9 +481,7 @@ the coherence relation $[[a <=> b]]$.
 We say that two terms $[[a]]$
 and $[[b]]$ are coherent if they can eventually reduce to some common
 term $[[c]]$ through parallel reduction. The symmetric notation of
-coherence suggests that it is an equivalence relation.% , and in fact, we
-% will use coherence as the equational theory for our type conversion
-% rule.
+coherence suggests that it is an equivalence relation.
 
 We sketch out some key properties about parallel reduction and
 coherence without giving their proofs. Our technique for establishing
@@ -798,7 +795,7 @@ TODO: put the wrong logical relation that violates ...
 
 Unfortunately, both versions not only violate the syntactic strict
 positivity constraint required in proof assistants, but
-are in fact genuinely not monotone over the domain of
+are genuinely non-monotone over the domain of
 relations.
 Intuitively, the failure of monotonicity stems from the fact
 that the witness picked in the precondition is not necessarily the
@@ -1675,13 +1672,67 @@ lemmas or invert derivations that are not specified in the
 works that establish metatheoretic results strong enough to derive
 consistency for dependently typed systems. Some of these techniques
 are still in use in more recent works. For example, the technique for
-proving strong normalization by \citet{geuvers1994short} is adopted by
+proving strong normalization by \citet{geuvers1994short} is adapted by
 \citet{moon2021graded} to show the same property to a dependently
 typed system extended with modalities.
 
-More recently, there have been efforts at mechanizing consistency
-or decidability of type conversion proofs using proof assistants such
-as Coq and Agda.
+\citet{decagda} mechanizes in Agda the decidability of type
+conversion rule for a dependently typed language with one predicative
+universe level and typed judgmental equality with function
+$\eta$-law. Unlike our logical relation for \lang{}, \citet{decagda}
+uses a Kripke-style logical relation parameterized over an
+type-directed equivalence relation satisfying certain properties. We
+are able to avoid the complexivity of a Kripke-style logical relation
+by defining our logical relation in terms of untyped parallel
+reduction, which does not impose any scoping constraint on the
+terms. \citet{decagda} defines their logical relation using the
+induction-recursion scheme, which is available in Agda but not in Coq.
+\citet{martin-lof-a-la-coq} manages to encode the logical relation
+from \citet{decagda} in the predicative fragment of Coq using a
+special way of encoding induction recursion. Their work further
+extends the decidability of type conversion result from~\citet{decagda} to the decidability
+type checking of a bidrectional type system.
+
+\citet{anand2014towards} mechanizes the metatheory of
+Nuprl~\citep{constable1986implementing} in Coq. The metatheory is an
+extensional type theory with features such as dependent functions,
+inductive types, and a full universe hierarchy. \citet{nbeincoq}
+mechanizes the normalization-by-evaluation algorithm in Coq for a
+dependently typed language with one predicative universe, similar to
+\citet{decagda} and \citet{martin-lof-a-la-coq}. Both
+\citet{anand2014towards} and \citet{nbeincoq} leverage the
+impredicative \texttt{Prop} sort of Coq to define the interpretation
+of dependent function types and thus are closely related to our
+mechanization. However, instead of explaining the purely inductive
+logical relation as a convoluted workaround to the lack of
+induction-recursion in Coq, we give a self-contained explanation of
+our logical relation.
+
+Finally, it is worth pointing out that all systems we have discussed
+so far builds a relational model for their logical relation. Recall
+that our logical relation takes the form $[[InterpR i A S]]$ where
+$[[S]]$ is a set of terms. In a relational model, each type is
+interpreted as a partial equivalence relation over terms rather than a
+set. A relational model is necessary for an extensional type theory
+such as Nuprl, though \citet{nbeincoq,decagda,martin-lof-a-la-coq} all
+use a relational model either to justify the function $\eta$-law or to
+derive $\Pi$-injectivity. In Section~\ref{sec:extension}, our $\eta$
+law for function is baked into the untyped reduction
+relation and therefore a relational model is not needed.
+
+The dependently typed systems we have discussed so far also vary
+greatly in expressiveness. For example, the Calculus of
+Constructions~\citep{CoC} and MLTT without universe levels are unable
+to encode large elimination. \citet{decagda} and \citet{nbeincoq} lack
+identity types. \citet{nbeincoq} lacks $\eta$-law for functions. Among
+the mechanized systems we have discussed so far, only
+\citet{anand2014towards} has a full universe hierarchy.
+Our object language \lang{}, while small, has a decent coverage of
+features commonly seen in dependently typed languages, including
+dependent pattern matching, dependent function types, a full universe
+hierarchy, an intensional identity type. We leave features such as
+type-directed reduction (necessary for unit $\eta$-law) and
+impredicative sorts as part of our future work.
 
 % Type soundness can be proven through a syntactic
 % approach~\citep{syntacticsoundness} as a corollary of two properties:
