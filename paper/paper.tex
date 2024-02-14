@@ -252,12 +252,12 @@ relation. % In our presented proof, we use the informal
 % and less noticeable.
 Rather than framing impredicativity as a
 mechanism for encoding induction
-recursion~\citep{induction-recursion}, a scheme in which logical
-relation for dependent types is typically defined~\citep{todo}, we opt
-for a direct explanation in informal language of sets, where
-impredicativity manifests in the form of second-order logical
-formulas and thus more intuitive to understand for readers with
-general mathematics background.
+recursion~\citep{induction-recursion-dybjer}, a scheme in which
+semantic models (including logical relations) for dependent types can
+be defined, we opt for a direct explanation in informal language of
+sets, where impredicativity manifests in the form of second-order
+logical formulas and thus more intuitive to understand for readers
+with general mathematics background.
 
 In Section~\ref{sec:extension}, we extend our logical
 relation to prove the stronger property that every well-typed term
@@ -719,23 +719,33 @@ level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
 $[[S]]$.
 
 By unfolding the definition from Figure~\ref{fig:logrelrec}, we can
-now show that the same introduction rules for $[[Interp I i A S]]$ is
-admissible for $[[InterpR i A S]]$. We give as example TODO:
+now show that the same introduction rules for $[[Interp I i A S]]$ are
+admissible for $[[InterpR i A S]]$, by
+instantiating $[[I]]$ with $[[I i]] := [[{A | exists S , InterpR i A
+  S}]]$, the same function $[[I]]$ used in the definition of $[[InterpR i A
+S]]$. We give as example the following rules.
+\begin{center}
+\drule[]{IR-Void} \qquad \drule[]{IR-Set}
+\end{center}
 
 In most informal presentations, instead of defining the logical
 relation in two steps as we have shown above, the rules for $[[InterpR
-i A S]]$ is given directly, with the implicit understanding of
-inductive definitions nested inside a recursive function. We choose
+i A S]]$ are given directly, with the implicit understanding that the
+relation is an inductive definition nested inside a recursive
+function over the universe level $[[i]]$. We choose
 the more explicit definition not only because it is directly definable
 in existing proof assistants where inductive definitions must appear
 at the top level, but also because it makes clear the induction
 principle we are allowed to use when reasoning about $[[InterpR i A
 S]]$.
 
-The most general format of the induction principle over $[[InterpR i A
-S]]$ is first by strong induction over the universe level $[[i]]$
-followed by structural induction over $[[Interp I i A S]]$. As
-examples, ... (\rref{I-Set} and \rref{I-Red}).
+% The paragraph below might be useful but I don't know how to phrase
+% it well
+
+% The most general format of the induction principle over
+% $[[InterpR i A S]]$ is first by strong induction over the universe level $[[i]]$
+% followed by structural induction over $[[Interp I i A S]]$. As
+% examples, ... (\rref{I-Set} and \rref{I-Red}).
 
 For the majority of the properties we are about to prove in this section, we
 do not need any information about the parameterized function $[[I]]$.
@@ -770,16 +780,18 @@ the conjunction of the following statements:
   [[S0]]\text{, } [[Interp I i B { a } S0 ]] $
 \end{itemize}
 In general, let $R$ be a binary relation over the sets $[[A]]$ and
-$[[B]]$, it easy to verify that the following equivalence:
+$[[B]]$, it easy to verify the following equivalence, which is used to
+justify the skolemization process~\citep{skolemization}.
 \[\forall a \in A, \exists b \in B \text{ such that } (a,b) \in R
   \iff \exists F \in A \rightarrow B \text, \forall a \in A, (a, F(a))
   \in R\]
-
 The left-hand side is equivalent to the right-hand side, but has no
-mentioning of any functions. In the context of \rref{I-Pi}, through
-the equivalence, we can more easily tell what's happening: $[[Pi A
-B]]$ has a semantic interpretation of $[[A]]$ can be semantically
-interpreted as the set $[[S]]$, and for all terms $[[a in S]]$, the
+mentioning of any functions.
+In the context of \rref{I-Pi}, through
+the equivalence, we can more easily tell what's happening: the
+function type $[[Pi A B]]$ has a semantic interpretation if its input
+type $[[A]]$ can be semantically
+interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
 type $[[B {a}]]$, obtained by substituing $[[a]]$ into the output type
 $[[B]]$, has a semantic interpretation.
 
@@ -789,24 +801,26 @@ presentation with an explicit $[[F in S -> PowerSet STm]]$ is
 useful. We want to state the fact that $[[B {a}]]$ has a semantic
 interpretation of some set $[[S0]]$, but we also want to refer to the
 set $[[S0]]$ when we talk about the set that $[[Pi A B]]$ corresponds
-to. If we used the alternative representation of the preconditions, we
-would be forced to define our logical relation in the following way.
-
-TODO: put the wrong logical relation that violates ...
-
-Unfortunately, both versions not only violate the syntactic strict
+to. With the function $[[F]]$, we can use $[[F a]]$ to retrive the
+witness in the precondition for $[[a in S]]$.
+With the alternative representation that is free of the function $[[F]]$, we
+might want to reformulate our logical relation in the following way.
+\begin{center}
+  \drule[]{I-PiAlt}
+\end{center}
+Unfortunately, \rref{I-PiAlt} not only violates the syntactic strict
 positivity constraint required in proof assistants, but
-are genuinely non-monotone over the domain of
-relations.
+is genuinely non-monotone when written as an endofunction over the
+domain of relations.
 Intuitively, the failure of monotonicity stems from the fact
 that the witness picked in the precondition is not necessarily the
 same witness being referred to in the post condition. While it might
 be possible to restrict the domain with additional constraints such as
 functionality and inversion properties, we opt for our current
 skolemized formulation of \rref{I-Pi} so we immediately obtain a
-well-defined inductive relation and a usable induction principle. The
-more intuitive introduction rules can be later shown to be admissible
-a posteriori.
+well-defined inductive relation and a usable induction
+principle. However, as we will see in Lemma~\ref{lemma:piintroalt} to
+show the admissibility of \rref{I-Pi} a posteriori.
 
 In the rest of the section, we establish some important facts about
 the logical relation that will be useful for proving fundamental theorem
@@ -982,8 +996,8 @@ Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
   \end{description}
 \end{proof}
 
-Lemma~\ref{lemma:logreldeter} enables us to derive the following
-alternative introduction and inversion principles for \rref{I-Pi}.
+Lemma~\ref{lemma:logreldeter} enables us to show the admissibility of
+\rref{I-PiAlt} and its related inversion principle.
 \begin{lemma}[Pi Intro Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_nopf}}]
   \label{lemma:piintroalt}
   Suppose the following two statements hold:
@@ -1304,6 +1318,7 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
   \label{fig:nenf}
 \end{figure}
 \begin{figure}[h]
+  \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
   \caption{Extended logical relation}
   \label{fig:logrelopen}
 \end{figure}

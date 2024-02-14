@@ -168,7 +168,7 @@ formula :: 'formula_' ::=
   | formula1 \/ formula2      ::   :: or
   | formula1 , formula2       ::   :: and
   | formula1 implies formula2 ::   :: implies
-    {{ tex [[formula1]]\implies [[formula2]] }}
+    {{ tex \text{if } [[formula1]]\text{, then } [[formula2]] }}
   | forall a , formula        ::   :: forallTm
     {{ tex \forall [[a]], [[formula]] }}
   | forall S , formula        ::   :: forallSet
@@ -177,6 +177,7 @@ formula :: 'formula_' ::=
     {{ tex \exists [[S]], [[formula]] }}
   | (# formula  #)            ::   :: HParen
     {{ tex [[formula]] }}
+  | ( formula )            ::   :: Paren
   | S1 = S2                   ::   :: SetEq
   | ne a                      ::   :: Ne
   | nf a                      ::   :: Nf
@@ -413,17 +414,27 @@ Interp I i A S ::  :: Interp :: 'I_' {{ com Interpretation relation }}
 {{ tex [ [[A]] ]_[[i]]^[[I]] \searrow [[S]] }}
 by
 
+ne A
+--------------------------- :: Ne
+Interp I i A { a | wne a }
+
 --------------------------- :: Void
 Interp I i Void emptyset
 
+--------------------------- :: VoidNew
+Interp I i Void { a | wne a }
 
 --------------------------- :: Bool
-Interp I i Bool { a | a =>+ true \/ a =>+ false   }
+Interp I i Bool { a | a =>+ true \/ a =>+ false }
 
+--------------------------- :: BoolNew
+Interp I i Bool { a | a =>+ true \/ a =>+ false \/ wne a  }
 
 --------------------------------------- :: Eq
-Interp I i a ~ b : A { p | p =>+ refl , a <=> b  }
+Interp I i a ~ b : A { p | p =>+ refl , a <=> b }
 
+--------------------------------------- :: EqNew
+Interp I i a ~ b : A { p | ( p =>+ refl , a <=> b )  \/ wne p  }
 
 Interp I i A S
 F in S -> PowerSet STm
@@ -431,6 +442,10 @@ forall a, (# a in S implies Interp I i B { a } F a #)
 -------------------------------- :: Pi
 Interp I i Pi A B { b | forall a, (# a in S implies b a in F a #) }
 
+Interp I i A S
+forall a, (# a in S implies (# exists S0 , Interp I i B {a} S0 #) #)
+------------------------------------------- :: PiAlt
+Interp I i Pi A B { b | forall a, (# a in S , forall S0, (# Interp I i B {a} S0,  b a in F a #) #) }
 
 j < i
 --------------------------------- :: Set
@@ -446,9 +461,16 @@ defns
 JII :: '' ::=
 
 defn
-InterpR i A S ::  :: InterpR :: 'I_' {{ com Interpretation relation }}
+InterpR i A S ::  :: InterpR :: 'IR_' {{ com Interpretation relation }}
 {{ tex [ [[A]] ]_[[i]] \searrow [[S]] }}
 by
+
+--------------------------- :: Void
+InterpR i Void emptyset
+
+j < i
+--------------------------------- :: Set
+InterpR i Set j { A | exists S , InterpR j A S }
 
 
 defns
