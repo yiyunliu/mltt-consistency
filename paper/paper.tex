@@ -1082,17 +1082,18 @@ all closed under expansion.
 \section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
 \begin{figure}[h]
-  \begin{equation*}
-    \begin{split}
-      [[rho |= G]] &:= \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
+\[
+\begin{array}{lcl}
+
+      [[rho |= G]] &:= & \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
                      } [[InterpR j (up Suc i G i) { rho } S ]] \text{, then } [[rho i in S]] \\
-      [[G |= a : A]] &:= \forall [[rho]], \text{ if }[[rho |=
+      [[G |= a : A]] &:= & \forall [[rho]], \text{ if }[[rho |=
                        G]]\text{ then there exists some } [[j]] \text{
                        and } [[S]] \text{ such that } [[InterpR j A
                        {rho} S]] \text{ and } [[a {rho} in S]] \\
-      [[|= G]] &:= \forall [[i < |G|]], \exists [[j]], [[drop Suc i G |= G i : Set j]]
-    \end{split}
-  \end{equation*}
+      [[|= G]] &:= & \forall [[i < |G|]], \exists [[j]], [[drop Suc i G |= G i : Set j]]
+\end{array}
+\]
   \caption{Semantic Typing for \lang}
   \label{fig:semtyping}
 \end{figure}
@@ -1733,6 +1734,10 @@ dependent pattern matching, dependent function types, a full universe
 hierarchy, an intensional identity type. We leave features such as
 type-directed reduction (necessary for unit $\eta$-law) and
 impredicative sorts as part of our future work.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
 
 % Type soundness can be proven through a syntactic
 % approach~\citep{syntacticsoundness} as a corollary of two properties:
