@@ -440,7 +440,7 @@ impossible to tell the binding structure from the syntax
 alone. Therefore, we annotate the syntax in Figure~\ref{fig:syntax}
 with the de Bruijn depth of each term, though we note that the
 syntax we work with is unscoped and the choice does matter when
-we extend our logical relation to open terms in Section~\ref{sec:discuss}.
+we extend our logical relation to open terms in Section~\ref{sec:extension}.
 
 % Figure~\ref{fig:auxdef} shows the auxiliary definitions over the term
 % syntax, including renaming, substitution, and operations over
@@ -616,8 +616,8 @@ information. As a result, it is easy to port our consistency result from our
 type system to a variant with typed judgmental equality
 as long as the typed system does not include $\eta$ laws
 that would require type annotations (e.g. the $\eta$-law for unit
-types) and we discuss in Section~\ref{sec:discuss} how we can extend
-our proof to handle those rules.
+types). % and we discuss in Section~\ref{sec:extension} how we can extend
+% our proof to handle those rules.
 
 Working with a system with untyped equality has the huge benefit that
 the confluence result for untyped parallel reduction
@@ -625,8 +625,8 @@ the confluence result for untyped parallel reduction
 resort to the complex syntatic (resp. semantic) technique from
 \citet{siles2012pure} (resp. \citet{decagda}) to resolve
 the circularity of subject reduction and $\Pi$-injectivity described
-in \citet{siles2012pure}. Section~\ref{sec:discuss} explains how we
-can generalize our technique to include $\eta$-law for functions and
+in \citet{siles2012pure}. Section~\ref{sec:extension} explains how we
+generalize our technique to include $\eta$-law for functions and
 show the existence of normal form for well-typed (open and closed)
 terms, achieving a similar level of expressiveness of the type system
 and strength of metatheoretic property as \citet{decagda}.
@@ -634,7 +634,7 @@ and strength of metatheoretic property as \citet{decagda}.
 Finally, since our system has an infinite universe hierarchy, we can
 present the system à la Russell by using the same judgment form $[[G
 |- a : A]]$ regardless of whether $[[a]]$ is a term or a type. There
-is therefore no need to distinguish between big types and small types
+is no need to distinguish between big types and small types
 and duplicate our typing specification.
 
 % , the
@@ -1666,14 +1666,22 @@ documentation for readers who wish to understand how the underlying
 proof works since the automation tactic is guaranteed to not use
 lemmas or invert derivations that are not specified in the
 \texttt{use} or \texttt{inv} flag.
-\section{Discussion}
-\label{sec:discuss}
-
-\subsection{Use of Impredicativity}
 
 
 \section{Related Work}
 \label{sec:relatedwork}
+\citet{Martin-Lof-1973}, \citet{geuvers1994short}, and
+\citet{barendregt:lambda-calculi-with-types} are some of the earlier
+works that establish metatheoretic results strong enough to derive
+consistency for dependently typed systems. Some of these techniques
+are still in use in more recent works. For example, the technique for
+proving strong normalization by \citet{geuvers1994short} is adopted by
+\citet{moon2021graded} to show the same property to a dependently
+typed system extended with modalities.
+
+More recently, there have been efforts at mechanizing consistency
+or decidability of type conversion proofs using proof assistants such
+as Coq and Agda.
 
 % Type soundness can be proven through a syntactic
 % approach~\citep{syntacticsoundness} as a corollary of two properties:
