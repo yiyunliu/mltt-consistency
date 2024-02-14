@@ -393,11 +393,12 @@ G |- true : Bool
 ----------------------------- :: False
 G |- false : Bool
 
+G ++ Bool |- A : Set i
 G |- a : Bool
-G |- b0 : A
-G |- b1 : A
+G |- b0 : A { true }
+G |- b1 : A { false }
 ----------------------------- :: If
-G |- if a b0 b1 : A
+G |- if a b0 b1 : A { a }
 
 |- G
 ----------------------------- :: Void
