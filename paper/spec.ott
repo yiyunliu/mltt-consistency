@@ -269,7 +269,7 @@ J t0 a0 b0 p0 => J t1 a1 b1 p1
 
 t0 => t1
 -------------------- :: JRefl
-J refl a0 b0 p => t1
+J t0 a0 b0 refl => t1
 
 a => a0
 ----------------------- :: AbsEta

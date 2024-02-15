@@ -133,11 +133,11 @@ Proof by logical relation is a powerful technique that has been used
 to derive metatheoretic properties of type systems, such as
 consistency and parametricity. While there exists a
 plethora of introductory materials about logical relation in the
-context of simply typed lambda calculus and System F, a streamlined
+context of simply typed or polymorphic lambda calculus, a streamlined
 presentation of proof by logical relation for a dependently language
-is lacking in comparison. In this paper, I present a short
+is lacking. In this paper, I present a short
 consistency proof for a dependently typed language that contains a
-rich set of features, including an infinite cumulative universe
+rich set of features, including a full cumulative universe
 hierarchy, booleans, and an intensional identity type. We have
 fully mechanized the consistency proof using the Coq proof assistant
 in under 1000 lines of code.
@@ -192,7 +192,7 @@ F in order to derive
 parametricity. \citet{harperkripke} gives a gentle introduction on how
 logical relations for closed terms can be extended to talk about open
 terms so we can derive properties such as normalization for well-typed
-open terms. In short, the introductory texts about logical relations
+open terms. Overall, the introductory texts about logical relations
 cover systems and properties with varying degrees of complexity, from
 simply typed to polymorphicly typed, logical predicate to logical
 equivalence, closed terms to open terms.
@@ -208,29 +208,25 @@ types is available in mechanized forms, % the key to address the
 \citet{nbeincoq,decagda,martin-lof-a-la-coq} all involve relational,
 Kripke-style models that obscure the technique for addressing
 type-level computation. The added complexivity is evident
-from the size of their code base. For example, \citet{nbeincoq}
-involves 22 thousand lines of Coq code.
+from the size of their code base. All three developments involve 20
+thousand to 30 thousand lines of Coq or Agda code.
 
 The goal of this paper is to give a tutorial on proof by logical relation for
-dependent types in a simple and digestable format. % The language specification will
-% be given in Section~\ref{sec:spec}.
-The system we present is small but not minimal. We want to cover
-features that are only available or require special treatments under
-dependent types%  without introducing complexities that would have
-% existed in its simply typed variant
-. We choose boolean
+dependent types in a simple and digestable format.
+The system we present is small but covers
+important features that are only available or require special treatments in
+dependently typed systems. We choose boolean
 types over natural numbers as our base type for simplicity, but include an
-intensional identity type in our type system as the interpretation
-of identity types requires an extra side condition that is needed for
-indexed family of types. Unlike \citet{nbeincoq,decagda,martin-lof-a-la-coq}
-but similar to \citet{anand2014towards}, we include an infinite
-hierarchy of universes since we want to not only have at least one
-predicative universe level to support type-level computations, but
-also avoid the unnecessary code duplication pointed out by
-\citet{nbeincoq}.
+intensional identity type in our type system to show how indexed
+types are treated in a logical relational proof. Unlike
+\citet{nbeincoq,decagda,martin-lof-a-la-coq} but similar to
+\citet{anand2014towards}, we include an infinite hierarchy of
+universes to not only support type-level computations, but also avoid
+the unnecessary code duplication pointed out by \citet{nbeincoq} when
+big and small types are treated non-uniformly.
 
 Our consistency proof is short and fully mechanized. The proof scripts
-involve less than 1000 lines of Coq code. In fact, what is even more
+involve less than 1000 lines of manually written Coq code. In fact, what we find
 encouraging is that among the 1000
 lines of Coq code, 400 lines are related to the specification of the
 type system, semantics, and properties related to untyped lambda
@@ -238,7 +234,7 @@ terms. The semantic type soundness proof through logical relation
 takes almost the same amount of code as our syntactic type soundness
 proof!
 Thanks to the conciseness of
-the proof, we are able to present most of its details in
+the proof, we are able to present it in detail in
 Sections~\ref{sec:logreldep} and \ref{sec:logrelproof}. Moreover, the
 structure of our mechanization closely corresponds to the proof we
 present in the text, enabling us to label at the footnote each lemma
@@ -247,17 +243,15 @@ reference and validate.
 
 The technique we use is most similar to the one from \citet{nbeincoq},
 which leverages impredicativity to define the logical
-relation. % In our presented proof, we use the informal
-% language of sets, where the use of impredicativity feels more natural
-% and less noticeable.
+relation as a partial function.
 Rather than framing impredicativity as a
 mechanism for encoding induction
 recursion~\citep{induction-recursion-dybjer}, a scheme in which
 semantic models (including logical relations) for dependent types can
-be defined, we opt for a direct explanation in informal language of
-sets, where impredicativity manifests in the form of second-order
-logical formulas and thus more intuitive to understand for readers
-with general mathematics background.
+be defined, we opt for a direct explanation through the informal
+language of sets, where impredicativity manifests in the form of
+second-order logical formulas and thus more intuitive to grasp
+for readers with a general mathematical background.
 
 In Section~\ref{sec:extension}, we extend our logical
 relation to prove the stronger property that every well-typed term
@@ -280,8 +274,7 @@ In Section~\ref{sec:logrelmech}, we discuss the details about our
 mechanization, including our use of existing libraries such as
 Autosubst for handling bindings and CoqHammer for general-purpose
 automation.
-
-Finally, in Section~\ref{sec:relatedwork}, we discuss how our proof
+In Section~\ref{sec:relatedwork}, we discuss how our proof
 relates to existing proofs by logical relations for dependent types in
 the literature.
 
@@ -496,6 +489,10 @@ modern exposition of the same technique can be found in
   \label{lemma:parcong}
   If $[[a0 => a1]]$ and $[[b0 => b1]]$, then $[[a0 { b0 } => a1 { b1 }]]$.
 \end{lemma}
+\begin{corollary}[Par subst\footnote{\dotv{join.v}{par\_subst}}]
+  \label{lemma:parsubst}
+  If $[[a0 => a1]]$, then $[[a0 {b} => a1 {b}]]$ for arbitrary $[[b]]$.
+\end{corollary}
 \begin{lemma}[Par diamond\footnote{\dotv{join.v}{par\_confluent}}]
   \label{lemma:pardiamond}
   If $[[a => b0]]$ and $[[a => b1]]$, then there exists some term
@@ -556,10 +553,6 @@ exactly the same as the untyped $\beta$-equivalence.
 
 % From Lemma~\ref{lemma:parcong} and \ref{lemma:parrefl}, we recover the
 % single substitution property as a simple corollary.
-% \begin{corollary}[Par subst\footnote{\dotv{join.v}{par\_subst}}]
-%   \label{lemma:parsubst}
-%   If $[[a0 => a1]]$, then $[[a0 {b} => a1 {b}]]$ for arbitrary $[[b]]$.
-% \end{corollary}
 
 
 % A relation that satisfies the
@@ -622,8 +615,10 @@ the confluence result for untyped parallel reduction
 (Lemma~\ref{lemma:pardiamond}) is easily derivable without having to
 resort to the complex syntatic (resp. semantic) technique from
 \citet{siles2012pure} (resp. \citet{decagda}) to resolve
-the circularity of subject reduction and $\Pi$-injectivity described
-in \citet{siles2012pure}. Section~\ref{sec:extension} explains how we
+the circularity of subject reduction and $\Pi$-injectivity.
+% described
+% in \citet{siles2012pure}
+Section~\ref{sec:extension} explains how we
 generalize our technique to include $\eta$-law for functions and
 show the existence of normal form for well-typed (open and closed)
 terms, achieving a similar level of expressiveness of the type system
@@ -692,7 +687,7 @@ sets with the following signatures:
     [[S]] &\in [[PowerSet STm]]
   \end{split}
 \end{equation*}
-The function $[[I]]$ is a family of subsets of terms indexed by
+The function $[[I]]$ is a family of sets of terms indexed by
 natural numbers strictly less than the parameter $[[i]]$, which
 represents the current universe level.  In \rref{I-Set}, function
 $[[I]]$ is used to define the meaning of
@@ -718,8 +713,8 @@ The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
 level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
 $[[S]]$.
 
-By unfolding the definition from Figure~\ref{fig:logrelrec}, we can
-now show that the same introduction rules for $[[Interp I i A S]]$ are
+With the definition from Figure~\ref{fig:logrelrec}, we can
+show that the same introduction rules for $[[Interp I i A S]]$ are
 admissible for $[[InterpR i A S]]$, by
 instantiating $[[I]]$ with $[[I i]] := [[{A | exists S , InterpR i A
   S}]]$, the same function $[[I]]$ used in the definition of $[[InterpR i A
@@ -819,8 +814,8 @@ be possible to restrict the domain with additional constraints such as
 functionality and inversion properties, we opt for our current
 skolemized formulation of \rref{I-Pi} so we immediately obtain a
 well-defined inductive relation and a usable induction
-principle. However, as we will see in Lemma~\ref{lemma:piintroalt} to
-show the admissibility of \rref{I-Pi} a posteriori.
+principle. However, as we will see in Lemma~\ref{lemma:piintroalt}, it
+is possible to show the admissibility of \rref{I-PiAlt} a posteriori.
 
 In the rest of the section, we establish some important facts about
 the logical relation that will be useful for proving fundamental theorem
@@ -1747,9 +1742,10 @@ the mechanized systems we have discussed so far, only
 Our object language \lang{}, while small, has a decent coverage of
 features commonly seen in dependently typed languages, including
 dependent pattern matching, dependent function types, a full universe
-hierarchy, an intensional identity type. We leave features such as
+hierarchy, an intensional identity type. We hope features such as
 type-directed reduction (necessary for unit $\eta$-law) and
-impredicative sorts as part of our future work.
+impredicative sorts can be implemented in a similarly streamlined
+fashion and we will leave those as part of our future work.
 
 \section{Conclusion}
 \label{sec:conclusion}
