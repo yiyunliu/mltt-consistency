@@ -464,13 +464,13 @@ of a few representative cases of substitution.
         \mathit{UpRen} \\
         [[( up xi ) 0]] & := & [[0]] \\
         [[( up xi ) Suc i]] & := & [[ Suc ren xi i ]] \\ \\
-        \mathit{UpTm} \\
-        [[( up rho ) 0]] & := & [[var 0]] \\
-        [[( up rho ) Suc i]] & := & [[ rho i < up 1 > ]] \\ \\
         \mathit{Renaming ([[a < xi >]])} \\
         [[(Pi A B) < xi >]] & := & [[Pi A < xi > B < up xi >]] \\
         [[(a b) < xi >]] & := & [[a < xi > (# b < xi > #)]] \\
         \ldots \\ \\
+        \mathit{UpTm} \\
+        [[( up rho ) 0]] & := & [[var 0]] \\
+        [[( up rho ) Suc i]] & := & [[ rho i < up 1 > ]] \\ \\
         \mathit{Substitution ([[ a { rho }  ]])} \\
         [[var i { rho }  ]] & := &  [[rho i]] \\
         [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
