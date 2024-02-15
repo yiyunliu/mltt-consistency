@@ -197,6 +197,8 @@ formula :: 'formula_' ::=
   | wn a                      ::   :: Wn
   | wne a                     ::   :: Wne
   | a = b                     ::   :: TmEq
+  | [ formula ]              ::   :: Regular
+    {{ tex \colorbox{lightgray}{$[[formula]]$} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -354,13 +356,13 @@ G |- var i : G i < up Suc i >
 
 %% functions
 
-G |- A : Set i
+[ G |- A : Set i ]
 G ++ A |- B : Set i
 --------------------------------------- :: Pi
 G |- Pi A B : Set i
 
+[ G |- Pi A B : Set i ]
 G ++ A |- b : B
-G |- Pi A B : Set i
 ----------------------------------------------- :: Abs
 G |- \ A b : Pi A B
 
@@ -386,9 +388,9 @@ G |- A : Set j
 -------------------------------- :: Eq
 G |- a ~ b : A : Set i
 
-G |- a : A
-G |- b : A
-G |- A : Set j
+[ G |- a : A ]
+[ G |- b : A ]
+[ G |- A : Set j ]
 G |- p : a ~ b : A
 (# G ++ A #) ++ var 0 ~ (# a < up 1 > #)  : (# A < up 1 > #) |- C : Set i
 G |- t : C { a ,  refl }

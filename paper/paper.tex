@@ -49,7 +49,9 @@
 \usepackage{ottalt}
 \usepackage{minted}
 \usepackage{xspace}
+\usepackage{tcolorbox}
 \usepackage[para]{footmisc}
+\definecolor{lightgray}{gray}{0.75}
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
 \newcommand{\lang}{$\lambda^H$\xspace}
 \inputott{rules}
@@ -649,16 +651,24 @@ exactly the same as the untyped $\beta$-equivalence.
 \end{figure}
 
 Figure~\ref{fig:typing} gives the full typing rules for
-\lang{}. \Rref{T-Conv} uses the definition of coherence from earlier
+\lang{}. The premises wrapped in \colorbox{lightgray}{gray} boxes can be shown to be
+admissible syntactically, though some of them are required to
+strengthen the inductive hypothesis of the fundamental theorem.
+In \rref{T-Var}, $[[G i]]$ is the partial function defined
+with the equations $[[ (G ++ A)  0 ]] := [[A]]$ and $[[ (G ++ A) Suc
+i ]] := [[G i]] $. The precondition $[[i < | G | ]]$, where $[[ | G |
+]]$ represents the length of the context $[[G]]$, ensures that $[[G
+i]]$ has a defined output.
+\Rref{T-Conv} uses the definition of coherence from earlier
 as our equality judgment for type conversion. The use of an untyped
 relation for type conversion makes our formulation slightly different
-from languages such as MLTT, where the judgmental equality typically
+from languages such as MLTT~\citep{Martin-Lof-1973}, where the judgmental equality
 takes the form $\Gamma \vdash a \equiv b : A$, which implies $[[G |- a :
 A]]$ and $[[G |- b : A]]$, the well-typedness of $[[a]]$ and $[[b]]$.
 \citet{siles2012pure} shows the equivalence of Barendregt's
 Pure Type System~\citep{barendregt1991introduction}, which employs
 untyped equality, and its variant that uses typed judgmental
-equality. Furthermore, it is trivial to embed a system with judgmental
+equality. It is trivial to embed a system with judgmental
 equality to a system with untyped equality by erasing typing
 information. As a result, it is easy to port our consistency result from our
 type system to a variant with typed judgmental equality
@@ -731,13 +741,14 @@ and duplicate our typing specification.
 \label{fig:logrel}
 \end{figure}
 In this section, we define the logical relation for \lang{} in the
-form of an inductively defined relation (Figure~\ref{fig:logrel}). The
-logical relation takes the form $[[Interp I i A S]]$. The
+form of an inductively defined relation (Figure~\ref{fig:logrel}).
+Throughout the text, we use the notation $[[PowerSet S]]$ denotes the powerset of the set $[[S]]$.
+The logical relation takes the form $[[Interp I i A S]]$. The
 metavariables $[[A]]$ and $[[i]]$ stand for terms and natural
 numbers respectively, as introduced earlier in
 Figure~\ref{fig:syntax}.
 The metavariables $[[I]]$ and $[[S]]$ are
-sets with the following signatures:
+sets with the following signatures.
 \begin{equation*}
   \begin{split}
     [[I]] &\in [[ { j | j < i  } ->  PowerSet STm ]] \\
@@ -1188,7 +1199,7 @@ work with.
   The following two statements are equivalent:
   \begin{itemize}
   \item $[[G |= A : Set i]]$
-  \item For all $[[rho]]$, if $[[rho |= G]]$, then there exists
+  \item $\forall$ $[[rho]]$, if $[[rho |= G]]$, then there exists
     $[[S]]$ such that $[[InterpR i (A {rho}) S]]$
   \end{itemize}
 \end{lemma}
@@ -1396,8 +1407,8 @@ takahashi-parallel-reduction}, though specifically for the de Bruijn
 representation, we need the following anti-renaming lemma about
 parallel reduction.
 \begin{lemma}[Par anti-renaming]
-  \label{lemma:parantirenaming} If $[[a { xi } => b0]]$, then there
-exists some $[[b]]$ such that $[[b { xi } = b0]]$ and $[[a => b]]$.
+  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
+exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
 \end{lemma}
 
 
@@ -1463,9 +1474,9 @@ non-empty context, a type itself may evaluate to a neutral term and in
 turn can only inhabited by neutral terms, thus the addition of \rref{I-Ne}.
 
 Interestingly, all the properties we have shown in
-Section~\ref{sec:logreldep} and \ref{sec:logrelproof} up to the
+Section~\ref{sec:logreldep} and \ref{sec:logrelproof} before the
 fundamental lemma can be proven in the exact same order, where the new
-cases related due to \rref{I-Ne} and the augmentation of neutral terms
+cases due to \rref{I-Ne} and the augmentation of neutral terms
 to \rref{I-Void, I-Eq, I-Bool} can be immediately discharged by
 Lemma~\ref{lemma:parnenf}.
 
@@ -1496,9 +1507,9 @@ Let us first start with some auxiliary lemmas and definitions.
 \begin{definition}[CR]
   Let $[[S]]$ be a set of lambda terms. We say that
   \begin{itemize}
-  \item $[[S]] \in CR_1$ if $[[wne a implies a in S]]$
-  \item $[[S]] \in CR_2$ if $[[a in S implies wn a]]$
-  \item $[[S]] \in CR$ if $[[S]] \in CR_1$ and $[[S]] \in CR_2$
+  \item $[[S]] \in CR_1 \iff $  $[[forall a, (#  wne a implies a in S #)]]$
+  \item $[[S]] \in CR_2 \iff$ $[[forall a, (# a in S implies wn a #)]]$
+  \item $[[S]] \in CR \iff $ $[[S]] \in CR_1$ and $[[S]] \in CR_2$
   \end{itemize}
 \end{definition}
 
@@ -1559,7 +1570,7 @@ Let us first start with some auxiliary lemmas and definitions.
 \end{lemma}
 \begin{proof}
   After unfolding the definition of $[[InterpR i A S]]$, trivial by
-  Lemma~\ref{lemma:cr2ty}, \ref{lemma:crel} and \ref{lemma:cr1ty}.
+  Lemmas~\ref{lemma:cr1ty}, \ref{lemma:crel} and \ref{lemma:cr2tyrec}.
 \end{proof}
 
 The formulation of the valuation and semantic well-typedness from
@@ -1580,12 +1591,12 @@ fundamental theorem.
   By the fundamental lemma, we know that $[[G |= a : A]]$. That is,
   for all $[[rho |= G]]$, there exists some $[[i]]$ and $[[S]]$ such
   that $[[InterpR i A {rho} S]]$ and $[[a {rho} in S]]$.
-  We pick the valuation $[[rho]](i) = i$, which injects
-  natural numbers as term variables. This is
-  allowed since Lemma~\ref{lemma:crelrec} says neutral terms,
+  We pick the valuation $[[rho]] = [[idtm]]$ (defined in Figure~\ref{fig:auxdef}), which injects
+  natural numbers as term variables. The side condition $[[idtm |=
+  G]]$ is satisfied since Lemma~\ref{lemma:crelrec} says neutral terms,
   including variables, semantically inhabit any $[[S0]]$ where
   $[[S0]]$ is the interpretation of some type. With our choice of
-  $[[rho]]$, we have $[[A {rho} = A]]$ and $[[a {rho} = a]]$. Then we
+  $[[rho]]$, we have $[[A {rho}]] = [[A {idtm}]] = [[A]]$ and $[[a {rho}]] = [[a{idtm}]] = [[a]]$. Then we
   know that $[[InterpR i A S]]$ and $[[a in S]]$ for some $[[i]]$ and
   $[[S]]$. By Lemmas~\ref{lemma:crelrec} and \ref{lemma:cr2tyrec}, we
   conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
@@ -1610,12 +1621,13 @@ Finally, we want to point out that
 Lemmas~\ref{lemma:cr1ty},~\ref{lemma:cr2tyrec}, and
 \ref{lemma:crelrec}, often referred to as adequacy of the logical
 relation, are in fact required in the normalization proof for simply
-typed languages~\citep{abel2019poplmark}. In the simply typed
+typed languages~\citep{abel2019poplmark}. Similar to the simply typed
 scenario, adequacy needs to be proven before the fundamental theorem
 so we can handle rules such as \rref{T-If} where the scrutinee is a
-neutral term. In a simply typed setting, Lemma~\ref{lemma:extwn} is
-used in the exact same way to show that lambda terms are themselves
-normalizing as we have done in Lemma~\ref{lemma:crel}.
+neutral term. In \citet{abel2019poplmark}, a variant of
+Lemma~\ref{lemma:extwn} is used in the exact same way to show that
+lambda terms are themselves normalizing as we have done in
+Lemma~\ref{lemma:crel}.
 
 Dependent types make the proof slightly more complicated
 as we also need to know that every type has a normal form. Whereas the
@@ -1686,7 +1698,7 @@ However, we choose instead an axiom-free workaround and define
 \end{center}
 It should be easy to verify that the preconditions of
 \rref{I-Pi}, \rref{I-PiAlt}, and \rref{I-PiCoq} are all
-equivalent. After establishing Lemma~{lemma:logreldeter}, it is
+equivalent. After establishing Lemma~\ref{lemma:logreldeter}, it is
 possible to further show that the conclusions of the rules are
 equivalent, too.
 
@@ -1815,7 +1827,7 @@ dependent pattern matching, dependent function types, a full universe
 hierarchy, an intensional identity type. We hope features such as
 type-directed reduction (necessary for unit $\eta$-law) and
 impredicative sorts can be implemented in a similarly streamlined
-fashion and we will leave those as part of our future work.
+fashion and we will leave those extensions as part of our future work.
 
 \section{Conclusion}
 \label{sec:conclusion}
