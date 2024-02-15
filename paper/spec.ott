@@ -4,6 +4,7 @@ var, x, y :: '' ::= {{ com variables }}
 
 nat, i, j, n :: '' ::= {{ com natural numbers }}
   | 0 :: :: zero
+  | 1 :: :: numone
   | Suc i :: :: succ {{ tex 1 + [[i]] }}
   | ( i ) :: S :: Paren
   | | G | :: S :: Length
@@ -33,22 +34,31 @@ set, R , S, F, I :: '' ::= {{ com sets }}
     {{ tex \mathbb{N} }}
   | S0 * S1 :: :: CartesianProd
     {{ tex [[S0]] \times [[S1]] }}
+  | S n     :: :: AppInt
+    {{ tex [[S]]([[n]]) }}
 
 rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
   | ( rho )      :: :: Parens
   | emptyS     :: :: emptyS
   | id        :: :: id
   | rho .: A  :: :: cons
-    {{ tex [[rho]],[[A]] }}
+    {{ tex [[rho]]:[[A]] }}
+  | xi .: i  :: :: consInt
+    {{ tex [[xi]]:[[i]] }}
   | up rho    :: :: up
     {{ tex \Uparrow [[rho]]}}
   | [ A ]         :: :: one
+  | idtm          :: :: idtm
+    {{ tex \ottkw{id}_{tm} }}
+  | up n      :: :: upn
+    {{ tex \uparrow^{[[n]]} }}
 
 tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
     {{ tex - }}
-  | i :: :: Var
+  | var i :: :: Var
     {{ com variable }}
+    {{ tex \ottkw{v}_{[[i]]} }}
   | Pi A B :: :: Pi
     {{ com dependent function type }}
   | \ A a :: :: Abs
@@ -61,9 +71,10 @@ tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
     {{ com function application }}
   | Set i :: :: Set
     {{ com universe }}
-  | a { A } :: S :: Subst {{ tex [[a]] \langle [[A]]  \rangle }}
-  | a { rho } :: S :: SubstRho {{ tex [[a]] \langle [[rho]]  \rangle }}
-  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] \langle [[b0]] , [[b1]]  \rangle }}
+  | a { A } :: S :: Subst {{ tex [[a]] [ [[A]]  ] }}
+  | a < rho > :: S :: RenRho {{ tex [[a]] \langle [[rho]]  \rangle }}
+  | a { rho } :: S :: SubstRho {{ tex [[a]] [ [[rho]]  ] }}
+  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] [ [[b0]] , [[b1]]  ] }}
   | ( A )   :: M :: Paren {{ coq ([[A]]) }}
   | (# a #) :: S :: SecretParen
     {{ tex [[a]] }}
@@ -85,10 +96,6 @@ tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
   | false :: :: False
   | if a b0 b1 :: :: If
     {{ tex \ottkw{if} \; [[a]]\; \ottkw{then}\; [[b0]]\; \ottkw{else}\; [[b1]] }}
-  | up n A :: S :: Shift
-    {{ tex \uparrow^{[[n]]} [[A]] }}
-  | up1 A :: S :: ShiftOne
-    {{ tex \uparrow[[A]] }}
   | G i :: S :: lookup
     {{ tex [[G]]([[i]]) }}
   | rho i :: S :: lookuprho
@@ -204,7 +211,7 @@ defn
 by
 
 ----------- :: Var
-i => i
+var i => var i
 
 ---------------- :: Set
 Set i => Set i
@@ -277,7 +284,7 @@ J t0 a0 b0 refl => t1
 
 a => a0
 ----------------------- :: AbsEta
-(# \\ ( ( up1 a ) 0 ) #) => a0
+(# \\ ( a < up 1 > var 0 ) #) => a0
 
 
 defns
@@ -341,7 +348,7 @@ G |-  Set i : Set j
 |- G
 i < | G |
 --------------------------------------------- :: Var
-G |- i : up Suc i G i
+G |- var i : G i < up Suc i >
 
 %% functions
 
@@ -381,7 +388,7 @@ G |- a : A
 G |- b : A
 G |- A : Set j
 G |- p : a ~ b : A
-(# G ++ A #) ++ 0 ~ up1 a : up1 A |- C : Set i
+(# G ++ A #) ++ var 0 ~ (# a < up 1 > #)  : (# A < up 1 > #) |- C : Set i
 G |- t : C { a ,  refl }
 ------------------------------------ :: J
 G |- J t a b p : C { b , p }

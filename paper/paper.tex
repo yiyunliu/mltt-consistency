@@ -110,12 +110,21 @@
 %% used to denote shared contribution to the research.
 \author{Yiyun Liu}
 \orcid{0009-0006-8717-2498}
-\affiliation{%
+\affiliation{
   \institution{University of Pennsylvania}
   \city{Philadelphia}
   \country{USA}
 }
 \email{liuyiyun@seas.upenn.edu}
+
+\author{Stephanie Weirich}
+\orcid{0000-0002-6756-9168}
+\affiliation{
+  \institution{University of Pennsylvania}
+  \city{Philadelphia}
+  \country{USA}
+}
+\email{sweirich@seas.upenn.edu}
 
 %%
 %% By default, the full list of authors will be used in the page
@@ -348,7 +357,7 @@ proofs for dependent types.
 \mathit{Contexts}\\
 [[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
 \mathit{Terms}\\
-[[a]],[[b]],[[c]],[[t]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[i]]\  |\ [[Void]]
+[[a]],[[b]],[[c]],[[t]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[var i]]\  |\ [[Void]]
                   & \mbox{universes, variables, empty type} \\
             & |   & [[Pi A B]]\ |\ [[\ A a]]\ |\ [[a b]]
                   & \mbox{function types, abstractions, applications} \\
@@ -385,7 +394,7 @@ proofs for dependent types.
 %         [[up xi]] & := & (add(1) \circ [[xi]]) , 0 \\ \\
 
 %         \mathit{Renaming} \\
-%         [[i {xi}]] & := & [[xi i]] \\
+%         [[var i {xi}]] & := & [[xi i]] \\
 %         [[(Set i) {xi}]] & := & [[Set i]] \\
 %         [[Void {xi}]] & := & [[Void]]\\
 %         [[(Pi A B) {xi}]] & := & [[Pi A{xi} B{up xi}]] \\
@@ -398,12 +407,6 @@ proofs for dependent types.
 %         [[(a ~ b : A) {xi}]] & := & [[ a{xi} ~ b{xi} : A{xi}]] \\
 %         [[refl {xi}]] & := & [[refl]] \\
 %         [[(J t a b p ) {xi}]] & := & [[J t {xi} a {xi} b {xi} p{xi}]] \\ \\
-
-%         \mathit{Shift} \\
-%         [[up n A]] & := & A \langle add(n) \rangle \\ \\
-
-%         \mathit{Shift\ one} \\
-%         [[up1 A]] & := & \uparrow^1 [[A]] \\ \\
 
 %         \mathit{Lookup} \\
 %         [[(G ++ A) 0]] & := &  [[A]] \\
@@ -424,16 +427,63 @@ dependent type theory whose logical consistency will be proven in
 Section~\ref{sec:logrelproof}. For concision, we refer to this system
 as \lang.
 
-The syntax of \lang can be found in Figure~\ref{fig:syntax}. We will use
-the unscoped de Bruijn representation for the rest of the paper,
-adopting notations from \citet{autosubst2}, summarized in Figure~\ref{fig:auxdef}.
-Without providing
-the full definition of the renaming and substitution functions, it is
-impossible to tell the binding structure from the syntax
-alone. Therefore, we annotate the syntax in Figure~\ref{fig:syntax}
-with the de Bruijn depth of each term, though we note that the
-syntax we work with is unscoped and the choice does matter when
-we extend our logical relation to open terms in Section~\ref{sec:extension}.
+The syntax of \lang can be found in Figure~\ref{fig:syntax}. We use
+the unscoped de Bruijn representation for both our Coq development and
+the informal presentation in our paper. We find de Bruijn
+representation advantageous for specification since it leaves very
+little ambiguity about the variable freeness side
+conditions, making our proof more easily reproducible. Furthermore, as we discuss in
+Section~\ref{sec:automation}, de Bruijn representation is much more
+amenable to automated reasoning in proof assistants.
+We adopt from \citet{autosubst} the notations for simultaneous
+renaming, substitution, and other auxiliary definitions related to our
+syntax, summarized in Figure~\ref{fig:auxdef}.
+
+\begin{figure}[ht]
+  \begin{equation*}
+    \begin{split}
+      \begin{array}{lll}
+        \mathit{Identity (Ren)} \\
+        [[id i]] & := & [[i]] \\ \\
+        \mathit{Identity (Subst)} \\
+        [[idtm i]] & := & [[var i]] \\ \\
+        \mathit{Cons (Ren)} \\
+        ([[xi .: n]])([[0]]) & := & [[n]] \\
+        ([[xi .: n]])([[Suc i]]) & := & [[xi i]] \\ \\
+        \mathit{Cons (Subst)} \\
+        ([[rho .: a]])([[0]]) & := & [[a]] \\
+        ([[rho .: a]])([[Suc i]]) & := & [[rho i]] \\ \\
+      \end{array}
+    \end{split}
+    \qquad \qquad
+    \begin{split}
+      \begin{array}{lll}
+        \mathit{Curried\ Add} \\
+        [[up n i]] & := & [[n]] + [[i]] \\ \\
+        \mathit{Renaming} \\
+        [[a < xi >]] & := & \ldots \\ \\
+        \mathit{Up} \\
+        [[( up rho ) 0]] & := & [[var 0]] \\
+        [[( up rho ) Suc i]] & := & [[ rho i < up 1 > ]] \\ \\
+        \mathit{Substitution} \\
+        [[var i { rho }  ]] & := &  [[rho i]] \\
+        [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
+        [[a { rho }  ]] & := & \ldots \\
+      \end{array}
+    \end{split}
+  \end{equation*}
+  \caption{Auxiliary Functions over Syntax}
+  \label{fig:auxdef}
+\end{figure}
+
+
+% Without providing
+% the full definition of the renaming and substitution functions, it is
+% impossible to tell the binding structure from the syntax
+% alone. Therefore, we annotate the syntax in Figure~\ref{fig:syntax}
+% with the de Bruijn depth of each term, though we note that the
+% syntax we work with is unscoped and the choice does matter when
+% we extend our logical relation to open terms in Section~\ref{sec:extension}.
 
 % Figure~\ref{fig:auxdef} shows the auxiliary definitions over the term
 % syntax, including renaming, substitution, and operations over
@@ -452,7 +502,7 @@ is the term whose type is to be casted.
 
 \lang is expressive enough to support large
 elimination, the ability to compute a type using a term as input. For
-example, the function $[[\ Bool if 0 Bool Bool -> Bool]]$ returns
+example, the function $[[\ Bool if var 0 Bool Bool -> Bool]]$ returns
 either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
 is $[[true]]$ or $[[false]]$.
 
@@ -813,9 +863,13 @@ same witness being referred to in the post condition. While it might
 be possible to restrict the domain with additional constraints such as
 functionality and inversion properties, we opt for our current
 skolemized formulation of \rref{I-Pi} so we immediately obtain a
-well-defined inductive relation and a usable induction
-principle. However, as we will see in Lemma~\ref{lemma:piintroalt}, it
-is possible to show the admissibility of \rref{I-PiAlt} a posteriori.
+well-defined inductive relation and a usable induction principle. The
+slight disadvantage of \rref{I-Pi} is that we need to construct the
+function $[[F]]$ each time we apply it. Therefore, in
+Lemma~\ref{lemma:piintroalt}, we show the admissibility of
+\rref{I-PiAlt} a posteriori and use that as a more convenient
+introduction rule for the rest of our proofs.
+
 
 In the rest of the section, we establish some important facts about
 the logical relation that will be useful for proving fundamental theorem
@@ -1096,7 +1150,7 @@ all closed under expansion.
 \begin{array}{lcl}
 
       [[rho |= G]] &:= & \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
-                     } [[InterpR j (up Suc i G i) { rho } S ]] \text{, then } [[rho i in S]] \\
+                     } [[InterpR j (G i < up Suc i > ) { rho } S ]] \text{, then } [[rho i in S]] \\
       [[G |= a : A]] &:= & \forall [[rho]], \text{ if }[[rho |=
                        G]]\text{ then there exists some } [[j]] \text{
                        and } [[S]] \text{ such that } [[InterpR j A
@@ -1177,7 +1231,7 @@ Next, we show some non-trivial cases of the fundamental theorem as
 top-level lemmas and leave the remaining cases as exercises for the reader.
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
-  If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= i : up Suc i G i]]$.
+  If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= var i : G i < up Suc i  >]]$.
 \end{lemma}
 \begin{proof}
   TODO: formulate renaming
@@ -1415,11 +1469,11 @@ formulate and prove the adequacy property.
 Let us first start with some auxiliary lemmas and definitions.
 \begin{lemma}[Ext Wn]
   \label{lemma:extwn}
-  If $[[wn a i]]$, then $[[wn a]]$.
+  If $[[wn a var i]]$, then $[[wn a]]$.
 \end{lemma}
 \begin{proof}
   By induction over the length of the reduction sequence in $[[wn a
-  i]]$. The proof relies on Lemma~\ref{lemma:parantirenaming} and
+  var i]]$. The proof relies on Lemma~\ref{lemma:parantirenaming} and
   \ref{lemma:parnenf}.
 \end{proof}
 
