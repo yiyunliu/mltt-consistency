@@ -683,8 +683,6 @@ the confluence result for untyped parallel reduction
 resort to the complex syntatic (resp. semantic) technique from
 \citet{siles2012pure} (resp. \citet{decagda}) to resolve
 the circularity of subject reduction and $\Pi$-injectivity.
-% described
-% in \citet{siles2012pure}
 Section~\ref{sec:extension} explains how we
 generalize our technique to include $\eta$-law for functions and
 show the existence of normal form for well-typed (open and closed)
@@ -1759,7 +1757,7 @@ lemmas or invert derivations that are not specified in the
 \texttt{use} or \texttt{inv} flag.
 
 
-\section{Related Work}
+\section{Related Work and Discussion}
 \label{sec:relatedwork}
 \citet{Martin-Lof-1973}, \citet{geuvers1994short}, and
 \citet{barendregt:lambda-calculi-with-types} are some of the earlier
@@ -1775,11 +1773,8 @@ conversion rule for a dependently typed language with one predicative
 universe level and typed judgmental equality with function
 $\eta$-law. Unlike our logical relation for \lang{}, \citet{decagda}
 uses a Kripke-style logical relation parameterized over an
-type-directed equivalence relation satisfying certain properties. We
-are able to avoid the complexivity of a Kripke-style logical relation
-by defining our logical relation in terms of untyped parallel
-reduction, which does not impose any scoping constraint on the
-terms. \citet{decagda} defines their logical relation using the
+type-directed equivalence relation satisfying certain
+properties. Their logical relation is defined using the
 induction-recursion scheme, which is available in Agda but not in Coq.
 \citet{martin-lof-a-la-coq} manages to encode the logical relation
 from \citet{decagda} in the predicative fragment of Coq using a
@@ -1828,6 +1823,106 @@ hierarchy, an intensional identity type. We hope features such as
 type-directed reduction (necessary for unit $\eta$-law) and
 impredicative sorts can be implemented in a similarly streamlined
 fashion and we will leave those extensions as part of our future work.
+
+% To end this section, we
+
+The final question we want to address is: why is our proof,
+even with the extension from Section~\ref{sec:extension}, so much
+shorter than the proofs from \citet{decagda, nbeincoq,
+  martin-lof-a-la-coq}?
+First, unlike developments that mechanize the correctness of a clever
+type conversion algorithm, we only show the existence of
+normal form for open and closed terms and state our properties in
+terms of the untyped small-step reduction relation. This removes a lot
+of scaffolding in the specification of our type system and our logical
+relation.
+
+This contrasts our development with
+\citet{martin-lof-a-la-coq}, where the irrelevance property turns out to be the most
+difficult property to prove due to the complexity of the equality
+judgment used to define the logical relation. In our system, the
+irrelevance property (Corollary~\ref{lemma:logrelcoherence}) is a
+direct consequence of Lemma~\ref{lemma:interppreservation}, which is
+straightforward after we prove the classical results about parallel
+reduction in Section~\ref{sec:spec}. In other words, we keep the
+the logical relation itself minimal at the cost of extra lemmas that can be proven
+through syntactic means independently from the logical relation.
+For example, as commented near the end of Section~\ref{sec:extension},
+our normalization property (Corollary~\ref{corollary:exbetanf})
+% can induce a decision procedure for type conversion by reducing two
+% terms to $\beta\eta$-normal form and check for their syntactic
+% equivalence. This decision procedure would be inefficient compared to
+% NbE or the algorithm from \citet{martin-lof-a-la-coq} that reduces terms
+% to weak head normal and checks for the equivalence of subterms
+% recursively
+does not immediately induce an efficient decision procedure, but it is
+possible to recover an efficient algorithm by reasoning about untyped
+lambda terms.
+
+% the concision of
+% our proof can be largely attributed to the fact that we bake into the
+% logical relation only the minimum amount of information that is the
+% most conducive to the proof of the metatheoretic result.
+
+Another key to our proof is the very early establishment of the confluence
+property of the paralell reduction relation
+(Lemma~\ref{lemma:pardiamond}). This property is used in
+Lemma~\ref{lemma:interppreservation} to show that the interpretation
+of a type is preserved under evaluation. That is, if $[[InterpR i A
+S]]$ and $[[A => B]]$, then we also have $[[InterpR i B S]]$.
+In a system with typed directed reduction, the confluence result is
+harder to establish since confluence requires subject reduction, which
+circularly depends on $\Pi$-injectivity, a consequence of
+confluence~\citep{siles2012pure}. There are different workarounds to
+this problem. \citet{siles2012pure} proposes a syntactic approach by
+defining a type system where the confluence result is
+directly provable and later show that the system of interest is
+equivalent to the system with the confluence property.
+\citet{decagda} uses a relational model and the relational counterpart
+of Lemma~\ref{lemma:extwn} to derive $\Pi$-injectivity. The relational
+model is parameterized by a typed indexed equivalence relation and
+is reused to prove derive different properties in their
+development. Another perhaps simpler approach is to simply
+extend the judgmental equality with rules about
+$\Pi$-injectivity~\citep{weirich:systemd}. This allows subject
+reduction to be proven independently from confluence and
+$\Pi$-injectivity can later be shown to be admissible. We find the
+approach from \citep{weirich:systemd} the most lightweight as it
+allows us to derive confluence early on even in systems with typed
+conversion.
+
+In cases where the judgmental equality does not leverage type information heavily
+(e.g. $\eta$-law for the unit type), it might be possible to show that
+$\Gamma \vdash a \equiv b : A$ is equivalent to the conjunction of
+$[[G |- a : A]]$, $[[G |- b : A ]]$, and $[[a <=> b]]$. If such a
+property holds (we believe this is likely true for both
+\citet{decagda} and \citet{martin-lof-a-la-coq}), we can reuse our existing logical relation in
+terms of untyped parallel reduction to show the decidability of type
+conversion. Otherwise, to fully model the system, we need to bake
+typing information into our logical relation and we need to redefine
+our logical relation in Kripke-style so we can relax the scoping
+constraint in order to prove adequacy, though a relational model would
+still be unnecessary as long as the $\eta$ laws are baked into the
+typed directed relation.
+
+Since confluence plays such as key role in our proof, we are uncertain
+how to generalize our technique to systems where confluence does not
+hold, and we will investigate those scenarios in our future work.
+
+% We are able to avoid the complexivity of a Kripke-style logical relation
+% by defining our logical relation in terms of untyped parallel
+% reduction, which does not impose any scoping constraint on the
+% terms.
+
+
+% Why is it that the justification of $\eta$ law
+% requires a Kripke-style relational model in all three developments
+% but not ours? Are we ``cheating'' by defining \lang{}'s equational
+% theory using an untyped conversion rule? Instead of answering the
+% questions one by one, we clarify the design of our type system and our
+% proof technique so the answers to those questions are self-evident.
+
+% The key to the shortness of
 
 \section{Conclusion}
 \label{sec:conclusion}
