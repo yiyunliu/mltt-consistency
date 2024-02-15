@@ -437,38 +437,45 @@ Section~\ref{sec:automation}, de Bruijn representation is much more
 amenable to automated reasoning in proof assistants.
 We adopt from \citet{autosubst} the notations for simultaneous
 renaming, substitution, and other auxiliary definitions related to our
-syntax, summarized in Figure~\ref{fig:auxdef}.
-
+syntax, summarized in Figure~\ref{fig:auxdef}. We omit most of the
+definitions of renaming and substitution and only show the definition
+of a few representative cases of substitution.
 \begin{figure}[ht]
   \begin{equation*}
     \begin{split}
       \begin{array}{lll}
-        \mathit{Identity (Ren)} \\
+        \mathit{IdentityRen} \\
         [[id i]] & := & [[i]] \\ \\
-        \mathit{Identity (Subst)} \\
+        \mathit{IdentityTm} \\
         [[idtm i]] & := & [[var i]] \\ \\
-        \mathit{Cons (Ren)} \\
+        \mathit{ConsRen ([[xi .: n]])} \\
         ([[xi .: n]])([[0]]) & := & [[n]] \\
         ([[xi .: n]])([[Suc i]]) & := & [[xi i]] \\ \\
-        \mathit{Cons (Subst)} \\
+        \mathit{ConsSubst ([[rho .: a]])} \\
         ([[rho .: a]])([[0]]) & := & [[a]] \\
         ([[rho .: a]])([[Suc i]]) & := & [[rho i]] \\ \\
+        \mathit{Curried\ Add} \\
+        [[up n i]] & := & [[n]] + [[i]]
       \end{array}
     \end{split}
     \qquad \qquad
     \begin{split}
       \begin{array}{lll}
-        \mathit{Curried\ Add} \\
-        [[up n i]] & := & [[n]] + [[i]] \\ \\
-        \mathit{Renaming} \\
-        [[a < xi >]] & := & \ldots \\ \\
-        \mathit{Up} \\
+        \mathit{UpRen} \\
+        [[( up xi ) 0]] & := & [[0]] \\
+        [[( up xi ) Suc i]] & := & [[ Suc ren xi i ]] \\ \\
+        \mathit{UpTm} \\
         [[( up rho ) 0]] & := & [[var 0]] \\
         [[( up rho ) Suc i]] & := & [[ rho i < up 1 > ]] \\ \\
-        \mathit{Substitution} \\
+        \mathit{Renaming ([[a < xi >]])} \\
+        [[(Pi A B) < xi >]] & := & [[Pi A < xi > B < up xi >]] \\
+        [[(a b) < xi >]] & := & [[a < xi > (# b < xi > #)]] \\
+        \ldots \\ \\
+        \mathit{Substitution ([[ a { rho }  ]])} \\
         [[var i { rho }  ]] & := &  [[rho i]] \\
         [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
-        [[a { rho }  ]] & := & \ldots \\
+        [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
+        \ldots
       \end{array}
     \end{split}
   \end{equation*}

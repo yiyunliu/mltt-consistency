@@ -10,6 +10,8 @@ nat, i, j, n :: '' ::= {{ com natural numbers }}
   | | G | :: S :: Length
   | (# i #) :: S :: SecretParen
     {{ tex [[i]] }}
+  | ren xi i :: S :: renapp {{ tex [[xi]]([[i]]) }}
+
 
 set, R , S, F, I :: '' ::= {{ com sets }}
   | emptyset :: :: empty
