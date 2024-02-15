@@ -272,7 +272,7 @@ a simply typed language and later ported into a dependently typed setting.
 
 In Section~\ref{sec:logrelmech}, we discuss the details about our
 mechanization, including our use of existing libraries such as
-Autosubst for handling bindings and CoqHammer for general-purpose
+Autosubst 2~\citep{autosubst2} for handling bindings and CoqHammer~\citep{czajka2018hammer} for general-purpose
 automation.
 In Section~\ref{sec:relatedwork}, we discuss how our proof
 relates to existing proofs by logical relations for dependent types in
@@ -1611,32 +1611,41 @@ that \texttt{R a b} is inhabited), we do not immediately obtain a function
 \texttt{F : A -> B} such that $\forall$ \texttt{a} $\in$ \texttt{A},
 \texttt{R a (F a)} is inhabited. However, the functional side
 conditions of a relation is clunky to express and tend to block
-automation. A simple workaround is to assume the choice axiom, which
-is known to be consistent and allows us to induce a function \texttt{F
+automation. A simple workaround is to assume the axiom of unique choice, which
+is known to be consistent with Coq and allows us to induce a function \texttt{F
 : A -> B} once we have shown the relation \texttt{R : A -> B -> Prop}
 is functional. This approach would make our Coq development match
 the text version of our proof from Section~\ref{sec:logrelproof} more
 closely.
 
 However, we choose instead an axiom-free workaround and define
-\rref{T-Pi} as follows in our Coq mechanization.
+\rref{I-Pi} as follows in our Coq mechanization.
+\begin{center}
+  \drule[]{I-PiCoq}
+\end{center}
+It should be easy to verify that the preconditions of
+\rref{I-Pi}, \rref{I-PiAlt}, and \rref{I-PiCoq} are all
+equivalent. After establishing Lemma~{lemma:logreldeter}, it is
+possible to further show that the conclusions of the rules are
+equivalent, too.
 
-Instead of constraining \texttt{F} to be a function or a functional
-relation, we leave \texttt{F} as an unrestricted relation that is
-total on input from the set $[[S]]$ and ...TODO...
-
-This formulation allows us to derive Lemma~\ref{lemma:piintroalt}
-before we even show that our logical relation is
-functional/deterministic, but does not affect the proof structure
-otherwise. We choose to keep the discrepancy since the skolemization
-process is typically expressed in terms of function symbols rather
-than relation symbols.
+% This formulation allows us to derive Lemma~\ref{lemma:piintroalt}
+% before we even show that our logical relation is
+% functional/deterministic, but does not affect the proof structure
+% otherwise.
+We choose to keep this discrepancy between the Coq development and the
+logical relation presented in Section~\ref{sec:logreldep} since the
+skolemization process is more intuitively expressed in terms of
+function symbols rather than relation symbols. Otherwise, we do not
+see a clear advantage of \rref{I-PiCoq} over \rref{I-Pi} in set
+theory, where there is no distinction between computable functions and
+functions in general.
 
 \subsection{Automation}
 \label{sec:automation}
 Our Coq mechanization heavily uses automation, though instead of
 defining custom tactics, we rely mostly on off-the-shelf tools such as
-Autosubst 2 and CoqHammer.
+Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
 
 We use the Autosubst 2 framework to specify our syntax in HOAS and
 produce Coq syntax files in de Bruijn representation. Additionallly,
@@ -1662,7 +1671,7 @@ Qed.
 In prose, the triangle property can be proven by induction over the
 graph of the \texttt{tstar} function, which stands for the Takahashi
 translation~\citep{takahashi-parallel-reduction}. Options \texttt{inv:Par} and
-\texttt{ctrs:Par} says that the proof involves inverting and
+\texttt{ctrs:Par} say that the proof involves inverting and
 constructing of the derivations of parallel
 reduction. The option \texttt{use:Par\_refl,par\_cong} allows the
 automation tactic to use

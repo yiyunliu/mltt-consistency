@@ -10,7 +10,7 @@ nat, i, j, n :: '' ::= {{ com natural numbers }}
   | (# i #) :: S :: SecretParen
     {{ tex [[i]] }}
 
-set, S, F, I :: '' ::= {{ com sets }}
+set, R , S, F, I :: '' ::= {{ com sets }}
   | emptyset :: :: empty
     {{ tex \emptyset }}
   | { a | formula } :: :: comprehension
@@ -31,6 +31,8 @@ set, S, F, I :: '' ::= {{ com sets }}
     {{ tex \{ [[i]] \mid [[formula]]  \} }}
   | SNat :: :: SetofNats
     {{ tex \mathbb{N} }}
+  | S0 * S1 :: :: CartesianProd
+    {{ tex [[S0]] \times [[S1]] }}
 
 rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
   | ( rho )      :: :: Parens
@@ -163,6 +165,8 @@ terminals :: 'terminals_' ::=
 formula :: 'formula_' ::=
   | i < j                     ::   :: lt
   | judgement                 ::   :: judgement
+  | ( a , S ) in R            ::   :: pmembership
+    {{ tex ( [[a]] , [[S]] ) \in [[R]]  }}
   | a in S                    ::   :: tmembership
   | S1 in S2                    ::   :: fmembership
   | formula1 \/ formula2      ::   :: or
@@ -441,6 +445,13 @@ F in S -> PowerSet STm
 forall a, (# a in S implies Interp I i B { a } F a #)
 -------------------------------- :: Pi
 Interp I i Pi A B { b | forall a, (# a in S implies b a in F a #) }
+
+Interp I i A S
+R in S * PowerSet STm
+forall a, (# exists S0  , ( a , S0 ) in R #)
+forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)
+-------------------------------- :: PiCoq
+Interp I i Pi A B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }
 
 Interp I i A S
 forall a, (# a in S implies (# exists S0 , Interp I i B {a} S0 #) #)
