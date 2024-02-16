@@ -105,7 +105,7 @@ tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
   | A -> B :: M :: Arr
     {{ tex [[A]] \rightarrow [[B]] }}
 
-context, G {{ tex \Gamma }} :: 'ctx_' ::= {{ com contexts }}
+context, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com contexts }}
 					  {{ coq list ( atom * (grade * tm) ) }}
    | drop n G        ::    :: Drop {{ tex [[G]] \downarrow_{[[n]]} }}
    | empty           ::    :: Empty       {{ coq nil }}

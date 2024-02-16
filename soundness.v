@@ -72,13 +72,9 @@ Proof.
   - move => Γ i h ih ? γ hγ.
     move /(_ i ltac:(done)) in ih.
     case : ih => F ih.
-    suff ih' : SemWt Γ (dep_ith Γ i) (tUniv (F i)).
-    + case /(_ _ hγ) : ih' => j [PA [hPA hi]].
-      simpl in hPA.
-      simp InterpUniv in hPA.
-      move /InterpExt_Univ_inv : hPA => [? h0]; subst.
-      move : hi; intros (PA & hi).
-      exists (F i), PA; sfirstorder.
+    suff /SemWt_Univ ih'  : SemWt Γ (dep_ith Γ i) (tUniv (F i)).
+    + move /ih' : (hγ) {ih'} => [PA hPA].
+      exists (F i), PA. sfirstorder.
     + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
   - hauto l:on use:SemWt_Univ.
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.

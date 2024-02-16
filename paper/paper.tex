@@ -1190,7 +1190,8 @@ typing ($[[ G |= a : A]]$), and semantic context well-formedness
 ($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}. In the
 definition of $[[|= G]]$, we use the notation $[[drop i G]]$ to denote
 the typing context obtained by dropping the last $[[i]]$ elements of
-$[[G]]$.
+$[[G]]$. When $[[G]]$ has less than $[[i]]$ elements, $[[drop i G]]$
+returns the empty list.
 
 The following lemma makes the statement $[[G |= A : Set i]]$ easier to
 work with.
@@ -1246,20 +1247,81 @@ satisfies similar structural rules.
 \end{proof}
 
 Next, we show some non-trivial cases of the fundamental theorem as
-top-level lemmas and leave the remaining cases as exercises for the reader.
+top-level lemmas and leave the remaining cases as exercises for the
+reader.
+
+First, we formulate the definition of valid renamings and prove that
+semantic typing satisfies renaming. We say that $[[xi]]$ is
+valid from the context $[[G]]$ to the context $[[D]]$ if the
+following condition holds.
+\[ \forall i \text{, if } i < | [[G]] |\text{, then }[[ ren xi i < |D| ]] \text{ and }
+  [[D ren xi
+  i < up Suc ren xi i > = G i < up Suc i > < xi >]] \]
+
+\begin{lemma}[Truncate is valid]
+  \label{lemma:validtruncate}
+  If $[[i < |G|]]$, then $[[up i]]$ is a valid renaming from $[[drop i
+  G]]$ to $[[G]]$.
+\end{lemma}
+\begin{proof}
+  By the definition of a valid renaming, we must show that given $[[j
+  < |drop i G|]] = [[|G|]] - [[i]]$, then the following conditions hold:
+  \begin{itemize}
+  \item $[[ren up i j]] = i + j  < [[| G | ]]$
+  \item $[[G ren up i j < up Suc ren up i j > = drop i G j < up Suc j > < up i >]]$
+  \end{itemize}
+  The first bullet point is immediate from the fact that $[[j]] <
+  [[|G|]] - [[i]]$. The second bullet follows from unfolding the
+  definitions, and the fact that $[[drop i G j]] = [[G]](i + j)$ when
+  $[[i]] + [[j]] < [[|G|]]$.
+\end{proof}
+
+\begin{lemma}[Renaming for $[[rho |= G]]$]
+  \label{lemma:renamingval}
+  If $[[rho |= D]]$ and $[[xi]]$ is a valid renaming from $[[G]]$ to
+  $[[D]]$, then we have $[[rho0 |= G]]$ where $[[rho0 i = rho ren xi i]]$.
+\end{lemma}
+\begin{proof}
+  Unfolding the definition of $[[rho0 |= G]]$, the goal is to show
+  that for all $i,j,$ and $S$, if $[[i < |G|]]$ and $[[InterpR j (G i
+  < up Suc i > ) { rho0 } S ]] \text{, then } [[rho0 i]] = [[rho ren xi i in S]]$.
+
+  By the definition of $[[rho0]]$ and the validity of $[[xi]]$, we
+have $[[G i < up Suc i > { rho0 }]] = [[G i < up Suc i > < xi > { rho
+} ]] = [[D ren xi i < up Suc ren xi i > { rho }]]$. From $[[rho |=
+D]]$ and $[[ren xi i < | D |]]$, we have $[[InterpR j D ren xi i < up Suc ren xi i > { rho }
+S]]$ and $[[rho ren xi i in S]]$. Done.
+\end{proof}
+
+\begin{lemma}[Renaming for $[[G |= a : A]]$]
+  \label{lemma:semrenaming}
+  If $[[G |= a : A]]$ and $[[xi]]$ is a valid renaming from $[[G]]$ to
+  $[[D]]$, then $[[D |= a < xi > : A < xi > ]]$.
+\end{lemma}
+\begin{proof}
+  Immediate from the definition of semantic typing and Lemma~\ref{lemma:renamingval}.
+\end{proof}
+
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
   If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= var i : G i < up Suc i  >]]$.
 \end{lemma}
 \begin{proof}
-  Suppose $[[rho |= G]]$. We need to show that there exists some
-  $[[j]]$ and $[[S]]$ such that
+  Suppose $[[rho |= G]]$. By the definition of semantic typing, we
+need to show that there exists some $[[j]]$ and $[[S]]$ such that
   \begin{itemize}
   \item $[[InterpR j G i < up Suc i > { rho } S]]$
-  \item $[[rho i in S]]$.
+  \item $[[rho i in S]]$
   \end{itemize}
-
-
+  From the definition of $[[|= G]]$, we know that there exists some
+  $[[j]]$ such that $[[drop Suc i G |= G i : Set j]]$. By
+  Lemma~\ref{lemma:validtruncate}, we know that $[[up Suc i]]$ is a
+  valid renaming from $[[drop Suc i G]]$ to $[[G]]$. By
+  Lemma~\ref{lemma:semrenaming}, we deduce $[[G |= G i < up Suc
+  i > : Set j]]$. By the identity from Lemma~\ref{lemma:setinv}, we
+  know that $[[InterpR j G i < up Suc i > { rho } S]]$. It now
+  suffices to show $[[rho i in S]]$, but that is immediate from the
+  definition of $[[rho |= G]]$.
 \end{proof}
 
 \begin{lemma}[ST-Set]
