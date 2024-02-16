@@ -1178,7 +1178,6 @@ all closed under expansion.
   \label{fig:semtyping}
 \end{figure}
 
-
 The logical relation we define in Figure~\ref{fig:logrel} does not
 include cases for variables. Likewise, for the base types such as
 boolean and equality, the output set $[[S]]$ contains only terms that
@@ -1188,7 +1187,10 @@ terms with a substitution whose codomain consists of terms that
 respect the interpretation of the types from the context. The full
 definitions of well-formed substitution ($[[rho |= G]]$), semantic
 typing ($[[ G |= a : A]]$), and semantic context well-formedness
-($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
+($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}. In the
+definition of $[[|= G]]$, we use the notation $[[drop i G]]$ to denote
+the typing context obtained by dropping the last $[[i]]$ elements of
+$[[G]]$.
 
 The following lemma makes the statement $[[G |= A : Set i]]$ easier to
 work with.
@@ -1250,7 +1252,14 @@ top-level lemmas and leave the remaining cases as exercises for the reader.
   If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= var i : G i < up Suc i  >]]$.
 \end{lemma}
 \begin{proof}
-  TODO: formulate renaming
+  Suppose $[[rho |= G]]$. We need to show that there exists some
+  $[[j]]$ and $[[S]]$ such that
+  \begin{itemize}
+  \item $[[InterpR j G i < up Suc i > { rho } S]]$
+  \item $[[rho i in S]]$.
+  \end{itemize}
+
+
 \end{proof}
 
 \begin{lemma}[ST-Set]
