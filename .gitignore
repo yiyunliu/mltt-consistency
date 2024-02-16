@@ -50,3 +50,11 @@ CoqSrc.mk.conf
 _CoqProject
 
 *~
+
+*.aux
+*.bbl
+*.blg
+*.out
+*.log
+paper/paper-output.tex
+paper/rules.tex
