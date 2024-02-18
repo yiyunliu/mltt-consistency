@@ -58,3 +58,4 @@ _CoqProject
 *.log
 paper/paper-output.tex
 paper/rules.tex
+paper/paper-output.pdf

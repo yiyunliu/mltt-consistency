@@ -1012,7 +1012,7 @@ principles.\scw{Put footnotes on lemma name, or on (1), (2), etc}
 \begin{lemma}[Inversion of the logical relation]
   \label{lemma:interpinv}\leavevmode
   \begin{enumerate}
-  \item If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Void\_inv}}
+  \item\footnote{\dotv{semtyping.v}{InterpExt\_Void\_inv}} If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
   \item If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Bool\_inv}}
   \item If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}}
   \item If $[[Interp I i Pi A B S0]]$, then there exists $[[S]],[[F]]$ such that:\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}}
