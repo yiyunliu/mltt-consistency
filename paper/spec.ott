@@ -111,6 +111,7 @@ context, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com contexts }}
    | empty           ::    :: Empty       {{ coq nil }}
 %   | A               :: M   :: One
    | G ++ A          ::   :: Append      {{ tex [[G]], [[A]] }}
+x   | G0 ++ G1        ::   :: Append2     {{ tex [[G0]], [[G1]] }}
    | ( G )           :: M  :: Paren       {{ coq ([[G]]) }}
    | (# G #)           :: M  :: SecretParen {{ tex [[G]] }}
 
