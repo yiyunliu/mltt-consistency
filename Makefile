@@ -1,6 +1,6 @@
 LIBNAME=WR
 
-coq: CoqSrc.mk $(VFILES)
+coq: CoqSrc.mk syntax.v
 	$(MAKE) -f CoqSrc.mk
 
 %.vo: %.v CoqSrc.mk
