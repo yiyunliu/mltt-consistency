@@ -1251,7 +1251,23 @@ top-level lemmas and leave the remaining cases as exercises for the
 reader.
 
 First, we formulate the definition of valid renamings and prove that
-semantic typing satisfies renaming. We say that $[[xi]]$ is
+semantic typing satisfies renaming so we can weaken the context when
+reasoning about the variable case of the fundamental lemma
+(Lemma~\ref{lemma:stvar}). Intuitively, given a valuation $[[rho |= G
+++ D]]$, it is easy to show that we can extract some valuation
+$[[rho0]]$ such that $[[rho0 |= G]]$, where $[[rho0]]$ is obtained by
+``truncating'' $[[rho]]$. As a result, if we know that $[[G |= a :
+A]]$, then we can conclude that $[[G ++ D |= a0 : A0 ]]$, where
+$[[a0]]$ and $[[A0]]$ are obtained by shifting $[[a]]$ and $[[A]]$
+after weakening the context; this implication holds because $[[rho |=
+G ++ D]]$ induces a context $[[rho0]]$ such that $[[rho0 |= G]]$ so we
+can make use of the premise $[[G |= a : A]]$ to derive what we need
+for the conclusion. We recommend the readers to skip the proofs of
+Lemmas~\ref{lemma:validtruncate} through \ref{lemma:semrenaming}
+during the first read as long as they have an intuitive understanding
+of what the renaming property is meant to capture.
+
+We say that $[[xi]]$ is
 valid from the context $[[G]]$ to the context $[[D]]$ if the
 following condition holds.
 \[ \forall i \text{, if } i < | [[G]] |\text{, then }[[ ren xi i < |D| ]] \text{ and }
@@ -1719,16 +1735,43 @@ Gödel's second incompleteness theorem.
 \section{Mechanization}
 \label{sec:logrelmech}
 \begin{figure}[h]
-  TODO
+  \begin{tabular}{ c |  c  | c  }
+    & Consistency & Normalization \\
+    \hline
+    Library (Autosubst 2)  & 491 & - \\
+    Syntactic typing (specification) &  69 & - \\
+    Renaming (common)  & 46 & -  \\
+    Syntactic soundness & 660 &  - \\
+    Untyped reduction & 350 & 834 \\
+    Logical relation & 342 & 515 \\
+    Semantic typing and soundness & 169 & 197 \\
+  \end{tabular}
   \caption{Statistics of the Coq Development}
   \label{fig:linecount}
 \end{figure}
 
-
 Figure~\ref{fig:linecount} shows the statics of our
 development, including the base consistency proof from
 Section~\ref{sec:logreldep} and \ref{sec:logrelproof} and the
-extension from Section~\ref{sec:extension}.
+extension to normalization for open and closed terms from
+Section~\ref{sec:extension}.
+
+Since the normalization and the consistency development share the same
+syntactic and typing specification, they differ in only the categories
+that are related to the logical relation. We use - as a marker that
+the line count is the same.
+
+Autosubst 2 takes our syntax specification in higher-order abstract
+syntax and generates Coq syntax specification, renaming and
+substitution functions, and lemmas and tactics that allow reasoning
+about those functions. The auto-generated files and the library header
+files are counted toward the \emph{Library (Autosubst 2)} category.
+
+Orthogonal to the development of our consistency and normalization
+proof, we prove the syntactic soundness of our system through subject
+reduction and progress. The syntactic soundness proof shares the
+definition of renaming with our semantic soundness proof, which is
+factored out as a separate file under the Renaming (common) category.
 
 \subsection{Artifacts Specific to Coq}
 In this section, we discuss the Coq encoding of the definitions and proofs presented
