@@ -1,3 +1,34 @@
+\newif\ifcomments     %% include author discussion
+\newif\ifanonymous    %% include author identities
+\newif\ifextended     %% include appendix
+\newif\ifsubmission   %% prepare the submitted version
+\newif\ifpublic       %% version available for posting / final version
+
+\commentstrue         %% toggle comments here
+\extendedfalse
+\anonymoustrue
+
+\submissionfalse     %% at most one of these must be true (neither for draft version)
+\publicfalse          %% but if you want to see comments, these should both be off
+
+
+% If we are going to make a version public, i.e. on arXiv, we should 
+% make sure that there are no comments and our names are on it.
+\ifpublic
+\submissionfalse
+\commentsfalse
+\anonymousfalse
+\fi
+
+%% If we are submission, make sure there are no comments and our names 
+%% are NOT on it.
+\ifsubmission
+\publicfalse
+\commentsfalse
+\anonymoustrue
+\fi
+
+
 %%
 %% This is file `sample-acmsmall.tex',
 %% generated with the docstrip utility.
@@ -45,13 +76,15 @@
 %% for your publication.
 %%
 %%
-\documentclass[acmsmall]{acmart}
+\documentclass[acmsmall,screen=true,
+\ifpublic review=false\else,review=true\fi
+  ,anonymous=\ifanonymous true\else false\fi]{acmart}
 \usepackage{ottalt}
 \usepackage{minted}
 \usepackage{xspace}
 \usepackage{tcolorbox}
 \usepackage[para]{footmisc}
-\definecolor{lightgray}{gray}{0.75}
+\definecolor{lightgray}{gray}{0.85}
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
 \newcommand{\lang}{$\lambda^H$\xspace}
 \inputott{rules}
@@ -60,6 +93,16 @@
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
     Bib\TeX}}}
+
+\usepackage{draft}
+
+\ifcomments
+\newnote{scw}{blue} % Stephanie Weirich
+\newnote{yl}{purple} % Yiyun Liu
+\else
+\newcommand{\scw}[1]{}
+\newcommand{\yl}[1]{}
+\fi
 
 
 %%
@@ -181,7 +224,7 @@ The consistency proofs of various dependently typed systems, including Martin-Lo
 type theory and the Calculus of Constructions, have long been
 available in the literature. In particular, recent works such as \citet{nbeincoq},
 \citet{decagda}, and \citet{martin-lof-a-la-coq} mechanize stronger
-results related to the decidability of type conversion or type
+results\scw{stronger than what?} related to the decidability of type conversion or type
 checking of dependently typed systems, from which consistency can be
 derived as a corollary.
 
@@ -191,16 +234,25 @@ which involves interpreting types as reducibility predicates,
 representing sets of terms satisfying certain properties with respect
 to the reduction relation. While the proof technique and the
 consistency result for dependent types are both well-established,
-there is a severe lack of rigorous and accessible material that shows
+there is a lack of rigorous and accessible material that shows
 how proof by logical relation can be applied to dependently typed
 systems.
+\scw{You are choosing to focus on mechanized logical relations proofs for 
+dependent type theories, not consistency proofs for dependent type theories. 
+Why? (And your title shuld match}
+
 
 Introductory materials about logical relations such as
 \citet{skorstengaard2019introduction}, \citet{harper2016practical}
-start from logical relations for simply typed languages, and
+start from logical relations for simply typed languages,\scw{proving 
+results such as \ldots} and
 eventually extend the technique to build a relational model for System
 F in order to derive
-parametricity. \citet{harperkripke} gives a gentle introduction on how
+parametricity.
+\scw{Are there some OPLSS notes from Amal Ahmed to also cite? Other modern textbooks?
+Does Aspinall and Hofmann's chapter of ATTAPL include a logical relation?}
+\scw{Seems like you should also mention POPLmark reloaded somehere too?}
+ \citet{harperkripke} gives a gentle introduction on how
 logical relations for closed terms can be extended to talk about open
 terms so we can derive properties such as normalization for well-typed
 open terms. Overall, the introductory texts about logical relations
@@ -223,13 +275,16 @@ from the size of their code base. All three developments involve 20
 thousand to 30 thousand lines of Coq or Agda code.
 
 The goal of this paper is to give a tutorial on proof by logical relation for
-dependent types in a simple and digestable format.
+dependent types in a simple and digestable format. \scw{This sentence should come as 
+early as possible.}
 The system we present is small but covers
-important features that are only available or require special treatments in
+important features\scw{list these features explicitly: 
+large eliminations, indexed types, others? \ldots}  that are only available or require special treatments in
 dependently typed systems. We choose boolean
 types over natural numbers as our base type for simplicity, but include an
 intensional identity type in our type system to show how indexed
-types are treated in a logical relational proof. Unlike
+types are treated in a logical relational proof. \scw{Talk about 
+identity type first.} Unlike
 \citet{nbeincoq,decagda,martin-lof-a-la-coq} but similar to
 \citet{anand2014towards}, we include an infinite hierarchy of
 universes to not only support type-level computations, but also avoid
@@ -264,7 +319,9 @@ language of sets, where impredicativity manifests in the form of
 second-order logical formulas and thus more intuitive to grasp
 for readers with a general mathematical background.
 
-In Section~\ref{sec:extension}, we extend our logical
+In Section~\ref{sec:extension}, \scw{what about sections 2-4?}
+
+ we extend our logical
 relation to prove the stronger property that every well-typed term
 has a normal form. Most interestingly, we find that extending the
 language with
@@ -347,6 +404,9 @@ proofs for dependent types.
 % existing literature related to logical consistency about dependent
 % type theory.
 
+\scw{The end of this section needs to include an explicit summar of the 
+contributions of the paper. }
+
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
 
@@ -375,7 +435,7 @@ proofs for dependent types.
 [[rho]] & \in & [[SNat -> STm]] &
 \end{array}
 \]
-  \caption{Syntax of \lang}
+  \caption{Syntax of \lang \scw{Where does the name come from?}}
   \label{fig:syntax}
 \end{figure}
 
@@ -429,9 +489,15 @@ dependent type theory whose logical consistency will be proven in
 Section~\ref{sec:logrelproof}. For concision, we refer to this system
 as \lang.
 
-The syntax of \lang can be found in Figure~\ref{fig:syntax}. We use
+The syntax of \lang can be found in Figure~\ref{fig:syntax}. 
+\scw{Why so many metavariables for terms? Do you need $c$, $p$ and $t$?}
+We use
 the unscoped de Bruijn representation for both our Coq development and
-the informal presentation in our paper. We find de Bruijn
+the informal presentation in our paper.  \scw{Give an overview of the figure}
+\scw{Define a convention that separates your use of natural numbers. Sometimes they 
+are universe levels and sometimes they are de Bruijn indices. Better to have separate
+metavariables for each. (And it is possible to generalize universe levels to structures other than natural numbers. Ask Jonathan.}
+We find de Bruijn
 representation advantageous for specification since it leaves very
 little ambiguity about the variable freeness side
 conditions, making our proof more easily reproducible. Furthermore, as we discuss in
@@ -439,7 +505,12 @@ Section~\ref{sec:automation}, de Bruijn representation is much more
 amenable to automated reasoning in proof assistants.
 We adopt from \citet{autosubst} the notations for simultaneous
 renaming, substitution, and other auxiliary definitions related to our
-syntax, summarized in Figure~\ref{fig:auxdef}. We omit most of the
+syntax, summarized in Figure~\ref{fig:auxdef}. 
+\scw{Need to explain the notations in the text. What are these operations? 
+What do readers need to understand about them? Help me understand the figure}
+\scw{As this is a tutorial paper, you'll need to explain more about how de Bruijn
+indices work.}
+We omit most of the
 definitions of renaming and substitution and only show the definition
 of a few representative cases of substitution.
 \begin{figure}[ht]
@@ -470,13 +541,14 @@ of a few representative cases of substitution.
         [[(Pi A B) < xi >]] & := & [[Pi A < xi > B < up xi >]] \\
         [[(a b) < xi >]] & := & [[a < xi > (# b < xi > #)]] \\
         \ldots \\ \\
-        \mathit{UpTm} \\
+        \mathit{UpTm \scw{shifting? lifting?}} \\
         [[( up rho ) 0]] & := & [[var 0]] \\
         [[( up rho ) Suc i]] & := & [[ rho i < up 1 > ]] \\ \\
         \mathit{Substitution ([[ a { rho }  ]])} \\
         [[var i { rho }  ]] & := &  [[rho i]] \\
         [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
         [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
+        && \fbox{ \scw{case for $\lambda$ } } \\
         \ldots
       \end{array}
     \end{split}
@@ -504,16 +576,19 @@ we use the notation $[[A -> B]]$ when the output type $[[B]]$ is not
 dependent on the input variable. $[[Set i]]$ represents the universe
 type where $[[i]]$ ranges over the set of natural numbers.
  Finally,
-\lang also includes an intensional identity type $[[a ~ b : A]]$ whose
+\lang\scw{Don't begin a sentence with a symbol} also includes an intensional identity type $[[a ~ b : A]]$ whose
 proofs can be eliminated by the J-eliminator $[[J t a b p]]$, where
 $[[p]]$ is an equality proof between $[[a]]$ and $[[b]]$, and $[[t]]$
 is the term whose type is to be casted.
+\scw{Example of what you can use identity types for? Or an example of 
+a program that uses J?}
 
 \lang is expressive enough to support large
-elimination, the ability to compute a type using a term as input. For
+eliminations, the ability to compute a type using a term as input. For
 example, the function $[[\ Bool if var 0 Bool Bool -> Bool]]$ returns
 either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
 is $[[true]]$ or $[[false]]$.
+
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
@@ -526,14 +601,18 @@ is $[[true]]$ or $[[false]]$.
 \label{fig:par}
 \end{figure}
 
+\scw{motivate parallel reduction. Why are you telling us this now. Is this 
+an explanation of definitional equality and its properties?}
 Figure~\ref{fig:par} shows the definition of the parallel reduction
 relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
 represent its transitive and reflexive closure, which in turn allows us to define
-the coherence relation $[[a <=> b]]$.
+the coherence relation $[[a <=> b]]$.\scw{where is the terminology ``coherence''
+from? I'm not familiar with it. Maybe you can replace it with ``definitional 
+equivalence'' as that is how it is used in \lang?}
 We say that two terms $[[a]]$
 and $[[b]]$ are coherent if they can eventually reduce to some common
 term $[[c]]$ through parallel reduction. The symmetric notation of
-coherence suggests that it is an equivalence relation.
+coherence suggests\scw{but you prove it below?} it is an equivalence relation.
 
 We sketch out some key properties about parallel reduction and
 coherence without giving their proofs. Our technique for establishing
@@ -573,7 +652,7 @@ modern exposition of the same technique can be found in
 From Lemma~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
 \ref{lemma:coherencetrans}, we conclude that coherence is indeed an
 equivalence relation. It is then trivial to derive that coherence is
-exactly the same as the untyped $\beta$-equivalence.
+exactly the same as untyped $\beta$-equivalence.\scw{cite barendregt?}
 
 % TODO: remove the lengthy discussion below
 
@@ -654,11 +733,18 @@ Figure~\ref{fig:typing} gives the full typing rules for
 \lang{}. The premises wrapped in \colorbox{lightgray}{gray} boxes can be shown to be
 admissible syntactically, though some of them are required to
 strengthen the inductive hypothesis of the fundamental theorem.
+\scw{Is the precondition for T-ABS really admissible? Isn't it required 
+to ensure predicativity? Have you proved it? Have you proved regularity?}
+\scw{Do you have a formation rule for identity types?}
+
 In \rref{T-Var}, $[[G i]]$ is the partial function defined
 with the equations $[[ (G ++ A)  0 ]] := [[A]]$ and $[[ (G ++ A) Suc
-i ]] := [[G i]] $. The precondition $[[i < | G | ]]$, where $[[ | G |
+i ]] := [[G i]] $.  \scw{explain the renaming in the conclusion of 
+this lemma}
+The precondition $[[i < | G | ]]$, where $[[ | G |
 ]]$ represents the length of the context $[[G]]$, ensures that $[[G
 i]]$ has a defined output.
+
 \Rref{T-Conv} uses the definition of coherence from earlier
 as our equality judgment for type conversion. The use of an untyped
 relation for type conversion makes our formulation slightly different
@@ -676,6 +762,10 @@ as long as the typed system does not include $\eta$ laws
 that would require type annotations (e.g. the $\eta$-law for unit
 types). % and we discuss in Section~\ref{sec:extension} how we can extend
 % our proof to handle those rules.
+\scw{Maybe move more of this paragraph and the next to the discussion/related
+  work section, and add a forward pointer here.}
+\scw{Just say that like Coq, the definition of the system uses untyped 
+equality}
 
 Working with a system with untyped equality has the huge benefit that
 the confluence result for untyped parallel reduction
@@ -694,6 +784,9 @@ present the system à la Russell by using the same judgment form $[[G
 |- a : A]]$ regardless of whether $[[a]]$ is a term or a type. There
 is no need to distinguish between big types and small types
 and duplicate our typing specification.
+\scw{Is there an advantage for Tarski universes even with infinite 
+hierarchy? or no?}
+
 
 % , the
 % statement that $\Gamma \vdash [[Pi A0 B0]] \equiv [[Pi A1 B1]]$
@@ -732,6 +825,11 @@ and duplicate our typing specification.
 % is slightly more economical.
 
 \section{Logical Relation}
+\scw{This section pre-supposes that we want to define a logical relation, 
+but doesn't precisely state what we want to use it to prove, and why a logical
+relation is suitable. (And why the property you want to prove is difficult to 
+show!) Should add more motivation here.}
+
 \label{sec:logreldep}
 \begin{figure}[h]
 \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Void, Bool, Eq, Pi, Set, Red}
@@ -745,6 +843,20 @@ The logical relation takes the form $[[Interp I i A S]]$. The
 metavariables $[[A]]$ and $[[i]]$ stand for terms and natural
 numbers respectively, as introduced earlier in
 Figure~\ref{fig:syntax}.
+\scw{Because the type of $I$ depends on $i$, I'd prefer a syntax that 
+keeps them in order. }
+\scw{Many introductory texts define the relation as a recursive function 
+over type structure, or step-indices. You use an inductive relation instead, why?}
+\scw{Can we view this inductive relation as the graph of the partial function
+that is defined recursively over types?}
+\scw{What is this form extensible too? impredicative quantification? recursive 
+types? }
+\scw{Is it worth observing here that this definition is not over sets of typed
+terms. That it characterizes all terms that look like booleans (i.e. evaluate to 
+true or false) or all terms that look like proofs (i.e. evaluate to refl). The 
+fact that there is no connection between p and a and b in the I-Eq case is strange
+looking. Need to explain.  }
+
 The metavariables $[[I]]$ and $[[S]]$ are
 sets with the following signatures.
 \begin{equation*}
@@ -761,6 +873,8 @@ universes that are strictly smaller than the current level $[[i]]$. The
 restriction $[[j < i]]$ in \rref{I-Set} is crucial for our system to
 be predicative. Removing the ordering constraint would result in a
 system where one can encode Girard's paradox~\citep{girard-thesis}.
+\scw{Spell this out a bit more about what goes wrong. Where does the 
+proof break? Also spell out how this enforces predicativity.}
 
 \begin{figure}[h]
 \begin{equation*}
@@ -768,6 +882,7 @@ system where one can encode Girard's paradox~\citep{girard-thesis}.
 \end{equation*}
 \caption{Logical relation for all universe levels}
 \label{fig:logrelrec}
+\scw{I didn't understand this figure without reading the text below.}
 \end{figure}
 To tie the knot and obtain an interpretation of all universe levels,
 we define in Figure~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
@@ -817,7 +932,7 @@ $[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
 A S]]$.
 
 To derive consistency, it suffices to restrict $[[S]]$ to the set of
-terms to reduce to closed terms. \Rref{I-Void, I-Bool} are
+terms that reduce to closed terms. \Rref{I-Void, I-Bool} are
 unsurprising; when considering only closed terms, the empty type
 should not be inhabited and therefore corresponds to the empty set,
 whereas the boolean type is semantically inhabited by terms that
@@ -843,6 +958,7 @@ the conjunction of the following statements:
 In general, let $R$ be a binary relation over the sets $[[A]]$ and
 $[[B]]$, it easy to verify the following equivalence, which is used to
 justify the skolemization process~\citep{skolemization}.
+\scw{Is this true constructively? If not, is that ok?}
 \[\forall a \in A, \exists b \in B \text{ such that } (a,b) \in R
   \iff \exists F \in A \rightarrow B \text, \forall a \in A, (a, F(a))
   \in R\]
@@ -892,7 +1008,7 @@ the logical relation that will be useful for proving fundamental theorem
 in Section~\ref{sec:logrelproof}.
 
 The relation $[[Interp I i A S]]$ satisfies the following inversion
-principles.
+principles.\scw{Put footnotes on lemma name, or on (1), (2), etc}
 \begin{lemma}[Inversion of the logical relation]
   \label{lemma:interpinv}\leavevmode
   \begin{enumerate}
@@ -910,6 +1026,9 @@ principles.
   \end{enumerate}
 \end{lemma}
 \begin{proof}
+  \scw{Why is this proof interesting and worth typesetting? Should
+    it be in an appendix so that it doesn't interrupt the flow of 
+    reading?}
   We only show the most involved function case; the rest follows a
   similar but simpler pattern. We start by
   inducting over the derivation of $[[Interp I i Pi A B S]]$. There
@@ -936,7 +1055,7 @@ principles.
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
     \end{itemize}
-    These properties are exactly what's required in the conclusion.
+    These properties are exactly what's\scw{avoid contractions} required in the conclusion.
   \end{description}
 \end{proof}
 
@@ -1002,10 +1121,14 @@ usual forward direction too.
 From Lemma~\ref{lemma:interppreservation} and \rref{I-Red}, we can easily
 derive the following corollary that two coherent types have the same
 interpretation.
+\scw{I'm not used to this lemma being called irrelevance. Intuitively, 
+it says that the definition of the logical relation respects
+definitional equality. }
 \begin{corollary}[Irrelevance of logical relation\footnote{\dotv{semtyping.v}{InterpUnivN\_Coherent}}]
   \label{lemma:logrelcoherence}
   If $[[Interp I i A S]]$ and $[[A <=> B]]$, then $[[Interp I i B S]]$.
 \end{corollary}
+\scw{Need a transition here}
 Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
 \begin{lemma}[Logical relation is functional\footnote{\dotv{semtyping.v}{InterpExt\_deterministic}}]
   \label{lemma:logreldeter}
@@ -1095,7 +1218,7 @@ Lemma~\ref{lemma:logreldeter} enables us to show the admissibility of
   \end{itemize}
 \end{lemma}
 \begin{proof}
-  Immedaite from Lemmas~\ref{lemma:interpinv} and \ref{lemma:logreldeter}.
+  Immediate from Lemmas~\ref{lemma:interpinv} and \ref{lemma:logreldeter}.
 \end{proof}
 
 % The combination of Lemmas~\ref{lemma:piintroalt} and
@@ -1135,6 +1258,8 @@ The final property we want to show is that the output set $[[S]]$ from
 the logical relation is closed under expansion. Unlike the previous
 lemmas, we need to constrain the function $[[I]]$ so its outputs are
 all closed under expansion.
+\scw{How is this related to the comment before 3.2 (i.e. the property
+derived from I-Red?}
 \begin{lemma}[Logical Relation Elements back preservation\footnote{\dotv{semtyping.v}{InterpExt\_back\_clos}}]
   \label{lemma:logrelbackclos}
   If $[[Interp I i A S]]$ and $[[I]]$ satisfies the property that
@@ -1181,13 +1306,19 @@ all closed under expansion.
 The logical relation we define in Figure~\ref{fig:logrel} does not
 include cases for variables. Likewise, for the base types such as
 boolean and equality, the output set $[[S]]$ contains only terms that
-evaluate to closed terms. To generalize our logical relation to open
+evaluate to closed terms.
+
+\scw{What is the motivation for this section? Why do we want to generalize
+the logical relation?}
+ To generalize our logical relation to open
 terms, we define the semantic typing judgment by closing the open
 terms with a substitution whose codomain consists of terms that
 respect the interpretation of the types from the context. The full
 definitions of well-formed substitution ($[[rho |= G]]$), semantic
 typing ($[[ G |= a : A]]$), and semantic context well-formedness
-($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}. In the
+($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}. 
+\scw{explain all parts of this figure. it's pretty intimidating.}
+In the
 definition of $[[|= G]]$, we use the notation $[[drop i G]]$ to denote
 the typing context obtained by dropping the last $[[i]]$ elements of
 $[[G]]$. When $[[G]]$ has less than $[[i]]$ elements, $[[drop i G]]$
@@ -1195,7 +1326,7 @@ returns the empty list.
 
 The following lemma makes the statement $[[G |= A : Set i]]$ easier to
 work with.
-\begin{lemma}[Set Inv\footnote{\dotv{soundness.v}{SemWt\_Univ}}]
+\begin{lemma}[Set Inv\footnote{\dotv{soundness.v}{SemWt\_Univ}}\scw{spell out the whole word}]
   \label{lemma:setinv}
   The following two statements are equivalent:
   \begin{itemize}
@@ -1215,17 +1346,19 @@ work with.
   $[[S0]]$ such that  $[[InterpR j Set i S0]]$ and $[[A {rho} in
   S0]]$.
   Pick $[[Suc i]]$ for $[[j]]$ and $[[ { A | exists S , InterpR i A S }
-  ]]$ for $[[S0]]$ and it's trivial to verify the conditions hold.
+  ]]$ for $[[S0]]$ and it is trivial to verify the conditions hold.
 \end{proof}
 
 The semantic context well-formedness judgment ($[[|= G]]$), unlike its syntactic
-counterpart $[[|- G]]$, is defined through a for all quantified statement rather
-than inductively over the context. It is easy to recover the same
+counterpart $[[|- G]]$, is defined through a $\forall$ quantified statement rather
+than inductively over the context. \scw{why is that the case?} It is easy to recover the same
 structural rules:
 \begin{lemma}[Semantic context well-formedness cons]
   \label{lemma:semwffcons}
   If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ A]]$.
 \end{lemma}
+\scw{point out that this lemma is the semantic analogue to Ctx-Cons. What about 
+Ctx-empty?}
 \begin{proof}
   By the definition of semantic context well-formedness, the goal is
   to show that given $[[i < | G ++ A |]] = [[Suc |G|]]$, $[[drop Suc i
@@ -1248,7 +1381,7 @@ satisfies similar structural rules.
 
 Next, we show some non-trivial cases of the fundamental theorem as
 top-level lemmas and leave the remaining cases as exercises for the
-reader.
+reader.\scw{I dislike leaving ``exercises to the reader''}
 
 First, we formulate the definition of valid renamings and prove that
 semantic typing satisfies renaming so we can weaken the context when
@@ -1267,6 +1400,8 @@ Lemmas~\ref{lemma:validtruncate} through \ref{lemma:semrenaming}
 during the first read as long as they have an intuitive understanding
 of what the renaming property is meant to capture.
 
+\scw{Make this a definition? Would it be useful to create notation 
+  for the relation, such as $[[xi]]:[[G]]\Rightarrow[[D]]$? }
 We say that $[[xi]]$ is
 valid from the context $[[G]]$ to the context $[[D]]$ if the
 following condition holds.
@@ -1296,6 +1431,7 @@ following condition holds.
   \label{lemma:renamingval}
   If $[[rho |= D]]$ and $[[xi]]$ is a valid renaming from $[[G]]$ to
   $[[D]]$, then we have $[[rho0 |= G]]$ where $[[rho0 i = rho ren xi i]]$.
+\scw{could you use $[[rho]]\circ[[xi]]$ for $[[rho0]]$?}
 \end{lemma}
 \begin{proof}
   Unfolding the definition of $[[rho0 |= G]]$, the goal is to show
@@ -1306,7 +1442,7 @@ following condition holds.
 have $[[G i < up Suc i > { rho0 }]] = [[G i < up Suc i > < xi > { rho
 } ]] = [[D ren xi i < up Suc ren xi i > { rho }]]$. From $[[rho |=
 D]]$ and $[[ren xi i < | D |]]$, we have $[[InterpR j D ren xi i < up Suc ren xi i > { rho }
-S]]$ and $[[rho ren xi i in S]]$. Done.
+S]]$ and $[[rho ren xi i in S]]$. 
 \end{proof}
 
 \begin{lemma}[Renaming for $[[G |= a : A]]$]
@@ -1317,6 +1453,9 @@ S]]$ and $[[rho ren xi i in S]]$. Done.
 \begin{proof}
   Immediate from the definition of semantic typing and Lemma~\ref{lemma:renamingval}.
 \end{proof}
+
+\scw{Need a transition here that you are starting to explain the semantic typing 
+rules.}
 
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
@@ -1345,7 +1484,7 @@ need to show that there exists some $[[j]]$ and $[[S]]$ such that
   If $[[i < j]]$, then $[[G |= Set i : Set j]]$.
 \end{lemma}
 \begin{proof}
-  Immedaite by Lemma~\ref{lemma:setinv} and \rref{I-Set}.
+  Immediate by Lemma~\ref{lemma:setinv} and \rref{I-Set}.
 \end{proof}
 
 \begin{lemma}[ST-Pi]
@@ -1444,6 +1583,8 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
 
 \end{proof}
 
+\scw{Spell this out in a little more detail.}
+
 \begin{corollary}[Logical Consistency]
   \label{corollary:consistency}
   The judgment $[[empty |- a : Void ]]$ is not derivable.
@@ -1475,6 +1616,7 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
   \label{fig:logrelopen}
 \end{figure}
 
+\scw{Put this introduction before the figure in the section.}
 In this section, we sketch out how the logical relation from
 Section~\ref{sec:logreldep} can be extended show the existence of
 $\beta\eta$ normal forms for (open and closed) well-typed terms. We
@@ -1483,6 +1625,8 @@ functions.
 \begin{center}
   \drule[width=2.5in]{P-AbsEta}
 \end{center}
+\scw{What happened to the domain type in the $\lambda$ expression? This is 
+not your syntax...}
 \Rref{P-AbsEta} effectively adds $\eta$ laws for functions to our
 equational theory since coherence, the untyped relation used for type
 conversion, is built on top of parallel reduction. We can recover the
@@ -1521,7 +1665,7 @@ we can take.
 The predicates $[[wne a]]$ and $[[wn
 a]]$ describe terms that can evaluate into $\beta$-neutral or
 $\beta$-normal form through parallel reduction and are defined as
-follows.
+follows.\scw{What does $[[wne]]$ stand for?}
 \[ [[wne a]] \iff \exists [[e]], [[a =>+ e]] \]
 \[ [[wn a]] \iff \exists [[f]], [[a =>+ f]] \]
 
@@ -1589,6 +1733,7 @@ Let us first start with some auxiliary lemmas and definitions.
   $[[wne a]]$ and $[[wn b]]$.
 \end{proof}
 
+\scw{What does CR stand for?}
 \begin{definition}[CR]
   Let $[[S]]$ be a set of lambda terms. We say that
   \begin{itemize}
@@ -1702,6 +1847,8 @@ specifics of dependently typed systems. Instead, we redirect readers
 to \citet{factorization-essentially, takahashi-parallel-reduction} for
 the details.
 
+\scw{Name and foreshadow these lemmas when they are introduced so that 
+it is easier to refer to them in the discussion.}
 Finally, we want to point out that
 Lemmas~\ref{lemma:cr1ty},~\ref{lemma:cr2tyrec}, and
 \ref{lemma:crelrec}, often referred to as adequacy of the logical
@@ -1782,7 +1929,7 @@ The powerset $[[PowerSet STm]]$ is encoded as the type \texttt{tm ->
 Prop}, a predicate over \lang{} terms.
 The inductive
 definition of the logical relation in Figure~\ref{fig:logrel} requires
-the impredicativity of Coq's \texttt{Prop} sort since in \rref{I-Pi},
+the impredicativity of Coq's \texttt{Prop} sort since\scw{or ``so that''?} in \rref{I-Pi},
 the function $[[F]]$ can be later instantiated into the logical
 relation itself (e.g. in the proof of Lemma~\ref{lemma:piintroalt}).
 
@@ -1812,19 +1959,20 @@ It should be easy to verify that the preconditions of
 \rref{I-Pi}, \rref{I-PiAlt}, and \rref{I-PiCoq} are all
 equivalent. After establishing Lemma~\ref{lemma:logreldeter}, it is
 possible to further show that the conclusions of the rules are
-equivalent, too.
+equivalent, too.\scw{If it is easy, you should have already done it. 
+Unless it is really long and boring.}
 
 % This formulation allows us to derive Lemma~\ref{lemma:piintroalt}
 % before we even show that our logical relation is
 % functional/deterministic, but does not affect the proof structure
 % otherwise.
 We choose to keep this discrepancy between the Coq development and the
-logical relation presented in Section~\ref{sec:logreldep} since the
+description of the logical relation presented in Section~\ref{sec:logreldep} since the
 skolemization process is more intuitively expressed in terms of
 function symbols rather than relation symbols. Otherwise, we do not
 see a clear advantage of \rref{I-PiCoq} over \rref{I-Pi} in set
 theory, where there is no distinction between computable functions and
-functions in general.
+functions in general. \scw{not sure I follow this last bit}
 
 \subsection{Automation}
 \label{sec:automation}
@@ -1834,19 +1982,22 @@ Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
 
 We use the Autosubst 2 framework to specify our syntax in HOAS and
 produce Coq syntax files in de Bruijn representation. Additionallly,
-Autosubst 2 provides a powerful tactic \texttt{asimpl} which
+Autosubst 2 provides a powerful tactic \texttt{asimpl} that
 can be used to prove the equivalence of two terms constructed using
 the primitive operators provided by the framework. This greatly
 simplifies the reasoning about substitution in our development as
 almost all substitution related properties are immediately discharged
 by \texttt{asimpl} without having to manually prove or even directly invoke any
-substitution related lemmas.
+substitution related lemmas. \scw{You are only referring to lemmas about 
+how substitution relates to syntax, right? You still need to manually 
+invoke lemmas about substitution and judgements.}
 
 For other automation tasks that are not specific to binding, we use
 the powerful \texttt{sauto} tactic provided by CoqHammer to write
 short and declarative proofs. For example, here is a one-line proof of
 the triangle property about parallel reduction, from which the diamond
 property (Lemma~\ref{lemma:pardiamond}) follows as a corollary.
+\scw{you have space, so repeat the mathematical statement of the lemma}
 \begin{minted}{coq}
 Lemma par_triangle a : forall b, Par a b ->  Par b (tstar a).
 Proof.
@@ -1862,6 +2013,7 @@ reduction. The option \texttt{use:Par\_refl,par\_cong} allows the
 automation tactic to use
 the reflexivity and congruence properties of parallel
 reduction as lemmas.
+\scw{What does \texttt{lq:on} and \texttt{hauto} mean?}
 
 The automation here not only gives us a proof that is shorter and more
 resiliant to changes in definition, but also gives useful
@@ -1873,10 +2025,22 @@ lemmas or invert derivations that are not specified in the
 
 \section{Related Work and Discussion}
 \label{sec:relatedwork}
+
+\scw{Maybe it would be useful to include a chart here, so that readers can
+  easily keep track of the features of the various languages.  i.e. which ones
+  include large eliminations? type-directed equivalence? impredicative prop?
+  inductive datatypes? what are their line counts?}
+
 \citet{Martin-Lof-1973}, \citet{geuvers1994short}, and
 \citet{barendregt:lambda-calculi-with-types} are some of the earlier
 works that establish metatheoretic results strong enough to derive
-consistency for dependently typed systems. Some of these techniques
+consistency for dependently typed systems. 
+\scw{Should give Martin L\"of credit for first consistency proof.}
+\scw{What techniques do these three proofs use? How is it different from 
+your proof? What about Luo, which 
+introduced a universe hierarchy? What about categories with families, or 
+other ways of showing consistency?}
+Some of these techniques
 are still in use in more recent works. For example, the technique for
 proving strong normalization by \citet{geuvers1994short} is adapted by
 \citet{moon2021graded} to show the same property to a dependently
@@ -1922,6 +2086,7 @@ use a relational model either to justify the function $\eta$-law or to
 derive $\Pi$-injectivity. In Section~\ref{sec:extension}, our $\eta$
 law for function is baked into the untyped reduction
 relation and therefore a relational model is not needed.
+\scw{would it be difficult to extend your proof to be a PER?}
 
 The dependently typed systems we have discussed so far also vary
 greatly in expressiveness. For example, the Calculus of
@@ -1939,7 +2104,7 @@ impredicative sorts can be implemented in a similarly streamlined
 fashion and we will leave those extensions as part of our future work.
 
 % To end this section, we
-
+\scw{should this be a new subsection?}
 The final question we want to address is: why is our proof,
 even with the extension from Section~\ref{sec:extension}, so much
 shorter than the proofs from \citet{decagda, nbeincoq,
@@ -1956,8 +2121,9 @@ This contrasts our development with
 difficult property to prove due to the complexity of the equality
 judgment used to define the logical relation. In our system, the
 irrelevance property (Corollary~\ref{lemma:logrelcoherence}) is a
-direct consequence of Lemma~\ref{lemma:interppreservation}, which is
-straightforward after we prove the classical results about parallel
+direct consequence of Lemma~\ref{lemma:interppreservation},\scw{refer to 
+lemma name} which is
+straightforward after we prove the results about parallel
 reduction in Section~\ref{sec:spec}. In other words, we keep the
 the logical relation itself minimal at the cost of extra lemmas that can be proven
 through syntactic means independently from the logical relation.
@@ -2003,7 +2169,7 @@ reduction to be proven independently from confluence and
 $\Pi$-injectivity can later be shown to be admissible. We find the
 approach from \citep{weirich:systemd} the most lightweight as it
 allows us to derive confluence early on even in systems with typed
-conversion.
+conversion. \scw{Maybe mention my $\eta$-equivalence paper here somewhere?}
 
 In cases where the judgmental equality does not leverage type information heavily
 (e.g. $\eta$-law for the unit type), it might be possible to show that
@@ -2017,11 +2183,14 @@ typing information into our logical relation and we need to redefine
 our logical relation in Kripke-style so we can relax the scoping
 constraint in order to prove adequacy, though a relational model would
 still be unnecessary as long as the $\eta$ laws are baked into the
-typed directed relation.
+typed directed relation. \scw{not sure I understand this last bit}
 
 Since confluence plays such as key role in our proof, we are uncertain
 how to generalize our technique to systems where confluence does not
 hold, and we will investigate those scenarios in our future work.
+\scw{What systems are you thinking of? Or do you mean more generally 
+that this technique only works for languages where the definition of 
+equality is based on joinability of parallel reduction?}
 
 % We are able to avoid the complexivity of a Kripke-style logical relation
 % by defining our logical relation in terms of untyped parallel
