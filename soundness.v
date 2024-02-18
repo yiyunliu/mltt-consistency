@@ -44,8 +44,7 @@ Proof.
   rewrite /SemWt => h Δ ξ hξ γ hγ.
   have hγ' : (γ_ok Γ (ξ >> γ)) by eauto using γ_ok_renaming.
   case /(_ _ hγ') : h => PA hPA.
-  exists PA.
-  by asimpl.
+  exists PA. by asimpl.
 Qed.
 
 Lemma SemWt_Univ Γ A i :
