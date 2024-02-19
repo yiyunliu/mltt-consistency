@@ -23,21 +23,20 @@ Inductive Par : tm -> tm -> Prop :=
   Par B0 B1 ->
   (* --------------------- *)
   Par (tPi A0 B0) (tPi A1 B1)
-| P_Abs A0 A1 a0 a1 :
-  Par A0 A1 ->
+| P_Abs a0 a1 :
   Par a0 a1 ->
   (* -------------------- *)
-  Par (tAbs A0 a0) (tAbs A1 a1)
+  Par (tAbs a0) (tAbs a1)
 | P_App a0 a1 b0 b1 :
   Par a0 a1 ->
   Par b0 b1 ->
   (* ------------------------- *)
   Par (tApp a0 b0) (tApp a1 b1)
-| P_AppAbs a A a0 b0 b1 :
+| P_AppAbs a a0 b0 b1 :
   Par a a0 ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp (tAbs A a) b0) (subst_tm (b1..) a0)
+  Par (tApp (tAbs a) b0) (subst_tm (b1..) a0)
 | P_True :
   (* ------- *)
   Par tTrue tTrue
@@ -120,9 +119,9 @@ Proof. hauto lq:on rew:off inv:rtc use:pars_univ_inv. Qed.
 Lemma Par_refl (a : tm) : Par a a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
-Lemma P_AppAbs_cbn (A a b b0 : tm) :
+Lemma P_AppAbs_cbn (a b b0 : tm) :
   b0 = subst_tm (b..) a ->
-  Par (tApp (tAbs A a) b) b0.
+  Par (tApp (tAbs a) b) b0.
 Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
 
 Lemma P_IfTrue_star a b c :
@@ -169,12 +168,12 @@ Proof.
     apply P_J; sfirstorder use:Par_refl.
 Qed.
 
-Lemma P_AppAbs' a A a0 b0 b b1 :
+Lemma P_AppAbs' a a0 b0 b b1 :
   b = subst_tm (b1..) a0 ->
   Par a a0 ->
   Par b0 b1 ->
   (* ---------------------------- *)
-  Par (tApp (tAbs A a) b0) b.
+  Par (tApp (tAbs a) b0) b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
 Lemma par_renaming a b (ξ : fin -> fin) :
@@ -216,7 +215,7 @@ Proof.
   elim : a b / h0; try solve [simpl; eauto with par].
   - hauto lq:on db:par use:par_morphing_lift.
   - hauto lq:on db:par use:par_morphing_lift.
-  - move => a A a0 b0 b1 h0 ih0 h1 ih1 ξ0 ξ h /=.
+  - move => a a0 b0 b1 h0 ih0 h1 ih1 ξ0 ξ h /=.
     apply P_AppAbs' with (a0 := subst_tm (up_tm_tm ξ) a0) (b1 := subst_tm ξ b1).
     by asimpl. hauto l:on use:par_renaming inv:nat. eauto.
   - hauto lq:on db:par use:par_morphing_lift.
@@ -359,8 +358,8 @@ Function tstar (a : tm) :=
   | tUniv _ => a
   | tVoid => a
   | tPi A B => tPi (tstar A) (tstar B)
-  | tAbs A a => tAbs (tstar A) (tstar a)
-  | tApp (tAbs A a) b => subst_tm ((tstar b)..) (tstar a)
+  | tAbs a => tAbs (tstar a)
+  | tApp (tAbs a) b => subst_tm ((tstar b)..) (tstar a)
   | tApp a b => tApp (tstar a) (tstar b)
   | tTrue => tTrue
   | tFalse => tFalse

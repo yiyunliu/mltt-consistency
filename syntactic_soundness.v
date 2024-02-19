@@ -99,14 +99,14 @@ Proof.
   qauto l:on use:Coherent_univ_inj, Wt_Pi_inv.
  Qed.
 
-Lemma Wt_Abs_inv Γ A a T (h : Wt Γ (tAbs A a) T) :
-  exists B i, Wt Γ (tPi A B) (tUniv i) /\
+Lemma Wt_Abs_inv Γ a T (h : Wt Γ (tAbs a) T) :
+  exists A B i, Wt Γ (tPi A B) (tUniv i) /\
          Wt (A :: Γ) a B /\
          Coherent (tPi A B) T /\
          exists i, (Wt Γ T (tUniv i)).
 Proof.
-  move E : (tAbs A a) h => a0 h.
-  move : A a E.
+  move E : (tAbs a) h => a0 h.
+  move : a E.
   elim : Γ a0 T / h => //.
   - hauto lq:on use:Coherent_reflexive.
   - hauto lq:on use:Coherent_transitive.
@@ -483,17 +483,13 @@ Proof.
     have ? : Wff Γ by eauto with wff.
     apply T_Conv with (A := tUniv i) (i := j) => //.
     qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
-  - move => A0 A1 a0 a1 h0 ih0 h1 ih1 Γ A /Wt_Abs_inv.
-    intros (B & i & hPi & ha0 & hCoherent & j & hA).
+  - move => a0 a1 h0 ih0 Γ A /Wt_Abs_inv.
+    intros (A1 & B & i & hPi & ha0 & hCoherent & j & hA).
     case /Wt_Pi_Univ_inv : hPi => hA0 hB.
     apply T_Conv with (A := tPi A1 B) (i := j) => //.
     apply T_Abs with (i := i).
     + qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
     + qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
-    + suff : Coherent (tPi A1 B) (tPi A0 B) by hauto l:on use:Coherent_transitive.
-      apply Coherent_symmetric.
-      apply Par_Coherent.
-      hauto lq:on ctrs:Par use:Par_refl.
   - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_App_inv.
     intros (A0 & B & hPi & hb0 & hCoherent & i & hA).
     eapply T_Conv with (A := subst_tm (b1..) B); eauto.
@@ -503,9 +499,9 @@ Proof.
     apply Par_Coherent.
     apply par_morphing; last by apply Par_refl.
     hauto q:on ctrs:Par inv:nat simp:asimpl.
-  - move => a A a0 b0 b1 haa0 iha hbb0 ihb Γ A0 /Wt_App_inv.
+  - move => a a0 b0 b1 haa0 iha hbb0 ihb Γ A0 /Wt_App_inv.
     intros (A1 & B & ha & hb0 & hCoherent & i & hA0).
-    have /Wt_Abs_inv := ha; intros (B0 & k & hPi & ha0 & hCoherent' & j & hPi').
+    have /Wt_Abs_inv := ha; intros (A & B0 & k & hPi & ha0 & hCoherent' & j & hPi').
     case /Coherent_pi_inj : hCoherent' => *.
     case /Wt_Pi_Univ_inv : hPi => *.
     move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
@@ -573,12 +569,12 @@ Proof.
     apply coherent_cong; first by auto.
     apply coherent_cong; last by apply Coherent_reflexive.
     apply Coherent_reflexive.
-Admitted.
+Qed.
 
 Definition is_value (a : tm) :=
   match a with
   | tPi A B => true
-  | tAbs A a => true
+  | tAbs a => true
   | tBool => true
   | tTrue => true
   | tFalse => true
@@ -597,7 +593,7 @@ Inductive head := hPi | hAbs | hBool | hTrue | hVoid | hFalse | hUniv | hVar | h
 Definition tm_to_head (a : tm) :=
   match a with
   | tPi A B => Some hPi
-  | tAbs A a => Some hAbs
+  | tAbs a => Some hAbs
   | tBool => Some hBool
   | tTrue => Some hTrue
   | tFalse => Some hFalse
@@ -660,7 +656,7 @@ Qed.
 Lemma wt_pi_canon a A B :
   Wt nil a (tPi A B) ->
   is_value a ->
-  exists A a0, a = tAbs A a0.
+  exists a0, a = tAbs a0.
 Proof.
   case : a => //.
   - hauto lq:on.

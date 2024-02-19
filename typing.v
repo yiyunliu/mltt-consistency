@@ -23,7 +23,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   Wt Γ (tPi A B) (tUniv i) ->
   Wt (A :: Γ) a B ->
   (* -------------------- *)
-  Wt Γ (tAbs A a) (tPi A B)
+  Wt Γ (tAbs a) (tPi A B)
 
 | T_App a A B b :
   Wt Γ a (tPi A B) ->
