@@ -97,7 +97,42 @@ Lemma Wt_Pi_Univ_inv Γ A B i (h : Wt Γ (tPi A B) (tUniv i)) :
   Wt (A :: Γ) B (tUniv i).
 Proof.
   qauto l:on use:Coherent_univ_inj, Wt_Pi_inv.
- Qed.
+Qed.
+
+Inductive head := hPi | hAbs | hBool | hTrue | hVoid | hFalse | hUniv | hVar | hEq | hRefl.
+
+Definition tm_to_head (a : tm) :=
+  match a with
+  | tPi A B => Some hPi
+  | tAbs a => Some hAbs
+  | tBool => Some hBool
+  | tTrue => Some hTrue
+  | tFalse => Some hFalse
+  | tVoid => Some hVoid
+  | tIf a b c => None
+  | tApp a b => None
+  | tUniv _ => Some hUniv
+  | var_tm _ => Some hVar
+  | tEq _ _ _ => Some hEq
+  | tRefl => Some hRefl
+  | tJ _ _ _ _ => None
+  end.
+
+Lemma par_head a b (h : Par a b) :
+  forall hd, tm_to_head a = Some hd ->
+        tm_to_head b = Some hd.
+Proof. induction h => //. Qed.
+
+Lemma par_head_star a b (h : Pars a b) :
+  forall hd, tm_to_head a = Some hd ->
+        tm_to_head b = Some hd.
+Proof. induction h; eauto using par_head. Qed.
+
+Lemma Coherent_consistent a b (h : Coherent a b) :
+  forall hd hd1, tm_to_head a = Some hd ->
+            tm_to_head b = Some hd1 ->
+            hd = hd1.
+Proof. qblast use:par_head_star. Qed.
 
 Lemma Wt_Abs_inv Γ a T (h : Wt Γ (tAbs a) T) :
   exists A B i, Wt Γ (tPi A B) (tUniv i) /\
@@ -290,11 +325,6 @@ Proof.
   - asimpl; eauto using T_Var with wff.
 Qed.
 
-Lemma T_UnivSuc Γ i :
-  Wff Γ ->
-  Wt Γ (tUniv i) (tUniv (S i)).
-Proof. sfirstorder use:T_Univ. Qed.
-
 Lemma Wt_regularity Γ a A
   (h : Wt Γ a A) :
   exists i, Wt Γ A (tUniv i).
@@ -306,7 +336,7 @@ Proof.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc.
     exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
     eauto using subst_Syn.
-  - hauto lq:on use:T_UnivSuc db:wff.
+  - hauto lq:on ctrs:Wt db:wff.
   - move => Γ t a b p A i j C ha iha hb ihb hA ihA hp ihp hC ihC ht iht.
     exists i. change (tUniv i) with (subst_tm (p .: b..) (tUniv i)).
     apply : morphing_Syn; eauto with wff.
@@ -587,41 +617,6 @@ Definition is_value (a : tm) :=
   | tEq _ _ _ => true
   | var_tm _ => false
   end.
-
-Inductive head := hPi | hAbs | hBool | hTrue | hVoid | hFalse | hUniv | hVar | hEq | hRefl.
-
-Definition tm_to_head (a : tm) :=
-  match a with
-  | tPi A B => Some hPi
-  | tAbs a => Some hAbs
-  | tBool => Some hBool
-  | tTrue => Some hTrue
-  | tFalse => Some hFalse
-  | tVoid => Some hVoid
-  | tIf a b c => None
-  | tApp a b => None
-  | tUniv _ => Some hUniv
-  | var_tm _ => Some hVar
-  | tEq _ _ _ => Some hEq
-  | tRefl => Some hRefl
-  | tJ _ _ _ _ => None
-  end.
-
-Lemma par_head a b (h : Par a b) :
-  forall hd, tm_to_head a = Some hd ->
-        tm_to_head b = Some hd.
-Proof. induction h => //. Qed.
-
-Lemma par_head_star a b (h : Pars a b) :
-  forall hd, tm_to_head a = Some hd ->
-        tm_to_head b = Some hd.
-Proof. induction h; eauto using par_head. Qed.
-
-Lemma Coherent_consistent a b (h : Coherent a b) :
-  forall hd hd1, tm_to_head a = Some hd ->
-            tm_to_head b = Some hd1 ->
-            hd = hd1.
-Proof. qblast use:par_head_star. Qed.
 
 Lemma Wt_Univ_winv Γ i U :
   Wt Γ (tUniv i) U ->

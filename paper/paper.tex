@@ -145,7 +145,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{A Short and Mechanized Consistency Proof for Dependent Type Theory}
+\title{Short and Mechanized Logical Relation for Dependent Type Theory}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -223,10 +223,11 @@ meaning that the empty type is not inhabited.
 The consistency proofs of various dependently typed systems, including Martin-Lof's
 type theory and the Calculus of Constructions, have long been
 available in the literature. In particular, recent works such as \citet{nbeincoq},
-\citet{decagda}, and \citet{martin-lof-a-la-coq} mechanize stronger
-results\scw{stronger than what?} related to the decidability of type conversion or type
-checking of dependently typed systems, from which consistency can be
-derived as a corollary.
+\citet{decagda}, and \citet{martin-lof-a-la-coq} mechanize the
+correctness of the NbE algorithm, the decidability of type
+conversion, decidability of type
+checking respectively for dependently typed systems. From these
+properties, consistency can be derived as a corollary.
 
 The underlying technique of the forementioned
 works is proof by logical relation,
@@ -242,20 +243,23 @@ dependent type theories, not consistency proofs for dependent type theories.
 Why? (And your title shuld match}
 
 
-Introductory materials about logical relations such as
-\citet{skorstengaard2019introduction}, \citet{harper2016practical}
-start from logical relations for simply typed languages,\scw{proving 
-results such as \ldots} and
-eventually extend the technique to build a relational model for System
-F in order to derive
-parametricity.
+Introductory materials about logical relations or standard textbooks such as
+\citet{skorstengaard2019introduction}, \citet{harper2016practical},
+and \citet{pierce2002types}
+talk about logical relations for simply or polymorphically typed
+languages, proving results such as termination for closed terms and parametricity.
 \scw{Are there some OPLSS notes from Amal Ahmed to also cite? Other modern textbooks?
-Does Aspinall and Hofmann's chapter of ATTAPL include a logical relation?}
+Does Aspinall and Hofmann's chapter of ATTAPL include a logical
+relation?}
+\yl{skorstengaard is from the OPLSS notes. Cited ATTAPL}
+\yl{Don't have a copy of }
 \scw{Seems like you should also mention POPLmark reloaded somehere too?}
- \citet{harperkripke} gives a gentle introduction on how
-logical relations for closed terms can be extended to talk about open
-terms so we can derive properties such as normalization for well-typed
-open terms. Overall, the introductory texts about logical relations
+\citet{pierce2004advanced}, \citet{harperkripke}, and \citet{abel2019poplmark} show how
+a Kripke-style logical relation can be used to include scoping
+information in the logical relation and
+derive properties such as the existence of normal form or strong
+normalization for open and closed terms in simply typed languages.
+Overall, the introductory texts about logical relations
 cover systems and properties with varying degrees of complexity, from
 simply typed to polymorphicly typed, logical predicate to logical
 equivalence, closed terms to open terms.
@@ -723,7 +727,7 @@ exactly the same as untyped $\beta$-equivalence.\scw{cite barendregt?}
 \begin{minipage}{0.9\textwidth}
 \drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
 \drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv,
-  Refl, J, If, Bool, True, False, Void}
+  Refl, Eq, J, If, Bool, True, False, Void}
 \end{minipage}
 \caption{Syntactic typing for \lang}
 \label{fig:typing}
@@ -735,7 +739,12 @@ admissible syntactically, though some of them are required to
 strengthen the inductive hypothesis of the fundamental theorem.
 \scw{Is the precondition for T-ABS really admissible? Isn't it required 
 to ensure predicativity? Have you proved it? Have you proved regularity?}
+\yl{I proved regularity. \Rref{T-Abs} is admissible if cumulativity
+  was formulated correctly (which wasn't the case in the version
+  of the paper you read). I revised \rref{T-Univ} so the premise is
+  not admissible }
 \scw{Do you have a formation rule for identity types?}
+\yl{Added}
 
 In \rref{T-Var}, $[[G i]]$ is the partial function defined
 with the equations $[[ (G ++ A)  0 ]] := [[A]]$ and $[[ (G ++ A) Suc

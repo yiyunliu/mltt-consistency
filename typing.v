@@ -61,11 +61,10 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   (* ----------- *)
   Wt Γ tBool (tUniv i)
 
-| T_Univ i j :
+| T_Univ i :
   Wff Γ ->
-  i < j ->
   (* ------------ *)
-  Wt Γ (tUniv i) (tUniv j)
+  Wt Γ (tUniv i) (tUniv (S i))
 
 | T_Refl a A:
   Wff Γ ->
@@ -89,6 +88,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   Wt Γ t (subst_tm (tRefl .: a ..) C) ->
   Wt Γ (tJ t a b p) (subst_tm (p .: b..) C)
   
+
 
 with Wff (Γ : context) : Prop :=
 | Wff_intro F :
