@@ -249,13 +249,34 @@ giving us a metatheoretic result almost as strong as the one from
 
 We present our definitions and proofs in set theory notation and
 terminology rather than in Coq syntax to make the material accessible
-to readers with general mathematical background. However, we make the
+to readers with general mathematical background. However, notation
+aside, the typeset representation is purposefully made to be closer to
+our mechanization so less massaging of the definitions is required to
+encode our proofs in a proof assistant.  The close correspondence
+between a typeset proof and a mechanized proof comes at the potential
+risk that the artifacts specific to theorem provers are reflected upon
+the presented proof. However, for proofs by logical relation for
+dependent types, we find our approach advantageous for a few
+reasons.
+First, unlike properties that are derivable through
+syntactic means, proof by logical relation is demanding on the
+strength of the metatheory. An informal proof that attempts to be
+agnostic or merely ambiguous about the underlying metatheory
+
+
+
+
+However, we make the
 typeset definitions as close as possible to our mechanization so the
 definitions and the proofs can be easily encoded in a proof
 assistant.
 We find the close correspondence
 between our typeset presentation and the Coq development advantageous
-for a couple of reasons.
+for a couple of reasons. First, compared to other proof techniques,
+such as the use of preservation and progress to derive syntactic
+soundness, defining a logical relation for a dependently typed
+language is demanding on the strength of the metatheory.
+
 
 
 % Depending on its application, we care about certain metatheoretic
