@@ -212,6 +212,52 @@ in under 1000 lines of code.
 \maketitle
 
 \section{Introduction}
+In this paper, we present a short and mechanized consistency proof by
+logical relation for \lang{}, a Martin-Löf style dependent type theory
+with large elimination, a full predicative universe hierarchy, an
+intensional identity type and a boolean base type, both of which
+equipped with dependent elimination forms. % The mechanization is
+% extremely short and involves less than 1000 lines of manually written
+% Coq code.
+
+Our goal is to show the fundamental technique required to carry out proof by logical
+relation in a dependently typed setting where logical relation can no
+longer be defined as a simple recursive function over the structure of
+types. Compared to the many mechanized proofs by logical relation for
+predicative dependent type
+theory~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards},
+whose proof developments range from 20,000 to 400,000 lines of code,
+our Coq development is the most lightweight at less than 1,000 lines.
+The big difference in the size of the developments does not
+necessarily imply that our proof technique leads to a more concise
+proof due to the differing expressiveness of the languages and the
+different metatheoretic results being established. For
+example, \citet{anand2014towards} mechanizes the metatheory of
+Nuprl~\citep{constable1986implementing}, which, on top of all the
+features that \lang{} supports, includes W-types and partial types and
+requires a PER semantics to model its extensional typed
+equality. The object language from \citet{decagda} does not support
+identity types and only has one predicative universe, but additionally
+supports $\Sigma$ types. However, for a researcher who wishes to learn
+the underlying techniques for mechanized logical relation for
+dependent type theory, a small development like ours is much easier to
+navigate and understand. Furthermore, we show how our simple
+consistency proof can be easily extended to show the existence of
+$\beta\eta$-normal form for well-typed open \emph{and} closed terms,
+giving us a metatheoretic result almost as strong as the one from
+\citet{decagda} at the moderate cost of around 500 lines of extra code.
+
+We present our definitions and proofs in set theory notation and
+terminology rather than in Coq syntax to make the material accessible
+to readers with general mathematical background. However, we make the
+typeset definitions as close as possible to our mechanization so the
+definitions and the proofs can be easily encoded in a proof
+assistant.
+We find the close correspondence
+between our typeset presentation and the Coq development advantageous
+for a couple of reasons.
+
+
 % Depending on its application, we care about certain metatheoretic
 % properties about a type system. As a programming language, we may care
 % about type soundness, which states that a well-typed never gets stuck
