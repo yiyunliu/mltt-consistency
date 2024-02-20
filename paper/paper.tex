@@ -568,8 +568,8 @@ contributions of the paper. }
                   & \mbox{boolean type, true, false} \\
             & |   & [[if a b0 b1]]
                   & \mbox{if} \\ \\
-\mathit{Renaming}\\
-[[xi]] & \in & [[SNat -> SNat]] & \\ \\
+% \mathit{Renaming}\\
+% [[xi]] & \in & [[SNat -> SNat]] & \\ \\
 \mathit{Substitution}\\
 [[rho]] & \in & [[SNat -> STm]] &
 \end{array}
@@ -632,62 +632,80 @@ The syntax of \lang can be found in Figure~\ref{fig:syntax}.
 \scw{Why so many metavariables for terms? Do you need $c$, $p$ and $t$?}
 We use
 the unscoped de Bruijn representation for both our Coq development and
-the informal presentation in our paper.  \scw{Give an overview of the figure}
+the informal presentation in our paper since it is more amenable to
+automation (Section~\ref{sec:automation}) and leaves no ambiguity
+about variable freeness conditions.
+
+ \scw{Give an overview of the figure}
 \scw{Define a convention that separates your use of natural numbers. Sometimes they
 are universe levels and sometimes they are de Bruijn indices. Better to have separate
 metavariables for each. (And it is possible to generalize universe levels to structures other than natural numbers. Ask Jonathan.}
-We find de Bruijn
-representation advantageous for specification since it leaves very
-little ambiguity about the variable freeness side
-conditions, making our proof more easily reproducible. Furthermore, as we discuss in
-Section~\ref{sec:automation}, de Bruijn representation is much more
-amenable to automated reasoning in proof assistants.
-We adopt from \citet{autosubst} the notations for simultaneous
-renaming, substitution, and other auxiliary definitions related to our
-syntax, summarized in Figure~\ref{fig:auxdef}.
+As a dependent type theory, terms and types are collapsed into the same
+syntactic category. The type $[[Set i]]$ represent universe
+types and $[[var n]]$ represent de Bruijn variables. While
+$[[i]],[[j]],$ and $[[n]]$ are all metavariables representing natural
+numbers, we always use $[[n]]$ to represent term variables that
+participate in substitution and $[[i]],[[j]]$ to represent universe levels.
+Dependent functions take the form $[[Pi A B]]$ and
+we use the notation $[[A -> B]]$ when the output type $[[B]]$ is not
+dependent on the input variable.
+Finally, we include in \lang{} the intensional identity type $[[a ~ b : A]]$ whose
+proofs can be eliminated by the J-eliminator $[[J t a b p]]$, where
+$[[p]]$ is an equality proof between $[[a]]$ and $[[b]]$, and $[[t]]$
+is the term whose type is to be casted.
+\scw{Example of what you can use identity types for? Or an example of
+a program that uses J?}
+
+% We find de Bruijn
+% representation advantageous for specification since it leaves very
+% little ambiguity about the variable freeness side
+% conditions, making our proof more easily reproducible. Furthermore, as we discuss in
+% Section~\ref{sec:automation}, de Bruijn representation is much more
+% amenable to automated reasoning in proof assistants.
+
 \scw{Need to explain the notations in the text. What are these operations?
 What do readers need to understand about them? Help me understand the figure}
 \scw{As this is a tutorial paper, you'll need to explain more about how de Bruijn
 indices work.}
-We omit most of the
-definitions of renaming and substitution and only show the definition
-of a few representative cases of substitution.
+% We omit most of the
+% definitions of renaming and substitution and only show the definition
+% of a few representative cases of substitution.
 \begin{figure}[ht]
   \begin{equation*}
     \begin{split}
       \begin{array}{lll}
-        \mathit{IdentityRen} \\
-        [[id i]] & := & [[i]] \\ \\
+        % \mathit{IdentityRen} \\
+        % [[id i]] & := & [[i]] \\ \\
         \mathit{IdentityTm} \\
-        [[idtm i]] & := & [[var i]] \\ \\
-        \mathit{ConsRen ([[xi .: n]])} \\
-        ([[xi .: n]])([[0]]) & := & [[n]] \\
-        ([[xi .: n]])([[Suc i]]) & := & [[xi i]] \\ \\
+        [[idtm n]] & := & [[var n]] \\ \\
+        % \mathit{ConsRen ([[xi .: n]])} \\
+        % ([[xi .: n]])([[0]]) & := & [[n]] \\
+        % ([[xi .: n]])([[Suc i]]) & := & [[xi i]] \\ \\
         \mathit{ConsSubst ([[rho .: a]])} \\
         ([[rho .: a]])([[0]]) & := & [[a]] \\
         ([[rho .: a]])([[Suc i]]) & := & [[rho i]] \\ \\
         \mathit{Curried\ Add} \\
-        [[up n i]] & := & [[n]] + [[i]]
+        [[up n i]] & := & \ottkw{v}_{[[n]] + [[i]]}
       \end{array}
     \end{split}
     \qquad \qquad
     \begin{split}
       \begin{array}{lll}
-        \mathit{UpRen} \\
-        [[( up xi ) 0]] & := & [[0]] \\
-        [[( up xi ) Suc i]] & := & [[ Suc ren xi i ]] \\ \\
-        \mathit{Renaming ([[a < xi >]])} \\
-        [[(Pi A B) < xi >]] & := & [[Pi A < xi > B < up xi >]] \\
-        [[(a b) < xi >]] & := & [[a < xi > (# b < xi > #)]] \\
-        \ldots \\ \\
-        \mathit{UpTm \scw{shifting? lifting?}} \\
+        % \mathit{UpRen} \\
+        % [[( up xi ) 0]] & := & [[0]] \\
+        % [[( up xi ) Suc i]] & := & [[ Suc ren xi i ]] \\ \\
+        % \mathit{Renaming ([[a < xi >]])} \\
+        % [[(Pi A B) < xi >]] & := & [[Pi A < xi > B < up xi >]] \\
+        % [[(a b) < xi >]] & := & [[a < xi > (# b < xi > #)]] \\
+        % \ldots \\ \\
+        \mathit{Lifting} \\
         [[( up rho ) 0]] & := & [[var 0]] \\
         [[( up rho ) Suc i]] & := & [[ rho i < up 1 > ]] \\ \\
         \mathit{Substitution ([[ a { rho }  ]])} \\
         [[var i { rho }  ]] & := &  [[rho i]] \\
         [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
         [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
-        && \fbox{ \scw{case for $\lambda$ } } \\
+        [[(\ a) { rho }]] & := & [[\ (a { up rho })]] \\
         \ldots
       \end{array}
     \end{split}
@@ -708,26 +726,41 @@ of a few representative cases of substitution.
 % Figure~\ref{fig:auxdef} shows the auxiliary definitions over the term
 % syntax, including renaming, substitution, and operations over
 % the typing context or substitution.
-As a
-dependent type theory, terms and types are collapsed into the same
-syntactic category. Dependent functions take the form $[[Pi A B]]$ and
-we use the notation $[[A -> B]]$ when the output type $[[B]]$ is not
-dependent on the input variable. $[[Set i]]$ represents the universe
-type where $[[i]]$ ranges over the set of natural numbers.
- Finally,
-\lang\scw{Don't begin a sentence with a symbol} also includes an intensional identity type $[[a ~ b : A]]$ whose
-proofs can be eliminated by the J-eliminator $[[J t a b p]]$, where
-$[[p]]$ is an equality proof between $[[a]]$ and $[[b]]$, and $[[t]]$
-is the term whose type is to be casted.
-\scw{Example of what you can use identity types for? Or an example of
-a program that uses J?}
 
-\lang is expressive enough to support large
+The \lang language is expressive enough to support large
 eliminations, the ability to compute a type using a term as input. For
 example, the function $[[\ Bool if var 0 Bool Bool -> Bool]]$ returns
 either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
 is $[[true]]$ or $[[false]]$.
 
+We adapt from \citet{autosubst2} the notations for simultaneous
+renaming, substitution, and other auxiliary definitions used in
+our paper, summarized in Figure~\ref{fig:auxdef}. We need those
+definitions to specify the reduction relation and the typing relation
+for \lang{}. The metavariable $[[rho]]$ represents substitutions,
+mappings from de Bruijn indices to terms.
+One example of a substitution is
+the function $\ottkw{id}_{tm}$, which takes a de Bruijn index directly
+injects it as a term variable. The $\uparrow^{[[n]]}$ operator is
+more general and adds $[[n]]$ to the index before injecting it as a
+term. The $[[(rho .: a)]]$ operation allows us to extend a substitution
+$[[rho]]$ with an extra element $[[a]]$; the extended substitution maps the variable
+$[[var 0]]$ to $[[a]]$ and variables $[[var Suc i]]$ to $[[rho i]]$.
+
+The substitution operator, which takes the form $[[a {rho}]]$,
+traverses the syntax of $[[a]]$ and replaces each variable $[[var i]]$
+with the term $[[rho i]]$. When traversing under binders (e.g. in the
+$[[(\ a) { rho }]]$ case), the $\Uparrow$ operator prevents $[[var
+0]]$, the bound variable, from being replaced by
+$[[rho]]$. From the definition of $[[up rho]]$, we see that it keeps
+$[[var 0]]$ unchanged during substitution and replaces each $[[var
+Suc i]]$ with $[[rho i {up 1}]]$. The extra shifting with $[[up 1]]$
+is required so the variables in terms from the codomain of $[[rho]]$ skip over
+the newly introduced binder to refer to the correct binding
+location. The substitution operator is referred to as simultaneous
+substitution as it substitutes all variables at once. It is possible
+to recover single substitution by composing the extension operator and
+the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$.
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
