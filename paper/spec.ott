@@ -347,9 +347,9 @@ defn
 G |-  Set i : Set ( Suc i )
 
 |- G
-i < | G |
+n < | G |
 --------------------------------------------- :: Var
-G |- var i : G i < up Suc i >
+G |- var n : G n < up Suc n >
 
 %% functions
 

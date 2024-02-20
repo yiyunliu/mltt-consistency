@@ -228,6 +228,7 @@ predicative dependent type
 theory~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards},
 whose proof developments range from 20,000 to 400,000 lines of code,
 our Coq development is the most lightweight at less than 1,000 lines.
+
 The big difference in the size of the developments does not
 necessarily imply that our proof technique leads to a more concise
 proof due to the differing expressiveness of the languages and the
@@ -249,196 +250,245 @@ giving us a metatheoretic result almost as strong as the one from
 
 We present our definitions and proofs in set theory notation and
 terminology rather than in Coq syntax to make the material accessible
-to readers with general mathematical background. However, notation
-aside, the typeset representation is purposefully made to be closer to
-our mechanization so less massaging of the definitions is required to
-encode our proofs in a proof assistant.  The close correspondence
-between a typeset proof and a mechanized proof comes at the potential
-risk that the artifacts specific to theorem provers are reflected upon
-the presented proof. However, for proofs by logical relation for
-dependent types, we find our approach advantageous for a few
-reasons.
+to readers with general mathematical background.
+However, notation aside, the typeset representation is
+purposefully made to be closer to our mechanization so less massaging
+of the definitions is required to encode our proofs in a proof
+assistant.
+The close correspondence between a typeset proof and a mechanized
+proof comes at the potential risk that the artifacts specific to
+theorem provers may become visible in the presented proof.
+However, for proofs by logical relation for
+dependent types, we find our approach advantageous for a few reasons.
 First, unlike properties that are derivable through
 syntactic means, proof by logical relation is demanding on the
 strength of the metatheory. An informal proof that attempts to be
-agnostic or merely ambiguous about the underlying metatheory
-
-
-
-
-However, we make the
-typeset definitions as close as possible to our mechanization so the
-definitions and the proofs can be easily encoded in a proof
-assistant.
-We find the close correspondence
-between our typeset presentation and the Coq development advantageous
-for a couple of reasons. First, compared to other proof techniques,
-such as the use of preservation and progress to derive syntactic
-soundness, defining a logical relation for a dependently typed
-language is demanding on the strength of the metatheory.
-
-
-
-% Depending on its application, we care about certain metatheoretic
-% properties about a type system. As a programming language, we may care
-% about type soundness, which states that a well-typed never gets stuck
-% during evaluation.
-When a dependently type system is used as a program logic where terms
-encode proofs, we want our type system to be logically consistent,
-meaning that the empty type is not inhabited.
-
-The consistency proofs of various dependently typed systems, including Martin-Lof's
-type theory and the Calculus of Constructions, have long been
-available in the literature. In particular, recent works such as \citet{nbeincoq},
-\citet{decagda}, and \citet{martin-lof-a-la-coq} mechanize the
-correctness of the NbE algorithm, the decidability of type
-conversion, decidability of type
-checking respectively for dependently typed systems. From these
-properties, consistency can be derived as a corollary.
-
-The underlying technique of the forementioned
-works is proof by logical relation,
-which involves interpreting types as reducibility predicates,
-representing sets of terms satisfying certain properties with respect
-to the reduction relation. While the proof technique and the
-consistency result for dependent types are both well-established,
-there is a lack of rigorous and accessible material that shows
-how proof by logical relation can be applied to dependently typed
-systems.
-\scw{You are choosing to focus on mechanized logical relations proofs for
-dependent type theories, not consistency proofs for dependent type theories.
-Why? (And your title shuld match}
-
-
-Introductory materials about logical relations or standard textbooks such as
-\citet{skorstengaard2019introduction}, \citet{harper2016practical},
-and \citet{pierce2002types}
-talk about logical relations for simply or polymorphically typed
-languages, proving results such as termination for closed terms and parametricity.
-\scw{Are there some OPLSS notes from Amal Ahmed to also cite? Other modern textbooks?
-Does Aspinall and Hofmann's chapter of ATTAPL include a logical
-relation?}
-\yl{skorstengaard is from the OPLSS notes. Cited ATTAPL}
-\yl{Don't have a copy of }
-\scw{Seems like you should also mention POPLmark reloaded somehere too?}
-\citet{pierce2004advanced}, \citet{harperkripke}, and \citet{abel2019poplmark} show how
-a Kripke-style logical relation can be used to include scoping
-information in the logical relation and
-derive properties such as the existence of normal form or strong
-normalization for open and closed terms in simply typed languages.
-Overall, the introductory texts about logical relations
-cover systems and properties with varying degrees of complexity, from
-simply typed to polymorphicly typed, logical predicate to logical
-equivalence, closed terms to open terms.
-
-The glaring gap here is the
-lack of fully dependently typed systems where computations may appear
-at the type-level. It is far from obvious why proof by
-logical relation is even applicable to dependent types, since the type
-may very well-be a computation that is yet to be evaluated.
-While it is assuring that proof by logical relations for dependent
-types is available in mechanized forms, % the key to address the
-% complexities of dependent types is obscured in
-\citet{nbeincoq,decagda,martin-lof-a-la-coq} all involve relational,
-Kripke-style models that obscure the technique for addressing
-type-level computation. The added complexivity is evident
-from the size of their code base. All three developments involve 20
-thousand to 30 thousand lines of Coq or Agda code.
-
-The goal of this paper is to give a tutorial on proof by logical relation for
-dependent types in a simple and digestable format. \scw{This sentence should come as
-early as possible.} Dependently typed systems comes in many flavors and
-vary greatly in their expressiveness.
-In Section~\ref{sec:spec}, we introduce \lang{}, a dependently typed
-language that is small but relatively complete in features \scw{list these features explicitly:
-large eliminations, indexed types, others? \ldots} related to
-dependently types, including large elimination, a full universe
-hierarchy, an intensional identity type and a boolean base type, both
-of which are equipped with dependent elimination forms (e.g. J eliminator
-for the identity type). In particular, the inclusion of identity
-types, which is absent from \citet{decagda}, \citet{nbeincoq},
-helps demonstrate how indexed types are handled when defining the
-logical relation.
-
-% We choose boolean
-% types over natural numbers as our base type for simplicity, but include an
-% intensional identity type in our type system to show how indexed
-% types are treated in a logical relational proof. \scw{Talk about
-% identity type first.} Unlike
-% \citet{nbeincoq,decagda,martin-lof-a-la-coq} but similar to
-% \citet{anand2014towards}, we include an infinite hierarchy of
-% universes to not only support type-level computations, but also avoid
-% the unnecessary code duplication pointed out by \citet{nbeincoq} when
-% big and small types are treated non-uniformly.
-In Section~\ref{sec:logreldep}, we give the definition of our logical
-relation as an inductively defined relation. We first show that the
-logical relation respects evaluation (referred to as the irrelevance
-property in \citet{martin-lof-a-la-coq}), then proceed to
-prove that the logical relation corresponds to a partial function in
-the sense that the each type has a unique interpretation if there
-exists one.
-
-In Section~\ref{sec:logrelproof}, we use the standard technique that
-is commonly seen in ...
-
-Our consistency proof is short and fully mechanized. The proof scripts
-involve less than 1000 lines of manually written Coq code. In fact, what we find
-encouraging is that among the 1000
-lines of Coq code, 400 lines are related to the specification of the
-type system, semantics, and properties related to untyped lambda
-terms. The semantic type soundness proof through logical relation
-takes almost the same amount of code as our syntactic type soundness
-proof!
-Thanks to the conciseness of
-the proof, we are able to present it in detail in
-Sections~\ref{sec:logreldep} and \ref{sec:logrelproof}. Moreover, the
-structure of our mechanization closely corresponds to the proof we
-present in the text, enabling us to label at the footnote each lemma
+agnostic or ambiguous about the underlying metatheory % may struggle to even
+% convey the validity of their definition and
+requires substantial
+effort from the reader to even understand whether it is theoretically
+possible to encode such proofs in a proof assistant.
+Second, while a proof assistant may reject perfectly valid
+definitions, it helps us keep our definition precise and
+unambiguous. A precise definition is crucial as the reasoning
+principles we are allowed to use is directly tied to the definition,
+which is sometimes obscured by concise notations that diverge too far
+from a formal proof.
+Finally, our approach does not result in a verbose proof on paper, thanks to
+the already short mechanization. On top of that, We make conservative
+simplifications to our typeset proof such as avoiding the clunky
+syntax for well-founded recursion in Coq, but we keep the overall
+structure of our typeset proofs consistent with our mechanization.
+The consistency enables us to label at the footnote each lemma
 directly to their counterpart in the proof script for the readers to
 reference and validate.
 
-The technique we use is most similar to the one from \citet{nbeincoq},
-which leverages impredicativity to define the logical
-relation as a partial function.
-Rather than framing impredicativity as a
-mechanism for encoding induction
-recursion~\citep{induction-recursion-dybjer}, a scheme in which
-semantic models (including logical relations) for dependent types can
-be defined, we opt for a direct explanation through the informal
-language of sets, where impredicativity manifests in the form of
-second-order logical formulas and thus more intuitive to grasp
-for readers with a general mathematical background.
+In Section~\ref{sec:spec}, we introduce \lang{}, the object language
+of interest, and establish some elementary properties about parallel
+reduction, which will be used as the equational theory of our language
+and play a central role in defining our logical relation. The design
+of \lang{} is reminiscent of Martin-Löf style predicatvie type
+systems. The untyped conversion rule of \lang{} is inspired by Pure
+Type Systems~\citet{barendregt1991introduction}, though we discuss how
+our proof can be easily adjusted for systems with typed judgmental
+equality.  We design \lang{} to incorporate some of the most common
+features of dependent type theory, including an intensional identity
+type, a boolean type, large elimination, dependent elimination, and a
+full universe hierarchy. We believe a good coverage of features will
+make our proof applicable to a broad range of type systems.
 
-In Section~\ref{sec:extension}, \scw{what about sections 2-4?}
- we extend our logical
-relation to prove the stronger property that every well-typed term
-has a normal form. Most interestingly, we find that extending the
-language with
-$\eta$ rule for functions and the metatheoretic result to normalization for open terms are
-mostly orthogonal to the fact that the language is dependently
-typed. In our mechanized proof, the overall
-structure of the logical relation remains unchanged, and the additional
-proof obligations are mostly related to properties about the untyped
-lambda calculus, all of which can be derived through syntactic
-means.
-In other words, once we have established the base technique for
-proof by logical relation for dependent types, we can factor out the
-complexities of an extension the are not specifically related to dependent
-types; such an extension, if desired, may be studied in the context of
-a simply typed language and later ported into a dependently typed setting.
+In Section~\ref{sec:logreldep}, we formulate the consistency property
+and motivate why proof by logical relation is needed to derive it.
+We define our logical relation as an inductively defined relation. We first
+show that the logical relation respects evaluation (referred to as the
+irrelevance property in \citet{martin-lof-a-la-coq}), then proceed to
+prove that the logical relation is a partial function; that is, each
+type can have at most one unique interpretation.
+
+In Section~\ref{sec:logrelproof}, we give the definition of semantic
+typing in terms of our logical relation so we can state and prove the
+fundamental theorem, which states that syntactic typing implies
+semantic typing, from which consistency follows as a corollary.
+
+In Section~\ref{sec:extension}, we extend our logical relation to
+prove the stronger property that every well-typed term has a
+$\beta\eta$-normal form. After laying the foundation for handling
+type-level computation in Section~\ref{sec:logreldep}, the extension
+to include open terms in the logical relation requries mechanical
+changes that directly mirrors the same extension for a simply typed
+language. We use this extension to demonstrate the idea that once we
+have established the base technique for proof by logical relation for
+dependent types, we can factor out the complexities of an extension
+the are not specifically related to dependent types; such an
+extension, if desired, may be studied in the context of a simply typed
+language and later ported into a dependently typed setting. We believe
+it is possible to extend our logical relation to a Kripke-style and
+relational model in a similar fashion.
 
 In Section~\ref{sec:logrelmech}, we discuss the details about our
 mechanization, including our use of existing libraries such as
-Autosubst 2~\citep{autosubst2} for handling bindings and CoqHammer~\citep{czajka2018hammer} for general-purpose
-automation.
-In Section~\ref{sec:relatedwork}, we discuss how our proof
-relates to existing proofs by logical relations for dependent types in
-the literature.
+Autosubst 2~\citep{autosubst2} for handling bindings and
+CoqHammer~\citep{czajka2018hammer} for general-purpose automation.
+
+In Section~\ref{sec:relatedwork}, we discuss how our proof relates to
+existing proofs by logical relations and other proof techniques for
+proving consistency and normalization.
 
 We hope our success at creating a short and mechanized proof for a
 relatively feature-complete language will encourage future researchers
 to leverage the tool of logical relation more often in mechanized
 proofs for dependent types.
+% % For
+% % example, \citet{geuvers1994short} requires impredicativity to encode
+% % Calculus of Constructions, an impredicative dependent type theory, but
+% % also relies on the classification property to define the logical
+% % relation over well-formed types and kinds. Their simple
+% % presentation of the logical relation as an inductively defined
+% % function over types, reminiscent of logical relations for simply typed
+% % languages,
+
+
+
+
+
+
+
+
+% However, we make the
+% typeset definitions as close as possible to our mechanization so the
+% definitions and the proofs can be easily encoded in a proof
+% assistant.
+% We find the close correspondence
+% between our typeset presentation and the Coq development advantageous
+% for a couple of reasons. First, compared to other proof techniques,
+% such as the use of preservation and progress to derive syntactic
+% soundness, defining a logical relation for a dependently typed
+% language is demanding on the strength of the metatheory.
+
+
+
+% % Depending on its application, we care about certain metatheoretic
+% % properties about a type system. As a programming language, we may care
+% % about type soundness, which states that a well-typed never gets stuck
+% % during evaluation.
+% When a dependently type system is used as a program logic where terms
+% encode proofs, we want our type system to be logically consistent,
+% meaning that the empty type is not inhabited.
+
+% The consistency proofs of various dependently typed systems, including Martin-Lof's
+% type theory and the Calculus of Constructions, have long been
+% available in the literature. In particular, recent works such as \citet{nbeincoq},
+% \citet{decagda}, and \citet{martin-lof-a-la-coq} mechanize the
+% correctness of the NbE algorithm, the decidability of type
+% conversion, decidability of type
+% checking respectively for dependently typed systems. From these
+% properties, consistency can be derived as a corollary.
+
+% The underlying technique of the forementioned
+% works is proof by logical relation,
+% which involves interpreting types as reducibility predicates,
+% representing sets of terms satisfying certain properties with respect
+% to the reduction relation. While the proof technique and the
+% consistency result for dependent types are both well-established,
+% there is a lack of rigorous and accessible material that shows
+% how proof by logical relation can be applied to dependently typed
+% systems.
+% \scw{You are choosing to focus on mechanized logical relations proofs for
+% dependent type theories, not consistency proofs for dependent type theories.
+% Why? (And your title shuld match}
+
+
+% Introductory materials about logical relations or standard textbooks such as
+% \citet{skorstengaard2019introduction}, \citet{harper2016practical},
+% and \citet{pierce2002types}
+% talk about logical relations for simply or polymorphically typed
+% languages, proving results such as termination for closed terms and parametricity.
+% \scw{Are there some OPLSS notes from Amal Ahmed to also cite? Other modern textbooks?
+% Does Aspinall and Hofmann's chapter of ATTAPL include a logical
+% relation?}
+% \yl{skorstengaard is from the OPLSS notes. Cited ATTAPL}
+% \yl{Don't have a copy of }
+% \scw{Seems like you should also mention POPLmark reloaded somehere too?}
+% \citet{pierce2004advanced}, \citet{harperkripke}, and \citet{abel2019poplmark} show how
+% a Kripke-style logical relation can be used to include scoping
+% information in the logical relation and
+% derive properties such as the existence of normal form or strong
+% normalization for open and closed terms in simply typed languages.
+% Overall, the introductory texts about logical relations
+% cover systems and properties with varying degrees of complexity, from
+% simply typed to polymorphicly typed, logical predicate to logical
+% equivalence, closed terms to open terms.
+
+% The glaring gap here is the
+% lack of fully dependently typed systems where computations may appear
+% at the type-level. It is far from obvious why proof by
+% logical relation is even applicable to dependent types, since the type
+% may very well-be a computation that is yet to be evaluated.
+% While it is assuring that proof by logical relations for dependent
+% types is available in mechanized forms, % the key to address the
+% % complexities of dependent types is obscured in
+% \citet{nbeincoq,decagda,martin-lof-a-la-coq} all involve relational,
+% Kripke-style models that obscure the technique for addressing
+% type-level computation. The added complexivity is evident
+% from the size of their code base. All three developments involve 20
+% thousand to 30 thousand lines of Coq or Agda code.
+
+% The goal of this paper is to give a tutorial on proof by logical relation for
+% dependent types in a simple and digestable format. \scw{This sentence should come as
+% early as possible.} Dependently typed systems comes in many flavors and
+% vary greatly in their expressiveness.
+% In Section~\ref{sec:spec}, we introduce \lang{}, a dependently typed
+% language that is small but relatively complete in features \scw{list these features explicitly:
+% large eliminations, indexed types, others? \ldots} related to
+% dependently types, including large elimination, a full universe
+% hierarchy, an intensional identity type and a boolean base type, both
+% of which are equipped with dependent elimination forms (e.g. J eliminator
+% for the identity type). In particular, the inclusion of identity
+% types, which is absent from \citet{decagda}, \citet{nbeincoq},
+% helps demonstrate how indexed types are handled when defining the
+% logical relation.
+
+% % We choose boolean
+% % types over natural numbers as our base type for simplicity, but include an
+% % intensional identity type in our type system to show how indexed
+% % types are treated in a logical relational proof. \scw{Talk about
+% % identity type first.} Unlike
+% % \citet{nbeincoq,decagda,martin-lof-a-la-coq} but similar to
+% % \citet{anand2014towards}, we include an infinite hierarchy of
+% % universes to not only support type-level computations, but also avoid
+% % the unnecessary code duplication pointed out by \citet{nbeincoq} when
+% % big and small types are treated non-uniformly.
+
+% In Section~\ref{sec:logrelproof}, we use the standard technique that
+% is commonly seen in ...
+
+% Our consistency proof is short and fully mechanized. The proof scripts
+% involve less than 1000 lines of manually written Coq code. In fact, what we find
+% encouraging is that among the 1000
+% lines of Coq code, 400 lines are related to the specification of the
+% type system, semantics, and properties related to untyped lambda
+% terms. The semantic type soundness proof through logical relation
+% takes almost the same amount of code as our syntactic type soundness
+% proof!
+% Thanks to the conciseness of
+% the proof, we are able to present it in detail in
+% Sections~\ref{sec:logreldep} and \ref{sec:logrelproof}. Moreover, the
+% structure of our mechanization closely corresponds to the proof we
+% present in the text, enabling us to label at the footnote each lemma
+% directly to their counterpart in the proof script for the readers to
+% reference and validate.
+
+% The technique we use is most similar to the one from \citet{nbeincoq},
+% which leverages impredicativity to define the logical
+% relation as a partial function.
+% Rather than framing impredicativity as a
+% mechanism for encoding induction
+% recursion~\citep{induction-recursion-dybjer}, a scheme in which
+% semantic models (including logical relations) for dependent types can
+% be defined, we opt for a direct explanation through the informal
+% language of sets, where impredicativity manifests in the form of
+% second-order logical formulas and thus more intuitive to grasp
+% for readers with a general mathematical background.
 
 % A naive attempt at proving consistency through induction over the
 % typing derivation would fail since the inductive hypothesis is not
@@ -508,7 +558,7 @@ contributions of the paper. }
 \mathit{Contexts}\\
 [[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
 \mathit{Terms}\\
-[[a]],[[b]],[[c]],[[t]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[var i]]\  |\ [[Void]]
+[[a]],[[b]],[[t]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[var n]]\  |\ [[Void]]
                   & \mbox{universes, variables, empty type} \\
             & |   & [[Pi A B]]\ |\ [[\ A a]]\ |\ [[a b]]
                   & \mbox{function types, abstractions, applications} \\
