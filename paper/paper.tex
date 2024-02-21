@@ -1084,10 +1084,9 @@ theorem, we will be able to derive consistency as a corollary.
 The logical relation for \lang{}, which takes the form $[[Interp I i A
 S]]$, is defined as an inductively generated relation (Figure~\ref{fig:logrel}).
 % The logical relation takes the form $[[Interp I i A S]]$.
-Themetavariables $[[A]]$ and $[[i]]$ stand for terms and natural
+Metavariables $[[A]]$ and $[[i]]$ stand for terms and natural
 numbers respectively, as introduced earlier in
 Figure~\ref{fig:syntax}.
-Throughout the text, we use the notation $[[PowerSet S]]$ denotes the powerset of the set $[[S]]$.
 \scw{Many introductory texts define the relation as a recursive function
 over type structure, or step-indices. You use an inductive relation instead, why?}
 \scw{Can we view this inductive relation as the graph of the partial function
@@ -1108,20 +1107,19 @@ sets with the following signatures.
     [[S]] &\in [[PowerSet STm]]
   \end{split}
 \end{equation*}
+The notation $[[PowerSet STm]]$ denotes the powerset of the set of
+\lang{} terms.
 The function $[[I]]$ is a family of sets of terms indexed by
 natural numbers strictly less than the parameter $[[i]]$, which
 represents the current universe level.  In \rref{I-Set}, function
 $[[I]]$ is used to define the meaning of
 universes that are strictly smaller than the current level $[[i]]$. The
 restriction $[[j < i]]$ in \rref{I-Set} is crucial for our system to
-be predicative. Removing the ordering constraint would result in a
-system where one can encode Girard's paradox~\citep{girard-thesis}.
-\scw{Spell this out a bit more about what goes wrong. Where does the
-proof break? Also spell out how this enforces predicativity.}
+be predicative and we will explain the reason shortly.
 
 To tie the knot and obtain an interpretation of all universe levels,
 we define in Figure~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
-using the well-foundedness of the strict less than relation on natural
+using the well-foundedness of $<$ relation on natural
 numbers (recall that
 the parameter $[[I]]$ of $[[Interp I i A S]]$ takes only natural
 numbers strictly less than $[[i]]$ as its input).
@@ -1135,10 +1133,19 @@ $[[S]]$.
 \end{equation*}
 \caption{Logical relation for all universe levels}
 \label{fig:logrelrec}
-\scw{I didn't understand this figure without reading the text below.}
 \end{figure}
+The definition of in Figure~\ref{fig:logrelrec} explains how the $[[j
+< i]]$ constraint in \rref{I-Set} makes our system predicative; the
+interpretation of the $[[i]]_{th}$ universe is only dependent on
+universes at strictly lower than $[[i]]$, which have been defined earlier.
+Removing the ordering constraint would result in a
+system where one can encode Girard's
+paradox~\citep{girard-thesis}. Our proof would no longer work with the
+restriction removed since the definition of $[[InterpR i A S]]$ would
+not be well-founded when $[[Interp I i A S]]$ calls $[[I]]$ on
+universe levels greater than or equal to $[[i]]$, which are yet to be defined.
 
-With the definition from Figure~\ref{fig:logrelrec}, we can
+By unfolding the definition in Figure~\ref{fig:logrelrec}, we
 show that the same introduction rules for $[[Interp I i A S]]$ are
 admissible for $[[InterpR i A S]]$, by
 instantiating $[[I]]$ with $[[I i]] := [[{A | exists S , InterpR i A
@@ -1247,35 +1254,38 @@ Lemma~\ref{lemma:piintroalt}, we show the admissibility of
 introduction rule for the rest of our proofs.
 
 
-In the rest of the section, we establish some important facts about
-the logical relation that will be useful for proving fundamental theorem
-in Section~\ref{sec:logrelproof}.
+In the rest of the section, we prove four important facts about
+our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
+functionality (Lemma~\ref{lemma:logreldeter}), cumulativity
+(Lemma~\ref{lemma:logrelcumulativity}), and the backward closure
+property (Lemma~\ref{lemma:logrelNbackclos}).
 
-The relation $[[Interp I i A S]]$ satisfies the following inversion
-principles.\scw{Put footnotes on lemma name, or on (1), (2), etc}
+First, we prove a family of simple properties, which we refer to as
+inversion principles for our logical relation. Given $[[Interp I i A
+S]]$ where $[[A]]$ is in some head form such as $[[Bool]]$ or $[[Pi A0
+B0]]$, the inversion lemma allows us to say something about the set
+$[[S]]$. Its proof is simple, but we sketch out the case for
+functions to help readers confirm their understanding of \rref{I-Pi}.
 \begin{lemma}[Inversion of the logical relation]
   \label{lemma:interpinv}\leavevmode
   \begin{enumerate}
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Void\_inv}} If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Bool\_inv}} If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
-  \item If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}}
-  \item If $[[Interp I i Pi A B S0]]$, then there exists $[[S]],[[F]]$ such that:\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}}
+  \item\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}} If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
+  \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}} If $[[Interp I i Pi A B S0]]$, then there exists $[[S]],[[F]]$ such that:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
     \item $[[S0 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
-  \item If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.\footnote{\dotv{semtyping.v}{InterpExt\_Univ\_inv}}
+  \item\footnote{\dotv{semtyping.v}{InterpExt\_Univ\_inv}} If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
   \end{enumerate}
 \end{lemma}
 \begin{proof}
-  \scw{Why is this proof interesting and worth typesetting? Should
-    it be in an appendix so that it doesn't interrupt the flow of
-    reading?}
-  We only show the most involved function case; the rest follows a
-  similar but simpler pattern. We start by
-  inducting over the derivation of $[[Interp I i Pi A B S]]$. There
+  As mentioned earlier, we only show the inversion property for the
+  function type.
+  We start by inducting over the derivation of $[[Interp I i Pi A B S]]$. There
   are only two possible cases we need to consider.
   \begin{description}
   \item[\Rref{I-Pi}:] Immediate.
@@ -1290,7 +1300,7 @@ principles.\scw{Put footnotes on lemma name, or on (1), (2), etc}
     \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
     \item $[[S0 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
-    By inverting $[[Pi A B => Pi A0 B0]]$, we derive $[[A => A0]]$ and
+    By inverting the derivation of $[[Pi A B => Pi A0 B0]]$, we derive $[[A => A0]]$ and
     $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a} => B0 {a} ]]$ for all
     $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
     $[[F]]$ satisfies the following properties:
@@ -1299,13 +1309,14 @@ principles.\scw{Put footnotes on lemma name, or on (1), (2), etc}
     \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
     \end{itemize}
-    These properties are exactly what's\scw{avoid contractions} required in the conclusion.
+    These properties are exactly the ones from the conclusion.
   \end{description}
 \end{proof}
 
 \Rref{I-Red} bakes into the logical relation the backward preservation
-property. The following property shows that preservation holds in the
-usual forward direction too.
+property. That is, given $[[Interp I i A S]]$, if $[[B =>+ A]]$, then
+$[[Interp I i B S]]$ also holds. The following property shows that
+preservation holds in the usual forward direction too.
 \begin{lemma}[Preservation of the logical relation\footnote{\dotv{semtyping.v}{InterpExt\_preservation}}]
   \label{lemma:interppreservation}
   If $[[Interp I i A S]]$ and $[[A => B]]$, then $[[Interp I i B S]]$.
@@ -2476,6 +2487,64 @@ equality is based on joinability of parallel reduction?}
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{refs}
 
+\appendix
+
+\subsection{More detailed proofs}
+\begin{lemma}[Preservation of the logical relation]
+  If $[[Interp I i A S]]$ and $[[A => B]]$, then $[[Interp I i B S]]$.
+\end{lemma}
+\begin{proof}
+  We carry out the proof by induction over the derivation of $[[Interp
+  I i A S]]$.
+  \begin{description}
+  \item[\Rref{I-Void}:] There exists some $[[B]]$ such that $[[Void =>
+    B]]$. By inverting the derivation of $[[Void => B]]$, $[[B]]$ must
+    be $[[Void]]$ and the result trivially follows.
+  \item[\Rref{I-Bool, I-Set}:] Similar to the case for \rref{I-Void}.
+  \item[\Rref{I-Eq}:] We know that $[[Interp I i a ~ b : A { p | p =>+
+      refl , a <=> b  }]]$ and, by inverting the derivation of
+    parallel reduction, $[[a => a0]]$, $[[b => b0]]$, $[[A => A0]]$
+    for some $[[a0]]$, $[[b0]]$, and $[[A0]]$. Our goal is to show
+    that $[[Interp I i a0 ~ b0 : A {p | p =>+ refl, a <=> b}]]$. By
+    \rref{I-Eq}, we already know that $[[Interp I i a0 ~ b0 : A {p | p
+      =>+ refl, a0 <=> b0}]]$ and therefore it suffices to show that
+    the sets $[[{p | p =>+ refl, a <=> b}]]$ and $[[{p | p =>+ refl,
+      a0 <=> b0}]]$ are equal. Equivalently, it suffices to show that
+    $[[a <=> b]]$ if and only if $[[a0 <=> b0]]$. By definition, from
+    $[[a => a0]]$ and $[[b => b0]]$, we derive $[[a <=> a0]]$ and $[[b
+    <=> b0]]$. The result then immediately follows from the fact that
+    coherence is an equivalence relation.
+  \item[\Rref{I-Pi}:] There exists $[[S]]$ and $[[F]]$
+    such that:
+    \begin{itemize}
+    \item $[[Interp I i Pi A B { b | forall a, (# a in S implies b a in F
+        a #) }]]$
+    \item $[[Interp I i A S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+    \end{itemize}
+    There exists some $[[A0]]$ and $[[B0]]$ such that $[[A => A0]]$ and
+    $[[B => B0]]$. Our goal is to show that $[[Interp I i Pi A0 B0 { b | forall a, (# a in S implies b a in F
+      a #) }]]$. By \rref{I-Pi}, it suffices to show:
+    \begin{itemize}
+    \item $[[Interp I i A0 S ]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
+    \end{itemize}
+    Since $[[A => A0]]$ and $[[B {a} => B0 {a}]]$ forall $[[a]]$, the
+    latter of which follows from Lemma~\ref{lemma:parsubst}, the above
+    conditions follow immediately from the induction hypothesis.
+  \item[\Rref{I-Red}:] There exists $[[B0]]$ and $[[S]]$ such that $[[A => B0]]$ and
+    $[[Interp I i B0 S]]$. Given an arbitrary $[[B]]$ such that $[[A
+    => B]]$, our goal is to show that $[[Interp I i B S]]$. By the diamond
+    property of parallel
+    reduction (Lemma~\ref{lemma:pardiamond}), there exists some term
+    $[[C]]$ such that $[[B0 => C]]$ and $[[B => C]]$. By the induction
+    hypothesis, we derive $[[Interp I i C S]]$ from $[[Interp I i
+    B0 S]]$. By \rref{I-Red} and
+    $[[B => C]]$, we conclude that $[[Interp I i B S]]$.
+  \end{description}
+\end{proof}
 
 %%
 %% If your work has an appendix, this is the place to put it.
