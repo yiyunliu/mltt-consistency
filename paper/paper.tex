@@ -1805,6 +1805,28 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
 
 \section{Toward Decidability of Type Conversion and $\eta$ laws}
 \label{sec:extension}
+In this section, we sketch out how the logical relation from
+Section~\ref{sec:logreldep} can be extended show the existence of
+$\beta\eta$ normal forms for (open and closed) well-typed terms. We
+first extend parallel reduction to include $\eta$ reduction for
+functions.
+\begin{center}
+  \drule[width=2.5in]{P-AbsEta}
+\end{center}
+
+\Rref{P-AbsEta} effectively adds $\eta$ laws for functions to our
+equational theory since coherence, the untyped relation used for type
+conversion, is built on top of parallel reduction. We can recover the
+same confluence result about parallel reduction using the standard
+techniques from \citet{barendregt:lambda-calculi-with-types,
+takahashi-parallel-reduction}, though specifically for the de Bruijn
+representation, we need the following anti-renaming lemma about
+parallel reduction.
+\begin{lemma}[Par anti-renaming]
+  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
+exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
+\end{lemma}
+
 \begin{figure}[h]
   \[
     \begin{array}{lcl}
@@ -1820,36 +1842,6 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
   \caption{$\beta$-neutral and normal forms}
   \label{fig:nenf}
 \end{figure}
-\begin{figure}[h]
-  \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
-  \caption{Extended logical relation}
-  \label{fig:logrelopen}
-\end{figure}
-
-\scw{Put this introduction before the figure in the section.}
-In this section, we sketch out how the logical relation from
-Section~\ref{sec:logreldep} can be extended show the existence of
-$\beta\eta$ normal forms for (open and closed) well-typed terms. We
-first extend parallel reduction to include $\eta$ reduction for
-functions.
-\begin{center}
-  \drule[width=2.5in]{P-AbsEta}
-\end{center}
-\scw{What happened to the domain type in the $\lambda$ expression? This is
-not your syntax...}
-\Rref{P-AbsEta} effectively adds $\eta$ laws for functions to our
-equational theory since coherence, the untyped relation used for type
-conversion, is built on top of parallel reduction. We can recover the
-same confluence result about parallel reduction using the standard
-techniques from \citet{barendregt:lambda-calculi-with-types,
-takahashi-parallel-reduction}, though specifically for the de Bruijn
-representation, we need the following anti-renaming lemma about
-parallel reduction.
-\begin{lemma}[Par anti-renaming]
-  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
-exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
-\end{lemma}
-
 
 
 The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the neutral terms
@@ -1878,6 +1870,12 @@ $\beta$-normal form through parallel reduction and are defined as
 follows.\scw{What does $wne$ stand for?}
 \[ [[wne a]] \iff \exists [[e]], [[a =>+ e]] \]
 \[ [[wn a]] \iff \exists [[f]], [[a =>+ f]] \]
+
+\begin{figure}[h]
+  \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
+  \caption{Extended logical relation}
+  \label{fig:logrelopen}
+\end{figure}
 
 The updated logical relation and its auxiliary definitions are shown
 in Figure~\ref{fig:logrelopen}.
