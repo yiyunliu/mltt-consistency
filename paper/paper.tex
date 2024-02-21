@@ -1112,6 +1112,18 @@ relation can be seen as a sophisticated way of strengthening the
 induction hypothesis. From the strengthened property, the fundamental
 theorem, we will be able to derive consistency as a corollary.
 
+The complexity of applying proof by logical relation to dependent types stem
+from the fact that the logical relation is much harder to define. In
+simply typed languages, the logical relation is defined as a recursive
+function over the type $[[A]]$. In dependent types, the type
+$[[A]]$ can take the form $[[(\ var 0) Bool]]$. To assign meaning to
+this type, we need to first reduce it to $[[Bool]]$. However, we
+cannot write a function that performs the reduction because we do not
+know the termination of well-typed terms a priori. As a result, we
+define the logical relation as an inductively defined relation,
+reminiscent of how we specify the reduction graph of a partial
+function; the functionality of the relation can later be recovered in Lemma~\ref{lemma:logreldeter}.
+
 \label{sec:logreldep}
 \begin{figure}[h]
 \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Void, Bool, Eq, Pi, Set, Red}
@@ -1135,7 +1147,6 @@ terms. That it characterizes all terms that look like booleans (i.e. evaluate to
 true or false) or all terms that look like proofs (i.e. evaluate to refl). The
 fact that there is no connection between p and a and b in the I-Eq case is strange
 looking. Need to explain.  }
-
 The metavariables $[[I]]$ and $[[S]]$ are
 sets with the following signatures.
 \begin{equation*}
@@ -1229,50 +1240,93 @@ says that an equality type $[[a ~ b : A]]$ corresonds to the
 set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ holds and
 otherwise corresponds to the empty set. Side conditions like $[[a <=>
 b]]$ are typically required for indexed types, of which equality types
-are an instance.
+are an instance. \Rref{I-Par} enables us to reduce our types in order
+to assign meanings. Recall the type expression $[[(\ var 0)
+Bool]]$. \Rref{I-Par} says to know that
+$[[Interp I i  (\ var 0) Bool S ]]$ for some $[[S]]$, it suffices to
+show that $[[Interp I i Bool S]]$ since $[[(\var 0) Bool =>
+Bool]]$. The derivation that $[[Interp I i (\ var 0) Bool { a | a =>+
+  true \/ a =>+ false }]]$ therefore follows by composing \rref{I-Par}
+and \rref{I-Bool}.
 
-\Rref{I-Pi} is the most interesting. The precondition consists of a
-mysterious function $[[F]]$ that takes an element from the set $[[S]]$, the interpretation
-of the type $[[A]]$, and returns a subset of terms. $[[F]]$ is further
-subject to the constraint that $[[forall a, (# a in S implies Interp I
-i B { a } F a #)]]$. Ignoring the content below the horizontal bar of
-the derivation, the statements from the precondition are equivalent to
-the conjunction of the following statements:
+
+\Rref{I-Pi} is the most interesting. To explain what it means, we
+need to perform a few steps of transformations to its precondition.
+The precondition consists of a
+mysterious relation $[[R]]$ over the set $[[S]]$, an interpretation
+of the type $[[A]]$, and returns a subset of terms. $[[R]]$ is further
+subject to the following two constraints:
+\begin{itemize}
+\item $[[forall a, (# exists S0  , ( a , S0 ) in R #)]]$
+\item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)]]$
+\end{itemize}
+The first condition allows us to induce a function $[[F in S ->
+PowerSet STm]]$ such that $[[(a , F a) in R]]$. Then we can easily
+show that $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$.
+
+For the other direction, given a function $[[F]]$ satisfying the
+property $[[forall a, (# a in S implies Interp I i B { a } F a #) ]]$, it
+is possible to go in the other direction and define a relation $[[R]]=[[
+{ ( a , F a )  | a in S }]]$. It is easy to verify that $[[R]]$ satisfy
+the the constraint required in the precondition of \rref{I-Pi}.
+
+Furthermore, the skolemization process allows us to conclude the
+following equivalence:
+\[ \exists F, [[forall a, (# a in S implies Interp I i B { a } F a #)]] \iff [[forall a, (# a in S implies (# exists S0 , Interp I i B {a} S0 #) #)]]  \]
+% Ignoring the content below the horizontal bar of
+% the derivation, we claim the statements from the precondition are equivalent to
+% the conjunction of the following statements:
+% \begin{itemize}
+% \item $[[Interp I i A S]]$
+% \item $\forall [[a]], \text{ if }[[a in S]]\text{, then } \exists
+%   [[S0]]\text{, } [[Interp I i B { a } S0 ]] $
+% \end{itemize}
+% In general, let $R$ be a binary relation over the sets $[[A]]$ and
+% $[[B]]$, it easy to verify the following equivalence, which is used to
+% justify the skolemization process~\citep{skolemization}.
+% \scw{Is this true constructively? If not, is that ok?}
+% \[\forall a \in A, \exists b \in B \text{ such that } (a,b) \in R
+%   \iff \exists F \in A \rightarrow B \text, \forall a \in A, (a, F(a))
+%   \in R\]
+% The left-hand side is equivalent to the right-hand side, but has no
+% mentioning of any functions.
+The precondition of \rref{I-Pi} therefore can be formulated as the
+following statements:
 \begin{itemize}
 \item $[[Interp I i A S]]$
-\item $\forall [[a]], \text{ if }[[a in S]]\text{, then } \exists
-  [[S0]]\text{, } [[Interp I i B { a } S0 ]] $
+\item $[[forall a, (# a in S implies (# exists S0 , Interp I i B {a} S0 #) #)]]$
 \end{itemize}
-In general, let $R$ be a binary relation over the sets $[[A]]$ and
-$[[B]]$, it easy to verify the following equivalence, which is used to
-justify the skolemization process~\citep{skolemization}.
-\scw{Is this true constructively? If not, is that ok?}
-\[\forall a \in A, \exists b \in B \text{ such that } (a,b) \in R
-  \iff \exists F \in A \rightarrow B \text, \forall a \in A, (a, F(a))
-  \in R\]
-The left-hand side is equivalent to the right-hand side, but has no
-mentioning of any functions.
-In the context of \rref{I-Pi}, through
-the equivalence, we can more easily tell what's happening: the
-function type $[[Pi A B]]$ has a semantic interpretation if its input
-type $[[A]]$ can be semantically
+From this alternative formulation, we can more easily tell what is
+happening in \rref{I-Pi}: the
+function type $[[Pi A B]]$ has an interpretation if its input
+type $[[A]]$ can be
 interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
 type $[[B {a}]]$, obtained by substituing $[[a]]$ into the output type
-$[[B]]$, has a semantic interpretation.
+$[[B]]$, has some semantic interpretation.
 
-If we look at $[[Interp I i Pi A B { b | forall a, (# a in S implies b
-  a in F a #) }]]$, the conclusion of \rref{I-Pi}, we see why the
-presentation with an explicit $[[F in S -> PowerSet STm]]$ is
+If we look at $[[Interp I i Pi A B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$, the conclusion of \rref{I-Pi}, we see why the
+presentation with an explicit $[[R in S * PowerSet STm]]$ is
 useful. We want to state the fact that $[[B {a}]]$ has a semantic
 interpretation of some set $[[S0]]$, but we also want to refer to the
 set $[[S0]]$ when we talk about the set that $[[Pi A B]]$ corresponds
-to. With the function $[[F]]$, we can use $[[F a]]$ to retrive the
-witness in the precondition for $[[a in S]]$.
-With the alternative representation that is free of the function $[[F]]$, we
-might want to reformulate our logical relation in the following way.
+to. With the relation $[[R]]$ in scope, we can refer to the
+witness sets $[[S0]]$ such that $[[Interp I i B {a} S0]]$ for $[[a in S]]$.
+With the alternative representation that is free of the relation $[[R]]$, we
+might want to reformulate our logical relation in the following more
+concise but equivalent form, whose admissibility follows directly from
+\rref{I-Pi}.
 \begin{center}
   \drule[]{I-PiAlt}
 \end{center}
+\begin{lemma}
+  \label{lemma:piintroalt}
+  \Rref{I-PiAlt} is admissible.
+\end{lemma}
+\begin{proof}
+Immediate from \rref{I-Pi} with $[[R]]$ instantiated to the relation $[[{ (a
+, S0 ) | a in S , Interp I i B { a } S0 }]]$.
+\end{proof}
+
 Unfortunately, \rref{I-PiAlt} not only violates the syntactic strict
 positivity constraint required in proof assistants, but
 is genuinely non-monotone when written as an endofunction over the
@@ -1282,14 +1336,11 @@ that the witness picked in the precondition is not necessarily the
 same witness being referred to in the post condition. While it might
 be possible to restrict the domain with additional constraints such as
 functionality and inversion properties, we opt for our current
-skolemized formulation of \rref{I-Pi} so we immediately obtain a
+formulation of \rref{I-Pi} so we immediately obtain a
 well-defined inductive relation and a usable induction principle. The
 slight disadvantage of \rref{I-Pi} is that we need to construct the
-function $[[F]]$ each time we apply it. Therefore, in
-Lemma~\ref{lemma:piintroalt}, we show the admissibility of
-\rref{I-PiAlt} a posteriori and use that as a more convenient
-introduction rule for the rest of our proofs.
-
+function $[[R]]$ each time we apply it, though this is mitigated by
+the immediate admissibility of \rref{I-PiAlt}.
 
 In the rest of the section, we prove four important facts about
 our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
@@ -1309,12 +1360,13 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Void\_inv}} If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Bool\_inv}} If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}} If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
-  \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}} If $[[Interp I i Pi A B S0]]$, then there exists $[[S]],[[F]]$ such that:
+  \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}} If $[[Interp I i Pi A B S1]]$, then there exists $[[S]],[[R]]$ such that:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
-    \item $[[S0 = { b | forall a, (# a in S implies b a in F a #) }]]$
+    \item $[[R in S * PowerSet STm]]$
+    \item $[[forall a, (# a in S implies (# exists S0 , (a , S0) in R #) #)]]$
+    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)]]$
+    \item $[[S1 = { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$
     \end{itemize}
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Univ\_inv}} If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
   \end{enumerate}
@@ -1326,27 +1378,27 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
   are only two possible cases we need to consider.
   \begin{description}
   \item[\Rref{I-Pi}:] Immediate.
-  \item[\Rref{I-Red}:] We are given that $[[Interp I i Pi A B S0]]$.
+  \item[\Rref{I-Red}:] We are given that $[[Interp I i Pi A B S1]]$.
     We know that there exists some $[[A0]]$ and
     $[[B0]]$ such that $[[Pi A B => Pi A0 B0]]$ and $[[Interp I i Pi
-    A0 B0 S0]]$. From the
-    induction hypothesis, there exists $[[S]]$ and $[[F]]$ such that :
+    A0 B0 S1]]$. From the
+    induction hypothesis, there exists $[[S]]$ and $[[R]]$ such that :
     \begin{itemize}
     \item $[[Interp I i A0 S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
-    \item $[[S0 = { b | forall a, (# a in S implies b a in F a #) }]]$
+    \item $[[R in S * PowerSet STm]]$
+    \item $[[forall a, (# a in S implies (# exists S0 , (a , S0) in R #) #)]]$
+    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B0 { a } S0 #)]]$
+    \item $[[S1 = { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$
     \end{itemize}
     By inverting the derivation of $[[Pi A B => Pi A0 B0]]$, we derive $[[A => A0]]$ and
     $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a} => B0 {a} ]]$ for all
     $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
-    $[[F]]$ satisfies the following properties:
+    $[[R]]$ additionally satisfies the following properties:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
+    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)]]$
     \end{itemize}
-    These properties are exactly the ones from the conclusion.
+    These properties are exactly what we need to finish the proof.
   \end{description}
 \end{proof}
 
@@ -1361,142 +1413,57 @@ preservation holds in the usual forward direction too.
 \begin{proof}
   We carry out the proof by induction over the derivation of $[[Interp
   I i A S]]$.
-  \begin{description}
-  \item[\Rref{I-Void}:] There exists some $[[B]]$ such that $[[Void =>
-    B]]$. By inverting the derivation of $[[Void => B]]$, $[[B]]$ must
-    be $[[Void]]$ and the result trivially follows.
-  \item[\Rref{I-Bool, I-Set}:] Similar to the case for \rref{I-Void}.
-  \item[\Rref{I-Eq}:] We know that $[[Interp I i a ~ b : A { p | p =>+
-      refl , a <=> b  }]]$ and, by inverting the derivation of
-    parallel reduction, $[[a => a0]]$, $[[b => b0]]$, $[[A => A0]]$
-    for some $[[a0]]$, $[[b0]]$, and $[[A0]]$. Our goal is to show
-    that $[[Interp I i a0 ~ b0 : A {p | p =>+ refl, a <=> b}]]$. By
-    \rref{I-Eq}, we already know that $[[Interp I i a0 ~ b0 : A {p | p
-      =>+ refl, a0 <=> b0}]]$ and therefore it suffices to show that
-    the sets $[[{p | p =>+ refl, a <=> b}]]$ and $[[{p | p =>+ refl,
-      a0 <=> b0}]]$ are equal. Equivalently, it suffices to show that
-    $[[a <=> b]]$ if and only if $[[a0 <=> b0]]$. By definition, from
-    $[[a => a0]]$ and $[[b => b0]]$, we derive $[[a <=> a0]]$ and $[[b
-    <=> b0]]$. The result then immediately follows from the fact that
-    coherence is an equivalence relation.
-  \item[\Rref{I-Pi}:] There exists $[[S]]$ and $[[F]]$
-    such that:
-    \begin{itemize}
-    \item $[[Interp I i Pi A B { b | forall a, (# a in S implies b a in F
-        a #) }]]$
-    \item $[[Interp I i A S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
-    \end{itemize}
-    There exists some $[[A0]]$ and $[[B0]]$ such that $[[A => A0]]$ and
-    $[[B => B0]]$. Our goal is to show that $[[Interp I i Pi A0 B0 { b | forall a, (# a in S implies b a in F
-      a #) }]]$. By \rref{I-Pi}, it suffices to show:
-    \begin{itemize}
-    \item $[[Interp I i A0 S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
-    \end{itemize}
-    Since $[[A => A0]]$ and $[[B {a} => B0 {a}]]$ forall $[[a]]$, the
-    latter of which follows from Lemma~\ref{lemma:parsubst}, the above
-    conditions follow immediately from the induction hypothesis.
-  \item[\Rref{I-Red}:] There exists $[[B0]]$ and $[[S]]$ such that $[[A => B0]]$ and
-    $[[Interp I i B0 S]]$. Given an arbitrary $[[B]]$ such that $[[A
-    => B]]$, our goal is to show that $[[Interp I i B S]]$. By the diamond
-    property of parallel
-    reduction (Lemma~\ref{lemma:pardiamond}), there exists some term
-    $[[C]]$ such that $[[B0 => C]]$ and $[[B => C]]$. By the induction
-    hypothesis, we derive $[[Interp I i C S]]$ from $[[Interp I i
-    B0 S]]$. By \rref{I-Red} and
-    $[[B => C]]$, we conclude that $[[Interp I i B S]]$.
-  \end{description}
+
+  The only interesting case is \Rref{I-Red}. Given that
+  $[[A => B0]]$ and $[[Interp I i B0 S]]$, we need to show
+  for all  $[[B]]$ such that $[[A => B1]]$, we have $[[Interp I i B1
+  S]]$. By the diamond property of parallel reduction
+  (Lemma~\ref{lemma:pardiamond}), there exists some term $[[B]]$ such
+  that $[[B0 => B]]$ and $[[B1 => B]]$. By the induction hypothesis,
+  we deduce $[[Interp I i B S]]$ from $[[B0 => B]]$ and $[[Interp I i
+  B0 S]]$. By \rref{I-Par} and $[[B1 => B]]$, we conclude that
+  $[[Interp I i B S]]$.
+
+  The remaining cases all fall from induction hypotheses and basic
+  properties about convertibility and parallel reduction we have
+  established in Section~\ref{sec:spec}.
 \end{proof}
 From Lemma~\ref{lemma:interppreservation} and \rref{I-Red}, we can easily
-derive the following corollary that two coherent types have the same
-interpretation.
-\scw{I'm not used to this lemma being called irrelevance. Intuitively,
-it says that the definition of the logical relation respects
-definitional equality. }
+derive the following corollary that two convertible types can always interpret
+into the same set. We adopt the terminology from \citet{martin-lof-a-la-coq}
+and refer to this property as irrelevance.
 \begin{corollary}[Irrelevance of logical relation\footnote{\dotv{semtyping.v}{InterpUnivN\_Coherent}}]
   \label{lemma:logrelcoherence}
   If $[[Interp I i A S]]$ and $[[A <=> B]]$, then $[[Interp I i B S]]$.
 \end{corollary}
-\scw{Need a transition here}
-Next, we show that $[[Interp I i A S]]$ is in fact a partial function.
+% \scw{Need a transition here}
+
+Since the definition of our logical relation is an inductive relation,
+it is not immediately obvious why each type $[[A]]$ can only uniquely
+corresponds to one set $[[S]]$. The following lemma shows that our
+logical relation is indeed functional.
 \begin{lemma}[Logical relation is functional\footnote{\dotv{semtyping.v}{InterpExt\_deterministic}}]
   \label{lemma:logreldeter}
   If $[[Interp I i A S0]]$ and $[[Interp I i A S1]]$, then $[[S0 = S1]]$.
 \end{lemma}
 \begin{proof}
-  We start by inducting over the derivation of the first premise $[[Interp I i A
-  S0]]$.
-  \begin{description}
-  \item[\Rref{I-Void}:] We know that $[[Interp I i Void
-    emptyset]]$. Given $[[Interp I i Void S1]]$, our goal is to show that
-    $[[emptyset = S1]]$. This is immediate by applying the $[[Void]]$ case of
-    Lemma~\ref{lemma:interpinv} to $[[Interp I i Void S1]]$.
-  \item[\Rref{I-Bool, I-Eq, I-Set}:] Similar to the \rref{I-Void} case
-    by applying the matching case of Lemma~\ref{lemma:interpinv}
-    to $[[Interp I i A S1]]$.
-  \item[\Rref{I-Pi}:] There exists $[[S]]$ and $[[F]]$
-    such that:
-    \begin{itemize}
-    \item $[[Interp I i A S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
-    \end{itemize}
-    Our goal is to show that given $[[Interp I i Pi A B S1]]$, we have
-    $[[S1 = { b | forall a, (# a in S implies b a in F
-      a #) }]]$.
-    By the function case of Lemma~\ref{lemma:interpinv}, there exists
-    some $[[S0]]$ and $[[F0]]$ such that:
-    \begin{itemize}
-    \item $[[Interp I i A S0 ]]$
-    \item $[[F0 in S0 -> PowerSet STm]]$
-    \item
-      $[[forall a, (# a in S0 implies Interp I i B { a } F0 a #)]]$
-    \item
-      $[[S1 = { b | forall a, (# a in S0 implies b a in F0 a #) }]]$
-    \end{itemize}
-    It suffices to show that $[[S = S0]]$ and $[[F = F0]]$. The
-    equality $[[S = S0]]$ immediately follows from the induction
-    hypothesis since $[[Interp I i A S]]$ and $[[Interp I i A
-    S0]]$. Therefore, functions $[[F]]$ and $[[F0]]$ have the same
-    domain and codomain and thus it suffices to show that forall $[[a in S]]$,
-    $[[F a = F0 a]]$. Suppose $[[a in S]]$, we must have $[[Interp I
-    i B {a} F a]]$ and $[[Interp I i B {a} F0 a]]$ from the two
-    $\forall$-quantified statements above. The equality $[[F a = F0 a]]$ then
-    immediately follows from the induction hypothesis.
-  \item[\Rref{I-Red}:] There exists some $[[B]]$ such that $[[A =>
-    B]]$ and $[[Interp I i B S0]]$. Our goal is to show that given
-    $[[Interp I i A S1]]$, we have $[[S0 = S1]]$. By
-    Lemma~\ref{lemma:interppreservation}, from $[[Interp I i A S1]]$
-    and $[[A => B]]$, we have $[[Interp I i B S1]]$. From the
-    induction hypothesis, we can conclude that $[[S0 = S1]]$ since
-    $[[Interp I i B S0]]$ and $[[Interp I i B S1]]$.
-  \end{description}
+  The proof proceeds by induction over the derivation of the first
+  premise $[[Interp I i A S0]]$.
+  All cases that are not \rref{I-Red} follow immediately from the
+  Lemma~\ref{lemma:interpinv}.
+
+  For \rref{I-Red}, we are given that there exists some $[[B]]$ such
+  that $[[A => B]]$ and $[[Interp I i B S0]]$. Our goal is to show
+  that given $[[Interp I i A S1]]$ for some $[[S1]]$, we have $[[S0 =
+  S1]]$. By the preservation property
+  (Lemma~\ref{lemma:interppreservation}),
+  we know that $[[Interp I i B S1]]$ since $[[A => B]]$. The statement
+  $[[S0 = S1]]$ then immediately follows from the induction hypothesis.
 \end{proof}
 
-Lemma~\ref{lemma:logreldeter} enables us to show the admissibility of
-\rref{I-PiAlt} and its related inversion principle.
-\begin{lemma}[Pi Intro Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_nopf}}]
-  \label{lemma:piintroalt}
-  Suppose the following two statements hold:
-  \begin{itemize}
-  \item $[[Interp I i A S]]$
-  \item $[[forall a, a in S implies (# exists S0 , Interp I i B {a} S0 #)]]$
-  \end{itemize}
-  Then we have $[[Interp I i Pi A B { b | forall a, (# a in S , forall
-    S0, (# Interp I i B {a} S0,  b a in F a #) #) }]]$
-\end{lemma}
-\begin{proof}
-  Let $[[F]]$ be the relation defined as follows:
-  \[ (a,S) \in [[F]] \iff [[Interp I i B {a} S]] \]
-  By the second bullet from the premise and
-  Lemma~\ref{lemma:logreldeter}, $[[F]]$ is a function that is total
-  on the set $[[S]]$. The conclusion then trivially follows from
-  \rref{I-Pi}.
-\end{proof}
-
+Lemma~\ref{lemma:logreldeter} enables us to show the following
+improved inversion lemma for function types whose statement is free of
+the relation $[[R]]$, analogous to the admissible rule \rref{I-PiAlt}.
 \begin{lemma}[Pi Inv Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
   \label{lemma:piinvalt}
   Suppose $[[Interp I i Pi A B S]]$, then there exists some $[[S0]]$
@@ -1512,12 +1479,6 @@ Lemma~\ref{lemma:logreldeter} enables us to show the admissibility of
 \begin{proof}
   Immediate from Lemmas~\ref{lemma:interpinv} and \ref{lemma:logreldeter}.
 \end{proof}
-
-% The combination of Lemmas~\ref{lemma:piintroalt} and
-% \ref{lemma:piinvalt} reveals what we truly want to capture with
-% \rref{I-Pi}. A function type is semantically well-defined if its input
-% type is well-defined, and its output type is defined for each valid
-% inahbitant of its input type.
 
 The next lemma shows that our logical relation satisfies
 cumulativity. That is, if a type has an interpretation at a lower
@@ -1548,32 +1509,30 @@ We say that a set of terms $[[S]]$ is closed under expansion if given
 $[[a in S]]$, then $[[b in S]]$ for all $[[b => a]]$.
 The final property we want to show is that the output set $[[S]]$ from
 the logical relation is closed under expansion. Unlike the previous
-lemmas, we need to constrain the function $[[I]]$ so its outputs are
-all closed under expansion.
-\scw{How is this related to the comment before 3.2 (i.e. the property
-derived from I-Red?}
-\begin{lemma}[Logical Relation Elements back preservation\footnote{\dotv{semtyping.v}{InterpExt\_back\_clos}}]
+lemmas, we directly state the lemma
+in terms of $[[InterpR i A S]]$ rather than $[[Interp I i A S]]$
+because we need to know something about $[[I]]$ for this property to
+hold in the \rref{I-Set} case.
+
+\yl{Can lift this lemma somewhere earlier in the section since it doesn't really
+  depend on anything}
+\begin{lemma}[Interpreted sets are closed under expansion\footnote{\dotv{semtyping.v}{InterpExt\_back\_clos}}]
   \label{lemma:logrelbackclos}
-  If $[[Interp I i A S]]$ and $[[I]]$ satisfies the property that
-  for all $[[i]]$, $[[I i]]$ is closed under expansion, then the set
-  $[[S]]$ is closed under expansion.
+  If $[[InterpR i A S]]$, then the set $[[S]]$ is closed under expansion.
 \end{lemma}
 \begin{proof}
-  Trivial by structural induction over the derivation of $[[Interp I i
-  A S]]$. The function case requires the following simple fact about
-  parallel reduction:
-  If $[[b0 => b1]]$ then $[[b0 a => b1 a]]$ for all $[[a]]$. This fact
-  is not immediate from the definition of parallel reduction but
-  follows from Lemma~\ref{lemma:parrefl} and \rref{P-App}.
-\end{proof}
+  By the definition of $[[InterpR i A S]]$ from
+  Figure~\ref{fig:logrelrec}, we unfold $[[InterpR i A S]]$ by one
+  step into $[[ Interp I i A S  ]]$ where $[[I i]] := [[{A | exists S
+    , InterpR i A S}]]$.
+  We then proceed by induction over the derivation of $[[Interp I i A S]]$.
 
-\begin{corollary}[Logical Relation Elements back preservation (rec)\footnote{\dotv{semtyping.v}{InterpUnivN\_back\_clos}}]
-  \label{lemma:logrelNbackclos}
-  If $[[InterpR i A S]]$, then $[[S]]$ is closed under expansion.
-\end{corollary}
-\begin{proof}
-  Immediate from Lemma~\ref{lemma:logrelbackclos}, the definition of
-  $[[InterpR i A S]]$, and \rref{I-Red}.
+  All cases are trivial except for the \rref{I-Set} case, where we
+  want to show that the set $[[I j]]$ is closed under expansion for
+  all $[[j < i]]$. However, by the definition of $[[I]]$, we know that
+  $[[A in I j]]$ if only if there exists some $[[S]]$ such that
+  $[[Interp I i A S]]$. By \rref{I-Par}, we must also have $[[B in I
+  j]]$ for all $[[B => A]]$.
 \end{proof}
 
 \section{Semantic Typing and Consistency}
@@ -1883,6 +1842,28 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
 
 \section{Toward Decidability of Type Conversion and $\eta$ laws}
 \label{sec:extension}
+In this section, we sketch out how the logical relation from
+Section~\ref{sec:logreldep} can be extended show the existence of
+$\beta\eta$ normal forms for (open and closed) well-typed terms. We
+first extend parallel reduction to include $\eta$ reduction for
+functions.
+\begin{center}
+  \drule[width=2.5in]{P-AbsEta}
+\end{center}
+
+\Rref{P-AbsEta} effectively adds $\eta$ laws for functions to our
+equational theory since coherence, the untyped relation used for type
+conversion, is built on top of parallel reduction. We can recover the
+same confluence result about parallel reduction using the standard
+techniques from \citet{barendregt:lambda-calculi-with-types,
+takahashi-parallel-reduction}, though specifically for the de Bruijn
+representation, we need the following anti-renaming lemma about
+parallel reduction.
+\begin{lemma}[Par anti-renaming]
+  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
+exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
+\end{lemma}
+
 \begin{figure}[h]
   \[
     \begin{array}{lcl}
@@ -1898,36 +1879,6 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
   \caption{$\beta$-neutral and normal forms}
   \label{fig:nenf}
 \end{figure}
-\begin{figure}[h]
-  \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
-  \caption{Extended logical relation}
-  \label{fig:logrelopen}
-\end{figure}
-
-\scw{Put this introduction before the figure in the section.}
-In this section, we sketch out how the logical relation from
-Section~\ref{sec:logreldep} can be extended show the existence of
-$\beta\eta$ normal forms for (open and closed) well-typed terms. We
-first extend parallel reduction to include $\eta$ reduction for
-functions.
-\begin{center}
-  \drule[width=2.5in]{P-AbsEta}
-\end{center}
-\scw{What happened to the domain type in the $\lambda$ expression? This is
-not your syntax...}
-\Rref{P-AbsEta} effectively adds $\eta$ laws for functions to our
-equational theory since coherence, the untyped relation used for type
-conversion, is built on top of parallel reduction. We can recover the
-same confluence result about parallel reduction using the standard
-techniques from \citet{barendregt:lambda-calculi-with-types,
-takahashi-parallel-reduction}, though specifically for the de Bruijn
-representation, we need the following anti-renaming lemma about
-parallel reduction.
-\begin{lemma}[Par anti-renaming]
-  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
-exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
-\end{lemma}
-
 
 
 The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the neutral terms
@@ -1956,6 +1907,12 @@ $\beta$-normal form through parallel reduction and are defined as
 follows.\scw{What does $wne$ stand for?}
 \[ [[wne a]] \iff \exists [[e]], [[a =>+ e]] \]
 \[ [[wn a]] \iff \exists [[f]], [[a =>+ f]] \]
+
+\begin{figure}[h]
+  \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
+  \caption{Extended logical relation}
+  \label{fig:logrelopen}
+\end{figure}
 
 The updated logical relation and its auxiliary definitions are shown
 in Figure~\ref{fig:logrelopen}.
@@ -2523,65 +2480,6 @@ equality is based on joinability of parallel reduction?}
 %% the bibliography file.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{refs}
-
-\appendix
-
-\subsection{More detailed proofs}
-\begin{lemma}[Preservation of the logical relation]
-  If $[[Interp I i A S]]$ and $[[A => B]]$, then $[[Interp I i B S]]$.
-\end{lemma}
-\begin{proof}
-  We carry out the proof by induction over the derivation of $[[Interp
-  I i A S]]$.
-  \begin{description}
-  \item[\Rref{I-Void}:] There exists some $[[B]]$ such that $[[Void =>
-    B]]$. By inverting the derivation of $[[Void => B]]$, $[[B]]$ must
-    be $[[Void]]$ and the result trivially follows.
-  \item[\Rref{I-Bool, I-Set}:] Similar to the case for \rref{I-Void}.
-  \item[\Rref{I-Eq}:] We know that $[[Interp I i a ~ b : A { p | p =>+
-      refl , a <=> b  }]]$ and, by inverting the derivation of
-    parallel reduction, $[[a => a0]]$, $[[b => b0]]$, $[[A => A0]]$
-    for some $[[a0]]$, $[[b0]]$, and $[[A0]]$. Our goal is to show
-    that $[[Interp I i a0 ~ b0 : A {p | p =>+ refl, a <=> b}]]$. By
-    \rref{I-Eq}, we already know that $[[Interp I i a0 ~ b0 : A {p | p
-      =>+ refl, a0 <=> b0}]]$ and therefore it suffices to show that
-    the sets $[[{p | p =>+ refl, a <=> b}]]$ and $[[{p | p =>+ refl,
-      a0 <=> b0}]]$ are equal. Equivalently, it suffices to show that
-    $[[a <=> b]]$ if and only if $[[a0 <=> b0]]$. By definition, from
-    $[[a => a0]]$ and $[[b => b0]]$, we derive $[[a <=> a0]]$ and $[[b
-    <=> b0]]$. The result then immediately follows from the fact that
-    coherence is an equivalence relation.
-  \item[\Rref{I-Pi}:] There exists $[[S]]$ and $[[F]]$
-    such that:
-    \begin{itemize}
-    \item $[[Interp I i Pi A B { b | forall a, (# a in S implies b a in F
-        a #) }]]$
-    \item $[[Interp I i A S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$
-    \end{itemize}
-    There exists some $[[A0]]$ and $[[B0]]$ such that $[[A => A0]]$ and
-    $[[B => B0]]$. Our goal is to show that $[[Interp I i Pi A0 B0 { b | forall a, (# a in S implies b a in F
-      a #) }]]$. By \rref{I-Pi}, it suffices to show:
-    \begin{itemize}
-    \item $[[Interp I i A0 S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B0 { a } F a #)]]$
-    \end{itemize}
-    Since $[[A => A0]]$ and $[[B {a} => B0 {a}]]$ forall $[[a]]$, the
-    latter of which follows from Lemma~\ref{lemma:parsubst}, the above
-    conditions follow immediately from the induction hypothesis.
-  \item[\Rref{I-Red}:] There exists $[[B0]]$ and $[[S]]$ such that $[[A => B0]]$ and
-    $[[Interp I i B0 S]]$. Given an arbitrary $[[B]]$ such that $[[A
-    => B]]$, our goal is to show that $[[Interp I i B S]]$. By the diamond
-    property of parallel
-    reduction (Lemma~\ref{lemma:pardiamond}), there exists some term
-    $[[C]]$ such that $[[B0 => C]]$ and $[[B => C]]$. By the induction
-    hypothesis, we derive $[[Interp I i C S]]$ from $[[Interp I i
-    B0 S]]$. By \rref{I-Red} and
-    $[[B => C]]$, we conclude that $[[Interp I i B S]]$.
-  \end{description}
-\end{proof}
 
 %%
 %% If your work has an appendix, this is the place to put it.
