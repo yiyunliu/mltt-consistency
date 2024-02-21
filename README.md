@@ -31,7 +31,7 @@ reference when designing the syntactic typing rules.
 ## Install dependencies
 The [opam.switch](opam.switch) file allows you to recreate an opam switch that is identical to the one I use on my machine. To create a switch named `mltt`, run the following command when you have [opam.switch](opam.switch) available in your working directory:
 ```
-opam switch import opam.swtich --switch mltt --repositories=coq-released=https://coq.inria.fr/opam/released,default=https://opam.ocaml.org
+opam switch import opam.switch --switch mltt --repositories=coq-released=https://coq.inria.fr/opam/released,default=https://opam.ocaml.org
 ```
 
 ## Build
@@ -67,3 +67,27 @@ existentials).
 - [ ] Extensional model (see the `per` branch)
 - [ ] Impredicative `Prop`
 - [ ] Proof irrelevance (see the `dcoi` branch)
+
+
+## Files
+
+```
+     113 axioms.v
+          fun_ext and prop_ext
+          Hints to help with automation
+      54 common.v
+          Operations on the context
+       7 imports.v
+     411 join.v
+          specification of parallel reduction
+          proof of confluence
+     383 semtyping.v
+          definition of logical relation
+          proof of semantic typing rules
+     176 soundness.v
+     707 syntactic_soundness.v
+     391 syntax.v
+     102 typing.v
+     209 unscoped.v
+    2553 total
+```

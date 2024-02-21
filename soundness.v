@@ -58,7 +58,7 @@ Proof.
     case => PA hPA.
     exists (S i). eexists.
     split.
-    + simp InterpUniv. apply InterpExt_Univ. lia.
+    + simp InterpUniv. apply InterpExt_Univ; eauto. 
     + simpl. eauto.
 Qed.
 
@@ -140,9 +140,22 @@ Proof.
       suff : PB = PA0 by congruence.
       hauto lq:on use:InterpUnivN_deterministic'.
   - hauto l:on use:SemWt_Univ.
-  - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
-  - hauto l:on.
-  - hauto l:on use:SemWt_Univ.
+  - hauto lq:on use:InterpUnivN_Univ, SemWt_Univ.
+  - intros.
+    unfold SemWt. intros.
+    move: (H0 γ H1) => [m [PA [h1 h2]]].
+    exists m. eexists. split.
+    rewrite InterpUnivN_nolt. asimpl.
+    eapply InterpExt_Eq. eauto.
+    simpl.
+    hauto lq:on ctrs:rtc.
+  - intros.
+    unfold SemWt. intros γ H2.
+    asimpl.
+    move: (H0 γ H2) => [m0 [PA0 [h01 h02]]].
+    move: (H1 γ H2) => [m1 [PA1 [h11 h12]]].
+    admit.
+
   - move => Γ t a b p A i j C _ _ _ _ _ _ _ hp _ hC _ ht γ hγ.
     move : hp (hγ); move/[apply] => hp.
     move : ht (hγ); move/[apply]. intros (m & PA & hPA & ht).
@@ -158,7 +171,7 @@ Proof.
       eapply InterpUnivN_back_clos_star with (b := subst_tm γ t); eauto.
       sfirstorder use: P_JRefl_star.
   - hauto l:on.
-Qed.
+Admitted.
 
 Lemma consistency a : ~Wt nil a tVoid.
 Proof.
