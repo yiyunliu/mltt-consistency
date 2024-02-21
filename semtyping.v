@@ -323,33 +323,22 @@ Lemma InterpUnivN_deterministic' n m  A PA PB :
   PA = PB.
 Proof. hauto lq:on rew:off use:InterpExt_deterministic' rew:db:InterpUniv. Qed.
 
-Lemma InterpExt_back_clos n I A PA
-  (hI : forall m, m < n -> forall A B, Par A B -> I m B -> I m A):
-  InterpExt n I A PA ->
-  forall a b, Par a b ->
-         PA b -> PA a.
+Lemma InterpUnivN_back_clos n A PA :
+    InterpUnivN n A PA ->
+    forall a b, Par a b ->
+           PA b -> PA a.
 Proof.
-  move => h.
-  elim : A PA / h.
+  simp InterpUniv => h.
+  elim : A PA /h.
   - sfirstorder.
   - hauto lq:on ctrs:rtc.
   - move => A B PA PF hPA ihA hPFTot hPF ihPF b0 b1 hb01.
     rewrite /ProdSpace => hPB a PB ha hPFa.
     have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
     hauto lq:on ctrs:Par.
-  - hauto lq:on.
+  - qauto l:on rew:db:InterpUniv ctrs:InterpExt.
   - hauto lq:on ctrs:rtc.
   - sfirstorder.
-Qed.
-
-Lemma InterpUnivN_back_clos n A PA :
-    InterpUnivN n A PA ->
-    forall a b, Par a b ->
-           PA b -> PA a.
-Proof.
-  simp InterpUniv.
-  apply InterpExt_back_clos.
-  qauto l:on rew:db:InterpUniv ctrs:InterpExt.
 Qed.
 
 Lemma InterpUnivN_back_clos_star n A PA :
