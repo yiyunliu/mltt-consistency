@@ -1554,21 +1554,50 @@ hold in the \rref{I-Set} case.
   \label{fig:semtyping}
 \end{figure}
 
-The logical relation we define in Figure~\ref{fig:logrel} does not
-include cases for variables. Likewise, for the base types such as
-boolean and equality, the output set $[[S]]$ contains only terms that
-evaluate to closed terms.
+% The logical relation we define in Figure~\ref{fig:logrel} does not
+% include cases for variables. Likewise, for the base types such as
+% boolean and equality, the output set $[[S]]$ contains only terms that
+% evaluate to closed terms.
 
-\scw{What is the motivation for this section? Why do we want to generalize
-the logical relation?}
-To generalize our logical relation to open
-terms, we define the semantic typing judgment by closing the open
-terms with a substitution whose codomain consists of terms that
-respect the interpretation of the types from the context. The full
+% \scw{What is the motivation for this section? Why do we want to generalize
+% the logical relation?}
+In this section, we define the notion of semantic typing based on the
+logical relation we have defined in Section~\ref{sec:logreldep} and
+prove the fundamental lemma, which states that syntactic typing
+implies semantic typing.
+
+The necessity of semantic typing as an extra layer of definition on
+top of the logic relation can be understood in simply typed
+languages~\citep{skorstengaard2019introduction, harpertait,
+  pierce2002types}. In our setting, attempting to show that $[[empty
+|- a : A]]$ implies $[[InterpR i A S]]$ and $[[a in S]]$ will fail in
+\rref{T-Abs}, where induction hypothesis is not helpful since the body
+of the lambda term is typed under a non-empty context. Through
+the definition of semantic typing, we can state a strengthened
+property that is actually provable.
+
+% To generalize our logical relation to open
+% terms, we define the semantic typing judgment by closing the open
+% terms with a substitution whose codomain consists of terms that
+% respect the interpretation of the types from the context.
+The full
 definitions of well-formed substitution ($[[rho |= G]]$), semantic
 typing ($[[ G |= a : A]]$), and semantic context well-formedness
 ($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
-\scw{explain all parts of this figure. it's pretty intimidating.}
+
+The $[[rho |= G]]$ judgment defines the semantic well-formedness of
+a substitution $[[rho]]$ with respect to a context
+$[[G]]$. Intuitively, for variable $[[i]]$ in the context (thus the
+restriction $[[i < | G |]]$), $[[rho i]]$ is a term that inhabits all
+possible interpretations of the type $[[G i]]$ from the
+context. However, since we are in a dependently typed system, there
+may be variables in $[[G i]]$, too. The type $[[(G i < up Suc i > ) {
+  rho }]]$ applies $[[rho]]$ to replace those variables. The shifting
+operation $[[up Suc i]]$ can be viewed as an artifact of the de Bruijn
+representation to lift the type $[[G i]]$ to the right scope before
+substitution can be carried out.
+
+
 In the
 definition of $[[|= G]]$, we use the notation $[[drop i G]]$ to denote
 the typing context obtained by dropping the last $[[i]]$ elements of
@@ -1904,9 +1933,10 @@ we can take.
 The predicates $[[wne a]]$ and $[[wn
 a]]$ describe terms that can evaluate into $\beta$-neutral or
 $\beta$-normal form through parallel reduction and are defined as
-follows.\scw{What does $wne$ stand for?}
+follows.
 \[ [[wne a]] \iff \exists [[e]], [[a =>+ e]] \]
 \[ [[wn a]] \iff \exists [[f]], [[a =>+ f]] \]
+We can read $[[wne a]]$ and $[[wn a]]$ as weakly normalizing to a neutral or a normal form respectively.
 
 \begin{figure}[h]
   \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
@@ -1916,14 +1946,12 @@ follows.\scw{What does $wne$ stand for?}
 
 The updated logical relation and its auxiliary definitions are shown
 in Figure~\ref{fig:logrelopen}.
-
 % The idea of a term blocked from $\beta$ reduction is
 % captured by $[[e]]$, the set of neutral terms. We augment the
 % interpretation of booleans and the empty types with terms that
 % evaluate to neutral terms. Furthermore, types that are neutral terms
 % can also be assigned a meaning since they may be inhabited by other
 % neutral terms.
-
 In the definition of the logical relation, we omit the rules for
 the function and universe cases since they remain identical to the
 original version in Figure~\ref{fig:logrel}.
