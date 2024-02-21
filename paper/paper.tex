@@ -9,7 +9,7 @@
 \anonymoustrue
 
 \submissionfalse     %% at most one of these must be true (neither for draft version)
-\publicfalse          %% but if you want to see comments, these should both be off
+\publicfalse         %% but if you want to see comments, these should both be off
 
 
 % If we are going to make a version public, i.e. on arXiv, we should
@@ -212,76 +212,113 @@ in under 1000 lines of code.
 \maketitle
 
 \section{Introduction}
-In this paper, we present a short and mechanized consistency proof by
-logical relation for \lang{}, a Martin-Löf style dependent type theory
-with large elimination, a full predicative universe hierarchy, an
-intensional identity type and a boolean base type, both of which
-equipped with dependent elimination forms. % The mechanization is
-% extremely short and involves less than 1000 lines of manually written
-% Coq code.
+In this paper, we present a \emph{short}, \emph{mechanized} proof of logical
+consistency for \lang{}, a Martin-Löf style dependent type theory with large
+eliminations, a full predicative universe hierarchy, an intensional identity
+type and a boolean base type, both of which are equipped with dependent
+elimination forms.
 
-Our goal is to show the fundamental technique required to carry out proof by logical
-relation in a dependently typed setting where logical relation can no
-longer be defined as a simple recursive function over the structure of
-types. Compared to the many mechanized proofs by logical relation for
-predicative dependent type
-theory~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards},
-whose proof developments range from 20,000 to 400,000 lines of code,
-our Coq development is the most lightweight at less than 1,000 lines.
+Our goal with this work is to demonstrate how the proof technique of
+\emph{logical relations} can be applied in dependently-typed setting.
+Tutorial material on this topic~\cite{lr-tutorials} is primarily focussed on
+languages with simple or polymorphic types. In that context, logical relations
+can be define as simple recursive functions over the structure of types, or
+(in the case of recursive types) defined over the evaluation steps of the
+computation.
 
-The big difference in the size of the developments does not
-necessarily imply that our proof technique leads to a more concise
-proof due to the differing expressiveness of the languages and the
-different metatheoretic results being established. For
-example, \citet{anand2014towards} mechanizes the metatheory of
-Nuprl~\citep{constable1986implementing}, which, on top of all the
-features that \lang{} supports, includes W-types and partial types and
-requires a PER semantics to model its extensional typed
-equality. The object language from \citet{decagda} does not support
-identity types and only has one predicative universe, but additionally
-supports $\Sigma$ types. However, for a researcher who wishes to learn
-the underlying techniques for mechanized logical relation for
-dependent type theory, a small development like ours is much easier to
-navigate and understand. Furthermore, we show how our simple
-consistency proof can be easily extended to show the existence of
-$\beta\eta$-normal form for well-typed open \emph{and} closed terms,
-giving us a metatheoretic result almost as strong as the one from
-\citet{decagda} at the moderate cost of around 500 lines of extra code.
+Neither of these techniques make sense for predicative dependent type theory,
+so a young researcher might be excused for thinking that logical
+relations-based arguments are not available.  \scw{Well, actually, we did use
+  a step-indexed relation for Trellys\ldots} But this is not the case. Recent
+authors have developed tour-de-force mechanizations for the metatheory of
+modern proof
+assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
+have used logical-relations-based reasoning as part of their
+arguments. However, at the same time, these definitions have been overshadowed
+by their magnitude of the surrounding developments. Because these proofs show
+diverse results about real systems and algorithms, these developments range in
+size from 20,000 to 400,000 lines of code, and the techniques are not
+accessible to a casual reader.
 
-We present our definitions and proofs in set theory notation and
-terminology rather than in Coq syntax to make the material accessible
-to readers with general mathematical background.
-However, notation aside, the typeset representation is
-purposefully made to be closer to our mechanization so less massaging
-of the definitions is required to encode our proofs in a proof
-assistant.
-The close correspondence between a typeset proof and a mechanized
-proof comes at the potential risk that the artifacts specific to
-theorem provers may become visible in the presented proof.
-However, for proofs by logical relation for
-dependent types, we find our approach advantageous for a few reasons.
-First, unlike properties that are derivable through
-syntactic means, proof by logical relation is demanding on the
-strength of the metatheory. An informal proof that attempts to be
-agnostic or ambiguous about the underlying metatheory % may struggle to even
+Our proof, designed to capture the essence of this proof technique in this
+setting, requires less than 1000 lines of code. We have achieved this
+significant reduction through a number of means: the careful selection of the
+features that we include in the object type type system and the results that
+we prove about it, in addition to the judicious use of automation.  Our
+language is small, but includes enough to be illustrative. For example, we
+eschew inductive datatypes or W-types, the but we do include propositionality
+equality and booleans in order to capture the challenges presented by indexed
+types and dependent pattern matching. We do not show the decidability of type
+checking, nor do we develop a PER semantics, but we do demonstrate how our
+consistency proof can be extended (at a moderate cost of 500 lines of code) to
+show the existence of $\beta\eta$-normal form for well-typed open \emph{and}
+closed terms. We include a full predicative universe hiercharchy and
+type-level computation, to demonstrate the logical strength of the
+approach. \scw{Say that we don't have impredicativity, but neither does anyone
+  else?}
+%%
+%% SCW: save specific comparisons with other systems for later
+%%
+% The big difference in the size of the developments does not
+% necessarily imply that our proof technique leads to a more concise
+% proof due to the differing expressiveness of the languages and the
+% different metatheoretic results being established. For
+% example, \citet{anand2014towards} mechanizes the metatheory of
+% Nuprl~\citep{constable1986implementing}, which, on top of all the
+% features that \lang{} supports, includes W-types and partial types and
+% requires a PER semantics to model its extensional typed
+% equality. The object language from \citet{decagda} does not support
+% identity types and only has one predicative universe, but additionally
+% supports $\Sigma$ types. However, for a researcher who wishes to learn
+% the underlying techniques for mechanized logical relation for
+% dependent type theory, a small development like ours is much easier to
+% navigate and understand. Furthermore, we show how our simple
+% consistency proof can be easily extended to show the existence of
+% $\beta\eta$-normal form for well-typed open \emph{and} closed terms,
+% giving us a metatheoretic result almost as strong as the one from
+% \citet{decagda} at the moderate cost of around 500 lines of extra code.
+
+
+The result of our work is a development that an interested researcher can
+navigate and understand. We accompany this mechanized proof with an informal
+description, presented here using set theory notation and terminology so that
+the material is accessible to readers with general mathematical background,
+That said, our explanations do not stray too far away from our proof scripts.
+We label each lemma directly to their counterpart in the proof script,
+anticipating that readers may wish to reference and validate our formalism.
+Our typeset representation are purposefully made to directly follow our
+mechanical proofs, while avoiding, as much as possible, the introduction 
+of artifacts that are specific to certain theorem prover.
+
+Not only does this connection aid readers that wish to, like us, adopt proof
+assistants for their day-to-day use. We also find that this precision is
+important for conveying the proof techique itself. Unlike properties that are
+derivable through syntactic means, proofs by logical relation make demands on
+the strength of the logic in which they are expressed. An informal proof that
+attempts to be agnostic or ambiguous about the underlying
+metatheory % may struggle to even
 % convey the validity of their definition and
 requires substantial
 effort from the reader to even understand whether it is theoretically
-possible to encode such proofs in a proof assistant.
-Second, while a proof assistant may reject perfectly valid
-definitions, it helps us keep our definition precise and
-unambiguous. A precise definition is crucial as the reasoning
-principles we are allowed to use is directly tied to the definition,
-which is sometimes obscured by concise notations that diverge too far
-from a formal proof.
+possible to encode such proofs in a given ambient logic, such as those found 
+in modern proof assistants.
+
+% The close correspondence between a typeset proof and a mechanized
+% proof comes at the potential risk that the artifacts specific to
+% theorem provers may become visible in the presented proof.
+%However, for proofs by logical relation for
+%dependent types, we find our approach advantageous for a few reasons.
+Furthermore, while a proof assistant may reject perfectly valid definitions,
+it helps us keep our definition precise and unambiguous. A precise definition
+is crucial as the reasoning principles we are allowed to use is directly tied
+to the definition, which is sometimes obscured by concise notations that
+diverge too far from a formal proof.
+
 Finally, our approach does not result in a verbose proof on paper, thanks to
-the already short mechanization. On top of that, We make conservative
-simplifications to our typeset proof such as avoiding the clunky
-syntax for well-founded recursion in Coq, but we keep the overall
-structure of our typeset proofs consistent with our mechanization.
-The consistency enables us to label at the footnote each lemma
-directly to their counterpart in the proof script for the readers to
-reference and validate.
+the already short mechanization. While we do make conservative simplifications
+to our typeset proof, such as avoiding the clunky syntax for well-founded
+recursion in Coq, we keep the overall structure of our typeset proofs
+consistent with our mechanization.
 
 In Section~\ref{sec:spec}, we introduce \lang{}, the object language
 of interest, and establish some elementary properties about parallel
