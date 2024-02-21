@@ -2,7 +2,7 @@ grammar
 
 var, x, y :: '' ::= {{ com variables }}
 
-nat, i, j, n :: '' ::= {{ com natural numbers }}
+nat, i, j, n, m :: '' ::= {{ com natural numbers }}
   | 0 :: :: zero
   | 1 :: :: numone
   | Suc i :: :: succ {{ tex 1 + [[i]] }}
@@ -353,7 +353,7 @@ G |- var n : G n < up Suc n >
 
 %% functions
 
-[ G |- A : Set i ]
+G |- A : Set i
 G ++ A |- B : Set i
 --------------------------------------- :: Pi
 G |- Pi A B : Set i
@@ -423,7 +423,7 @@ JI :: '' ::=
 
 defn
 Interp I i A S ::  :: Interp :: 'I_' {{ com Interpretation relation }}
-{{ tex [ [[A]] ]_[[i]]^[[I]] \searrow [[S]] }}
+{{ tex [ [[A]] ]_[[I]]^[[i]] \searrow [[S]] }}
 by
 
 ne A
@@ -481,7 +481,7 @@ JII :: '' ::=
 
 defn
 InterpR i A S ::  :: InterpR :: 'IR_' {{ com Interpretation relation }}
-{{ tex [ [[A]] ]_[[i]] \searrow [[S]] }}
+{{ tex [ [[A]] ]^[[i]] \searrow [[S]] }}
 by
 
 --------------------------- :: Void

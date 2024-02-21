@@ -683,9 +683,9 @@ indices work.}
         % ([[xi .: n]])([[Suc i]]) & := & [[xi i]] \\ \\
         \mathit{ConsSubst ([[rho .: a]])} \\
         ([[rho .: a]])([[0]]) & := & [[a]] \\
-        ([[rho .: a]])([[Suc i]]) & := & [[rho i]] \\ \\
+        ([[rho .: a]])([[Suc n]]) & := & [[rho n]] \\ \\
         \mathit{Curried\ Add} \\
-        [[up n i]] & := & \ottkw{v}_{[[n]] + [[i]]}
+        [[up n m]] & := & \ottkw{v}_{[[n]] + [[m]]}
       \end{array}
     \end{split}
     \qquad \qquad
@@ -700,9 +700,9 @@ indices work.}
         % \ldots \\ \\
         \mathit{Lifting} \\
         [[( up rho ) 0]] & := & [[var 0]] \\
-        [[( up rho ) Suc i]] & := & [[ rho i < up 1 > ]] \\ \\
+        [[( up rho ) Suc n]] & := & [[ rho n < up 1 > ]] \\ \\
         \mathit{Substitution ([[ a { rho }  ]])} \\
-        [[var i { rho }  ]] & := &  [[rho i]] \\
+        [[var n { rho }  ]] & := &  [[rho n]] \\
         [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
         [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
         [[(\ a) { rho }]] & := & [[\ (a { up rho })]] \\
@@ -774,23 +774,21 @@ the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$.
 \end{figure}
 
 \scw{motivate parallel reduction. Why are you telling us this now. Is this
-an explanation of definitional equality and its properties?}
-Figure~\ref{fig:par} shows the definition of the parallel reduction
-relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
-represent its transitive and reflexive closure, which in turn allows us to define
-the coherence relation $[[a <=> b]]$.\scw{where is the terminology ``coherence''
-from? I'm not familiar with it. Maybe you can replace it with ``definitional
-equivalence'' as that is how it is used in \lang?}
-We say that two terms $[[a]]$
-and $[[b]]$ are coherent if they can eventually reduce to some common
-term $[[c]]$ through parallel reduction. The symmetric notation of
-coherence suggests\scw{but you prove it below?} it is an equivalence relation.
-
-We sketch out some key properties about parallel reduction and
-coherence without giving their proofs. Our technique for establishing
-those results is based on \citet{takahashi-parallel-reduction} and a
-modern exposition of the same technique can be found in
-\citet{plfa22.08}.
+  an explanation of definitional equality and its properties?}
+Before we specify the typing rules, we need to first specify its
+untyped equational theory. We choose to represent the untyped
+equational theory in an algorithmic style using the notion of parallel
+reduction, defined in Figure~\ref{fig:par}. Parallel reduction takes
+the form $[[a => b]]$ and we denote its transitive as $[[a =>+
+b]]$. We say that two terms $[[a0]]$ and $[[a1]]$ are convertible,
+denoted by the notation $[[a0 <=> a1]]$, if there exists some term
+$[[b]]$ such that $[[a0 =>+ b]]$ and $[[a1 =>+ b]]$. The symmetric
+notation of convertibility suggests that it is an equivalence
+relation. We sketch out the sequence of lemmas required to derive this
+property below and omit the details. Our technique for proving the
+properties about parallel reduction is based on
+\citet{takahashi-parallel-reduction}. A modern exposition of the
+same technique can be found in \citet{plfa22.08}.
 \begin{lemma}[Par Refl\footnote{\dotv{join.v}{Par\_refl}}]
   \label{lemma:parrefl}
   For all terms $[[a]]$, $[[a => a]]$.
@@ -820,11 +818,43 @@ modern exposition of the same technique can be found in
   \label{lemma:coherencetrans}
   If $[[a0 <=> a1]]$ and $[[a1 <=> a2]]$, then $[[a0 <=> a2]]$.
 \end{lemma}
-
 From Lemma~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
 \ref{lemma:coherencetrans}, we conclude that coherence is indeed an
-equivalence relation. It is then trivial to derive that coherence is
-exactly the same as untyped $\beta$-equivalence.\scw{cite barendregt?}
+equivalence relation. It is then trivial to show that all untyped
+$\beta$-equivalence rules are admissible, though we omit this proof
+from our mechanization and will from now on focus on parallel
+reduction since the diamond property (Lemma~\ref{lemma:pardiamond})
+makes it easier to work with. A detailed argument of the equivalence
+between $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
+\citet{barendregt:lambda-calculi-with-types} and
+\citet{takahashi-parallel-reduction}.
+
+\begin{figure}[h]
+\begin{minipage}{0.9\textwidth}
+\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
+\drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv,
+  Refl, Eq, J, If, Bool, True, False, Void}
+\end{minipage}
+\caption{Syntactic typing for \lang}
+\label{fig:typing}
+\end{figure}
+% Figure~\ref{fig:par} shows the definition of the parallel reduction
+% relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
+% represent its transitive and reflexive closure, which in turn allows us to define
+% the coherence relation $[[a <=> b]]$.\scw{where is the terminology ``coherence''
+% from? I'm not familiar with it. Maybe you can replace it with ``definitional
+% equivalence'' as that is how it is used in \lang?}
+% We say that two terms $[[a]]$
+% and $[[b]]$ are coherent if they can eventually reduce to some common
+% term $[[c]]$ through parallel reduction. The symmetric notation of
+% coherence suggests\scw{but you prove it below?} it is an equivalence relation.
+
+% We sketch out some key properties about parallel reduction and
+% coherence without giving their proofs. Our technique for establishing
+% those results is based on
+
+% \scw{cite barendregt?}
+% \yl{resolved}
 
 % TODO: remove the lengthy discussion below
 
@@ -891,78 +921,88 @@ exactly the same as untyped $\beta$-equivalence.\scw{cite barendregt?}
 %   transitivity and therefore is an equivalence relation.
 % \end{lemma}
 
-\begin{figure}[ht]
-\begin{minipage}{0.9\textwidth}
-\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
-\drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv,
-  Refl, Eq, J, If, Bool, True, False, Void}
-\end{minipage}
-\caption{Syntactic typing for \lang}
-\label{fig:typing}
-\end{figure}
 
 Figure~\ref{fig:typing} gives the full typing rules for
 \lang{}. The premises wrapped in \colorbox{lightgray}{gray} boxes can be shown to be
 admissible syntactically, though some of them are required to
 strengthen the inductive hypothesis of the fundamental theorem.
-\scw{Is the precondition for T-ABS really admissible? Isn't it required
-to ensure predicativity? Have you proved it? Have you proved regularity?}
-\yl{I proved regularity. \Rref{T-Abs} is admissible if cumulativity
-  was formulated correctly (which wasn't the case in the version
-  of the paper you read). I revised \rref{T-Univ} so the premise is
-  not admissible }
-\scw{Do you have a formation rule for identity types?}
-\yl{Added}
+% \scw{Is the precondition for T-ABS really admissible? Isn't it required
+% to ensure predicativity? Have you proved it? Have you proved regularity?}
+% \yl{I proved regularity. \Rref{T-Abs} is admissible if cumulativity
+%   was formulated correctly (which wasn't the case in the version
+%   of the paper you read). I revised \rref{T-Univ} so the premise is
+%   not admissible }
+% \scw{Do you have a formation rule for identity types?}
+% \yl{Added}
 
-In \rref{T-Var}, $[[G i]]$ is the partial function defined
-with the equations $[[ (G ++ A)  0 ]] := [[A]]$ and $[[ (G ++ A) Suc
-i ]] := [[G i]] $.  \scw{explain the renaming in the conclusion of
-this lemma}
-The precondition $[[i < | G | ]]$, where $[[ | G |
+In \rref{T-Var}, $[[G n]]$ is the partial function defined
+by the equations $[[ (G ++ A)  0 ]] := [[A]]$ and $[[ (G ++ A) Suc
+n ]] := [[G n]]$.
+The precondition $[[n < | G | ]]$, where $[[ | G |
 ]]$ represents the length of the context $[[G]]$, ensures that $[[G
-i]]$ has a defined output.
+n]]$ has a defined output. The type $[[G n]]$ needs to be shifted
+by $[[Suc n]]$ since the types stored in the context $[[G]]$ are
+scoped differently. In the typing judgment $[[G |- a : A]]$, we want
+both $[[a]]$ and $[[A]]$ to have the same scope. However, the closer a
+type is to the head of $[[G]]$, the smaller de Bruijn it has since
+there is less variables in the context it can refer to (see \rref{Ctx-Cons}). Shifting $[[G
+n]]$ by $[[Suc n]]$ weakens the type so it is scoped consistently with
+the full context $[[G]]$ rather than a truncated version of $[[G]]$.
 
-\Rref{T-Conv} uses the definition of coherence from earlier
+\Rref{T-Conv} uses the convertibility relation from earlier
 as our equality judgment for type conversion. The use of an untyped
-relation for type conversion makes our formulation slightly different
+relation for type conversion is reminiscent of Barendregt's Pure Type
+Systems~\citet{barendregt1991introduction} and makes our formulation different
 from languages such as MLTT~\citep{Martin-Lof-1973}, where the judgmental equality
-takes the form $\Gamma \vdash a \equiv b : A$, which implies $[[G |- a :
-A]]$ and $[[G |- b : A]]$, the well-typedness of $[[a]]$ and $[[b]]$.
+takes the form $\Gamma \vdash a \equiv b : A$, from which one can
+usually derive  $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving
+subject reduction.
+
 \citet{siles2012pure} shows the equivalence of Barendregt's
 Pure Type System~\citep{barendregt1991introduction}, which employs
 untyped equality, and its variant that uses typed judgmental
-equality. It is trivial to embed a system with judgmental
-equality to a system with untyped equality by erasing typing
-information. As a result, it is easy to port our consistency result from our
-type system to a variant with typed judgmental equality
-as long as the typed system does not include $\eta$ laws
-that would require type annotations (e.g. the $\eta$-law for unit
-types). % and we discuss in Section~\ref{sec:extension} how we can extend
+equality. This assures us that we do not lose much generality working
+with a system with untyped conversion. We include a detailed
+discussion in Section~\ref{sec:relatedwork} on how type-directed and
+untyped equality affect the applicability of our technique.
+
+% As a result, there is no loss of generality from
+
+% It is trivial to embed a system with judgmental
+% equality to a system with untyped equality by erasing typing
+% information. As a result, it is easy to port our consistency result from our
+% type system to a variant with typed judgmental equality
+% as long as the typed system does not include $\eta$ laws
+% that would require type annotations (e.g. the $\eta$-law for unit
+% types).
+% and we discuss in Section~\ref{sec:extension} how we can extend
 % our proof to handle those rules.
-\scw{Maybe move more of this paragraph and the next to the discussion/related
-  work section, and add a forward pointer here.}
-\scw{Just say that like Coq, the definition of the system uses untyped
-equality}
+\yl{Unresolved: is it ok to say our system's conversion rule is untyped like
+Coq?}
+% \scw{Maybe move more of this paragraph and the next to the discussion/related
+%   work section, and add a forward pointer here.}
+% \scw{Just say that like Coq, the definition of the system uses untyped
+% equality}
 
-Working with a system with untyped equality has the huge benefit that
-the confluence result for untyped parallel reduction
-(Lemma~\ref{lemma:pardiamond}) is easily derivable without having to
-resort to the complex syntatic (resp. semantic) technique from
-\citet{siles2012pure} (resp. \citet{decagda}) to resolve
-the circularity of subject reduction and $\Pi$-injectivity.
-Section~\ref{sec:extension} explains how we
-generalize our technique to include $\eta$-law for functions and
-show the existence of normal form for well-typed (open and closed)
-terms, achieving a similar level of expressiveness of the type system
-and strength of metatheoretic property as \citet{decagda}.
+% Working with a system with untyped equality has the huge benefit that
+% the confluence result for untyped parallel reduction
+% (Lemma~\ref{lemma:pardiamond}) is easily derivable without having to
+% resort to the complex syntatic (resp. semantic) technique from
+% \citet{siles2012pure} (resp. \citet{decagda}) to resolve
+% the circularity of subject reduction and $\Pi$-injectivity.
+% Section~\ref{sec:extension} explains how we
+% generalize our technique to include $\eta$-law for functions and
+% show the existence of normal form for well-typed (open and closed)
+% terms, achieving a similar level of expressiveness of the type system
+% and strength of metatheoretic property as \citet{decagda}.
 
-Finally, since our system has an infinite universe hierarchy, we can
-present the system à la Russell by using the same judgment form $[[G
-|- a : A]]$ regardless of whether $[[a]]$ is a term or a type. There
-is no need to distinguish between big types and small types
-and duplicate our typing specification.
-\scw{Is there an advantage for Tarski universes even with infinite
-hierarchy? or no?}
+% Finally, since our system has an infinite universe hierarchy, we can
+% present the system à la Russell by using the same judgment form
+%$[[G |- a : A]]$ regardless of whether $[[a]]$ is a term or a type. There
+% is no need to distinguish between big types and small types
+% and duplicate our typing specification.
+% \scw{Is there an advantage for Tarski universes even with infinite
+% hierarchy? or no?}
 
 
 % , the
@@ -1002,10 +1042,38 @@ hierarchy? or no?}
 % is slightly more economical.
 
 \section{Logical Relation}
-\scw{This section pre-supposes that we want to define a logical relation,
-but doesn't precisely state what we want to use it to prove, and why a logical
-relation is suitable. (And why the property you want to prove is difficult to
-show!) Should add more motivation here.}
+% \scw{This section pre-supposes that we want to define a logical relation,
+% but doesn't precisely state what we want to use it to prove, and why a logical
+% relation is suitable. (And why the property you want to prove is difficult to
+% show!) Should add more motivation here.}
+Before we define our logical relation, we first formally specify the
+consistency property that we want to prove.
+\begin{theorem}[Logical Consistency]
+  \label{theorem:consistency}
+  The judgment $[[empty |- a : Void ]]$ is not derivable.
+\end{theorem}
+The property can be formulated in a simply typed language, where
+$[[Void]]$ is similarly defined as a type that has no term. A related
+property, referred to as the termination property (for closed terms),
+is commonly used in introductory materials such as
+\citet{skorstengaard2019introduction}, \citet{pierce2002types}, and
+\citet{harpertait} to motivate the need for a logical relation.
+
+A naive attempt to proving Theorem~\ref{theorem:consistency} by
+induction on the derivation $[[empty |- a : Void]]$ would succeed at
+almost all cases except for \rref{T-App}. In the application
+case, we are given $[[empty |- b : Pi A B]]$ and $[[empty |- a : A]]$, and
+the equality that $[[B {a} = Bool]]$. Our goal is to show that
+$[[empty |- b a : Void]]$ is not possible. However, note that there is
+nothing we know of $[[b]]$ or $[[a]]$ from the induction hypothesis
+because neither $[[Pi A B]]$ nor $[[A]]$ is equal to $[[Bool]]$.
+We have no way of deriving a contradiction from $[[empty |- b a :
+Void]]$. The takeaway from this failed attempt is that, in order to
+derive the consistency, we need to know something about types other
+than $[[Void]]$. From a pragmatic point of view, proof by logical
+relation can be seen as a sophisticated way of strengthening the
+induction hypothesis. From the strengthened property, the fundamental
+theorem, we will be able to derive consistency as a corollary.
 
 \label{sec:logreldep}
 \begin{figure}[h]
@@ -1013,15 +1081,13 @@ show!) Should add more motivation here.}
 \caption{Logical relation for \lang}
 \label{fig:logrel}
 \end{figure}
-In this section, we define the logical relation for \lang{} in the
-form of an inductively defined relation (Figure~\ref{fig:logrel}).
-Throughout the text, we use the notation $[[PowerSet S]]$ denotes the powerset of the set $[[S]]$.
-The logical relation takes the form $[[Interp I i A S]]$. The
-metavariables $[[A]]$ and $[[i]]$ stand for terms and natural
+The logical relation for \lang{}, which takes the form $[[Interp I i A
+S]]$, is defined as an inductively generated relation (Figure~\ref{fig:logrel}).
+% The logical relation takes the form $[[Interp I i A S]]$.
+Themetavariables $[[A]]$ and $[[i]]$ stand for terms and natural
 numbers respectively, as introduced earlier in
 Figure~\ref{fig:syntax}.
-\scw{Because the type of $I$ depends on $i$, I'd prefer a syntax that
-keeps them in order. }
+Throughout the text, we use the notation $[[PowerSet S]]$ denotes the powerset of the set $[[S]]$.
 \scw{Many introductory texts define the relation as a recursive function
 over type structure, or step-indices. You use an inductive relation instead, why?}
 \scw{Can we view this inductive relation as the graph of the partial function
@@ -1053,14 +1119,6 @@ system where one can encode Girard's paradox~\citep{girard-thesis}.
 \scw{Spell this out a bit more about what goes wrong. Where does the
 proof break? Also spell out how this enforces predicativity.}
 
-\begin{figure}[h]
-\begin{equation*}
-    [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I i]] := [[{A | exists S , InterpR i A S}]]
-\end{equation*}
-\caption{Logical relation for all universe levels}
-\label{fig:logrelrec}
-\scw{I didn't understand this figure without reading the text below.}
-\end{figure}
 To tie the knot and obtain an interpretation of all universe levels,
 we define in Figure~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
 using the well-foundedness of the strict less than relation on natural
@@ -1070,6 +1128,15 @@ numbers strictly less than $[[i]]$ as its input).
 The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
 level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
 $[[S]]$.
+
+\begin{figure}[h]
+\begin{equation*}
+    [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I i]] := [[{A | exists S , InterpR i A S}]]
+\end{equation*}
+\caption{Logical relation for all universe levels}
+\label{fig:logrelrec}
+\scw{I didn't understand this figure without reading the text below.}
+\end{figure}
 
 With the definition from Figure~\ref{fig:logrelrec}, we can
 show that the same introduction rules for $[[Interp I i A S]]$ are
@@ -1487,7 +1554,7 @@ evaluate to closed terms.
 
 \scw{What is the motivation for this section? Why do we want to generalize
 the logical relation?}
- To generalize our logical relation to open
+To generalize our logical relation to open
 terms, we define the semantic typing judgment by closing the open
 terms with a substitution whose codomain consists of terms that
 respect the interpretation of the types from the context. The full
@@ -1762,10 +1829,6 @@ Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs}
 
 \scw{Spell this out in a little more detail.}
 
-\begin{corollary}[Logical Consistency]
-  \label{corollary:consistency}
-  The judgment $[[empty |- a : Void ]]$ is not derivable.
-\end{corollary}
 \begin{proof}
   Immediate from Theorem~\ref{theorem:soundness} and the $[[Void]]$ case of Lemma~\ref{lemma:interpinv}.
 \end{proof}
