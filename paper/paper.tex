@@ -212,34 +212,33 @@ in under 1000 lines of code.
 \maketitle
 
 \section{Introduction}
-In this paper, we present a \emph{short}, \emph{mechanized} proof of logical
-consistency for \lang{}, a Martin-Löf style dependent type theory with large
-eliminations, a full predicative universe hierarchy, an intensional identity
-type and a boolean base type, both of which are equipped with dependent
-elimination forms.
+In this paper, we present a \emph{short} and \emph{mechanized} proof of
+logical consistency for \lang{}, a dependent type theory with a full
+predicative universe hierarchy, large eliminations, an intensional identity
+type, a boolean base type, and dependent elimination forms.
 
 Our goal with this work is to demonstrate how the proof technique of
-\emph{logical relations} can be applied in dependently-typed setting.
+\emph{logical relations} can be applied to reason about dependent type theories.
 Tutorial material on this topic~\cite{lr-tutorials} is primarily focussed on
-languages with simple or polymorphic types. In that context, logical relations
+systems with simple or polymorphic types. In that context, logical relations
 can be define as simple recursive functions over the structure of types, or
 (in the case of recursive types) defined over the evaluation steps of the
 computation.
 
 Neither of these techniques make sense for predicative dependent type theory,
-so a young researcher might be excused for thinking that logical
-relations-based arguments are not available.  \scw{Well, actually, we did use
-  a step-indexed relation for Trellys\ldots}\yl{The core calculus of Trellys' logical fragment
-  is simple type + identity so I don't think that counts..} But this is not the case. Recent
-authors have developed tour-de-force mechanizations for the metatheory of
-modern proof
+so a young researcher might be excused for thinking that proofs that use
+logical relations are not applicable.  \scw{Well, actually, we did use a
+  step-indexed relation for Trellys\ldots}\yl{The core calculus of Trellys'
+  logical fragment is simple type + identity so I don't think that counts..}
+But this is not the case. Recent authors have developed tour-de-force
+mechanizations for the metatheory of modern proof
 assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
-have used logical-relations-based reasoning as part of their
-arguments. However, at the same time, these definitions have been overshadowed
-by their magnitude of the surrounding developments. Because these proofs show
-diverse results about real systems and algorithms, these developments range in
-size from 20,000 to 400,000 lines of code, and the techniques are not
-accessible to a casual reader.
+have relied on logical relations defined as part of their
+developments. However, because these proofs show diverse results about real
+systems and algorithms, these developments range in size from 20,000 to
+400,000 lines of code, these definitions are easy to miss and difficult to
+isolate from their surrounding contexts. As a result, they are not accessible
+to casual readers.
 
 Our proof, designed to capture the essence of this proof technique in this
 setting, requires less than 1000 lines of code. We have achieved this
