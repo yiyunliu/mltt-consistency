@@ -1269,7 +1269,7 @@ show that $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$.
 
 For the other direction, given a function $[[F]]$ satisfying the
 property $[[forall a, (# a in S implies Interp I i B { a } F a #) ]]$, it
-is possible to go in the other direction and define a relation $[[R]]=[[
+is possible to  define a relation $[[R]]=[[
 { ( a , F a )  | a in S }]]$. It is easy to verify that $[[R]]$ satisfy
 the the constraint required in the precondition of \rref{I-Pi}.
 
@@ -1330,9 +1330,10 @@ Immediate from \rref{I-Pi} with $[[R]]$ instantiated to the relation $[[{ (a
 , S0 ) | a in S , Interp I i B { a } S0 }]]$.
 \end{proof}
 
-Unfortunately, \rref{I-PiAlt} not only violates the syntactic strict
-positivity constraint required in proof assistants, but
-is genuinely non-monotone when written as an endofunction over the
+Unfortunately, we cannot define the function case of our logical
+relation directly using \rref{I-PiAlt} since it not only violates the
+syntactic strict positivity constraint required in proof assistants,
+but is genuinely non-monotone when written as an endofunction over the
 domain of relations.
 Intuitively, the failure of monotonicity stems from the fact
 that the witness picked in the precondition is not necessarily the
