@@ -81,7 +81,7 @@ Proof.
     move => γ hγ.
     move /(_ γ hγ) : h0; intros (PA & hPA).
     eexists => /=.
-    apply InterpUnivN_Fun; eauto.
+    apply InterpUnivN_Fun_nopf; eauto.
     move => *; asimpl. eauto using γ_ok_cons.
   - move => Γ A b B i _ /SemWt_Univ hB _ hb γ hγ.
     case /(_ γ hγ) : hB => /= PPi hPPi.
