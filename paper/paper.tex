@@ -674,10 +674,11 @@ the informal presentation in our paper since it is more amenable to
 automation (Section~\ref{sec:automation}) and leaves no ambiguity
 about variable freeness conditions.
 
- \scw{Give an overview of the figure}
-\scw{Define a convention that separates your use of natural numbers. Sometimes they
-are universe levels and sometimes they are de Bruijn indices. Better to have separate
-metavariables for each. (And it is possible to generalize universe levels to structures other than natural numbers. Ask Jonathan.}
+%  \scw{Give an overview of the figure}
+% \scw{Define a convention that separates your use of natural numbers. Sometimes they
+% are universe levels and sometimes they are de Bruijn indices. Better to have separate
+% metavariables for each. (And it is possible to generalize universe
+% levels to structures other than natural numbers. Ask Jonathan.} \yl{resolved?}
 As a dependent type theory, terms and types are collapsed into the same
 syntactic category. The type $[[Set i]]$ represent universe
 types and $[[var n]]$ represent de Bruijn variables. While
@@ -704,8 +705,8 @@ a program that uses J?}
 % \scw{Need to explain the notations in the text. What are these operations?
 % What do readers need to understand about them? Help me understand
 % the figure} \yl{resolved}
-\scw{As this is a tutorial paper, you'll need to explain more about how de Bruijn
-indices work.}
+% \scw{As this is a tutorial paper, you'll need to explain more about how de Bruijn
+% indices work.} \yl{resolved?}
 % We omit most of the
 % definitions of renaming and substitution and only show the definition
 % of a few representative cases of substitution.
@@ -812,8 +813,8 @@ the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$.
 \label{fig:par}
 \end{figure}
 
-\scw{motivate parallel reduction. Why are you telling us this now. Is this
-  an explanation of definitional equality and its properties?}
+% \scw{motivate parallel reduction. Why are you telling us this now. Is this
+%   an explanation of definitional equality and its properties?}
 Before we specify the typing rules, we need to first specify its
 untyped equational theory. We choose to represent the untyped
 equational theory in an algorithmic style using the notion of parallel
@@ -1140,10 +1141,10 @@ numbers respectively, as introduced earlier in
 Figure~\ref{fig:syntax}.
 \scw{Many introductory texts define the relation as a recursive function
 over type structure, or step-indices. You use an inductive relation instead, why?}
-\scw{Can we view this inductive relation as the graph of the partial function
-that is defined recursively over types?}
-\scw{What is this form extensible too? impredicative quantification? recursive
-types? }
+% \scw{Can we view this inductive relation as the graph of the partial function
+% that is defined recursively over types?} \yl{reolsved}
+% \scw{What is this form extensible too? impredicative quantification? recursive
+% types? } \yl{resolved? impredicativity is hard}
 \scw{Is it worth observing here that this definition is not over sets of typed
 terms. That it characterizes all terms that look like booleans (i.e. evaluate to
 true or false) or all terms that look like proofs (i.e. evaluate to refl). The
@@ -1348,7 +1349,7 @@ In the rest of the section, we prove four important facts about
 our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
 functionality (Lemma~\ref{lemma:logreldeter}), cumulativity
 (Lemma~\ref{lemma:logrelcumulativity}), and the backward closure
-property (Lemma~\ref{lemma:logrelNbackclos}).
+property (Lemma~\ref{lemma:logrelbackclos}).
 
 First, we prove a family of simple properties, which we refer to as
 inversion principles for our logical relation. Given $[[Interp I i A
@@ -2486,7 +2487,8 @@ The dependently typed systems we have discussed so far also vary
 greatly in expressiveness. For example, the Calculus of
 Constructions~\citep{CoC} and MLTT without universe levels are unable
 to encode large elimination. \citet{decagda} and \citet{nbeincoq} lack
-identity types. \citet{nbeincoq} lacks $\eta$-law for functions. Among
+identity types. % \citet{nbeincoq} lacks $\eta$-law for functions.
+Among
 the mechanized systems we have discussed so far, only
 \citet{anand2014towards} has a full universe hierarchy.
 Our object language \lang{}, while small, has a decent coverage of
