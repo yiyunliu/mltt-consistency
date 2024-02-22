@@ -2603,6 +2603,24 @@ equality is based on joinability of parallel reduction?}
 
 \section{Conclusion}
 \label{sec:conclusion}
+In this work, we show a short and mechanized proof of consistency
+through proof by logical relation for a fully dependently typed
+language with a full universe hierarchy, an intensional identity type,
+and large elimination. We show the extensibility of our approach by
+proving the existence of $\beta\eta$-normal forms with only small
+and mechanical changes to our proof development. Our Coq mechanization
+leverages existing Coq libraries for reasoning about metatheory and
+general-purpose automation, allowing us to significantly reduce the
+verbosity typically associated with mechanized proofs and recover a
+declarative proof style that is usually only available in pen and
+paper. Our development shows that proof by logical relation for
+dependent types should be more accessible since it does not always
+require months of effort to implement. We hope our proof can inspire
+researchers to more actively mechanize results such as consistency,
+normalization for dependent type theory.
+
+
+
 
 
 % Type soundness can be proven through a syntactic
