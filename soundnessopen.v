@@ -143,7 +143,7 @@ Proof.
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
   - move => Γ a A _ _ _ ha γ.
     move : ha. move/[apply]. move => [m [PA [h0 h1]]].
-    exists 0, (fun p => (Pars p tRefl /\ Coherent (subst_tm γ a) (subst_tm γ a)) \/ wne p).
+    exists 0. eexists.
     split => /=.
     + apply InterpUnivN_Eq;
       hauto l:on use:adequacy, InterpUniv_wn_ty, InterpUnivN_Eq unfold:CR.

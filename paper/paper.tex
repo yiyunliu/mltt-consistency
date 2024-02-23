@@ -2007,10 +2007,10 @@ Lemma~\ref{lemma:parnenf}.
 
 Before we can prove the fundamental theorem and derive the
 normalization property as its corollary, we need to additionally
-formulate and prove the adequacy properties.
+formulate and prove the adequacy property.
 
 Let us first start with some auxiliary lemmas and definitions.
-\begin{lemma}[Ext Wn]
+\begin{lemma}[Wn extensionality]
   \label{lemma:extwn}
   If $[[wn (a var i)]]$, then $[[wn a]]$.
 \end{lemma}
@@ -2029,7 +2029,7 @@ Let us first start with some auxiliary lemmas and definitions.
   $[[wne a]]$ and $[[wn b]]$.
 \end{proof}
 
-To state the adequacy lemmas, it is useful to first define the notion
+To state the adequacy lemma, we first define the notion
 of reducibility candidates (shortened as $CR$), predicates over sets
 of lambda terms that capture the properties we need from our logical
 relation.
@@ -2042,73 +2042,112 @@ relation.
   \end{itemize}
 \end{definition}
 
-\begin{lemma}[Adequacy: $CR_1$ for type]
-  \label{lemma:cr1ty}
-  If $[[wne A]]$, then we have $[[Interp I i A {a | wne a }]]$.
+\yl{Merged all the separate adequacy related properties into a single
+  property proved through nested induction. (The mechanization has
+  been adjusted accordingly)}
+We now state and prove the adequacy lemma. We give some more details
+since we prove it through nested induction.
+\begin{lemma}[Adequacy\footnote{\dotv{soundnessopen.v}{soundness}}]
+  \label{lemma:adequacy}
+  If $[[InterpR i A S]]$, then we have $[[S]] \in CR$.
 \end{lemma}
 \begin{proof}
-  Immediately from \rref{I-Ne} and \rref{I-Par}.
+  We start by strong induction over $[[i]]$. We are given the
+  induction hypothesis that for all $[[j < i]]$, $[[InterpR j A S]]$
+  implies $[[S]] \in CR$. Our goal is to show $[[InterpR i A S]]$
+  implies $[[S]] \in CR$.
+
+  By its definition in Figure~\ref{fig:logrelrec}, we have the
+  equality $[[InterpR i A S]] = [[Interp I i A S]]$  where $[[I i]] :=
+  [[{A | exists S , InterpR i A S}]]$.
+  We then proceed by structural over the derivation of $[[Interp I i A
+  S]]$. The only interesting cases are \rref{I-Pi} and \rref{I-Set}.
+  The function case requires Lemmas~\ref{lemma:extwn} and
+  \ref{lemma:wnewn} we have shown earlier.
+
+  The \rref{I-Set} case is the most involved. We need to show that
+  for all $[[j < i]]$, the set $[[{ A | exists S, InterpR j A S  }]]
+  \in CR$. We immediately know that $[[{A | exists S, InterpR j A S
+  }]] \in CR_1$ by \rref{I-Ne}. It remains to show that $[[{A | exists S, InterpR j A S
+  }]] \in CR_2$, or equivalently, for all $[[A]]$, $[[InterpR j A S]]$
+  implies $[[wn A]]$. Suppose $[[InterpR j A S]]$ for an arbitrary
+  $[[A]]$. We have $[[InterpR j A S]]=[[Interp I j A S]]$ where $[[I]]$
+  has the same definition from earlier but its domain restricted to
+  numbers less than $[[j]]$. We perform another induction on
+  $[[j]]$. All cases are trivial except for the case for
+  \rref{I-Pi}. Our induction hypothesis immediately gives us $[[wn
+  A]]$. To derive $[[wn Pi A B]]$, it remains to show $[[wn B]]$. We
+  use the outermost induction hypothesis to show that $[[var 0]]$
+  semantically inhabits $[[A]]$, from which we derive $[[wn B {var 0}]]$
+  and conclude $[[wn B]]$ through antirenaming (Lemma~\ref{lemma:parantirenaming}).
 \end{proof}
 
-\begin{lemma}[Adequacy: $CR$ for interpreted sets]
-  \label{lemma:crel}
-  If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[S]] \in CR$.
-\end{lemma}
-\begin{proof}
-  By induction over the derivation of $[[Interp I i A S]]$. The base
-  cases are all immediate.
+% \begin{lemma}[Adequacy: $CR_1$ for type]
+%   \label{lemma:cr1ty}
+%   If $[[wne A]]$, then we have $[[Interp I i A {a | wne a }]]$.
+% \end{lemma}
+% \begin{proof}
+%   Immediately from \rref{I-Ne} and \rref{I-Par}.
+% \end{proof}
 
-  In the function case ($[[Pi A B]]$), we use the induction
-  hypothesis to show that variables, which are special cases of
-  neutral terms, semantically inhabit the input type $[[A]]$. We apply the
-  function to an arbitrary variable and we can then use
-  Lemma~\ref{lemma:extwn} to conclude the $CR_2$ property.
+% \begin{lemma}[Adequacy: $CR$ for interpreted sets]
+%   \label{lemma:crel}
+%   If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[S]] \in CR$.
+% \end{lemma}
+% \begin{proof}
+%   By induction over the derivation of $[[Interp I i A S]]$. The base
+%   cases are all immediate.
 
-  To show
-  the $CR_1$ property, we need to prove that given a neutral term $[[b]]$
-  such that $[[wne b]]$,
-  and a term $[[a]]$ that semantically inhabits $[[A]]$, $[[b a]]$ gives
-  us a term that semantically inhabits $[[B {a}]]$. From the induction
-  hypothesis, $[[A]]$ also satisfies $CR_2$ and therefore $[[wn a]]$
-  holds. By Lemma~\ref{lemma:wnewn}, we have $[[wne b a]]$. By $CR_2$
-  from the induction hypothesis, since every term that evaluates to
-  some neutral form semantically inhabits $[[B {a}]]$. Done.
-\end{proof}
+%   In the function case ($[[Pi A B]]$), we use the induction
+%   hypothesis to show that variables, which are special cases of
+%   neutral terms, semantically inhabit the input type $[[A]]$. We apply the
+%   function to an arbitrary variable and we can then use
+%   Lemma~\ref{lemma:extwn} to conclude the $CR_2$ property.
+
+%   To show
+%   the $CR_1$ property, we need to prove that given a neutral term $[[b]]$
+%   such that $[[wne b]]$,
+%   and a term $[[a]]$ that semantically inhabits $[[A]]$, $[[b a]]$ gives
+%   us a term that semantically inhabits $[[B {a}]]$. From the induction
+%   hypothesis, $[[A]]$ also satisfies $CR_2$ and therefore $[[wn a]]$
+%   holds. By Lemma~\ref{lemma:wnewn}, we have $[[wne b a]]$. By $CR_2$
+%   from the induction hypothesis, since every term that evaluates to
+%   some neutral form semantically inhabits $[[B {a}]]$. Done.
+% \end{proof}
 
 
-\begin{lemma}[Adequacy: $CR_2$ for type]
-  \label{lemma:cr2ty}
-  If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[wn A]]$ holds.
-\end{lemma}
-\begin{proof}
-  By induction over the derivation of $[[Interp I i A S]]$. The
-  function case uses Lemma~\ref{lemma:crel} and Lemma~\ref{lemma:extwn}.
-\end{proof}
+% \begin{lemma}[Adequacy: $CR_2$ for type]
+%   \label{lemma:cr2ty}
+%   If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[wn A]]$ holds.
+% \end{lemma}
+% \begin{proof}
+%   By induction over the derivation of $[[Interp I i A S]]$. The
+%   function case uses Lemma~\ref{lemma:crel} and Lemma~\ref{lemma:extwn}.
+% \end{proof}
 
-\begin{lemma}[Adequacy: $CR_2$ for types (Rec)]
-  \label{lemma:cr2tyrec}
-  If $[[InterpR i A S]]$, then $[[wn A]]$.
-\end{lemma}
-\begin{proof}
-  By strong induction over $[[i]]$ and Lemma~\ref{lemma:cr2ty}.
-\end{proof}
+% \begin{lemma}[Adequacy: $CR_2$ for types (Rec)]
+%   \label{lemma:cr2tyrec}
+%   If $[[InterpR i A S]]$, then $[[wn A]]$.
+% \end{lemma}
+% \begin{proof}
+%   By strong induction over $[[i]]$ and Lemma~\ref{lemma:cr2ty}.
+% \end{proof}
 
-\begin{lemma}[Adequacy: $CR$ for terms (Rec)]
-  \label{lemma:crelrec}
-  If $[[InterpR i A S]]$, then $[[S]] \in CR$.
-\end{lemma}
-\begin{proof}
-  After unfolding the definition of $[[InterpR i A S]]$, trivial by
-  Lemmas~\ref{lemma:cr1ty}, \ref{lemma:crel} and \ref{lemma:cr2tyrec}.
-\end{proof}
+% \begin{lemma}[Adequacy: $CR$ for terms (Rec)]
+%   \label{lemma:crelrec}
+%   If $[[InterpR i A S]]$, then $[[S]] \in CR$.
+% \end{lemma}
+% \begin{proof}
+%   After unfolding the definition of $[[InterpR i A S]]$, trivial by
+%   Lemmas~\ref{lemma:cr1ty}, \ref{lemma:crel} and \ref{lemma:cr2tyrec}.
+% \end{proof}
 
 The formulation of the valuation and semantic well-typedness from
 Figure~\ref{fig:semtyping} and the fundamental lemma remains
 unchanged.
 The proof of the fundamental lemma is still carried out by induction
 over the typing derivation, where the additional neutral term related
-cases are handled by Lemmas~\ref{lemma:cr2tyrec} and
-\ref{lemma:crelrec}.
+cases are handled by Lemma~\ref{lemma:adequacy}, the adequacy property.
 
 The normalization property then follows as a corollary of the
 fundamental theorem.
@@ -2155,13 +2194,11 @@ fundamental theorem so we can handle elimination rules such as
 in the exact same way to show the normalization of lambda forms
 as we have done in Lemma~\ref{lemma:crel}.
 
-Dependent types make the normalization proof slightly more complicated
-as we also need to know that every type has a normal form.
-Whereas the
-$CR_1$ property for types (Lemma~\ref{lemma:cr1ty}) is directly
-derivable, the $CR_2$ property for types (Lemma~\ref{lemma:cr2ty})
-requires the $CR_1$ property about the interpreted sets
-(Lemma~\ref{lemma:crel}) to be derived first.
+Dependent types make the adequacy proof slightly more complicated
+as we also need to know that every type has a normal form, not just
+the terms.
+This complicates our proof specifically in the \rref{I-Set} case for
+Lemma~\ref{lemma:adequacy}.
 
 Overall, despite the dependently typed setting,
 the extension of our logical relation to prove normalization of open
