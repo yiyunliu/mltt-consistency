@@ -290,21 +290,30 @@ Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
 Lemma InterpExt_Eq_inv n I a b A P :
   InterpExt n I (tEq a b A) P ->
-  P = fun A => Pars A tRefl /\ Coherent a b \/ wne A.
+  (P = fun A => Pars A tRefl /\ Coherent a b \/ wne A) /\ wn a /\ wn b /\ wn A.
 Proof.
   move E : (tEq a b A) => T h.
   move : a b A E.
   elim : T P /h => //.
   hauto q:on inv:tm.
-  hauto lq:on rew:off inv:Par.
+  hauto lq:on ctrs:rtc.
   move => A A0 PA hred hA0 ih a b A1 ?. subst.
   elim /Par_inv : hred=>//.
   move => hred ? ? ? a2 b2 A2 ? ? ? [] *;subst.
+  split; last by hauto lq:on rew:off ctrs:rtc.
   specialize ih with (1 := eq_refl).
-  rewrite ih.
-  fext => A. f_equal.
+  move : ih => [->] *.
+  fext => A. do 2 f_equal.
   apply propositional_extensionality.
   hauto lq:on use:Par_Coherent, Coherent_symmetric, Coherent_transitive.
+Qed.
+
+Lemma InterpUnivN_Eq_inv n a b A P :
+  InterpUnivN n (tEq a b A) P ->
+  P = (fun p => (Pars p tRefl /\ Coherent a b) \/ wne p) /\ wn a /\ wn b /\ wn A.
+Proof.
+  simp InterpUniv.
+  hauto l:on use:InterpExt_Eq_inv.
 Qed.
 
 (* ------------- relation is deterministic ---------------- *)
@@ -390,6 +399,20 @@ Lemma InterpUnivN_Fun_inv_nopf n A B P  (h : InterpUnivN n (tPi A B) P) :
 Proof.
   qauto use:InterpExt_Fun_inv_nopf l:on rew:db:InterpUniv.
 Qed.
+
+(* ---- Alternative intro rule for Eq ----------- *)
+Lemma InterpUnivN_Eq n a b A:
+  wn a -> wn b -> wn A ->
+  InterpUnivN n (tEq a b A) (fun p => (Pars p tRefl /\ Coherent a b) \/ wne p).
+Proof.
+  move => [va [? ?]] [vb [? ?]] [vA [? ?]].
+  have ? : InterpUnivN n (tEq va vb vA) (fun p => (Pars p tRefl /\ Coherent va vb) \/ wne p)
+    by hauto lq:on ctrs:InterpExt rew:db:InterpUniv.
+  have ? : Pars (tEq a b A) (tEq va vb vA) by auto using S_Eq.
+  have : InterpUnivN n (tEq a b A) (fun p => (Pars p tRefl /\ Coherent va vb) \/ wne p) by eauto using InterpUnivN_back_preservation_star.
+  move /[dup] /InterpUnivN_Eq_inv. move => [?]. congruence.
+Qed.
+
 
 (* ----  Backward closure for the interpreted sets ----- *)
 Lemma InterpUnivN_back_clos n A PA :
@@ -481,4 +504,15 @@ Proof.
       * hauto lq:on ctrs:rtc.
     + hauto lq:on ctrs:InterpExt use:InterpExt_back_preservation_star rew:db:InterpUniv unfold:wne.
   - hauto lq:on db:nfne.
+Qed.
+
+Corollary InterpUniv_wn_ty n A PA
+  (h : InterpUnivN n A PA) :
+  wn A.
+Proof.
+  suff : exists PA, InterpUnivN (S n) (tUniv n) PA /\ PA A by hauto q:on use:adequacy.
+  eexists.
+  split.
+  qauto l:on ctrs:InterpExt rew:db:InterpUniv.
+  move =>//. eauto.
 Qed.
