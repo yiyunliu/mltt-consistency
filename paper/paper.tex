@@ -1917,69 +1917,41 @@ property using the fundamental lemma.
 \end{proof}
 
 
-\section{Toward Decidability of Type Conversion and $\eta$ laws}
+\section{Existence of $\beta$-normal forms}
 \label{sec:extension}
 In this section, we sketch out how the logical relation from
-Section~\ref{sec:logreldep} can be extended show the existence of
-$\beta\eta$ normal forms for (open and closed) well-typed terms. We
-first extend parallel reduction to include $\eta$ reduction for
-functions.
-\begin{center}
-  \drule[width=2.5in]{P-AbsEta}
-\end{center}
+Section~\ref{sec:logreldep} can be extended to show the existence of
+$\beta$ normal forms for (open and closed) well-typed terms.
+\scw{Why is this a sketch? We've done the whole proof and we will
+explain it all, right?}
 
-\Rref{P-AbsEta} effectively adds the $\eta$ law for functions to our
-equational theory since convertibility ($[[a <=> b]]$), the untyped relation used for type
-conversion, is built on top of parallel reduction. We can recover the
-same confluence result about parallel reduction using the standard
-techniques from \citet{barendregt:lambda-calculi-with-types,
-takahashi-parallel-reduction}, though specifically for the de Bruijn
-representation, we need the following anti-renaming lemma about
-parallel reduction.
-\begin{lemma}[Par anti-renaming]
-  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
-exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
-\end{lemma}
-Both the confluence and anti-renaming properties require structural
-induction over the size of terms to obtain a useful induction
-hypotehsis in the $\eta$ case.
+The goal of this section is to prove that all well-typed terms have
+$\beta$-normal forms. In other words, we can repeatedly use our parallel
+reduction relation to reduce any term to a unique normal form, where no
+further reductions can be applied. This result can be used to show that our
+type conversion relation is decidable, as computation of the normal form will
+always terminate.
 
 \begin{figure}[h]
   \[
-    \begin{array}{lcl}
-      % \beta\text{-}\mathit{neutral\ terms}\\
+    \begin{array}{llcl}
+       \beta\text{-}\mathit{neutral\ terms} &
       [[e]] & ::= & [[i]]\ |\ [[e f]]\ |\ [[J e f f f]]\ |\ [[if e f
                     f]] \\ \\
-      % \beta\text{-}\mathit{normal\ terms} \\
+      \beta\text{-}\mathit{normal\ terms} &
       [[f]] & ::= & [[e]]\ |\ [[Set i]]\ |\ [[Void]]\ |\ [[Pi f f]]\
                     |\ [[f ~ f : f]]\\
-            & |   & [[\ f]]\ |\ [[refl]]\ |\ [[Bool]]\ |\ [[true]]\ |\ [[false]]
+            & & |   & [[\ f]]\ |\ [[refl]]\ |\ [[Bool]]\ |\ [[true]]\ |\ [[false]]
     \end{array}
   \]
   \caption{$\beta$-neutral and normal forms}
   \label{fig:nenf}
 \end{figure}
 
-
-The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the neutral terms
-and normal forms with respect to $\beta$-reduction, but can still take
-$\eta$ reduction steps. We sometimes use the judgment forms $[[ne a]]$
-and $[[nf a]]$ to indicate that there exists $[[e]]$ or $[[f]]$ such
-that $[[a = e]]$ or $[[a = f]]$.
-
-We can show that parallel reduction preserves $\beta$-normal and
-neutral forms.
-\begin{lemma}[Par preserves $\beta$-neutral and normal forms]
-  \label{lemma:parnenf}
-  If $[[a => b]]$, then
-  \begin{itemize}
-  \item $[[ne a]]$ implies $[[ne b]]$
-  \item $[[nf a]]$ implies $[[nf b]]$
-  \end{itemize}
-\end{lemma}
-This lemma is mainly to show that \rref{P-AbsEta} does not introduce
-any new $\beta$ redex because $\eta$ reduction is the only real step
-we can take.
+The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
+neutral terms and normal forms with respect to $\beta$-reduction. We sometimes
+use the judgment forms $[[ne a]]$ and $[[nf a]]$ to indicate that there exists
+$[[e]]$ or $[[f]]$ such that $[[a = e]]$ or $[[a = f]]$.
 
 The predicates $[[wne a]]$ and $[[wn
 a]]$ describe terms that can evaluate into $\beta$-neutral or
@@ -2158,29 +2130,17 @@ fundamental theorem.
   $[[S]]$. By Lemmas~\ref{lemma:crelrec} and \ref{lemma:cr2tyrec}, we
   conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
 \end{proof}
-\begin{corollary}[Existence of $\beta\eta$-normal form]
-\label{corollary:exbetaeta}
-If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
-\end{corollary}
-\begin{proof}
-  From Corollary~\ref{corollary:exbetanf}, we can easily conclude the
-  existence of $\beta\eta$-normal forms for well-typed terms since
-  $\eta$-reduction preserves $\beta$-normal form (implied by
-  Lemma~\ref{lemma:parnenf}) and also strictly decreases the size of
-  the term (evident from \rref{P-AbsEta}).
-\end{proof}
 
-Due to the non-deterministic nature of parallel reduction, we need to
-take a few more steps to convert the existence of $\beta\eta$-normal
-form into a decision procedure for type conversion. More specifically,
-we can show that a deterministic evaluation strategy such as
-leftmost-outermost reduction can always find the $\beta\eta$-normal
-form if there exists one. Then the termination of that strategy
-immediately follows from Corollary~\ref{corollary:exbetaeta} However, we omit such proofs since they can
-can be formulated on untyped lambda terms and thus are orthogonal to
-the specifics of dependently typed systems. Instead, we redirect
-readers to \citet{factorization-essentially,
-takahashi-parallel-reduction} for the details.
+Due to the non-deterministic nature of parallel reduction, we need to take a
+few more steps to convert the existence of $\beta$-normal form into a decision
+procedure for type conversion. More specifically, we can show that a
+deterministic evaluation strategy such as leftmost-outermost reduction can
+always find the $\beta$-normal form if there exists one. Then the termination
+of that strategy immediately follows from Corollary~\ref{corollary:exbetanf}
+However, we omit such proofs since they can can be formulated on untyped
+lambda terms and thus are orthogonal to the specifics of dependently typed
+systems. Instead, we redirect readers to \citet{factorization-essentially,
+  takahashi-parallel-reduction} for the details.
 
 \scw{Name and foreshadow these lemmas when they are introduced so that
 it is easier to refer to them in the discussion.}
@@ -2213,6 +2173,59 @@ technique for handling dependent types in our logical relation, the
 extension to open terms mostly boil down to properties that can be
 independently derived from the logical relation through syntactic
 means.
+
+\section{Existence of $\beta\eta$-normal forms}
+\scw{relocated text from previous section. Not a complete description yet.}
+
+We first extend parallel reduction to include $\eta$ reduction for functions.
+\begin{center}
+  \drule[width=2.5in]{P-AbsEta}
+\end{center}
+
+\Rref{P-AbsEta} effectively adds the $\eta$ law for functions to our
+equational theory since convertibility ($[[a <=> b]]$), the untyped relation
+used for type conversion, is built on top of parallel reduction. We can
+recover the same confluence result about parallel reduction using the standard
+techniques from \citet{barendregt:lambda-calculi-with-types,
+  takahashi-parallel-reduction}, though specifically for the de Bruijn
+representation, we need the following anti-renaming lemma about parallel
+reduction.
+\begin{lemma}[Par anti-renaming]
+  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
+exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
+\end{lemma}
+Both the confluence and anti-renaming properties require structural
+induction over the size of terms to obtain a useful induction
+hypotehsis in the $\eta$ case.
+
+We can show that parallel reduction preserves $\beta$-normal and
+neutral forms.
+\begin{lemma}[Par preserves $\beta$-neutral and normal forms]
+  \label{lemma:parnenf}
+  If $[[a => b]]$, then
+  \begin{itemize}
+  \item $[[ne a]]$ implies $[[ne b]]$
+  \item $[[nf a]]$ implies $[[nf b]]$
+  \end{itemize}
+\end{lemma}
+This lemma is mainly to show that \rref{P-AbsEta} does not introduce
+any new $\beta$ redex because $\eta$ reduction is the only real step
+we can take.
+
+\begin{corollary}[Existence of $\beta\eta$-normal form]
+\label{corollary:exbetaeta}
+If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
+\end{corollary}
+\begin{proof}
+  From Corollary~\ref{corollary:exbetanf}, we can easily conclude the
+  existence of $\beta\eta$-normal forms for well-typed terms since
+  $\eta$-reduction preserves $\beta$-normal form (implied by
+  Lemma~\ref{lemma:parnenf}) and also strictly decreases the size of
+  the term (evident from \rref{P-AbsEta}).
+\end{proof}
+
+
+
 
 \section{Mechanization}
 \label{sec:logrelmech}
