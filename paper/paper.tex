@@ -803,12 +803,11 @@ the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$.
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
-\drules[P]{$[[a => b]]$}{Parallel Reduction}{Var, Set, Void, Pi, Abs, App, AppAbs, True, False, If, IfTrue, IfFalse,
-  Bool, Eq, Refl, J, JRefl}
+\drules[P]{$[[a => b]]$}{Parallel Reduction}{AppAbs, IfTrue, IfFalse, JRefl}
 \drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{Refl, Step}
 \drules[C]{$[[a <=> b]]$}{Coherence}{Intro}
 \end{minipage}
-\caption{Parallel reduction and coherence}
+\caption{Parallel reduction ($\beta$-rules only) and convertibility }
 \label{fig:par}
 \end{figure}
 
@@ -817,7 +816,7 @@ the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$.
 Before we specify the typing rules, we need to first specify its
 untyped equational theory. We choose to represent the untyped
 equational theory in an algorithmic style using the notion of parallel
-reduction, defined in Figure~\ref{fig:par}. Parallel reduction takes
+reduction, defined in Figure~\ref{fig:par} (congruence rules are omitted). Parallel reduction takes
 the form $[[a => b]]$ and we denote its transitive as $[[a =>+
 b]]$. We say that two terms $[[a0]]$ and $[[a1]]$ are convertible,
 denoted by the notation $[[a0 <=> a1]]$, if there exists some term
@@ -2010,7 +2009,25 @@ Before we can prove the fundamental theorem and derive the
 normalization property as its corollary, we need to additionally
 formulate and prove the adequacy property.
 
+\yl{Moved renaming back to Sec 5 because they are needed for the
+  non-eta development too}
 Let us first start with some auxiliary lemmas and definitions.
+\begin{lemma}[Par anti-renaming]
+  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
+exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
+\end{lemma}
+
+We can show that parallel reduction preserves $\beta$-normal and
+neutral forms.
+\begin{lemma}[Par preserves $\beta$-neutral and normal forms]
+  \label{lemma:parnenf}
+  If $[[a => b]]$, then
+  \begin{itemize}
+  \item $[[ne a]]$ implies $[[ne b]]$
+  \item $[[nf a]]$ implies $[[nf b]]$
+  \end{itemize}
+\end{lemma}
+
 \begin{lemma}[Wn extensionality]
   \label{lemma:extwn}
   If $[[wn (a var i)]]$, then $[[wn a]]$.
@@ -2162,12 +2179,12 @@ fundamental theorem.
   that $[[InterpR i A {rho} S]]$ and $[[a {rho} in S]]$.
   We pick the valuation $[[rho]] = [[idtm]]$ (defined in Figure~\ref{fig:auxdef}), which injects
   natural numbers as term variables. The side condition $[[idtm |=
-  G]]$ is satisfied since Lemma~\ref{lemma:crelrec} says neutral terms,
+  G]]$ is satisfied since Lemma~\ref{lemma:adequacy} says neutral terms,
   including variables, semantically inhabit any $[[S0]]$ where
   $[[S0]]$ is the interpretation of some type. With our choice of
   $[[rho]]$, we have $[[A {rho}]] = [[A {idtm}]] = [[A]]$ and $[[a {rho}]] = [[a{idtm}]] = [[a]]$. Then we
   know that $[[InterpR i A S]]$ and $[[a in S]]$ for some $[[i]]$ and
-  $[[S]]$. By Lemmas~\ref{lemma:crelrec} and \ref{lemma:cr2tyrec}, we
+  $[[S]]$. By Lemma~\ref{lemma:adequacy}, we
   conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
 \end{proof}
 
@@ -2185,8 +2202,7 @@ systems. Instead, we redirect readers to \citet{factorization-essentially,
 \scw{Name and foreshadow these lemmas when they are introduced so that
 it is easier to refer to them in the discussion.}
 Finally, we want to point out that
-the adequacy properties (Lemmas~\ref{lemma:cr1ty},~\ref{lemma:cr2tyrec}, and
-\ref{lemma:crelrec}) are in fact required in the normalization proof
+the adequacy property (Lemma~\ref{lemma:adequacy}) are in fact required in the normalization proof
 for simply typed languages~\citep{abel2019poplmark}. Similar to the
 simply typed scenario, adequacy needs to be proven before the
 fundamental theorem so we can handle elimination rules such as
@@ -2228,24 +2244,11 @@ techniques from \citet{barendregt:lambda-calculi-with-types,
   takahashi-parallel-reduction}, though specifically for the de Bruijn
 representation, we need the following anti-renaming lemma about parallel
 reduction.
-\begin{lemma}[Par anti-renaming]
-  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
-exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
-\end{lemma}
+
 Both the confluence and anti-renaming properties require structural
 induction over the size of terms to obtain a useful induction
 hypotehsis in the $\eta$ case.
 
-We can show that parallel reduction preserves $\beta$-normal and
-neutral forms.
-\begin{lemma}[Par preserves $\beta$-neutral and normal forms]
-  \label{lemma:parnenf}
-  If $[[a => b]]$, then
-  \begin{itemize}
-  \item $[[ne a]]$ implies $[[ne b]]$
-  \item $[[nf a]]$ implies $[[nf b]]$
-  \end{itemize}
-\end{lemma}
 This lemma is mainly to show that \rref{P-AbsEta} does not introduce
 any new $\beta$ redex because $\eta$ reduction is the only real step
 we can take.

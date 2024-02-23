@@ -74,9 +74,9 @@ tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
   | Set i :: :: Set
     {{ com universe }}
   | a { A } :: S :: Subst {{ tex [[a]] [ [[A]]  ] }}
-  | a < rho > :: S :: RenRho {{ tex [[a]] [ [[rho]]  ] }}
-  | a { rho } :: S :: SubstRho {{ tex [[a]] [ [[rho]]  ] }}
-  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] [ [[b0]] , [[b1]]  ] }}
+  | a < rho > :: S :: RenRho {{ tex [[a]] \{ [[rho]]  \} }}
+  | a { rho } :: S :: SubstRho {{ tex [[a]] \{ [[rho]]  \} }}
+  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] \{ [[b0]] , [[b1]]  \} }}
   | ( A )   :: M :: Paren {{ coq ([[A]]) }}
   | (# a #) :: S :: SecretParen
     {{ tex [[a]] }}
