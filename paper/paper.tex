@@ -224,6 +224,7 @@ systems with simple or polymorphic types. In that context, logical relations
 can be define as simple recursive functions over the structure of types, or
 (in the case of recursive types) defined over the evaluation steps of the
 computation.
+\scw{need one sentence to motivate why logical relations are important}
 
 Neither of these techniques make sense for predicative dependent type theory,
 so a young researcher might be excused for thinking that proofs that use
@@ -585,6 +586,27 @@ contributions of the paper. }
 
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
+
+\scw{This section needs to say:
+  \begin{itemize}
+\item definitional equality is untyped so that we can prove 
+  properties about it independent of the type system
+\item definitional equality is based on parallel reduction so that we can take
+  advantage of the algorithmic structure later. This definition is easier to
+  invert because there are fewer derivation. That is important when reasoning
+  about our logical relation.
+\item can prove that parallel reduction is equivalent to other definitions of
+  equality using standard means (cite Barendregt's book).  (we go halfway
+  there by showing it is an equivalence relation). Can also prove equivalent
+  to typed relation. (cite Siles, also CoreSpec?)
+\item All of the proofs in this section are standard, well known, and use
+  techniques that are well-suited for proof assistants. In fact, de Bruijn's
+  paper that introduces de Bruijn indices was part of a mechanized confluence
+  proof for the untyped lambda calculus.
+\item extensions: forward reference to eta equivalence for functions in later
+  section. type-directed equivalence is future work
+  \end{itemize}
+}
 
 \begin{figure}[h]
 \[
@@ -1084,6 +1106,30 @@ Coq?}
 % but doesn't precisely state what we want to use it to prove, and why a logical
 % relation is suitable. (And why the property you want to prove is difficult to
 % show!) Should add more motivation here.}
+\scw{We need to explicitly point out that the key ideas of this paper are 
+  discussed, here, in this section. 
+  We need to explicitly remark on why logical relations are difficult to 
+  define for dependent type theory and explain why this setting is more 
+  difficult than with simple types (STLC) or with polymorphic types (System F).
+  \begin{itemize}
+  \item Dependent function types (result type mentions argument value, so can't define 
+    relation by recursion over type structure)
+  \item Definitional equality (not all types look like types)
+  \item Identity types(?)
+  \end{itemize}
+  Should we be more explicit in our comparison with Girard's trick for polymorphic type?
+  There, the definition stays recursive because it doesn't substitute for the variables 
+  in the function types. But that approach is not available in this setting, because not 
+  all quantified things are types. And we might need that information to interpret, say, 
+  identity types in the right way.
+}
+\scw{ We also need to explicitly point out that our logical relation is untyped. 
+  This has two benefits: it allows semantic typing to be meaningful independent from 
+  syntactic typing (cite Derek, forward reference to next section) and it avoids 
+  significant bookkeeping, especially in the case of Kripke logical relations (we need to define 
+  what these are).
+  Is there a cost to an untyped relation? 
+}
 Before we define our logical relation, we first formally specify the
 consistency property that we want to prove.
 \begin{theorem}[Logical Consistency]
