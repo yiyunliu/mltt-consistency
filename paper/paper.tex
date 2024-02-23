@@ -589,7 +589,7 @@ contributions of the paper. }
 
 \scw{This section needs to say:
   \begin{itemize}
-\item definitional equality is untyped so that we can prove 
+\item definitional equality is untyped so that we can prove
   properties about it independent of the type system
 \item definitional equality is based on parallel reduction so that we can take
   advantage of the algorithmic structure later. This definition is easier to
@@ -1106,29 +1106,29 @@ Coq?}
 % but doesn't precisely state what we want to use it to prove, and why a logical
 % relation is suitable. (And why the property you want to prove is difficult to
 % show!) Should add more motivation here.}
-\scw{We need to explicitly point out that the key ideas of this paper are 
-  discussed, here, in this section. 
-  We need to explicitly remark on why logical relations are difficult to 
-  define for dependent type theory and explain why this setting is more 
+\scw{We need to explicitly point out that the key ideas of this paper are
+  discussed, here, in this section.
+  We need to explicitly remark on why logical relations are difficult to
+  define for dependent type theory and explain why this setting is more
   difficult than with simple types (STLC) or with polymorphic types (System F).
   \begin{itemize}
-  \item Dependent function types (result type mentions argument value, so can't define 
+  \item Dependent function types (result type mentions argument value, so can't define
     relation by recursion over type structure)
   \item Definitional equality (not all types look like types)
   \item Identity types(?)
   \end{itemize}
   Should we be more explicit in our comparison with Girard's trick for polymorphic type?
-  There, the definition stays recursive because it doesn't substitute for the variables 
-  in the function types. But that approach is not available in this setting, because not 
-  all quantified things are types. And we might need that information to interpret, say, 
+  There, the definition stays recursive because it doesn't substitute for the variables
+  in the function types. But that approach is not available in this setting, because not
+  all quantified things are types. And we might need that information to interpret, say,
   identity types in the right way.
 }
-\scw{ We also need to explicitly point out that our logical relation is untyped. 
-  This has two benefits: it allows semantic typing to be meaningful independent from 
-  syntactic typing (cite Derek, forward reference to next section) and it avoids 
-  significant bookkeeping, especially in the case of Kripke logical relations (we need to define 
+\scw{ We also need to explicitly point out that our logical relation is untyped.
+  This has two benefits: it allows semantic typing to be meaningful independent from
+  syntactic typing (cite Derek, forward reference to next section) and it avoids
+  significant bookkeeping, especially in the case of Kripke logical relations (we need to define
   what these are).
-  Is there a cost to an untyped relation? 
+  Is there a cost to an untyped relation?
 }
 Before we define our logical relation, we first formally specify the
 consistency property that we want to prove.
@@ -1971,12 +1971,12 @@ $\beta$ normal forms for (open and closed) well-typed terms.
 explain it all, right?}\yl{s/sketch out/show. I used sketch because we
 didn't spell out the full proofs}
 
-\scw{The goal of this section is also to demonstrate that our logical relations 
-  proof technique can be extended to reason about the (parallel) reduction of 
-  open terms, not just the reduction of terms after closing 
-  substitutions. This is important, in particular, for dependently-typed languages 
-  because type checking involves reasoning about open terms. But even simple type 
-  systems may wish to employ this sort of reasoning, in the case of, say, reasoning 
+\scw{The goal of this section is also to demonstrate that our logical relations
+  proof technique can be extended to reason about the (parallel) reduction of
+  open terms, not just the reduction of terms after closing
+  substitutions. This is important, in particular, for dependently-typed languages
+  because type checking involves reasoning about open terms. But even simple type
+  systems may wish to employ this sort of reasoning, in the case of, say, reasoning
   about compiler correctness in open environments. (Does Amal do anthing like this?)
 }
 
@@ -2105,8 +2105,8 @@ neutral forms.
 To state the adequacy lemma, we first define the notion
 of reducibility candidates (shortened as $CR$), predicates over sets
 of lambda terms that capture the properties we need from our logical
-relation. \scw{Need to provide intuition for these two properties that need 
-to be proved similtaneously. Also, cite where this form of proof originally 
+relation. \scw{Need to provide intuition for these two properties that need
+to be proved similtaneously. Also, cite where this form of proof originally
 appeared? This part is standard.}
 \begin{definition}[CR]
   Let $[[S]]$ be a set of lambda terms. We say that
@@ -2358,9 +2358,8 @@ the line count is the same.
 Autosubst 2 takes our syntax specification in higher-order abstract
 syntax and generates Coq syntax specification, renaming and
 substitution functions, and lemmas and tactics that allow reasoning
-about those functions. The auto-generated files and the library header
-files are counted toward the \emph{Library (Autosubst 2)} category.
-\scw{this line is no longer in the figure}
+about those functions. The auto-generated syntax file by Autosubst 2
+and library header files are omitted from the figure.
 
 Orthogonal to the development of our consistency and normalization
 proof, we prove the syntactic soundness of our system through subject
@@ -2531,7 +2530,7 @@ lemmas or invert derivations that are not specified in the
 \texttt{use} or \texttt{inv} flag.
 
 
-\section{Related Work and Discussion}
+\section{Related Work}
 \label{sec:relatedwork}
 
 \scw{Maybe it would be useful to include a chart here, so that readers can
@@ -2539,34 +2538,85 @@ lemmas or invert derivations that are not specified in the
   include large eliminations? type-directed equivalence? impredicative prop?
   inductive datatypes? what are their line counts?}
 
-\citet{Martin-Lof-1973}, \citet{geuvers1994short}, and
+Proof by logical relations does not come with a precise definition. In
+the most general sense, a logical relation can be viewed as a
+practical technique that uses a type-indexed relation to assign
+meanings to types and strengthen the induction hypothesis for the
+property of interest. The original idea of this technique can be
+traced back to
+\citet{tait1967:reducibility}. \citet{tait1967:reducibility} maps
+types to sets of terms satisfying certain properties related to reduction.
+The same idea is explained in \citet{girard1989proofs} and extended to
+prove the strong normalization property of System F.
+
+Tait's method has been successfully applied to dependently typed
+languages.  \citet{Martin-Lof-1973}, \citet{luo1990extended},
+\citet{geuvers1994short}, and
 \citet{barendregt:lambda-calculi-with-types} are some of the earlier
-works that establish metatheoretic results strong enough to derive
-consistency for dependently typed systems.
+works that prove strong
+normalization for different dependently type systems using Tait's notion of
+reducibility.
+
 \scw{Should give Martin L\"of credit for first consistency proof.}
 \scw{What techniques do these three proofs use? How is it different from
 your proof? What about Luo, which
 introduced a universe hierarchy? What about categories with families, or
 other ways of showing consistency?}
-Some of these techniques
-are still in use in more recent works. For example, the technique for
-proving strong normalization by \citet{geuvers1994short} is adapted by
-\citet{moon2021graded} to show the same property to a dependently
-typed system extended with modalities.
+
+% Some of these proofs are still reapplied in more recent works. For
+% example, the technique for proving strong normalization by
+% \citet{geuvers1994short} is adapted by \citet{moon2021graded} to show
+% the normalization property for a dependently typed system extended with
+% modalities.
+
+The pen and paper representation of the logical relation proofs
+can be challenging to adapt to a theorem prover since a lot of details
+are hidden behind the concise notations.
+As an example, \citet{geuvers1994short} presents the interpretation for types as
+an inductively defined total function over the set of syntactically
+well-formed types. Despite the notation for the logical relation as a
+simply typed function that takes a type and returns some set, the
+interpretation function in reality is a dependent function whose
+return type depends on the derivation of the well-typedness of its
+input. The well-typedness derivation and the proof of the
+classification theorem are needed relevantly in the body
+of the interpretation function to decide whether an argument of an
+application should be erased during interpretation. Due to the
+impredicativity of the object language, \citet{geuvers1994short}'s
+proof cannot be encoded in Agda, which has a predicative
+metatheory. Due to the use of proof-relevant derivations, even in
+Coq, a proof assistant that supports impredicativity, one would need
+to constantly juggle between the impredicative but irrelevant sort
+\texttt{Prop} sort and the predicative but relevant sort
+\texttt{Type}.
+
+More recent works such as \citet{Abel12}
+and\citet{abel2008betaeta} make their definitions more explicit and
+precise and thus easier to encode in proof assistants. Our definition
+of logical relation is reminiscent to their definition of a
+semantic universe hierarchy, though our logical relation is defined to
+be closed under expansion with respect to parallel reduction rather
+than weak head reduction. Furthermore, \citet{Abel12} and
+\citet{abel2008betaeta} use the semantic universe hierachy as a
+measure to define Kripke-style logical relations, from which they
+derive the correctness of their conversion algorithms. In our work, we
+use the semantic universe hierarchy directly because it is sufficient
+for deriving consistency and later normalization.
 
 \citet{decagda} mechanizes in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
 universe level and typed judgmental equality with function
-$\eta$-law. Unlike our logical relation for \lang{}, \citet{decagda}
-uses a Kripke-style logical relation parameterized over an
+$\eta$-law. They
+use a Kripke-style logical relation parameterized over a
 type-directed equivalence relation satisfying certain
-properties. Their logical relation is defined using the
-induction-recursion scheme, which is available in Agda but not in Coq.
+properties to facillitate the reuse of their definition. The
+logical relation is defined using the induction-recursion scheme,
+which is available in Agda but not in Coq.
 \citet{martin-lof-a-la-coq} manages to encode the logical relation
-from \citet{decagda} in the predicative fragment of Coq using a
-special way of encoding induction recursion. Their work further
-extends the decidability of type conversion result from~\citet{decagda} to the decidability
-type checking of a bidrectional type system.
+from \citet{decagda} in the predicative fragment of Coq and further
+extends the decidability of type conversion result
+from~\citet{decagda} to the decidability type checking of a
+bidrectional type system.
 
 \citet{anand2014towards} mechanizes the metatheory of
 Nuprl~\citep{constable1986implementing} in Coq. The metatheory is an
@@ -2578,128 +2628,213 @@ dependently typed language with one predicative universe, similar to
 \citet{anand2014towards} and \citet{nbeincoq} leverage the
 impredicative \texttt{Prop} sort of Coq to define the interpretation
 of dependent function types and thus are closely related to our
-mechanization. However, instead of explaining the purely inductive
+mechanization. However, instead of explaining the inductive
 logical relation as a convoluted workaround to the lack of
 induction-recursion in Coq, we give a self-contained explanation of
 our logical relation.
 
-Finally, it is worth pointing out that all systems we have discussed
-so far builds a relational model for their logical relation. Recall
-that our logical relation takes the form $[[InterpR i A S]]$ where
-$[[S]]$ is a set of terms. In a relational model, each type is
-interpreted as a partial equivalence relation over terms rather than a
-set. A relational model is necessary for an extensional type theory
-such as Nuprl, though \citet{nbeincoq,decagda,martin-lof-a-la-coq} all
-use a relational model either to justify the function $\eta$-law or to
-derive $\Pi$-injectivity. In Section~\ref{sec:extension}, our $\eta$
-law for function is baked into the untyped reduction
-relation and therefore a relational model is not needed.
-\scw{would it be difficult to extend your proof to be a PER?}
+Finally, \citet{barras2010sets, Wang2013SemanticsOI} assign
+set-theoretic semantics to dependent type theory in Coq. Unlike the
+previous mechanization efforts, which primarily focus on predicative
+type theory and more direct reducibility models,
+\citet{barras2010sets, Wang2013SemanticsOI} tackle extensions of
+$CC^\omega$, a system that incorporates a predicative universe on top
+of the impredicative sort in Calculus of Constructions. We choose to
+focus on a simple term model so we do not have to take the extra step
+of mechanizing mathematical objects such as sets and domains.
 
-The dependently typed systems we have discussed so far also vary
-greatly in expressiveness. For example, the Calculus of
-Constructions~\citep{CoC} and MLTT without universe levels are unable
-to encode large elimination. \citet{decagda} and \citet{nbeincoq} lack
-identity types. % \citet{nbeincoq} lacks $\eta$-law for functions.
-Among
-the mechanized systems we have discussed so far, only
-\citet{anand2014towards} has a full universe hierarchy.
-Our object language \lang{}, while small, has a decent coverage of
-features commonly seen in dependently typed languages, including
-dependent pattern matching, dependent function types, a full universe
-hierarchy, an intensional identity type. We hope features such as
-type-directed reduction (necessary for unit $\eta$-law) and
-impredicative sorts can be implemented in a similarly streamlined
-fashion and we will leave those extensions as part of our future work.
+\section{Discussion}
+\label{sec:discuss}
+\yl{I'm not sure how strong of a statement we can make about our proof
+technique. We've already demonstrated how to address type-level
+dependency when defining a logical relation through a simple
+example. Claiming that our proof structure is better seems quite
+ambitious, but I think there's a middle point where we claim that
+adding moderate features like typed reduction doesn't instantly make
+our code size expand all the way from 1000 to 20,000 without saying
+the other developments are just verbose for no good reason}
+The short consistency proof we
+present achieves the goal of ilustrating the technique of proof by
+logical relation for dependently typed languages.
+In this section, we discuss what attributes to the shortness of our
+proof.
+% focus on the following question: why is our proof,
+% even with its extension to the existence $\beta\eta$-normal form, so much
+% shorter than the other mechanized results from \citet{decagda,
+% nbeincoq, martin-lof-a-la-coq}?
 
-% To end this section, we
-\scw{should this be a new subsection?}
-The final question we want to address is: why is our proof,
-even with the extension from Section~\ref{sec:extension}, so much
-shorter than the proofs from \citet{decagda, nbeincoq,
-  martin-lof-a-la-coq}?
-First, unlike developments that mechanize the correctness of a clever
-type conversion algorithm, we only show the existence of
+
+
+First, unlike developments that mechanize the correctness of a
+type-directed conversion algorithm, we only show the existence of
 normal form for open and closed terms and state our properties in
 terms of the untyped small-step reduction relation. This removes a lot
-of scaffolding in the specification of our type system and our logical
-relation.
+of scaffolding related to the specification of the algorithm and the
+extra proof obligation that the algorithm is sound and complete with
+respect to the declarative specification of the type system.
 
-This contrasts our development with
-\citet{martin-lof-a-la-coq}, where the irrelevance property turns out to be the most
-difficult property to prove due to the complexity of the equality
-judgment used to define the logical relation. In our system, the
-irrelevance property (Corollary~\ref{lemma:logrelcoherence}) is a
-direct consequence of Lemma~\ref{lemma:interppreservation},\scw{refer to
-lemma name} which is
-straightforward after we prove the results about parallel
-reduction in Section~\ref{sec:spec}. In other words, we keep the
-the logical relation itself minimal at the cost of extra lemmas that can be proven
-through syntactic means independently from the logical relation.
-For example, as commented near the end of Section~\ref{sec:extension},
-our normalization property (Corollary~\ref{corollary:exbetanf})
-% can induce a decision procedure for type conversion by reducing two
-% terms to $\beta\eta$-normal form and check for their syntactic
-% equivalence. This decision procedure would be inefficient compared to
-% NbE or the algorithm from \citet{martin-lof-a-la-coq} that reduces terms
-% to weak head normal and checks for the equivalence of subterms
-% recursively
-does not immediately induce an efficient decision procedure, but it is
-possible to recover an efficient algorithm by reasoning about untyped
-lambda terms.
+Second, our logical relation, unlike the ones from \citet{decagda,
+  nbeincoq, martin-lof-a-la-coq, anand2014towards}, maps from types to
+predicates rather than relations. The need for a relational model is
+directly related to the metatheoretic property one wants to
+prove. \citet{anand2014towards} requires a relational model to capture
+the extensionality of their type system, wheras \citet{decagda,
+  martin-lof-a-la-coq, nbeincoq} uses a relational model to derive the
+injectivity of $\Pi$ types and justify the validity of
+$\eta$-conversion among other properties.
+Since \lang{} uses an untyped conversion rule, type conversion can be
+done through the \emph{normalize-and-compare}
+strategy described in \citet{pierce2004advanced}. The decidability of
+normalize-and-compare is implied by the existence of
+$\beta\eta$-normal form, which follows from our logical
+predicate.
+
+
+In \rref{I-Par, I-Bool}, we close over our semantically valid types
+and terms using the non-deterministic parallel reduction relation,
+which relates to full reduction, whereas \citet{decagda,nbeincoq} all
+refer to the deterministic weak head reduction. The use of a
+non-deterministic reduction strategy comes at the cost that we need
+confluence to prove the functionality of our logical relation, but
+immediately gives us a semantic justification of the conversion rule
+(Lemma~\ref{lemma:logrelcoherence}).
+% In particular, we obtain the confluence
+% result of reduction at a very early stage before we even define our
+% logical relation.
+
+With untyped conversion,
+we sidestep the relational, Kripke-style logical relation found in
+other mechanized proofs. However, our early dependence on confluence
+before the fundamental theorem is established can be alarming.
+In a system with type-directed reduction,
+confluence is not immediately available since it depends on
+depends on $\Pi$-injectivity, which is usually only proven after the
+fundamental theorem.
+Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
+problem that allow us to recover confluence property independently
+from the logical relation. \citet{siles2012pure} generalizes the
+notion of Type Parallel One Step Reduction from \citet{adams2006pure}
+to syntactically prove $\Pi$-injectivity for arbitrary Pure Tyep
+Systems. \citet{weirich:systemd} add $\Pi$-injectivity to their
+equational theory, and thus allowing subject reduction to be proven
+independently from confluence. Therefore, we believe that even in a
+system where type-directed reduction is required (e.g. a system with
+the unit $\eta$-law) in the logical relation, the proof can still be carried
+out in a structure similar to the one we have presented.
+
+% Finally, it is worth pointing out that all systems we have discussed
+% so far builds a relational model for their logical relation.
+
+% Recall
+% that our logical relation takes the form $[[InterpR i A S]]$ where
+% $[[S]]$ is a set of terms. In a relational model, each type is
+% interpreted as a partial equivalence relation over terms rather than a
+% set. A relational model is necessary for an extensional type theory
+% such as Nuprl, though \citet{nbeincoq,decagda,martin-lof-a-la-coq} all
+% use a relational model either to justify the function $\eta$-law or to
+% derive $\Pi$-injectivity. In Section~\ref{sec:extension}, our $\eta$
+% law for function is baked into the untyped reduction
+% relation and therefore a relational model is not needed.
+% \scw{would it be difficult to extend your proof to be a PER?}
+
+% The dependently typed systems we have discussed so far also vary
+% greatly in expressiveness. For example, the Calculus of
+% Constructions~\citep{CoC} and MLTT without universe levels are unable
+% to encode large elimination. \citet{decagda} and \citet{nbeincoq} lack
+% identity types. % \citet{nbeincoq} lacks $\eta$-law for functions.
+% Among
+% the mechanized systems we have discussed so far, only
+% \citet{anand2014towards} has a full universe hierarchy.
+% Our object language \lang{}, while small, has a decent coverage of
+% features commonly seen in dependently typed languages, including
+% dependent pattern matching, dependent function types, a full universe
+% hierarchy, an intensional identity type. We hope features such as
+% type-directed reduction (necessary for unit $\eta$-law) and
+% impredicative sorts can be implemented in a similarly streamlined
+% fashion and we will leave those extensions as part of our future work.
+
+% To end this section, we
+% \scw{should this be a new subsection?}
+% The final question we want to address is: why is our proof,
+% even with the extension from Section~\ref{sec:extension}, so much
+% shorter than the proofs from \citet{decagda, nbeincoq,
+%   martin-lof-a-la-coq}?
+
+
+% This contrasts our development with
+% \citet{martin-lof-a-la-coq}, where the irrelevance property turns out to be the most
+% difficult property to prove due to the complexity of the equality
+% judgment used to define the logical relation. In our system, the
+% irrelevance property (Corollary~\ref{lemma:logrelcoherence}) is a
+% direct consequence of Lemma~\ref{lemma:interppreservation},\scw{refer to
+% lemma name} which is
+% straightforward after we prove the results about parallel
+% reduction in Section~\ref{sec:spec}. In other words, we keep the
+% the logical relation itself minimal at the cost of extra lemmas that can be proven
+% through syntactic means independently from the logical relation.
+% For example, as commented near the end of Section~\ref{sec:extension},
+% our normalization property (Corollary~\ref{corollary:exbetanf})
+% % can induce a decision procedure for type conversion by reducing two
+% % terms to $\beta\eta$-normal form and check for their syntactic
+% % equivalence. This decision procedure would be inefficient compared to
+% % NbE or the algorithm from \citet{martin-lof-a-la-coq} that reduces terms
+% % to weak head normal and checks for the equivalence of subterms
+% % recursively
+% does not immediately induce an efficient decision procedure, but it is
+% possible to recover an efficient algorithm by reasoning about untyped
+% lambda terms.
 
 % the concision of
 % our proof can be largely attributed to the fact that we bake into the
 % logical relation only the minimum amount of information that is the
 % most conducive to the proof of the metatheoretic result.
 
-Another key to our proof is the very early establishment of the confluence
-property of the paralell reduction relation
-(Lemma~\ref{lemma:pardiamond}). This property is used in
-Lemma~\ref{lemma:interppreservation} to show that the interpretation
-of a type is preserved under evaluation. That is, if $[[InterpR i A
-S]]$ and $[[A => B]]$, then we also have $[[InterpR i B S]]$.
-In a system with typed directed reduction, the confluence result is
-harder to establish since confluence requires subject reduction, which
-circularly depends on $\Pi$-injectivity, a consequence of
-confluence~\citep{siles2012pure}. There are different workarounds to
-this problem. \citet{siles2012pure} proposes a syntactic approach by
-defining a type system where the confluence result is
-directly provable and later show that the system of interest is
-equivalent to the system with the confluence property.
-\citet{decagda} uses a relational model and the relational counterpart
-of Lemma~\ref{lemma:extwn} to derive $\Pi$-injectivity. The relational
-model is parameterized by a typed indexed equivalence relation and
-is reused to prove derive different properties in their
-development. Another perhaps simpler approach is to simply
-extend the judgmental equality with rules about
-$\Pi$-injectivity~\citep{weirich:systemd}. This allows subject
-reduction to be proven independently from confluence and
-$\Pi$-injectivity can later be shown to be admissible. We find the
-approach from \citep{weirich:systemd} the most lightweight as it
-allows us to derive confluence early on even in systems with typed
-conversion. \scw{Maybe mention my $\eta$-equivalence paper here somewhere?}
+% Another key to our proof is the very early establishment of the confluence
+% property of the paralell reduction relation
+% (Lemma~\ref{lemma:pardiamond}). This property is used in
+% Lemma~\ref{lemma:interppreservation} to show that the interpretation
+% of a type is preserved under evaluation. That is, if $[[InterpR i A S]]$ and $[[A => B]]$, then we also have $[[InterpR i B S]]$.
+% In a system with typed directed reduction, the confluence result is
+% harder to establish since confluence requires subject reduction, which
+% circularly depends on $\Pi$-injectivity, a consequence of
+% confluence~\citep{siles2012pure}. There are different workarounds to
+% this problem. \citet{siles2012pure} proposes a syntactic approach by
+% defining a type system where the confluence result is
+% directly provable and later show that the system of interest is
+% equivalent to the system with the confluence property.
+% \citet{decagda} uses a relational model and the relational counterpart
+% of Lemma~\ref{lemma:extwn} to derive $\Pi$-injectivity. The relational
+% model is parameterized by a typed indexed equivalence relation and
+% is reused to prove derive different properties in their
+% development. Another perhaps simpler approach is to simply
+% extend the judgmental equality with rules about
+% $\Pi$-injectivity~\citep{weirich:systemd}. This allows subject
+% reduction to be proven independently from confluence and
+% $\Pi$-injectivity can later be shown to be admissible. We find the
+% approach from \citep{weirich:systemd} the most lightweight as it
+% allows us to derive confluence early on even in systems with typed
+% conversion. \scw{Maybe mention my $\eta$-equivalence paper here somewhere?}
 
-In cases where the judgmental equality does not leverage type information heavily
-(e.g. $\eta$-law for the unit type), it might be possible to show that
-$\Gamma \vdash a \equiv b : A$ is equivalent to the conjunction of
-$[[G |- a : A]]$, $[[G |- b : A ]]$, and $[[a <=> b]]$. If such a
-property holds (we believe this is likely true for both
-\citet{decagda} and \citet{martin-lof-a-la-coq}), we can reuse our existing logical relation in
-terms of untyped parallel reduction to show the decidability of type
-conversion. Otherwise, to fully model the system, we need to bake
-typing information into our logical relation and we need to redefine
-our logical relation in Kripke-style so we can relax the scoping
-constraint in order to prove adequacy, though a relational model would
-still be unnecessary as long as the $\eta$ laws are baked into the
-typed directed relation. \scw{not sure I understand this last bit}
+% In cases where the judgmental equality does not leverage type information heavily
+% (e.g. $\eta$-law for the unit type), it might be possible to show that
+% $\Gamma \vdash a \equiv b : A$ is equivalent to the conjunction of
+% $[[G |- a : A]]$, $[[G |- b : A ]]$, and $[[a <=> b]]$. If such a
+% property holds (we believe this is likely true for both
+% \citet{decagda} and \citet{martin-lof-a-la-coq}), we can reuse our existing logical relation in
+% terms of untyped parallel reduction to show the decidability of type
+% conversion. Otherwise, to fully model the system, we need to bake
+% typing information into our logical relation and we need to redefine
+% our logical relation in Kripke-style so we can relax the scoping
+% constraint in order to prove adequacy, though a relational model would
+% still be unnecessary as long as the $\eta$ laws are baked into the
+% typed directed relation. \scw{not sure I understand this last bit}
 
-Since confluence plays such as key role in our proof, we are uncertain
-how to generalize our technique to systems where confluence does not
-hold, and we will investigate those scenarios in our future work.
-\scw{What systems are you thinking of? Or do you mean more generally
-that this technique only works for languages where the definition of
-equality is based on joinability of parallel reduction?}
+% Since confluence plays such as key role in our proof, we are uncertain
+% how to generalize our technique to systems where confluence does not
+% hold, and we will investigate those scenarios in our future work.
+% \scw{What systems are you thinking of? Or do you mean more generally
+% that this technique only works for languages where the definition of
+% equality is based on joinability of parallel reduction?}
 
 % We are able to avoid the complexivity of a Kripke-style logical relation
 % by defining our logical relation in terms of untyped parallel
