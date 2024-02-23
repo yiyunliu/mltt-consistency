@@ -33,15 +33,18 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
   InterpExt n I A0 PA ->
   InterpExt n I A PA.
 
+Notation "a ~ b @ A"   := (tEq a b A) (at level 70, right associativity).
+Notation "⟦ A ⟧ n , I ↘ PA" := (InterpExt n I A PA) (at level 70).
+
 Lemma InterpExt_Eq' n I PA a b A :
   PA = (fun p => Pars p tRefl /\ Coherent a b) ->
-  InterpExt n I (tEq a b A) PA.
+  ⟦ a ~ b @ A ⟧ n , I ↘ PA.
 Proof. hauto lq:on use:InterpExt_Eq. Qed.
 
 Lemma InterpExt_Univ' n I m PF :
   PF = I m ->
   m < n ->
-  InterpExt n I (tUniv m) PF.
+  ⟦ tUniv m ⟧ n , I ↘ PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
 Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
