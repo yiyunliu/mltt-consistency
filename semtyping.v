@@ -3,6 +3,9 @@ From WR Require Import syntax join imports.
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
+Infix "⇒*" := Pars (at level 60, right associativity).
+Infix "⇒" := Par (at level 60, right associativity).
+
 (* Logical Relation:
 
   InterpUnivN i A P  holds when
@@ -15,26 +18,30 @@ Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm
 
  *)
 
+Reserved Notation "⟦ A ⟧ n , I ↘" (at level 70).
 Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
-| InterpExt_Void : InterpExt n I tVoid (const False)
-| InterpExt_Bool : InterpExt n I tBool (fun a => exists v, Pars a v /\ is_bool_val v)
+| InterpExt_Void : 
+  ⟦ tVoid ⟧ n , I ↘ (const False)
+| InterpExt_Bool : 
+  ⟦ tVoid ⟧ n , I ↘ (fun a => exists v, a ⇒* v /\ is_bool_val v)
 | InterpExt_Fun A B PA PF :
-  InterpExt n I A PA ->
+  ⟦ A ⟧ n , I ↘ PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PF a PB -> InterpExt n I (subst_tm (a..) B) PB) ->
-  InterpExt n I (tPi A B) (ProdSpace PA PF)
+  (forall a PB, PF a PB -> ⟦ subst_tm (a..) B ⟧ n , I ↘ PB) ->
+  ⟦ tPi A B ⟧ n , I ↘ (ProdSpace PA PF)
 | InterpExt_Univ m :
   m < n ->
-  InterpExt n I (tUniv m) (I m)
+  ⟦ tUniv m ⟧ n , I ↘ (I m)
 | InterpExt_Eq a b A :
-  InterpExt n I (tEq a b A) (fun p => Pars p tRefl /\ Coherent a b)
+  ⟦ tEq a b A ⟧ n , I ↘ (fun p => p ⇒* tRefl /\ Coherent a b)
 | InterpExt_Step A A0 PA :
-  Par A A0 ->
-  InterpExt n I A0 PA ->
-  InterpExt n I A PA.
+  A ⇒ A0 ->
+  ⟦ A ⟧ n , I ↘ PA ->
+  ⟦ A0 ⟧ n , I ↘ PA
+where "⟦ A ⟧ n , I ↘" := (InterpExt n I A).
 
 Notation "a ~ b @ A"   := (tEq a b A) (at level 70, right associativity).
-Notation "⟦ A ⟧ n , I ↘ PA" := (InterpExt n I A PA) (at level 70).
+
 
 Lemma InterpExt_Eq' n I PA a b A :
   PA = (fun p => Pars p tRefl /\ Coherent a b) ->
@@ -54,6 +61,8 @@ Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
                                   | right _ => False
                                   end).
 
+Notation "⟦ A ⟧ n ↘" := (InterpUnivN n A) (at level 70).
+
 (* ---------------------------------------------------- *)
 
 (* The definition of InterpUnivN is more complicated than
@@ -62,12 +71,12 @@ Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
    without doing the case analysis.
 *)
 Lemma InterpExt_lt_redundant n I A PA
-  (h : InterpExt n I A PA) :
-      InterpExt n (fun m A =>
+  (h : ⟦ A ⟧ n , I ↘ PA) :
+       ⟦ A ⟧ n , (fun m A =>
                      match Compare_dec.lt_dec m n with
                      | left h => I m A
                      | right _ => False
-                     end) A PA.
+                     end) ↘ PA.
 Proof.
   elim : A PA / h.
   - hauto l:on.
@@ -110,7 +119,8 @@ Qed.
 
 #[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
 
-Lemma InterpExt_Fun_inv n I A B P  (h : InterpExt n I (tPi A B) P) :
+Lemma InterpExt_Fun_inv n I A B P  
+  (h : InterpExt n I (tPi A B) P) :
   exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
     InterpExt n I A PA /\
     (forall a, PA a -> exists PB, PF a PB) /\
@@ -141,9 +151,9 @@ Proof.
 Qed.
 
 Lemma InterpUnivN_Fun_nopf n A B PA :
-  InterpUnivN n A PA ->
-  (forall a, PA a -> exists PB, InterpUnivN n (subst_tm (a..) B) PB) ->
-  InterpUnivN n (tPi A B) (ProdSpace PA (fun a => InterpUnivN n (subst_tm (a..) B))).
+  ⟦ A ⟧ n ↘ PA ->
+  (forall a, PA a -> exists PB, ⟦ subst_tm (a..) B ⟧ n ↘ PB) ->
+  ⟦ tPi A B ⟧ n ↘ (PA ⇒ (fun a PB => ⟦ subst_tm (a..) B ⟧ n ↘ PB)).
 Proof.
   hauto l:on use:InterpExt_Fun_nopf rew:db:InterpUniv.
 Qed.
