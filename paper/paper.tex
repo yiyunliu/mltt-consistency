@@ -2654,31 +2654,31 @@ adding moderate features like typed reduction doesn't instantly make
 our code size expand all the way from 1000 to 20,000 without saying
 the other developments are just verbose for no good reason}
 The short consistency proof we
-present achieves the goal of ilustrating the technique of proof by
-logical relation for dependently typed languages.
-In this section, we discuss what attributes to the shortness of our
-proof.
+present achieves the goal of demonstrating the technique of proof by
+logical relation for dependently typed languages. However, what
+remains unanswered is what makes our development significantly shorter
+compared to others. Are we proving simpler results, or is our proof
+technique genuinely more efficient?
 % focus on the following question: why is our proof,
 % even with its extension to the existence $\beta\eta$-normal form, so much
 % shorter than the other mechanized results from \citet{decagda,
 % nbeincoq, martin-lof-a-la-coq}?
 
 
-
-First, unlike developments that mechanize the correctness of a
+First, the metatheoretic property we prove is indeed simpler.
+Unlike developments that mechanize the correctness of a
 type-directed conversion algorithm, we only show the existence of
 normal form for open and closed terms and state our properties in
 terms of the untyped small-step reduction relation. This removes a lot
 of scaffolding related to the specification of the algorithm and the
 extra proof obligation that the algorithm is sound and complete with
 respect to the declarative specification of the type system.
-
-Second, our logical relation, unlike the ones from \citet{decagda,
+As a result, our logical relation, unlike the ones from \citet{decagda,
   nbeincoq, martin-lof-a-la-coq, anand2014towards}, maps from types to
 predicates rather than relations. The need for a relational model is
 directly related to the metatheoretic property one wants to
 prove. \citet{anand2014towards} requires a relational model to capture
-the extensionality of their type system, wheras \citet{decagda,
+the extensionality of their type system, whereas \citet{decagda,
   martin-lof-a-la-coq, nbeincoq} uses a relational model to derive the
 injectivity of $\Pi$ types and justify the validity of
 $\eta$-conversion among other properties.
@@ -2690,8 +2690,8 @@ $\beta\eta$-normal form, which follows from our logical
 predicate.
 
 
-In \rref{I-Par, I-Bool}, we close over our semantically valid types
-and terms using the non-deterministic parallel reduction relation,
+In terms of our proof technique, we close over our semantically valid types
+and terms in \rref{I-Par, I-Bool} using the non-deterministic parallel reduction relation,
 which relates to full reduction, whereas \citet{decagda,nbeincoq} all
 refer to the deterministic weak head reduction. The use of a
 non-deterministic reduction strategy comes at the cost that we need
@@ -2712,15 +2712,30 @@ depends on $\Pi$-injectivity, which is usually only proven after the
 fundamental theorem.
 Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
 problem that allow us to recover confluence property independently
-from the logical relation. \citet{siles2012pure} generalizes the
+from the logical relation. \citet{siles2012pure} generalize the
 notion of Type Parallel One Step Reduction from \citet{adams2006pure}
 to syntactically prove $\Pi$-injectivity for arbitrary Pure Tyep
 Systems. \citet{weirich:systemd} add $\Pi$-injectivity to their
-equational theory, and thus allowing subject reduction to be proven
+equational theory, thus allowing subject reduction to be proven
 independently from confluence. Therefore, we believe that even in a
 system where type-directed reduction is required (e.g. a system with
 the unit $\eta$-law) in the logical relation, the proof can still be carried
 out in a structure similar to the one we have presented.
+
+Finally, despite our earlier claim that our metatheoretic properties
+are not as strong as some of the related work, we can strengthen our
+results through syntactic means. For example, the
+normalize-and-compare strategy does not induce an efficient algorithm
+for type conversion, like the ones from \citet{decagda} and
+\citet{martin-lof-a-la-coq}. However, with the standard syntactic
+techniques from \citet{takahashi-parallel-reduction,
+factorization-essentially}, we can prove that leftmost-outermost
+reduction is a normalizing reduction strategy, from which we can
+separately show the correctness a more efficient algorithm that
+reduces the two terms to weak head normal form before recursively
+comparing their subcomponents. We believe factoring such properties
+out of a logical relation is valuable, as it helps us identify the
+part of our proof that requires extra strength from the metatheory.
 
 % Finally, it is worth pointing out that all systems we have discussed
 % so far builds a relational model for their logical relation.
