@@ -2206,16 +2206,14 @@ the adequacy property (Lemma~\ref{lemma:adequacy}) are in fact required in the n
 for simply typed languages~\citep{abel2019poplmark}. Similar to the
 simply typed scenario, adequacy needs to be proven before the
 fundamental theorem so we can handle elimination rules such as
-\rref{T-If} and \rref{T-App} where the scrutinee is a neutral term. In
-\citet{abel2019poplmark}, a variant of Lemma~\ref{lemma:extwn} is used
-in the exact same way to show the normalization of lambda forms
-as we have done in Lemma~\ref{lemma:crel}.
-
+\rref{T-If} and \rref{T-App} where the scrutinee is a neutral term. % In
+% \citet{abel2019poplmark}, a variant of Lemma~\ref{lemma:extwn} is used
+% in the exact same way to show the normalization of lambda forms
 Dependent types make the adequacy proof slightly more complicated
 as we also need to know that every type has a normal form, not just
 the terms.
 This complicates our proof specifically in the \rref{I-Set} case for
-Lemma~\ref{lemma:adequacy}.
+our adequacy property (Lemma~\ref{lemma:adequacy}).
 
 Overall, despite the dependently typed setting,
 the extension of our logical relation to prove normalization of open
@@ -2275,12 +2273,15 @@ If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
     & Consistency & Normalization \\
     \hline
     % Library (Autosubst 2)  & 491 & - \\
-    Syntactic typing (specification) &  69 & - \\
+    Syntactic typing (specification) &  68 & - \\
     Renaming & 46 & -  \\
     % Syntactic soundness & 660 &  - \\
-    Untyped reduction & 350 & 834 \\
-    Logical relation & 342 & 515 \\
-    Semantic typing and soundness & 169 & 197 \\
+    Untyped reduction & 349 & - \\
+    Neutral and normal forms & N/A & 269 \\
+    Logical relation & 331 & 426 \\
+    Semantic typing and soundness & 169 & 199 \\
+    \hline
+    Total & 963 & 1357 \\
   \end{tabular}
   \caption{Statistics of the Coq Development}
   \label{fig:linecount}
