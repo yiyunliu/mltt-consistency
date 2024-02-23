@@ -23,7 +23,7 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Void : 
   ⟦ tVoid ⟧ n , I ↘ (const False)
 | InterpExt_Bool : 
-  ⟦ tVoid ⟧ n , I ↘ (fun a => exists v, a ⇒* v /\ is_bool_val v)
+  ⟦ tBool ⟧ n , I ↘ (fun a => exists v, a ⇒* v /\ is_bool_val v)
 | InterpExt_Fun A B PA PF :
   ⟦ A ⟧ n , I ↘ PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
@@ -36,8 +36,8 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
   ⟦ tEq a b A ⟧ n , I ↘ (fun p => p ⇒* tRefl /\ Coherent a b)
 | InterpExt_Step A A0 PA :
   A ⇒ A0 ->
-  ⟦ A ⟧ n , I ↘ PA ->
-  ⟦ A0 ⟧ n , I ↘ PA
+  ⟦ A0 ⟧ n , I ↘ PA ->
+  ⟦ A ⟧ n , I ↘ PA
 where "⟦ A ⟧ n , I ↘" := (InterpExt n I A).
 
 Notation "a ~ b @ A"   := (tEq a b A) (at level 70, right associativity).
@@ -153,7 +153,7 @@ Qed.
 Lemma InterpUnivN_Fun_nopf n A B PA :
   ⟦ A ⟧ n ↘ PA ->
   (forall a, PA a -> exists PB, ⟦ subst_tm (a..) B ⟧ n ↘ PB) ->
-  ⟦ tPi A B ⟧ n ↘ (PA ⇒ (fun a PB => ⟦ subst_tm (a..) B ⟧ n ↘ PB)).
+  ⟦ tPi A B ⟧ n ↘ (ProdSpace PA (fun a PB => ⟦ subst_tm (a..) B ⟧ n ↘ PB)).
 Proof.
   hauto l:on use:InterpExt_Fun_nopf rew:db:InterpUniv.
 Qed.
