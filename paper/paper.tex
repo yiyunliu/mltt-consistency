@@ -1971,6 +1971,15 @@ $\beta$ normal forms for (open and closed) well-typed terms.
 explain it all, right?}\yl{s/sketch out/show. I used sketch because we
 didn't spell out the full proofs}
 
+\scw{The goal of this section is also to demonstrate that our logical relations 
+  proof technique can be extended to reason about the (parallel) reduction of 
+  open terms, not just the reduction of terms after closing 
+  substitutions. This is important, in particular, for dependently-typed languages 
+  because type checking involves reasoning about open terms. But even simple type 
+  systems may wish to employ this sort of reasoning, in the case of, say, reasoning 
+  about compiler correctness in open environments. (Does Amal do anthing like this?)
+}
+
 The goal of this section is to prove that all well-typed terms have
 $\beta$-normal forms. In other words, we can repeatedly use our parallel
 reduction relation to reduce any term to a unique normal form, where no
@@ -2096,7 +2105,9 @@ neutral forms.
 To state the adequacy lemma, we first define the notion
 of reducibility candidates (shortened as $CR$), predicates over sets
 of lambda terms that capture the properties we need from our logical
-relation.
+relation. \scw{Need to provide intuition for these two properties that need 
+to be proved similtaneously. Also, cite where this form of proof originally 
+appeared? This part is standard.}
 \begin{definition}[CR]
   Let $[[S]]$ be a set of lambda terms. We say that
   \begin{itemize}
@@ -2349,6 +2360,7 @@ syntax and generates Coq syntax specification, renaming and
 substitution functions, and lemmas and tactics that allow reasoning
 about those functions. The auto-generated files and the library header
 files are counted toward the \emph{Library (Autosubst 2)} category.
+\scw{this line is no longer in the figure}
 
 Orthogonal to the development of our consistency and normalization
 proof, we prove the syntactic soundness of our system through subject
