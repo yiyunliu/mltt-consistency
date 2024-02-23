@@ -18,7 +18,7 @@ Infix "⇒" := Par (at level 60, right associativity).
 
  *)
 
-Reserved Notation "⟦ A ⟧ n , I ↘" (at level 70).
+Reserved Notation "⟦ A ⟧ n , I ↘ S" (at level 70).
 Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Void : 
   ⟦ tVoid ⟧ n , I ↘ (const False)
@@ -38,7 +38,7 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
   A ⇒ A0 ->
   ⟦ A0 ⟧ n , I ↘ PA ->
   ⟦ A ⟧ n , I ↘ PA
-where "⟦ A ⟧ n , I ↘" := (InterpExt n I A).
+where "⟦ A ⟧ n , I ↘ S" := (InterpExt n I A S).
 
 Notation "a ~ b @ A"   := (tEq a b A) (at level 70, right associativity).
 
@@ -61,7 +61,7 @@ Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
                                   | right _ => False
                                   end).
 
-Notation "⟦ A ⟧ n ↘" := (InterpUnivN n A) (at level 70).
+Notation "⟦ A ⟧ n ↘ S" := (InterpUnivN n A S) (at level 70).
 
 (* ---------------------------------------------------- *)
 
