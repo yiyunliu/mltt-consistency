@@ -2581,7 +2581,7 @@ factorization technique discussed in
 composing the existence of normal form and the fact that the
 deterministic relation is normalizing, we can derive show the
 accessibility of the deterministic reduction relation
-(\mintedinline{coq}{Acc} in Coq), and use the accessibility proof as
+(\mintinline{coq}{Acc} in Coq), and use the accessibility proof as
 an induction metric to define an executable algorithm.
 
 \section{Related Work}
@@ -2769,15 +2769,15 @@ justification of the conversion rule (Lemma~\ref{lemma:logrelcoherence}).
 
 With untyped conversion,
 we sidestep the relational, Kripke-style logical relation found in
-other mechanized proofs. \scw{Need to define Kripke-style. Also the other 
-proofs need Kripke style because they are defining typed relations, not untyped 
+other mechanized proofs. \scw{Need to define Kripke-style. Also the other
+proofs need Kripke style because they are defining typed relations, not untyped
 relations. }
 However, our early dependence on confluence
 before the fundamental theorem is established can be alarming.
 In a system with type-directed reduction,
-confluence is not immediately available because it 
+confluence is not immediately available because it
 depends on $\Pi$-injectivity, which is usually only proven after the
-fundamental theorem.\scw{confluence depends on Pi injectivity? I thought 
+fundamental theorem.\scw{confluence depends on Pi injectivity? I thought
 it was only needed for subject reduction}
 Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
 problem that allow us to recover confluence property independently
@@ -2789,7 +2789,7 @@ equational theory, thus allowing subject reduction to be proven
 independently from confluence. Therefore, we believe that even in a
 system where type-directed reduction is required (e.g. a system with
 the unit $\eta$-law) in the logical relation, the proof can still be carried
-out in a structure similar to the one we have presented. \scw{Not sure that 
+out in a structure similar to the one we have presented. \scw{Not sure that
 I understand this paragraph}
 
 Finally, despite our earlier claim that our metatheoretic properties
@@ -2806,7 +2806,7 @@ reduces the two terms to weak head normal form before recursively
 comparing their subcomponents. We believe factoring such properties
 out of a logical relation is valuable, as it helps us identify the
 part of our proof that requires extra strength from the metatheory.
-\scw{Why don't we just use leftmost-outermost reduction in the first place? 
+\scw{Why don't we just use leftmost-outermost reduction in the first place?
 Do we even need nondeterministic parallel reduction?}
 
 % Finally, it is worth pointing out that all systems we have discussed
