@@ -2370,7 +2370,7 @@ proof, we have also proven the syntactic soundness of our system through subject
 reduction and progress. The syntactic soundness proof shares the
 definition of renaming with our semantic soundness proof, which is
 factored out as a separate file under the Renaming (common) category.
-\scw{Should add this line count as another column, for comparison. I've done so, 
+\scw{Should add this line count as another column, for comparison. I've done so,
 but may need to update the numbers. }
 
 \subsection{Artifacts Specific to Coq}
@@ -2388,8 +2388,8 @@ In our proof presented in Section~\ref{sec:logreldep}, the relation
 $[[R]]$ in \rref{I-Pi} requires Coq's impredicative \texttt{Prop} sort
 since $[[R]]$ can later be instantiated into something defined in
 terms of the logical relation itself (e.g. in
-Lemma~\ref{lemma:piintroalt}). \scw{I'm having trouble connecting the rule in 
-the figure with rule \texttt{InterpExtFun} in the coq development. Would it make 
+Lemma~\ref{lemma:piintroalt}). \scw{I'm having trouble connecting the rule in
+the figure with rule \texttt{InterpExtFun} in the coq development. Would it make
 sense to include the definition of ProdSpace? What is the Coq type of R?}
 
 In the Coq mechanized proof, the definition of $[[Interp I i A S]]$ has type
@@ -2401,7 +2401,7 @@ interpretation for any \emph{finite} number of universes. The use of
 \texttt{Type} becomes troublesome only when we attempt to define
 $[[InterpR i A S]]$, the top-level logical relation defined in
 Figure~\ref{fig:logrelrec} that recursively calls itself at smaller universe
-levels. Therefore, the one feature of \lang{} that truly requires impredicativity 
+levels. Therefore, the one feature of \lang{} that truly requires impredicativity
 is its countable universe hierarchy. \scw{I'm not sure the last part of this sentence
 adds much: ``Although, lemmas such as the
 admissibility of \rref{I-PiAlt} (Lemma~\ref{lemma:piintroalt}) not only simply
@@ -2411,7 +2411,7 @@ our logical relation means something else.}
 
 The definition of $[[Interp I i A S]]$ has an almost one-to-one
 correspondence to the Coq definition. The main difference is the
-specification of $[[I]]$. In 
+specification of $[[I]]$. In
 Section~\ref{sec:logreldep}, we define $[[I]]$ as a function over
 numbers less than $[[i]]$, the universe level. In Coq, we only require
 $[[I]]$ to be function with the set of natural numbers as its domain.
@@ -2419,10 +2419,10 @@ In the Coq encoding of $[[InterpR i A S]]$ (Figure~\ref{fig:logrelrec}), we defi
 \begin{equation*}
   \begin{split}
     [[I]]   &\in [[SNat -> PowerSet STm]] \\
-    [[I j]] &= 
+    [[I j]] &=
      \begin{cases}
       \ [[{A | exists S , InterpR j A S}]] & \text{when } j < i \\
-      \ [[emptyset]] & \text{otherwise} 
+      \ [[emptyset]] & \text{otherwise}
     \end{cases}
   \end{split}
 \end{equation*}
@@ -2524,7 +2524,7 @@ In prose, the triangle property can be proven by induction over the graph of
 and \texttt{ctrs:Par} say that the proof involves inverting and constructing
 of the derivations of parallel reduction. The option
 \texttt{use:Par\_refl,par\_cong} allows the automation tactic to use the
-reflexivity and congruence properties of parallel reduction as lemmas.  
+reflexivity and congruence properties of parallel reduction as lemmas.
 
 The flag \texttt{lq:on} tunes CoqHammer's search algorithm.  While this flag
 appears arcane, when developing our proof scripts we never specify this option
@@ -2540,13 +2540,49 @@ who wish to understand how the underlying proof. Although automation performs
 extensive search, it does not use lemmas or invert derivations that are not
 specified in the \texttt{use} or \texttt{inv} flag.
 
-\subsection{Use of impredicativity}
-\yl{Mention that logrel itself doesn't require impredicativty}
-\scw{Didn't we say this above?}
-
-\subsection{Extraction of conversion algorithm}
+\subsection{Extraction of a conversion algorithm}
 \label{sec:conversionalgo}
-\yl{technically future work. Not sure whereelse to put it}
+A constructive proof of the existence of $\beta\eta$-normal form
+for well-typed terms (Corollary~\ref{corollary:exbetaeta}) induces a
+normalization algorithm. From this normalization procedure, we can
+derive a normalize-and-compare algorithm. Given two well-typed terms
+$[[a]]$ and $[[b]]$, to know whether $[[a <=> b]]$, we apply the
+normalization algorithm on $[[a]]$ and $[[b]]$ to obtain $\beta\eta$
+normal forms $[[f0]]$ and $[[f1]]$. The algorithm then returns true
+exactly when $[[f0]]$ and $[[f1]]$ are syntactically equal. This
+algorithm is referred to as normalize-and-compare by
+\citet{pierce2004advanced}.
+
+The soundness of the algorithm is immediate. The completeness of the
+algorithm is justified the confluence property of the untyped
+reduction relation. Suppose $[[a <=> b]]$, $[[a =>+ f0]]$, $[[b =>+
+f1]]$ but $[[f0]]$ is syntactically distinct from each
+other. By the transitivity of convertibility, we have $[[f0 <=> f1]]$.
+Because $[[f0]]$ and $[[f1]]$ are both in
+$\beta\eta$-normal forms and can only reduce to themselves, we must
+have $[[f0 = f1]]$. Contradiction.
+
+In our development, since our countable universe hierarchy
+relies on impredicativity from the metatheory, we encode our
+properties in Coq's \texttt{Prop} sort, which is not very suitable for
+code execution. On the other hand, due to our heavy reliance on
+automated proof search, even if we were able to extract an algorithm from \texttt{Prop},
+the algorithm would be unpredictable because its definition depends on
+the specific choices made by the proof search algorithm.
+
+However, with a little more effort, it is possible to recover a
+precise algorithm. The first step is to define a deterministic
+small-step reduction relation that is normalizing; that is, the
+relation can always find a normal form if there exists one. A good
+candidate is the leftmost-outermost reduction strategy. Its
+normalizing property is standard and can be proven using the
+factorization technique discussed in
+\citet{takahashi-parallel-reduction, factorization-essentially}. By
+composing the existence of normal form and the fact that the
+deterministic relation is normalizing, we can derive show the
+accessibility of the deterministic reduction relation
+(\mintinline{coq}{Acc} in Coq), and use the accessibility proof as
+an induction metric to define an executable algorithm.
 
 \section{Related Work}
 \label{sec:relatedwork}
@@ -2756,15 +2792,15 @@ justification of the conversion rule (Lemma~\ref{lemma:logrelcoherence}).
 
 With untyped conversion,
 we sidestep the relational, Kripke-style logical relation found in
-other mechanized proofs. \scw{Need to define Kripke-style. Also the other 
-proofs need Kripke style because they are defining typed relations, not untyped 
+other mechanized proofs. \scw{Need to define Kripke-style. Also the other
+proofs need Kripke style because they are defining typed relations, not untyped
 relations. }
 However, our early dependence on confluence
 before the fundamental theorem is established can be alarming.
 In a system with type-directed reduction,
-confluence is not immediately available because it 
+confluence is not immediately available because it
 depends on $\Pi$-injectivity, which is usually only proven after the
-fundamental theorem.\scw{confluence depends on Pi injectivity? I thought 
+fundamental theorem.\scw{confluence depends on Pi injectivity? I thought
 it was only needed for subject reduction}
 Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
 problem that allow us to recover confluence property independently
@@ -2776,7 +2812,7 @@ equational theory, thus allowing subject reduction to be proven
 independently from confluence. Therefore, we believe that even in a
 system where type-directed reduction is required (e.g. a system with
 the unit $\eta$-law) in the logical relation, the proof can still be carried
-out in a structure similar to the one we have presented. \scw{Not sure that 
+out in a structure similar to the one we have presented. \scw{Not sure that
 I understand this paragraph}
 
 Finally, despite our earlier claim that our metatheoretic properties
@@ -2793,7 +2829,7 @@ reduces the two terms to weak head normal form before recursively
 comparing their subcomponents. We believe factoring such properties
 out of a logical relation is valuable, as it helps us identify the
 part of our proof that requires extra strength from the metatheory.
-\scw{Why don't we just use leftmost-outermost reduction in the first place? 
+\scw{Why don't we just use leftmost-outermost reduction in the first place?
 Do we even need nondeterministic parallel reduction?}
 
 % Finally, it is worth pointing out that all systems we have discussed
