@@ -1,16 +1,20 @@
 From WR Require Import syntax join semtyping typing common imports.
 
 (* Semantic substitution well-formedness *)
-Definition γ_ok Γ γ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
+Definition γ_ok Γ γ := forall i, i < length Γ -> forall m PA, ⟦ (dep_ith Γ i) [γ] ⟧ m ↘ PA -> PA (γ i).
 
 (* Semantic typing, written Γ ⊨ a : A in the paper *)
-Definition SemWt Γ a A := forall γ, γ_ok Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
+Definition SemWt Γ a A := forall γ, γ_ok Γ γ -> exists m PA, ( ⟦ A [γ] ⟧ m ↘ PA)  /\ PA (a [γ]).
+Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
+
+(* Semantic context wellformedness *)
+Definition SemWff Γ := forall i, i < length Γ -> exists F, (skipn (S i) Γ) ⊨ ith Γ i ∈ tUniv (F i).
+Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 
-Definition SemWff Γ := forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i)).
 
 Lemma γ_ok_cons {i Γ γ a PA A} :
-  InterpUnivN i (subst_tm γ A) PA ->
+  InterpUnivN i (A [γ]) PA ->
   PA a ->
   γ_ok Γ γ ->
   γ_ok (A :: Γ) (a .: γ).

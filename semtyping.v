@@ -26,7 +26,7 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Fun A B PA PF :
   ⟦ A ⟧ n , I ↘ PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
-  (forall a PB, PF a PB -> ⟦ subst_tm (a..) B ⟧ n , I ↘ PB) ->
+  (forall a PB, PF a PB -> ⟦ B[a..] ⟧ n , I ↘ PB) ->
   ⟦ tPi A B ⟧ n , I ↘ (ProdSpace PA PF)
 | InterpExt_Univ m :
   m < n ->
@@ -34,7 +34,7 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Eq a b A :
   ⟦ tEq a b A ⟧ n , I ↘ (fun p => p ⇒* tRefl /\ Coherent a b)
 | InterpExt_Step A A0 PA :
-  A ⇒ A0 ->
+  (A ⇒ A0) ->
   ⟦ A0 ⟧ n , I ↘ PA ->
   ⟦ A ⟧ n , I ↘ PA
 where "⟦ A ⟧ n , I ↘ S" := (InterpExt n I A S).
@@ -108,7 +108,7 @@ Proof.
 Qed.
 
 Lemma InterpUnivN_nolt n :
-  InterpUnivN n = InterpExt n (fun m A => exists PA, InterpUnivN m A PA).
+  InterpUnivN n = InterpExt n (fun m A => exists PA, ⟦ A ⟧ m ↘ PA).
 Proof.
   simp InterpUnivN.
   fext => A P.
@@ -119,11 +119,11 @@ Qed.
 #[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
 
 Lemma InterpExt_Fun_inv n I A B P  
-  (h : InterpExt n I (tPi A B) P) :
+  (h :  ⟦ tPi A B ⟧ n , I ↘ P) :
   exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop),
-    InterpExt n I A PA /\
+     ⟦ A ⟧ n , I ↘ PA /\
     (forall a, PA a -> exists PB, PF a PB) /\
-    (forall a PB, PF a PB -> InterpExt n I (subst_tm (a..) B) PB) /\
+    (forall a PB, PF a PB -> ⟦ B[a..] ⟧ n , I ↘ PB) /\
     P = ProdSpace PA PF.
 Proof.
   move E : (tPi A B) h => T h.
@@ -142,17 +142,17 @@ Qed.
 (* -----  I-PiAlt is admissible (free of PF, the relation R on paper)  ---- *)
 
 Lemma InterpExt_Fun_nopf n I A B PA  :
-  InterpExt n I A PA ->
-  (forall a, PA a -> exists PB, ⟦ subst_tm (a..) B ⟧ n , I ↘  PB) ->
-  InterpExt n I (tPi A B) (ProdSpace PA (fun a PB => ⟦ subst_tm (a..) B ⟧ n , I ↘ PB)).
+   ⟦ A ⟧ n , I ↘ PA ->
+  (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ n , I ↘  PB) ->
+  InterpExt n I (tPi A B) (ProdSpace PA (fun a PB => ⟦ B[a..] ⟧ n , I ↘ PB)).
 Proof.
   move => h0 h1. apply InterpExt_Fun =>//.
 Qed.
 
 Lemma InterpUnivN_Fun_nopf n A B PA :
   ⟦ A ⟧ n ↘ PA ->
-  (forall a, PA a -> exists PB, ⟦ subst_tm (a..) B ⟧ n ↘ PB) ->
-  ⟦ tPi A B ⟧ n ↘ (ProdSpace PA (fun a PB => ⟦ subst_tm (a..) B ⟧ n ↘ PB)).
+  (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ n ↘ PB) ->
+  ⟦ tPi A B ⟧ n ↘ (ProdSpace PA (fun a PB => ⟦ B[a..] ⟧ n ↘ PB)).
 Proof.
   hauto l:on use:InterpExt_Fun_nopf rew:db:InterpUniv.
 Qed.
@@ -161,7 +161,7 @@ Qed.
 
 Lemma InterpExt_cumulative n m I A PA :
   n < m ->
-  InterpExt n I A PA ->
+   ⟦ A ⟧ n , I ↘ PA ->
   InterpExt m I A PA.
 Proof.
   move => h h0.
@@ -299,8 +299,8 @@ Qed.
 (* ------------- relation is deterministic ---------------- *)
 
 Lemma InterpExt_deterministic n I A PA PB :
-  InterpExt n I A PA ->
-  InterpExt n I A PB ->
+  ⟦ A ⟧ n , I ↘ PA ->
+  ⟦ A ⟧ n , I ↘ PB ->
   PA = PB.
 Proof.
   move => h.
@@ -321,8 +321,8 @@ Proof.
 Qed.
 
 Lemma InterpUnivN_deterministic n A PA PB :
-  InterpUnivN n A PA ->
-  InterpUnivN n A PB ->
+  ⟦ A ⟧ n ↘ PA ->
+  ⟦ A ⟧ n ↘ PB ->
   PA = PB.
 Proof.
   simp InterpUnivN. apply InterpExt_deterministic.
@@ -331,8 +331,8 @@ Qed.
 (* slight generalization to work with any levels using cumulativity. *)
 
 Lemma InterpExt_deterministic' n m I A PA PB :
-  InterpExt n I A PA ->
-  InterpExt m I A PB ->
+   ⟦ A ⟧ n , I ↘ PA ->
+   ⟦ A ⟧ m , I ↘ PB ->
   PA = PB.
 Proof.
   move => h0 h1.
@@ -346,8 +346,8 @@ Proof.
 Qed.
 
 Lemma InterpUnivN_deterministic' n m  A PA PB :
-  InterpUnivN n A PA ->
-  InterpUnivN m A PB ->
+  ⟦ A ⟧ n ↘ PA ->
+  ⟦ A ⟧ m ↘ PB ->
   PA = PB.
 Proof. hauto lq:on rew:off use:InterpExt_deterministic' rew:db:InterpUniv. Qed.
 
@@ -355,9 +355,9 @@ Proof. hauto lq:on rew:off use:InterpExt_deterministic' rew:db:InterpUniv. Qed.
 
 Lemma InterpExt_Fun_inv_nopf n I A B P  (h : InterpExt n I (tPi A B) P) :
   exists (PA : tm -> Prop),
-    InterpExt n I A PA /\
-    (forall a, PA a -> exists PB, InterpExt n I (subst_tm (a..) B) PB) /\
-      P = ProdSpace PA (fun a => InterpExt n I (subst_tm (a..) B)).
+     ⟦ A ⟧ n , I ↘ PA /\
+    (forall a, PA a -> exists PB, InterpExt n I (B[a..]) PB) /\
+      P = ProdSpace PA (fun a PB => InterpExt n I (B[a..]) PB).
 Proof.
   move /InterpExt_Fun_inv : h. intros (PA & PF & hPA & hPF & hPF' & ?); subst.
   exists PA. repeat split => //.
@@ -373,8 +373,8 @@ Qed.
 Lemma InterpUnivN_Fun_inv_nopf n A B P  (h : InterpUnivN n (tPi A B) P) :
   exists (PA : tm -> Prop),
     InterpUnivN n A PA /\
-    (forall a, PA a -> exists PB, InterpUnivN n (subst_tm (a..) B) PB) /\
-      P = ProdSpace PA (fun a => InterpUnivN n (subst_tm (a..) B)).
+    (forall a, PA a -> exists PB, InterpUnivN n (B[a..]) PB) /\
+      P = ProdSpace PA (fun a PB => InterpUnivN n (B[a..]) PB).
 Proof.
   qauto use:InterpExt_Fun_inv_nopf l:on rew:db:InterpUniv.
 Qed.
