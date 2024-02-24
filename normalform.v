@@ -1,6 +1,7 @@
 From WR Require Import syntax join imports.
 
-Fixpoint ne (a : tm) :=
+(* Identifying neutral (ne) and normal (nf) terms *)
+Fixpoint ne (a : tm) : bool :=
   match a with
   | var_tm _ => true
   | tApp a b => ne a && nf b
@@ -16,7 +17,7 @@ Fixpoint ne (a : tm) :=
   | tEq a b A => false
   | tRefl => false
   end
-with nf (a : tm) :=
+with nf (a : tm) : bool :=
   match a with
   | var_tm _ => true
   | tApp a b => ne a && nf b
@@ -33,23 +34,41 @@ with nf (a : tm) :=
   | tRefl => true
   end.
 
+(* Terms that are weakly normalizing to a neutral or normal form. *)
 Definition wn (a : tm) := exists b, a ⇒* b /\ nf b.
 Definition wne (a : tm) := exists b, a ⇒* b /\ ne b.
 
-Lemma bool_val_nf v : is_bool_val v -> nf v.
-Proof. case : v =>// _; hauto lq:on unfold:nf inv:Par. Qed.
-
+(* All neutral terms are normal forms *)
 Lemma ne_nf (a : tm) : ne a -> nf a.
 Proof. elim : a =>//; hauto q:on unfold:nf inv:Par. Qed.
 
+(* Weakly neutral implies weakly normal *)
+Lemma wne_wn a : wne a -> wn a.
+Proof. sfirstorder use:ne_nf. Qed.
+
+(* Normal implies weakly normal *)
+Lemma nf_wn v : nf v -> wn v.
+Proof. sfirstorder ctrs:rtc. Qed.
+
+(* booleans are normal *)
+Lemma bool_val_nf v : is_bool_val v -> nf v.
+Proof. case : v =>// _; hauto lq:on unfold:nf inv:Par. Qed.
+
+(* Neutral and normal forms are stable under renaming *)
 Lemma ne_nf_renaming (a : tm) :
   forall (ξ : nat -> nat),
-    (ne a <-> ne (ren_tm ξ a)) /\ (nf a <-> nf (ren_tm ξ a)).
+    (ne a <-> ne (a⟨ξ⟩)) /\ (nf a <-> nf (a⟨ξ⟩)).
 Proof.
   elim : a; solve [auto; hauto b:on].
 Qed.
 
-Create HintDb nfne.
+(* TODO: Would this lemma make more sense than nf/ne_preservation ? *)
+Lemma nf_refl a b (h: a ⇒ b) : (nf a -> b = a) /\ (ne a -> b = a).
+Proof.
+elim : a b / h => // ; hauto b:on.
+Qed.
+
+(* Normal and neural forms are preserved by parallel reduction. *)
 Lemma nf_ne_preservation a b (h : a ⇒ b) : (nf a ==> nf b) /\ (ne a ==> ne b).
 Proof.
   elim : a b / h => //; hauto lqb:on depth:2.
@@ -61,19 +80,18 @@ Proof. sfirstorder use:nf_ne_preservation b:on. Qed.
 Lemma ne_preservation : forall a b, (a ⇒ b) -> ne a -> ne b.
 Proof. sfirstorder use:nf_ne_preservation b:on. Qed.
 
-Lemma nf_wn v : nf v -> wn v.
-Proof. sfirstorder ctrs:rtc. Qed.
-
-Lemma wne_wn a : wne a -> wn a.
-Proof. sfirstorder use:ne_nf. Qed.
-
+Create HintDb nfne.
 #[export]Hint Resolve nf_wn bool_val_nf ne_nf wne_wn ne_preservation nf_preservation : nfne.
 
 
+(* ------------------ antirenaming ------------------------- *)
+
+(* Next we show that if a renamed term reduces, then 
+   we can extract the unrenamed term from the derivation. *)
 Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
-  (h : a ⟨ ξ ⟩ ⇒ b0) : exists b, (a ⇒ b) /\ b0 = b ⟨ξ⟩.
+  (h : a⟨ξ⟩ ⇒ b0) : exists b, (a ⇒ b) /\ b0 = b⟨ξ⟩.
 Proof.
-  move E : (a ⟨ξ⟩) h => a0 h.
+  move E : (a⟨ξ⟩) h => a0 h.
   move : a ξ E.
   elim : a0 b0 / h.
   - move => + []//. eauto with par.
@@ -131,6 +149,11 @@ Proof.
   sfirstorder use:ne_nf_renaming.
 Qed.
 
+(* ------------------------------------------------------------- *)
+
+(* The next set of lemmas are congruence rules for multiple steps 
+   of parallel reduction. *)
+
 #[local]Ltac solve_s_rec :=
   move => *; eapply rtc_l; eauto;
   hauto lq:on ctrs:Par use:Par_refl.
@@ -185,6 +208,50 @@ Proof.
   auto using rtc_refl.
 Qed.
 
+Lemma S_Pi (a a0 b b0 : tm) :
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tPi a b) ⇒* (tPi a0 b0).
+Proof.
+  move => h.
+  move : b b0.
+  elim : a a0/h.
+  - move => + b b0 h.
+    elim : b b0/h.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+Lemma S_Abs (a b : tm)
+  (h : a ⇒* b) :
+  (tAbs a) ⇒* (tAbs b).
+Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
+
+Lemma S_Eq a0 a1 b0 b1 A0 A1 :
+  a0 ⇒* a1 ->
+  b0 ⇒* b1 ->
+  A0 ⇒* A1 ->
+  (tEq a0 b0 A0) ⇒* (tEq a1 b1 A1).
+Proof.
+  move => h.
+  move : b0 b1 A0 A1.
+  elim : a0 a1 /h.
+  - move => + b0 b1 + + h.
+    elim : b0 b1 /h.
+    + move => + + A0 A1 h.
+      elim : A0 A1 /h.
+      * auto using rtc_refl.
+      * solve_s_rec.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+(* ------------------------------------------------------ *)
+
+(* We can construct proofs that terms are weakly neutral 
+   and weakly normal compositionally. *)
+
 Lemma wne_j (t a b p : tm) :
   wn t -> wn a -> wn b -> wne p -> wne (tJ t a b p).
 Proof.
@@ -209,26 +276,6 @@ Proof.
   hauto b:on use:S_AppLR.
 Qed.
 
-Lemma S_Pi (a a0 b b0 : tm) :
-  a ⇒* a0 ->
-  b ⇒* b0 ->
-  (tPi a b) ⇒* (tPi a0 b0).
-Proof.
-  move => h.
-  move : b b0.
-  elim : a a0/h.
-  - move => + b b0 h.
-    elim : b b0/h.
-    + auto using rtc_refl.
-    + solve_s_rec.
-  - solve_s_rec.
-Qed.
-
-Lemma S_Abs (a b : tm)
-  (h : a ⇒* b) :
-  (tAbs a) ⇒* (tAbs b).
-Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
-
 Lemma wn_abs (a : tm) (h : wn a) : wn (tAbs a).
 Proof.
   move : h => [v [? ?]].
@@ -243,25 +290,6 @@ Proof.
   hauto lqb:on use:S_Pi.
 Qed.
 
-Lemma S_Eq a0 a1 b0 b1 A0 A1 :
-  a0 ⇒* a1 ->
-  b0 ⇒* b1 ->
-  A0 ⇒* A1 ->
-  (tEq a0 b0 A0) ⇒* (tEq a1 b1 A1).
-Proof.
-  move => h.
-  move : b0 b1 A0 A1.
-  elim : a0 a1 /h.
-  - move => + b0 b1 + + h.
-    elim : b0 b1 /h.
-    + move => + + A0 A1 h.
-      elim : A0 A1 /h.
-      * auto using rtc_refl.
-      * solve_s_rec.
-    + solve_s_rec.
-  - solve_s_rec.
-Qed.
-
 Lemma wn_eq a b A : wn a -> wn b -> wn A -> wn (tEq a b A).
 Proof.
   rewrite /wn.
@@ -271,6 +299,12 @@ Proof.
   - by apply S_Eq.
   - hauto lqb:on.
 Qed.
+
+(* --------------------------------------------------------------- *)
+
+(* This lemma is used for reasoning about eta-equivalence. It is like an
+   inversion principle for weakly normal terms. If a term applied to a
+   variable is normal, then the term itself is normal. *)
 
 Lemma ext_wn (a : tm) i :
     wn (tApp a (var_tm i)) ->

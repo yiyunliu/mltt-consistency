@@ -12,7 +12,7 @@ Definition SemWff Γ := forall i, i < length Γ -> exists F, (skipn (S i) Γ) �
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 
-
+(* Extending a well-formed substitution *)
 Lemma ρ_ok_cons {i Γ ρ a PA A} :
   ⟦ A [ρ] ⟧ i ↘ PA -> PA a ->
   ρ_ok Γ ρ ->
