@@ -94,6 +94,10 @@
   \providecommand\BibTeX{{%
     Bib\TeX}}}
 
+%% to allow unicode characters in minted code
+\usepackage{newunicodechar}
+\newunicodechar{⇒}{$\Rightarrow$}
+
 \usepackage{draft}
 
 \ifcomments
@@ -2326,33 +2330,33 @@ If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
 \section{Mechanization}
 \label{sec:logrelmech}
 \begin{figure}[h]
-  \begin{tabular}{ c |  c  | c  }
-    & Consistency & Normalization \\
+  \begin{tabular}{ l |  c  | c | c }
+    & Consistency & Normalization & Syntactic metatheory \\
     \hline
     % Library (Autosubst 2)  & 491 & - \\
-    Syntactic typing (specification) &  68 & - \\
-    Renaming & 46 & -  \\
-    % Syntactic soundness & 660 &  - \\
-    Untyped reduction & 349 & - \\
-    Neutral and normal forms & N/A & 269 \\
-    Logical relation & 331 & 426 \\
-    Semantic typing and soundness & 169 & 199 \\
+    Syntactic typing (specification) &  68 & - & - \\
+    Renaming & 46 & -  & - \\
+    Untyped reduction & 349 & - & - \\
+    Neutral and normal forms & N/A & 269 & N/A \\
+    Logical relation & 331 & 426 & N/A \\
+    Semantic typing and soundness & 169 & 199 & N/A \\
+    Syntactic soundness & N/A & N/A  & 660 \\
     \hline
-    Total & 963 & 1357 \\
+    Total & 963 & 1357 & 1123 \\
   \end{tabular}
   \caption{Statistics of the Coq Development}
   \label{fig:linecount}
 \end{figure}
 
-Figure~\ref{fig:linecount} shows the statics of our
+Figure~\ref{fig:linecount} shows the number of non-blank, non-comment lines of
+code\footnote{calculated by the \texttt{cloc} tool} for each file of our
 development, including the base consistency proof from
-Section~\ref{sec:logreldep} and \ref{sec:logrelproof} and the
-extension to normalization for open and closed terms from
-Section~\ref{sec:extension}.
+Section~\ref{sec:logreldep} and \ref{sec:logrelproof} and the extension to
+normalization for open and closed terms from Section~\ref{sec:extension}.
 
-Since the normalization and the consistency development share the same
+Because the normalization and the consistency development share the same
 syntactic and typing specification, they differ in only the categories
-that are related to the logical relation. We use - as a marker that
+that are relevant to the logical relation. We use - as a marker that
 the line count is the same.
 
 Autosubst 2 takes our syntax specification in higher-order abstract
@@ -2362,15 +2366,17 @@ about those functions. The auto-generated syntax file by Autosubst 2
 and library header files are omitted from the figure.
 
 Orthogonal to the development of our consistency and normalization
-proof, we prove the syntactic soundness of our system through subject
+proof, we have also proven the syntactic soundness of our system through subject
 reduction and progress. The syntactic soundness proof shares the
 definition of renaming with our semantic soundness proof, which is
 factored out as a separate file under the Renaming (common) category.
+\scw{Should add this line count as another column, for comparison. I've done so, 
+but may need to update the numbers. }
 
 \subsection{Artifacts Specific to Coq}
 In this section, we discuss the Coq encoding of the definitions and proofs presented
-in Section~\ref{sec:logrelproof}  and the artifacts that are
-specific to Coq and may not appear in other proof assistants.
+in Section~\ref{sec:logrelproof} and the artifacts of this encoding that are
+specific to Coq.
 
 % The inductive
 % definition of the logical relation in Figure~\ref{fig:logrel} requires
@@ -2382,24 +2388,30 @@ In our proof presented in Section~\ref{sec:logreldep}, the relation
 $[[R]]$ in \rref{I-Pi} requires Coq's impredicative \texttt{Prop} sort
 since $[[R]]$ can later be instantiated into something defined in
 terms of the logical relation itself (e.g. in
-Lemma~\ref{lemma:piintroalt}). However, in the mechanized proof, the
-definition of $[[Interp I i A S]]$ can in fact be encoded without the
-use of impredicativity by consistently replacing the use of
-\texttt{Prop} with Coq's predicative sort \texttt{Type}. One can even
-use this \texttt{Type} variant of the logical relation to define
-interpretation for any finite number of universes. The lack of
-impredicativity becomes troublesome only when we attempt to define
+Lemma~\ref{lemma:piintroalt}). \scw{I'm having trouble connecting the rule in 
+the figure with rule \texttt{InterpExtFun} in the coq development. Would it make 
+sense to include the definition of ProdSpace? What is the Coq type of R?}
+
+In the Coq mechanized proof, the definition of $[[Interp I i A S]]$ has type
+\texttt{Prop}, when \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S}
+has type \texttt {tm -> Prop}.  However, if desired, we could consistently
+replace the use of \texttt{Prop} with Coq's predicative sort
+\texttt{Type}. This variation of the definition could be used to define the
+interpretation for any \emph{finite} number of universes. The use of
+\texttt{Type} becomes troublesome only when we attempt to define
 $[[InterpR i A S]]$, the top-level logical relation defined in
-Figure~\ref{fig:logrelrec} that recursively calls itself at smaller
-universe levels. As a result, the one feature that truly requires
-impredicativity from \lang{} is its countable universe
-hierarchy, though lemmas such as the admissibility of \rref{I-PiAlt}
-(Lemma~\ref{lemma:piintroalt}) not only simply our mechanization, but
-also give better intuition on what our logical relation means.
+Figure~\ref{fig:logrelrec} that recursively calls itself at smaller universe
+levels. Therefore, the one feature of \lang{} that truly requires impredicativity 
+is its countable universe hierarchy. \scw{I'm not sure the last part of this sentence
+adds much: ``Although, lemmas such as the
+admissibility of \rref{I-PiAlt} (Lemma~\ref{lemma:piintroalt}) not only simply
+our mechanization, but also give better intuition on what our logical relation
+means.'' Yes, we need impredicativity to define these lemmas, but without impredicativity
+our logical relation means something else.}
 
 The definition of $[[Interp I i A S]]$ has an almost one-to-one
 correspondence to the Coq definition. The main difference is the
-specification of $[[I]]$. In the presentation in
+specification of $[[I]]$. In 
 Section~\ref{sec:logreldep}, we define $[[I]]$ as a function over
 numbers less than $[[i]]$, the universe level. In Coq, we only require
 $[[I]]$ to be function with the set of natural numbers as its domain.
@@ -2407,8 +2419,11 @@ In the Coq encoding of $[[InterpR i A S]]$ (Figure~\ref{fig:logrelrec}), we defi
 \begin{equation*}
   \begin{split}
     [[I]]   &\in [[SNat -> PowerSet STm]] \\
-    [[I j]] &= [[{A | exists S , InterpR j A S}]] \text{, if } j < i \\
-    [[I j]] &= [[emptyset]] \text{, } j \geq i
+    [[I j]] &= 
+     \begin{cases}
+      \ [[{A | exists S , InterpR j A S}]] & \text{when } j < i \\
+      \ [[emptyset]] & \text{otherwise} 
+    \end{cases}
   \end{split}
 \end{equation*}
 Since $[[I]]$ is only applied to numbers strictly less than $[[i]]$ in
@@ -2499,38 +2514,35 @@ which roughly corresponds to simultaneous reduction of the redexes in
 $[[a]]$, excluding the new redexes that appear as a result of
 reduction.
 \begin{minted}{coq}
-Lemma par_triangle a : forall b, Par a b ->  Par b (tstar a).
+Lemma par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
 Proof.
   apply tstar_ind; hauto lq:on inv:Par use:Par_refl,par_cong ctrs:Par.
 Qed.
 \end{minted}
-In prose, the triangle property can be proven by induction over the
-graph of \mintinline{coq}{tstar a}, the Takahashi translation. Options \texttt{inv:Par} and
-\texttt{ctrs:Par} say that the proof involves inverting and
-constructing of the derivations of parallel
-reduction. The option \texttt{use:Par\_refl,par\_cong} allows the
-automation tactic to use
-the reflexivity and congruence properties of parallel
-reduction as lemmas.
-The flag \texttt{lq:on} toggles tunes CoqHammer's search
-algorithm, though we never need to specify those options
-manually. Instead, we first invoke the \texttt{sauto} tactic indirectly through the
-\texttt{best} tactic provided by CoqHammer where we specify only the
-\texttt{inv}, \texttt{ctrs}, and lemmas we want to use. The
-\texttt{best} tactic iterates through possible configurations and
-provides us a replacement to the \texttt{best} tactic with the
-tuned performance flags to save time for future re-execution of the
-tactic.
+In prose, the triangle property can be proven by induction over the graph of
+\mintinline{coq}{tstar a}, the Takahashi translation. Options \texttt{inv:Par}
+and \texttt{ctrs:Par} say that the proof involves inverting and constructing
+of the derivations of parallel reduction. The option
+\texttt{use:Par\_refl,par\_cong} allows the automation tactic to use the
+reflexivity and congruence properties of parallel reduction as lemmas.  
 
-The automation provided by CoqHammer not only gives us a proof that is
-shorter and more resiliant to changes, but also gives useful
-documentation for readers who wish to understand how the underlying
-proof works since the automation tactic is guaranteed to not use
-lemmas or invert derivations that are not specified in the
-\texttt{use} or \texttt{inv} flag.
+The flag \texttt{lq:on} tunes CoqHammer's search algorithm.  While this flag
+appears arcane, when developing our proof scripts we never specify this option
+manually. Instead, we first invoke the \texttt{best} tactic provided by
+CoqHammer, specifying only the \texttt{inv}, \texttt{ctrs}, and lemmas that we
+want to use. The \texttt{best} tactic then iterates through possible
+configurations and provides us with a replacement with the tuned performance
+flags that save time for future re-execution of the proof script.
+
+The automation provided by CoqHammer not only gives us a proof that is shorter
+and more resiliant to changes, but also gives useful documentation for readers
+who wish to understand how the underlying proof. Although automation performs
+extensive search, it does not use lemmas or invert derivations that are not
+specified in the \texttt{use} or \texttt{inv} flag.
 
 \subsection{Use of impredicativity}
 \yl{Mention that logrel itself doesn't require impredicativty}
+\scw{Didn't we say this above?}
 
 \subsection{Extraction of conversion algorithm}
 \yl{technically future work. Not sure whereelse to put it}
