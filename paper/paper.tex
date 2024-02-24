@@ -2663,18 +2663,17 @@ of mechanizing mathematical objects such as sets and domains.
 \section{Discussion}
 \label{sec:discuss}
 \yl{I'm not sure how strong of a statement we can make about our proof
-technique. We've already demonstrated how to address type-level
-dependency when defining a logical relation through a simple
-example. Claiming that our proof structure is better seems quite
-ambitious, but I think there's a middle point where we claim that
-adding moderate features like typed reduction doesn't instantly make
-our code size expand all the way from 1000 to 20,000 without saying
-the other developments are just verbose for no good reason}
-The short consistency proof we
-present achieves the goal of demonstrating the technique of proof by
-logical relation for dependently typed languages. However, what
-remains unanswered is what makes our development significantly shorter
-compared to others. Are we proving simpler results, or is our proof
+  technique. We've already demonstrated how to address type-level dependency
+  when defining a logical relation through a simple example. Claiming that our
+  proof structure is better seems quite ambitious, but I think there's a
+  middle point where we claim that adding moderate features like typed
+  reduction doesn't instantly make our code size expand all the way from 1000
+  to 20,000 without saying the other developments are just verbose for no good
+  reason} The short consistency proof we present achieves the goal of
+demonstrating the technique of proof by logical relation for dependently typed
+languages. However, what remains unanswered is what makes our development
+significantly shorter compared to others. Are we proving simpler results, for
+smaller languages, are we making more use of automation, or is our proof
 technique genuinely more efficient?
 % focus on the following question: why is our proof,
 % even with its extension to the existence $\beta\eta$-normal form, so much
@@ -2682,17 +2681,16 @@ technique genuinely more efficient?
 % nbeincoq, martin-lof-a-la-coq}?
 
 
-First, the metatheoretic property we prove is indeed simpler.
-Unlike developments that mechanize the correctness of a
-type-directed conversion algorithm, we only show the existence of
-normal form for open and closed terms and state our properties in
-terms of the untyped small-step reduction relation. This removes a lot
-of scaffolding related to the specification of the algorithm and the
-extra proof obligation that the algorithm is sound and complete with
+First, the metatheoretic properties that we prove are indeed simpler.  Unlike
+developments that mechanize the correctness of a type-directed conversion
+algorithm, we only show the existence of normal forms for open and closed
+terms and state our properties in terms of an untyped reduction relation. This
+avoids a lot of the scaffolding related to the specification of the algorithm
+and the proof obligations that the algorithm is sound and complete with
 respect to the declarative specification of the type system.
 As a result, our logical relation, unlike the ones from \citet{decagda,
   nbeincoq, martin-lof-a-la-coq, anand2014towards}, maps from types to
-predicates rather than relations. The need for a relational model is
+predicates rather than relations. \scw{How does this follow? Why do we need unary relations where they need binary relations?} The need for a relational model is
 directly related to the metatheoretic property one wants to
 prove. \citet{anand2014towards} requires a relational model to capture
 the extensionality of their type system, whereas \citet{decagda,
@@ -2706,38 +2704,56 @@ normalize-and-compare is implied by the existence of
 $\beta\eta$-normal form, which follows from our logical
 predicate.
 
+\scw{I'm getting confused by this paragraph. Does this reorganization sense:
+  Our language is simpler than Nuprl, because it doesn't have extensional
+  equality. It is simpler than Agda, because it doesn't have type-directed
+  equality. Both of these cases require the definition of a binary logical
+  relation, that defines a notion of semantic equality between terms. This
+  relation justifies the injectivity of $\Pi$ types and justify the validity
+  of $\eta$-conversion among other properties.}  \scw{Furthermore our proof is
+  also simpler because we don't need prove the correctness of the NBE
+  algorithm, which is used to show the decidability of Agda's type-directed
+  equivalence. Therefore, we don't need to define this algorithm and show that
+  it is sound and complete with respect to the type-directed
+  equality. Instead, to show the decidability of our untyped equivalence, we
+  need only show that terms have $\beta\eta$ normal forms. }
+
 
 In terms of our proof technique, we close over our semantically valid types
-and terms in \rref{I-Par, I-Bool} using the non-deterministic parallel reduction relation,
-which relates to full reduction, whereas \citet{decagda,nbeincoq} all
-refer to the deterministic weak head reduction. The use of a
-non-deterministic reduction strategy comes at the cost that we need
-confluence to prove the functionality of our logical relation, but
-immediately gives us a semantic justification of the conversion rule
-(Lemma~\ref{lemma:logrelcoherence}).
+and terms in \rref{I-Par, I-Bool} using the non-deterministic parallel
+reduction relation, while \citet{decagda,nbeincoq} employ a deterministic weak
+head reduction relation. Our use of a non-deterministic reduction strategy
+means that we need confluence to prove the functionality of our logical
+relation. However, the benefit is that it immediately gives us a semantic
+justification of the conversion rule (Lemma~\ref{lemma:logrelcoherence}).
 % In particular, we obtain the confluence
 % result of reduction at a very early stage before we even define our
 % logical relation.
 
 With untyped conversion,
 we sidestep the relational, Kripke-style logical relation found in
-other mechanized proofs. However, our early dependence on confluence
+other mechanized proofs. \scw{Need to define Kripke-style. Also the other 
+proofs need Kripke style because they are defining typed relations, not untyped 
+relations. }
+However, our early dependence on confluence
 before the fundamental theorem is established can be alarming.
 In a system with type-directed reduction,
-confluence is not immediately available since it depends on
+confluence is not immediately available because it 
 depends on $\Pi$-injectivity, which is usually only proven after the
-fundamental theorem.
+fundamental theorem.\scw{confluence depends on Pi injectivity? I thought 
+it was only needed for subject reduction}
 Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
 problem that allow us to recover confluence property independently
 from the logical relation. \citet{siles2012pure} generalize the
 notion of Type Parallel One Step Reduction from \citet{adams2006pure}
-to syntactically prove $\Pi$-injectivity for arbitrary Pure Tyep
+to syntactically prove $\Pi$-injectivity for arbitrary Pure Type
 Systems. \citet{weirich:systemd} add $\Pi$-injectivity to their
 equational theory, thus allowing subject reduction to be proven
 independently from confluence. Therefore, we believe that even in a
 system where type-directed reduction is required (e.g. a system with
 the unit $\eta$-law) in the logical relation, the proof can still be carried
-out in a structure similar to the one we have presented.
+out in a structure similar to the one we have presented. \scw{Not sure that 
+I understand this paragraph}
 
 Finally, despite our earlier claim that our metatheoretic properties
 are not as strong as some of the related work, we can strengthen our
@@ -2753,6 +2769,8 @@ reduces the two terms to weak head normal form before recursively
 comparing their subcomponents. We believe factoring such properties
 out of a logical relation is valuable, as it helps us identify the
 part of our proof that requires extra strength from the metatheory.
+\scw{Why don't we just use leftmost-outermost reduction in the first place? 
+Do we even need nondeterministic parallel reduction?}
 
 % Finally, it is worth pointing out that all systems we have discussed
 % so far builds a relational model for their logical relation.
