@@ -2288,43 +2288,43 @@ independently derived from the logical relation through syntactic
 means.
 
 \section{Existence of $\beta\eta$-normal forms}
-\scw{relocated text from previous section. Not a complete description yet.}
-
-We first extend parallel reduction to include $\eta$ reduction for functions.
+We can easily incorporate the function $\eta$ law to the equational
+theory of \lang{} by adding the following parallel reduction rule.
 \begin{center}
   \drule[width=2.5in]{P-AbsEta}
 \end{center}
+% \Rref{P-AbsEta} effectively adds the $\eta$ law for functions to our
+% equational theory since convertibility ($[[a <=> b]]$), the untyped relation
+% used for type conversion, is built on top of parallel reduction.
+We can recover the same confluence result about parallel reduction
+using the standard techniques from
+\citet{barendregt:lambda-calculi-with-types,
+takahashi-parallel-reduction}, though anti-renaming
+(Lemma~\ref{lemma:parantirenaming}) needs to be proven before the
+diamond property (Lemma~\ref{lemma:pardiamond}). Another complication
+is that confluence and anti-renaming now requires induction on a size
+metric of lambda terms so the $\eta$ case has a useful induction hypothesis.
 
-\Rref{P-AbsEta} effectively adds the $\eta$ law for functions to our
-equational theory since convertibility ($[[a <=> b]]$), the untyped relation
-used for type conversion, is built on top of parallel reduction. We can
-recover the same confluence result about parallel reduction using the standard
-techniques from \citet{barendregt:lambda-calculi-with-types,
-  takahashi-parallel-reduction}, though specifically for the de Bruijn
-representation, we need the following anti-renaming lemma about parallel
-reduction.
-
-Both the confluence and anti-renaming properties require structural
-induction over the size of terms to obtain a useful induction
-hypotehsis in the $\eta$ case.
-
-This lemma is mainly to show that \rref{P-AbsEta} does not introduce
-any new $\beta$ redex because $\eta$ reduction is the only real step
-we can take.
-
+Note that the specification of our logical relation does not require
+any changes. We can continue using $\ottkw{ne}$ and $\ottkw{nf}$ to
+represent $\beta$-neutral and normal forms. By reproving the
+fundamental lemma, we learn that every well-typed term as a
+$\beta$-normal form. Lemma~\ref{lemma:parnenf} still holds with our
+extended parallel reduction. In the presence of the $\eta$ reduction
+rule, Lemma~\ref{lemma:parnenf} tells us that $\eta$ reduction
+preserves $\beta$-normal forms (i.e. does not produce new
+$\beta$-redexes). Furthermore, since the $\eta$ reduction rule for
+functions strictly decreases the size of the term, the existence of
+$\beta\eta$ normal form trivially follows.
 \begin{corollary}[Existence of $\beta\eta$-normal form]
 \label{corollary:exbetaeta}
 If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
 \end{corollary}
-\begin{proof}
-  From Corollary~\ref{corollary:exbetanf}, we can easily conclude the
-  existence of $\beta\eta$-normal forms for well-typed terms since
-  $\eta$-reduction preserves $\beta$-normal form (implied by
-  Lemma~\ref{lemma:parnenf}) and also strictly decreases the size of
-  the term (evident from \rref{P-AbsEta}).
-\end{proof}
-
-
+Due to some technical
+details, our proof about the existence of $\beta\eta$ form does not
+immediately induce a decision procedure for type conversion in
+\lang{}. We discuss this issue and its workaround in
+Section~\ref{sec:conversionalgo}.
 
 
 \section{Mechanization}
@@ -2545,6 +2545,7 @@ specified in the \texttt{use} or \texttt{inv} flag.
 \scw{Didn't we say this above?}
 
 \subsection{Extraction of conversion algorithm}
+\label{sec:conversionalgo}
 \yl{technically future work. Not sure whereelse to put it}
 
 \section{Related Work}
