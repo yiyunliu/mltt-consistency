@@ -57,7 +57,7 @@ rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
   | up n      :: :: upn
     {{ tex \uparrow^{[[n]]} }}
 
-tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
+tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
     {{ tex - }}
   | var i :: :: Var
@@ -90,7 +90,7 @@ tm, a , b , c, t, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
     {{ com reflexivity proof }}
   | Void      :: :: Void
     {{ com empty type }}
-  | J t a b p         :: :: Transp
+  | J c a b p         :: :: Transp
     {{ com J eliminator }}
   | Bool           :: :: Bool
     {{ com boolean type }}
@@ -275,16 +275,16 @@ a0 ~ b0 : A0 => a1 ~ b1 : A1
 ------------- :: Refl
 refl => refl
 
-t0 => t1
+c0 => c1
 a0 => a1
 b0 => b1
 p0 => p1
 ------------------------------- :: J
-J t0 a0 b0 p0 => J t1 a1 b1 p1
+J c0 a0 b0 p0 => J c1 a1 b1 p1
 
-t0 => t1
+c0 => c1
 -------------------- :: JRefl
-J t0 a0 b0 refl => t1
+J c0 a0 b0 refl => c1
 
 a => a0
 ----------------------- :: AbsEta
@@ -391,10 +391,10 @@ G |- a ~ b : A : Set i
 [ G |- b : A ]
 [ G |- A : Set j ]
 G |- p : a ~ b : A
-(# G ++ A #) ++ var 0 ~ (# a < up 1 > #)  : (# A < up 1 > #) |- C : Set i
-G |- t : C { a ,  refl }
+(# G ++ A #) ++ var 0 ~ (# a < up 1 > #)  : (# A < up 1 > #) |- B : Set i
+G |- c : B { a ,  refl }
 ------------------------------------ :: J
-G |- J t a b p : C { b , p }
+G |- J c a b p : B { b , p }
 
 |- G
 -------------------------- :: Bool
