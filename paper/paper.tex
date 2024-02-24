@@ -2706,12 +2706,12 @@ of mechanizing mathematical objects such as sets and domains.
   middle point where we claim that adding moderate features like typed
   reduction doesn't instantly make our code size expand all the way from 1000
   to 20,000 without saying the other developments are just verbose for no good
-  reason} 
+  reason}
 \scw{I think we can find reasons for much of the differences. Am I missing any?
-While it would be difficult to assign numbers to each of the deltas, I think it 
+While it would be difficult to assign numbers to each of the deltas, I think it
 is believable that when put together they add up to a lot.
 \begin{itemize}
-\item We don't include inductive or coinductive datatypes. We don't include 
+\item We don't include inductive or coinductive datatypes. We don't include
 cumulativity. We don't include Prop. We don't include universe polymorphism.
 \item We state our equality algorithmically instead of declaratively. On one
   hand, this gives us automatic inversion principles when working with
@@ -2721,8 +2721,8 @@ cumulativity. We don't include Prop. We don't include universe polymorphism.
 \item We don't prove decidability of type checking. (And, it is not provable
   for our system, because we lack type annotations on functions. We should
   point this out.)
-\item Our logical relation is unary and untyped. The latter means that we don't 
-  require the bookkeeping of a Kripke logical relation when reasoning about 
+\item Our logical relation is unary and untyped. The latter means that we don't
+  require the bookkeeping of a Kripke logical relation when reasoning about
   open terms. I don't know why unary relations are shorter.
 \item CoqHammer leads to short proofs.
 \end{itemize}
@@ -2841,6 +2841,12 @@ out of a logical relation is valuable, as it helps us identify the
 part of our proof that requires extra strength from the metatheory.
 \scw{Why don't we just use leftmost-outermost reduction in the first place?
 Do we even need nondeterministic parallel reduction?}
+\yl{The conversion uses full reduction. Nondeterministic reduction
+  makes it harder to show that convertible types have the same
+  meaning. Maybe it would require us to prove factorization in our
+  development but it definitely simplifies the determinism proof
+  (confluence is no longer required before the fundamental
+  lemma). }
 
 % Finally, it is worth pointing out that all systems we have discussed
 % so far builds a relational model for their logical relation.
