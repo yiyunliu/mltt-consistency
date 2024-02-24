@@ -3,8 +3,7 @@ From WR Require Import syntax join imports.
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
-Infix "⇒*" := Pars (at level 60, right associativity).
-Infix "⇒" := Par (at level 60, right associativity).
+Notation "a ~ b @ A"   := (tEq a b A) (at level 70, right associativity).
 
 (* Logical Relation:
 
@@ -40,11 +39,9 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
   ⟦ A ⟧ n , I ↘ PA
 where "⟦ A ⟧ n , I ↘ S" := (InterpExt n I A S).
 
-Notation "a ~ b @ A"   := (tEq a b A) (at level 70, right associativity).
-
 
 Lemma InterpExt_Eq' n I PA a b A :
-  PA = (fun p => Pars p tRefl /\ Coherent a b) ->
+  PA = (fun p => p ⇒* tRefl /\ Coherent a b) ->
   ⟦ a ~ b @ A ⟧ n , I ↘ PA.
 Proof. hauto lq:on use:InterpExt_Eq. Qed.
 
@@ -54,10 +51,12 @@ Lemma InterpExt_Univ' n I m PF :
   ⟦ tUniv m ⟧ n , I ↘ PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
+Infix "<?" := Compare_dec.lt_dec (at level 60).
+
 Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
   InterpUnivN n := InterpExt n (fun m A =>
-                                  match Compare_dec.lt_dec m n with
-                                  | left h => exists PA, InterpUnivN m A PA
+                                  match m <? n with
+                                  | left _ => exists PA, InterpUnivN m A PA
                                   | right _ => False
                                   end).
 
@@ -90,12 +89,12 @@ Proof.
 Qed.
 
 Lemma InterpExt_lt_redundant2 n I A PA
-  (h : InterpExt n (fun m A =>
+  (h : ⟦ A ⟧ n , (fun m A =>
                       match Compare_dec.lt_dec m n with
                      | left h => I m A
                      | right _ => False
-                     end) A PA) :
-  InterpExt n I A PA.
+                     end) ↘ PA) :
+  ⟦ A ⟧ n , I ↘ PA.
 Proof.
   elim : A PA / h.
   - hauto l:on.
@@ -144,8 +143,8 @@ Qed.
 
 Lemma InterpExt_Fun_nopf n I A B PA  :
   InterpExt n I A PA ->
-  (forall a, PA a -> exists PB, InterpExt n I (subst_tm (a..) B) PB) ->
-  InterpExt n I (tPi A B) (ProdSpace PA (fun a => InterpExt n I (subst_tm (a..) B))).
+  (forall a, PA a -> exists PB, ⟦ subst_tm (a..) B ⟧ n , I ↘  PB) ->
+  InterpExt n I (tPi A B) (ProdSpace PA (fun a PB => ⟦ subst_tm (a..) B ⟧ n , I ↘ PB)).
 Proof.
   move => h0 h1. apply InterpExt_Fun =>//.
 Qed.
@@ -183,7 +182,7 @@ Qed.
    forwards and backwards. *)
 
 Lemma InterpExt_preservation n I A B P (h : InterpExt n I A P) :
-  Par A B ->
+  A ⇒ B ->
   InterpExt n I B P.
 Proof.
   move : B.
@@ -211,27 +210,27 @@ Proof.
 Qed.
 
 Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
-  Par A B ->
+  A ⇒ B ->
   InterpUnivN n B P.
 Proof. hauto l:on rew:db:InterpUnivN use: InterpExt_preservation. Qed.
 
 Lemma InterpExt_back_preservation_star i I A B P (h : InterpExt i I B P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpExt i I A P.
 Proof. induction 1; hauto l:on ctrs:InterpExt. Qed.
 
 Lemma InterpExt_preservation_star n I A B P (h : InterpExt n I A P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpExt n I B P.
 Proof. induction 1; hauto l:on use:InterpExt_preservation. Qed.
 
 Lemma InterpUnivN_preservation_star n A B P (h : InterpUnivN n A P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpUnivN n B P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_preservation_star. Qed.
 
 Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpUnivN n A P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
@@ -250,7 +249,7 @@ Qed.
 
 Lemma InterpExt_Bool_inv n I P :
   InterpExt n I tBool P ->
-  P = fun a => exists v, Pars a v /\ is_bool_val v.
+  P = fun a => exists v, a ⇒* v /\ is_bool_val v.
 Proof.
   move E : tBool => A h.
   move : E.
@@ -277,12 +276,12 @@ Qed.
 
 Lemma InterpUnivN_Bool_inv n P :
   InterpUnivN n tBool P ->
-  P = fun a => exists v, Pars a v /\ is_bool_val v.
+  P = fun a => exists v, a ⇒* v /\ is_bool_val v.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
 Lemma InterpExt_Eq_inv n I a b A P :
   InterpExt n I (tEq a b A) P ->
-  P = (fun A => Pars A tRefl /\ Coherent a b).
+  P = (fun A => A ⇒* tRefl /\ Coherent a b).
 Proof.
   move E : (tEq a b A) => T h.
   move : a b A E.
@@ -401,7 +400,7 @@ Qed.
 
 Lemma InterpUnivN_back_clos_star n A PA :
     InterpUnivN n A PA ->
-    forall a b, Pars a b ->
+    forall a b, a ⇒* b ->
            PA b -> PA a.
 Proof.
   move => h a b.

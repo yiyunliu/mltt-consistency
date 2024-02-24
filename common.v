@@ -1,4 +1,4 @@
-From WR Require Import syntax imports.
+From WR Require Import imports.
 
 Definition context := list tm.
 

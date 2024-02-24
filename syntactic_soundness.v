@@ -118,12 +118,12 @@ Definition tm_to_head (a : tm) :=
   | tJ _ _ _ _ => None
   end.
 
-Lemma par_head a b (h : Par a b) :
+Lemma par_head a b (h : a ⇒ b) :
   forall hd, tm_to_head a = Some hd ->
         tm_to_head b = Some hd.
 Proof. induction h => //. Qed.
 
-Lemma par_head_star a b (h : Pars a b) :
+Lemma par_head_star a b (h : a ⇒* b) :
   forall hd, tm_to_head a = Some hd ->
         tm_to_head b = Some hd.
 Proof. induction h; eauto using par_head. Qed.
@@ -473,7 +473,7 @@ Qed.
 
 Lemma T_Refl' Γ a0 a1 A
   (hΓ : Wff Γ)
-  (h : Par a0 a1) :
+  (h : a0 ⇒ a1) :
   Wt Γ a0 A ->
   Wt Γ a1 A ->
   Wt Γ tRefl (tEq a0 a1 A).
@@ -504,7 +504,7 @@ Proof.
   qauto l:on use:Wt_Refl_inv, Coherent_eq_inj, Coherent_transitive, Coherent_symmetric.
 Qed.
 
-Lemma subject_reduction a b (h : Par a b) : forall Γ A,
+Lemma subject_reduction a b (h : a ⇒ b) : forall Γ A,
     Wt Γ a A -> Wt Γ b A.
 Proof.
   elim : a b /h => //.
@@ -544,7 +544,7 @@ Proof.
       apply Coherent_symmetric.
       apply Coherent_morphing.
       * by apply Coherent_symmetric.
-      * case; [by asimpl | sfirstorder use:Par_refl].
+      * case; [by asimpl | sfirstorder use:Par_refl simp:asimpl].
   - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_If_inv.
     move => [A0][ha0][hb0][hc0][hC][[i hA0]][j hAj].
     apply : T_Conv. apply T_If with (i := i); eauto. eauto.
@@ -559,7 +559,7 @@ Proof.
     hauto l:on ctrs:Wt use:@rtc_once.
   - move => t0 a0 b0 p0 t1 a1 b1 p1 ht iht ha iha hb ihb hp ihp Γ U /Wt_J_inv.
     intros (A & C & i & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (j & hU)).
-    have ? : Par (tEq a0 b0 A) (tEq a1 b1 A) by hauto lq:on ctrs:Par use:Par_refl.
+    have ? : (tEq a0 b0 A ⇒ tEq a1 b1 A) by hauto lq:on ctrs:Par use:Par_refl.
     have ? : Coherent (tEq a0 b0 A) (tEq a1 b1 A) by hauto l:on use:@rtc_once.
     apply T_Conv with (A := subst_tm (p1 .: b1..) C) (i := j) => //.
     apply T_J_simpl with (A := A) (i := i).
@@ -696,7 +696,7 @@ Proof.
   - qauto l:on use:Wt_Eq_inv, Coherent_consistent.
 Qed.
 
-Lemma wt_progress a A (h :Wt nil a A) : is_value a \/ exists a0, Par a a0.
+Lemma wt_progress a A (h :Wt nil a A) : is_value a \/ exists a0, a ⇒ a0.
 Proof.
   move E : nil h => Γ h.
   move : E.

@@ -1,4 +1,4 @@
-From WR Require Import syntax join common.
+From WR Require Import imports join common.
 
 Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 | T_Var i :
@@ -28,7 +28,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   Wt Γ a (tPi A B) ->
   Wt Γ b A ->
   (* -------------------- *)
-  Wt Γ (tApp a b) (subst_tm (b..) B)
+  Wt Γ (tApp a b) (B [ b.. ])
 
 | T_Conv a A B i :
   Wt Γ a A ->
@@ -50,10 +50,10 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 | T_If a b c A i :
   Wt (tBool :: Γ) A (tUniv i) ->
   Wt Γ a tBool ->
-  Wt Γ b (subst_tm (tTrue..) A) ->
-  Wt Γ c (subst_tm (tFalse..) A) ->
+  Wt Γ b (A [tTrue..]) ->
+  Wt Γ c (A [tFalse..]) ->
   (* ------------ *)
-  Wt Γ (tIf a b c) (subst_tm (a..) A)
+  Wt Γ (tIf a b c) (A [a..])
 
 | T_Bool i :
   Wff Γ ->
@@ -84,8 +84,8 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   Wt Γ A (tUniv j) ->
   Wt Γ p (tEq a b A) ->
   Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) ->
-  Wt Γ t (subst_tm (tRefl .: a ..) C) ->
-  Wt Γ (tJ t a b p) (subst_tm (p .: b..) C)
+  Wt Γ t (C [tRefl .: a ..]) ->
+  Wt Γ (tJ t a b p) (C [p .: b..])
   
 
 

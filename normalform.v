@@ -33,8 +33,8 @@ with nf (a : tm) :=
   | tRefl => true
   end.
 
-Definition wn (a : tm) := exists b, Pars a b /\ nf b.
-Definition wne (a : tm) := exists b, Pars a b /\ ne b.
+Definition wn (a : tm) := exists b, a ⇒* b /\ nf b.
+Definition wne (a : tm) := exists b, a ⇒* b /\ ne b.
 
 Lemma bool_val_nf v : is_bool_val v -> nf v.
 Proof. case : v =>// _; hauto lq:on unfold:nf inv:Par. Qed.
@@ -50,15 +50,15 @@ Proof.
 Qed.
 
 Create HintDb nfne.
-Lemma nf_ne_preservation a b (h : Par a b) : (nf a ==> nf b) /\ (ne a ==> ne b).
+Lemma nf_ne_preservation a b (h : a ⇒ b) : (nf a ==> nf b) /\ (ne a ==> ne b).
 Proof.
   elim : a b / h => //; hauto lqb:on depth:2.
 Qed.
 
-Lemma nf_preservation : forall a b, Par a b -> nf a -> nf b.
+Lemma nf_preservation : forall a b, (a ⇒ b) -> nf a -> nf b.
 Proof. sfirstorder use:nf_ne_preservation b:on. Qed.
 
-Lemma ne_preservation : forall a b, Par a b -> ne a -> ne b.
+Lemma ne_preservation : forall a b, (a ⇒ b) -> ne a -> ne b.
 Proof. sfirstorder use:nf_ne_preservation b:on. Qed.
 
 Lemma nf_wn v : nf v -> wn v.
@@ -71,9 +71,9 @@ Proof. sfirstorder use:ne_nf. Qed.
 
 
 Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
-  (h : Par (ren_tm ξ a) b0) : exists b, Par a b /\ b0 = ren_tm ξ b.
+  (h : a ⟨ ξ ⟩ ⇒ b0) : exists b, (a ⇒ b) /\ b0 = b ⟨ξ⟩.
 Proof.
-  move E : (ren_tm ξ a) h => a0 h.
+  move E : (a ⟨ξ⟩) h => a0 h.
   move : a ξ E.
   elim : a0 b0 / h.
   - move => + []//. eauto with par.
@@ -112,9 +112,9 @@ Proof.
 Qed.
 
 Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
-  (h : Pars (ren_tm ξ a) b0) : exists b, b0 = ren_tm ξ b /\ Pars a b.
+  (h : (a⟨ξ⟩ ⇒* b0)) : exists b, b0 = b⟨ξ⟩ /\ (a ⇒* b).
 Proof.
-  move E :  (ren_tm ξ a) h => a0 h.
+  move E : (a⟨ξ⟩) h => a0 h.
   move : a E.
   elim : a0 b0 / h.
   - hauto lq:on ctrs:rtc.
@@ -123,7 +123,7 @@ Proof.
     hauto lq:on ctrs:rtc, eq.
 Qed.
 
-Lemma wn_antirenaming a (ξ : nat -> nat) : wn (ren_tm ξ a) -> wn a.
+Lemma wn_antirenaming a (ξ : nat -> nat) : wn (a⟨ξ⟩) -> wn a.
 Proof.
   rewrite /wn.
   move => [v [rv nfv]].
@@ -136,9 +136,9 @@ Qed.
   hauto lq:on ctrs:Par use:Par_refl.
 
 Lemma S_AppLR (a a0 b b0 : tm) :
-  Pars a a0 ->
-  Pars b b0 ->
-  Pars (tApp a b) (tApp a0 b0).
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tApp a b) ⇒* (tApp a0 b0).
 Proof.
   move => h. move :  b b0.
   elim : a a0 / h.
@@ -150,10 +150,10 @@ Proof.
 Qed.
 
 Lemma S_If a0 a1 : forall b0 b1 c0 c1,
-    Pars a0 a1 ->
-    Pars b0 b1 ->
-    Pars c0 c1 ->
-    Pars (tIf a0 b0 c0) (tIf a1 b1 c1).
+    a0 ⇒* a1 ->
+    b0 ⇒* b1 ->
+    c0 ⇒* c1 ->
+    (tIf a0 b0 c0) ⇒* (tIf a1 b1 c1).
 Proof.
   move => + + + + h.
   elim : a0 a1 /h.
@@ -168,11 +168,11 @@ Proof.
 Qed.
 
 Lemma S_J t0 t1 : forall a0 a1 b0 b1 p0 p1,
-    Pars t0 t1 ->
-    Pars a0 a1 ->
-    Pars b0 b1 ->
-    Pars p0 p1 ->
-    Pars (tJ t0 a0 b0 p0) (tJ t1 a1 b1 p1).
+    t0 ⇒* t1 ->
+    a0 ⇒* a1 ->
+    b0 ⇒* b1 ->
+    p0 ⇒* p1 ->
+    (tJ t0 a0 b0 p0) ⇒* (tJ t1 a1 b1 p1).
 Proof.
   move => + + + + + + h.
   elim : t0 t1 /h; last by solve_s_rec.
@@ -210,9 +210,9 @@ Proof.
 Qed.
 
 Lemma S_Pi (a a0 b b0 : tm) :
-  Pars a a0 ->
-  Pars b b0 ->
-  Pars (tPi a b) (tPi a0 b0).
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tPi a b) ⇒* (tPi a0 b0).
 Proof.
   move => h.
   move : b b0.
@@ -225,8 +225,8 @@ Proof.
 Qed.
 
 Lemma S_Abs (a b : tm)
-  (h : Pars a b) :
-  Pars (tAbs a) (tAbs b).
+  (h : a ⇒* b) :
+  (tAbs a) ⇒* (tAbs b).
 Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
 
 Lemma wn_abs (a : tm) (h : wn a) : wn (tAbs a).
@@ -244,10 +244,10 @@ Proof.
 Qed.
 
 Lemma S_Eq a0 a1 b0 b1 A0 A1 :
-  Pars a0 a1 ->
-  Pars b0 b1 ->
-  Pars A0 A1 ->
-  Pars (tEq a0 b0 A0) (tEq a1 b1 A1).
+  a0 ⇒* a1 ->
+  b0 ⇒* b1 ->
+  A0 ⇒* A1 ->
+  (tEq a0 b0 A0) ⇒* (tEq a1 b1 A1).
 Proof.
   move => h.
   move : b0 b1 A0 A1.

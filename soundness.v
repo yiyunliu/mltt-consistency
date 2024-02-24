@@ -151,7 +151,7 @@ Proof.
   - move => Γ t a b p A i j C _ _ _ _ _ _ _ hp _ hC _ ht γ hγ.
     move : hp (hγ); move/[apply] => hp.
     move : ht (hγ); move/[apply]. intros (m & PA & hPA & ht).
-    have [? [q ?]] : Pars (subst_tm γ p) tRefl /\ Coherent (subst_tm γ a) (subst_tm γ b) by
+    have [? [q ?]] : (subst_tm γ p) ⇒* tRefl /\ Coherent (subst_tm γ a) (subst_tm γ b) by
       sauto lq:on  rew:db:InterpUniv use:InterpExt_Eq_inv.
     exists m, PA.
     split.

@@ -18,7 +18,7 @@ Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm
 Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Ne A : ne A -> InterpExt n I A wne
 | InterpExt_Void : InterpExt n I tVoid wne
-| InterpExt_Bool : InterpExt n I tBool (fun a => exists v, Pars a v /\ (is_bool_val v \/ ne v))
+| InterpExt_Bool : InterpExt n I tBool (fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v))
 | InterpExt_Fun A B PA PF :
   InterpExt n I A PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
@@ -31,9 +31,9 @@ Inductive InterpExt n (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
   nf a ->
   nf b ->
   nf A ->
-  InterpExt n I (tEq a b A) (fun p => (Pars p tRefl /\ Coherent a b) \/ wne p)
+  InterpExt n I (tEq a b A) (fun p => (p ⇒* tRefl /\ Coherent a b) \/ wne p)
 | InterpExt_Step A A0 PA :
-  Par A A0 ->
+  (A ⇒ A0) ->
   InterpExt n I A0 PA ->
   InterpExt n I A PA.
 
@@ -41,7 +41,7 @@ Lemma InterpExt_Eq' n I PA a b A :
   nf a ->
   nf b ->
   nf A ->
-  PA = (fun p => (Pars p tRefl /\ Coherent a b) \/ wne p) ->
+  PA = (fun p => (p ⇒* tRefl /\ Coherent a b) \/ wne p) ->
   InterpExt n I (tEq a b A) PA.
 Proof. hauto lq:on use:InterpExt_Eq. Qed.
 
@@ -180,7 +180,7 @@ Qed.
    forwards and backwards. *)
 
 Lemma InterpExt_preservation n I A B P (h : InterpExt n I A P) :
-  Par A B ->
+  (A ⇒ B) ->
   InterpExt n I B P.
 Proof.
   move : B.
@@ -209,27 +209,27 @@ Proof.
 Qed.
 
 Lemma InterpUnivN_preservation n A B P (h : InterpUnivN n A P) :
-  Par A B ->
+  (A ⇒ B) ->
   InterpUnivN n B P.
 Proof. hauto l:on rew:db:InterpUnivN use: InterpExt_preservation. Qed.
 
 Lemma InterpExt_back_preservation_star i I A B P (h : InterpExt i I B P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpExt i I A P.
 Proof. induction 1; hauto l:on ctrs:InterpExt. Qed.
 
 Lemma InterpExt_preservation_star n I A B P (h : InterpExt n I A P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpExt n I B P.
 Proof. induction 1; hauto l:on use:InterpExt_preservation. Qed.
 
 Lemma InterpUnivN_preservation_star n A B P (h : InterpUnivN n A P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpUnivN n B P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_preservation_star. Qed.
 
 Lemma InterpUnivN_back_preservation_star n A B P (h : InterpUnivN n B P) :
-  Pars A B ->
+  A ⇒* B ->
   InterpUnivN n A P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
@@ -258,7 +258,7 @@ Qed.
 
 Lemma InterpExt_Bool_inv n I P :
   InterpExt n I tBool P ->
-  P = fun a => exists v, Pars a v /\ (is_bool_val v \/ ne v).
+  P = fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v).
 Proof.
   move E : tBool => A h.
   move : E.
@@ -285,12 +285,12 @@ Qed.
 
 Lemma InterpUnivN_Bool_inv n P :
   InterpUnivN n tBool P ->
-  P = fun a => exists v, Pars a v /\ (is_bool_val v \/ ne v).
+  P = fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v).
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
 
 Lemma InterpExt_Eq_inv n I a b A P :
   InterpExt n I (tEq a b A) P ->
-  (P = fun A => Pars A tRefl /\ Coherent a b \/ wne A) /\ wn a /\ wn b /\ wn A.
+  (P = fun A => A ⇒* tRefl /\ Coherent a b \/ wne A) /\ wn a /\ wn b /\ wn A.
 Proof.
   move E : (tEq a b A) => T h.
   move : a b A E.
@@ -310,7 +310,7 @@ Qed.
 
 Lemma InterpUnivN_Eq_inv n a b A P :
   InterpUnivN n (tEq a b A) P ->
-  P = (fun p => (Pars p tRefl /\ Coherent a b) \/ wne p) /\ wn a /\ wn b /\ wn A.
+  P = (fun p => (p ⇒* tRefl /\ Coherent a b) \/ wne p) /\ wn a /\ wn b /\ wn A.
 Proof.
   simp InterpUniv.
   hauto l:on use:InterpExt_Eq_inv.
@@ -403,13 +403,13 @@ Qed.
 (* ---- Alternative intro rule for Eq ----------- *)
 Lemma InterpUnivN_Eq n a b A:
   wn a -> wn b -> wn A ->
-  InterpUnivN n (tEq a b A) (fun p => (Pars p tRefl /\ Coherent a b) \/ wne p).
+  InterpUnivN n (tEq a b A) (fun p => (p ⇒* tRefl /\ Coherent a b) \/ wne p).
 Proof.
   move => [va [? ?]] [vb [? ?]] [vA [? ?]].
-  have ? : InterpUnivN n (tEq va vb vA) (fun p => (Pars p tRefl /\ Coherent va vb) \/ wne p)
+  have ? : InterpUnivN n (tEq va vb vA) (fun p => (p ⇒* tRefl /\ Coherent va vb) \/ wne p)
     by hauto lq:on ctrs:InterpExt rew:db:InterpUniv.
-  have ? : Pars (tEq a b A) (tEq va vb vA) by auto using S_Eq.
-  have : InterpUnivN n (tEq a b A) (fun p => (Pars p tRefl /\ Coherent va vb) \/ wne p) by eauto using InterpUnivN_back_preservation_star.
+  have ? : (tEq a b A) ⇒* (tEq va vb vA) by auto using S_Eq.
+  have : InterpUnivN n (tEq a b A) (fun p => (p ⇒* tRefl /\ Coherent va vb) \/ wne p) by eauto using InterpUnivN_back_preservation_star.
   move /[dup] /InterpUnivN_Eq_inv. move => [?]. congruence.
 Qed.
 
@@ -417,7 +417,7 @@ Qed.
 (* ----  Backward closure for the interpreted sets ----- *)
 Lemma InterpUnivN_back_clos n A PA :
     InterpUnivN n A PA ->
-    forall a b, Par a b ->
+    forall a b, (a ⇒ b) ->
            PA b -> PA a.
 Proof.
   simp InterpUniv => h.
@@ -427,7 +427,7 @@ Proof.
   - hauto lq:on ctrs:rtc.
   - move => A B PA PF hPA ihA hPFTot hPF ihPF b0 b1 hb01.
     rewrite /ProdSpace => hPB a PB ha hPFa.
-    have ? : Par (tApp b0 a)(tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
+    have ? : (tApp b0 a ⇒ tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
     hauto lq:on ctrs:Par.
   - qauto l:on rew:db:InterpUniv ctrs:InterpExt.
   - hauto lq:on ctrs:rtc.
@@ -436,7 +436,7 @@ Qed.
 
 Lemma InterpUnivN_back_clos_star n A PA :
     InterpUnivN n A PA ->
-    forall a b, Pars a b ->
+    forall a b, a ⇒* b ->
            PA b -> PA a.
 Proof.
   move => h a b.

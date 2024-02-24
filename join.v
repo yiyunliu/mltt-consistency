@@ -1,4 +1,4 @@
-From WR Require Import syntax imports.
+From WR Require Import imports.
 Require Export Setoid.
 
 Definition is_bool_val a :=
@@ -8,90 +8,92 @@ Definition is_bool_val a :=
   | _ => false
   end.
 
+Reserved Infix "⇒" (at level 60, right associativity).
 Inductive Par : tm -> tm -> Prop :=
 | P_Var i :
   (* ------- *)
-  Par (var_tm i) (var_tm i)
+  (var_tm i) ⇒ (var_tm i)
 | P_Univ n :
   (* -------- *)
-  Par (tUniv n) (tUniv n)
+  (tUniv n) ⇒ (tUniv n)
 | P_Void :
   (* -------- *)
-  Par tVoid tVoid
+  tVoid ⇒ tVoid
 | P_Pi A0 A1 B0 B1 :
-  Par A0 A1 ->
-  Par B0 B1 ->
+  (A0 ⇒ A1) ->
+  (B0 ⇒ B1) ->
   (* --------------------- *)
-  Par (tPi A0 B0) (tPi A1 B1)
+  (tPi A0 B0) ⇒ (tPi A1 B1)
 | P_Abs a0 a1 :
-  Par a0 a1 ->
+  (a0 ⇒ a1) ->
   (* -------------------- *)
-  Par (tAbs a0) (tAbs a1)
+  (tAbs a0) ⇒ (tAbs a1)
 | P_App a0 a1 b0 b1 :
-  Par a0 a1 ->
-  Par b0 b1 ->
+  (a0 ⇒ a1) ->
+  (b0 ⇒ b1) ->
   (* ------------------------- *)
-  Par (tApp a0 b0) (tApp a1 b1)
+  (tApp a0 b0) ⇒ (tApp a1 b1)
 | P_AppAbs a a0 b0 b1 :
-  Par a a0 ->
-  Par b0 b1 ->
+  (a ⇒ a0) ->
+  (b0 ⇒ b1) ->
   (* ---------------------------- *)
-  Par (tApp (tAbs a) b0) (subst_tm (b1..) a0)
+  (tApp (tAbs a) b0) ⇒ (a0 [b1..])
 | P_True :
   (* ------- *)
-  Par tTrue tTrue
+  tTrue ⇒ tTrue
 | P_False :
   (* ---------- *)
-  Par tFalse tFalse
+  tFalse ⇒ tFalse
 | P_If a0 a1 b0 b1 c0 c1:
-  Par a0 a1 ->
-  Par b0 b1 ->
-  Par c0 c1 ->
+  (a0 ⇒ a1) ->
+  (b0 ⇒ b1) ->
+  (c0 ⇒ c1) ->
   (* ---------- *)
-  Par (tIf a0 b0 c0) (tIf a1 b1 c1)
+  (tIf a0 b0 c0) ⇒ (tIf a1 b1 c1)
 | P_IfTrue b0 b1 c0 :
-  Par b0 b1 ->
+  (b0 ⇒ b1) ->
   (* ---------- *)
-  Par (tIf tTrue b0 c0) b1
+  (tIf tTrue b0 c0) ⇒ b1
 | P_IfFalse b0 c0 c1 :
-  Par c0 c1 ->
+  (c0 ⇒ c1) ->
   (* ---------- *)
-  Par (tIf tFalse b0 c0) c1
+  (tIf tFalse b0 c0) ⇒ c1
 | P_Bool :
-  Par tBool tBool
+  tBool ⇒ tBool
 | P_Refl :
-  Par tRefl tRefl
+  tRefl ⇒ tRefl
 | P_Eq a0 b0 A0 a1 b1 A1 :
-  Par a0 a1 ->
-  Par b0 b1 ->
-  Par A0 A1 ->
-  Par (tEq a0 b0 A0) (tEq a1 b1 A1)
+  (a0 ⇒ a1) ->
+  (b0 ⇒ b1) ->
+  (A0 ⇒ A1) ->
+  (tEq a0 b0 A0) ⇒ (tEq a1 b1 A1)
 | P_J t0 a0 b0 p0 t1 a1 b1 p1 :
-  Par t0 t1 ->
-  Par a0 a1 ->
-  Par b0 b1 ->
-  Par p0 p1 ->
-  Par (tJ t0 a0 b0 p0) (tJ t1 a1 b1 p1)
+  (t0 ⇒ t1) ->
+  (a0 ⇒ a1) ->
+  (b0 ⇒ b1) ->
+  (p0 ⇒ p1) ->
+  (tJ t0 a0 b0 p0) ⇒ (tJ t1 a1 b1 p1)
 | P_JRefl t0 a b t1 :
-  Par t0 t1 ->
-  Par (tJ t0 a b tRefl) t1.
+  (t0 ⇒ t1) ->
+  (tJ t0 a b tRefl) ⇒ t1
+where "A ⇒ B" := (Par A B).
 
 #[export]Hint Constructors Par : par.
 
-Notation Pars := (rtc Par).
+Infix "⇒*" := (rtc Par) (at level 60, right associativity).
 
-Definition Coherent a0 a1 := (exists b, Pars a0 b /\ Pars a1 b).
+Definition Coherent a0 a1 := (exists b, a0 ⇒* b /\ a1 ⇒* b).
 
-Lemma pars_pi_inv A B C (h : Pars (tPi A B) C) :
-  exists A0 B0, C = tPi A0 B0 /\ Pars A A0 /\ Pars B B0.
+Lemma pars_pi_inv A B C (h : (tPi A B) ⇒* C) :
+  exists A0 B0, C = tPi A0 B0 /\ (A ⇒* A0) /\ (B ⇒* B0).
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
   elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
 Qed.
 
-Lemma pars_eq_inv a b A C (h : Pars (tEq a b A) C) :
-  exists a0 b0 A0, C = tEq a0 b0 A0 /\ Pars a a0 /\ Pars b b0 /\ Pars A A0.
+Lemma pars_eq_inv a b A C (h : (tEq a b A) ⇒* C) :
+  exists a0 b0 A0, C = tEq a0 b0 A0 /\ a ⇒* a0 /\ b ⇒* b0 /\ A ⇒* A0.
 Proof.
   move E : (tEq a b A) h => T h.
   move : a b A E.
@@ -105,7 +107,7 @@ Proof. hauto q:on use:pars_pi_inv. Qed.
 Lemma Coherent_eq_inj a b A a0 b0 A0 (h : Coherent (tEq a b A) (tEq a0 b0 A0)) : Coherent a a0 /\ Coherent b b0 /\ Coherent A A0.
 Proof. hauto q:on use:pars_eq_inv. Qed.
 
-Lemma pars_univ_inv i A (h : Pars (tUniv i) A) :
+Lemma pars_univ_inv i A (h : (tUniv i) ⇒* A) :
   A = tUniv i.
 Proof.
   move E : (tUniv i) h => A0 h.
@@ -116,17 +118,17 @@ Qed.
 Lemma Coherent_univ_inj i j (h : Coherent (tUniv i) (tUniv j)) : i = j.
 Proof. hauto lq:on rew:off inv:rtc use:pars_univ_inv. Qed.
 
-Lemma Par_refl (a : tm) : Par a a.
+Lemma Par_refl (a : tm) : a ⇒ a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
 Lemma P_AppAbs_cbn (a b b0 : tm) :
-  b0 = subst_tm (b..) a ->
-  Par (tApp (tAbs a) b) b0.
+  b0 = a [b..] ->
+  (tApp (tAbs a) b) ⇒ b0.
 Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
 
 Lemma P_IfTrue_star a b c :
-  Pars a tTrue ->
-  Pars (tIf a b c) b.
+  (a ⇒* tTrue) ->
+  ((tIf a b c) ⇒* b).
   move E : tTrue => v h.
   move : E.
   elim : a v / h.
@@ -139,8 +141,8 @@ Lemma P_IfTrue_star a b c :
 Qed.
 
 Lemma P_IfFalse_star a b c :
-  Pars a tFalse ->
-  Pars (tIf a b c) c.
+  (a ⇒* tFalse) ->
+  ((tIf a b c) ⇒* c).
   move E : tFalse => v h.
   move : E.
   elim : a v / h.
@@ -154,8 +156,8 @@ Lemma P_IfFalse_star a b c :
 Qed.
 
 Lemma P_JRefl_star t a b p :
-  Pars p tRefl  ->
-  Pars (tJ t a b p) t.
+  (p ⇒* tRefl)  ->
+  ((tJ t a b p) ⇒* t).
 Proof.
   move E : tRefl => v h.
   move : E.
@@ -169,16 +171,16 @@ Proof.
 Qed.
 
 Lemma P_AppAbs' a a0 b0 b b1 :
-  b = subst_tm (b1..) a0 ->
-  Par a a0 ->
-  Par b0 b1 ->
+  b = a0 [b1..] ->
+  (a ⇒ a0) ->
+  (b0 ⇒ b1) ->
   (* ---------------------------- *)
-  Par (tApp (tAbs a) b0) b.
+  (tApp (tAbs a) b0) ⇒ b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
 Lemma par_renaming a b (ξ : fin -> fin) :
-  Par a b ->
-  Par (ren_tm ξ a) (ren_tm ξ b).
+  (a ⇒ b) ->
+  a⟨ξ⟩ ⇒ b⟨ξ⟩.
   move => h.
   move : ξ.
   elim : a b / h => /=; eauto with par.
@@ -187,58 +189,59 @@ Lemma par_renaming a b (ξ : fin -> fin) :
 Qed.
 
 Lemma pars_renaming a b (ξ : fin -> fin) :
-  Pars a b ->
-  Pars (ren_tm ξ a) (ren_tm ξ b).
+  (a ⇒* b) ->
+  a⟨ξ⟩ ⇒* b⟨ξ⟩.
 Proof. induction 1; hauto lq:on ctrs:rtc use:par_renaming. Qed.
 
 Lemma Coherent_renaming a b (ξ : fin -> fin) :
   Coherent a b ->
-  Coherent (ren_tm ξ a) (ren_tm ξ b).
+  Coherent (a ⟨ ξ ⟩) (b ⟨ ξ ⟩).
 Proof. hauto lq:on rew:off use:pars_renaming. Qed.
 
+(* TODO: notation for up_tm_tm *)
 Lemma par_morphing_lift (ξ0 ξ1 : fin -> tm)
-  (h : forall i, Par (ξ0 i) (ξ1 i)) :
-  forall i, Par (up_tm_tm ξ0 i) (up_tm_tm ξ1 i).
+  (h : forall i, (ξ0 i) ⇒ (ξ1 i)) :
+  forall i, (up_tm_tm ξ0 i) ⇒ (up_tm_tm ξ1 i).
 Proof.
   case => [|i]; first by constructor.
   asimpl.
   by apply par_renaming.
 Qed.
 
-Lemma par_morphing a b (ξ0 ξ1 : fin -> tm)
-  (h : forall i, Par (ξ0 i) (ξ1 i)) :
-  Par a b ->
-  Par (subst_tm ξ0 a) (subst_tm ξ1 b).
+Lemma par_morphing a b (σ0 σ1 : fin -> tm)
+  (h : forall i, (σ0 i) ⇒ (σ1 i)) :
+  (a ⇒ b) ->
+  (a[σ0]) ⇒ (b[σ1]).
 Proof.
   move => h0.
-  move : ξ0 ξ1 h.
+  move : σ0 σ1 h.
   elim : a b / h0; try solve [simpl; eauto with par].
   - hauto lq:on db:par use:par_morphing_lift.
   - hauto lq:on db:par use:par_morphing_lift.
-  - move => a a0 b0 b1 h0 ih0 h1 ih1 ξ0 ξ h /=.
-    apply P_AppAbs' with (a0 := subst_tm (up_tm_tm ξ) a0) (b1 := subst_tm ξ b1).
+  - move => a a0 b0 b1 h0 ih0 h1 ih1 σ0 σ h /=.
+    apply P_AppAbs' with (a0 := a0 [up_tm_tm σ]) (b1 := b1 [σ]).
     by asimpl. hauto l:on use:par_renaming inv:nat. eauto.
   - hauto lq:on db:par use:par_morphing_lift.
 Qed.
 
 Inductive good_pars_morphing : (fin -> tm) -> (fin -> tm) -> Prop :=
-| good_pars_morphing_one ξ :
-  good_pars_morphing ξ ξ
-| good_pars_morphing_cons ξ0 ξ1 ξ2 :
-  (forall i, Par (ξ0 i) (ξ1 i)) ->
-  good_pars_morphing ξ1 ξ2 ->
-  good_pars_morphing ξ0 ξ2.
+| good_pars_morphing_one σ :
+  good_pars_morphing σ σ
+| good_pars_morphing_cons σ0 σ1 σ2 :
+  (forall i, (σ0 i) ⇒ (σ1 i)) ->
+  good_pars_morphing σ1 σ2 ->
+  good_pars_morphing σ0 σ2.
 
-Lemma good_pars_morphing_ext a b ξ0 ξ1
-  (h : Pars a b) :
-  good_pars_morphing ξ0 ξ1 ->
-  good_pars_morphing (a .: ξ0) (b .: ξ1).
+Lemma good_pars_morphing_ext a b σ0 σ1
+  (h : a ⇒* b) :
+  good_pars_morphing σ0 σ1 ->
+  good_pars_morphing (a .: σ0) (b .: σ1).
 Proof.
   elim : a b /h.
   - move => a.
     move => h.
-    elim : ξ0 ξ1 / h; first by sfirstorder.
-    move => ξ0 ξ1 ξ2 h h1.
+    elim : σ0 σ1 / h; first by sfirstorder.
+    move => σ0 σ1 σ2 h h1.
     apply good_pars_morphing_cons.
     hauto lq:on inv:nat use:Par_refl.
   - move => x y z ha hb /[apply].
@@ -246,81 +249,81 @@ Proof.
     hauto lq:on inv:nat use:Par_refl.
 Qed.
 
-Lemma good_pars_morphing_ext2 a0 b0 a1 b1 ξ0 ξ1
-  (h : Pars a0 b0) (h1 : Pars a1 b1) :
-  good_pars_morphing ξ0 ξ1 ->
-  good_pars_morphing (a0 .: (a1 .: ξ0)) (b0 .: (b1 .: ξ1)).
+Lemma good_pars_morphing_ext2 a0 b0 a1 b1 σ0 σ1
+  (h : a0 ⇒* b0) (h1 : a1 ⇒*  b1) :
+  good_pars_morphing σ0 σ1 ->
+  good_pars_morphing (a0 .: (a1 .: σ0)) (b0 .: (b1 .: σ1)).
 Proof. sfirstorder use:good_pars_morphing_ext. Qed.
 
-(* No idea how to induct on (forall i, Pars (ξ0 i) (ξ1 i) ) *)
-Lemma pars_morphing a b (ξ0 ξ1 : fin -> tm)
-  (h : good_pars_morphing ξ0 ξ1) :
-  Par a b ->
-  Pars (subst_tm ξ0 a) (subst_tm ξ1 b).
+(* No idea how to induct on (forall i, Pars (σ0 i) (σ1 i) ) *)
+Lemma pars_morphing a b (σ0 σ1 : fin -> tm)
+  (h : good_pars_morphing σ0 σ1) :
+  (a ⇒ b) ->
+  (a [σ0]) ⇒* (b[σ1]).
 Proof.
   move : a b.
-  elim : ξ0 ξ1 / h.
+  elim : σ0 σ1 / h.
   - sfirstorder use:par_morphing, @rtc_once, Par_refl.
   - hauto lq:on use:par_morphing, Par_refl ctrs:rtc.
 Qed.
 
-Lemma pars_morphing_star a b (ξ0 ξ1 : fin -> tm)
-  (h : good_pars_morphing ξ0 ξ1)
-  (h0 : Pars a b) :
-  Pars (subst_tm ξ0 a) (subst_tm ξ1 b).
+Lemma pars_morphing_star a b (σ0 σ1 : fin -> tm)
+  (h : good_pars_morphing σ0 σ1)
+  (h0 : a ⇒* b) :
+  (a [σ0] ⇒* b[σ1]).
 Proof.
   elim : a b / h0.
   - sfirstorder use:pars_morphing, Par_refl.
   - move => x y z /[swap] _.
-    move : pars_morphing (good_pars_morphing_one ξ0); repeat move /[apply].
+    move : pars_morphing (good_pars_morphing_one σ0); repeat move /[apply].
     apply rtc_transitive.
 Qed.
 
-Definition good_coherent_morphing ξ0 ξ1 :=
-  exists ξ, good_pars_morphing ξ0 ξ /\ good_pars_morphing ξ1 ξ.
+Definition good_coherent_morphing σ0 σ1 :=
+  exists σ, good_pars_morphing σ0 σ /\ good_pars_morphing σ1 σ.
 
-Lemma coherent_morphing_star a b ξ0 ξ1
-  (h : good_coherent_morphing ξ0 ξ1)
+Lemma coherent_morphing_star a b σ0 σ1
+  (h : good_coherent_morphing σ0 σ1)
   (h0 : Coherent a b) :
-  Coherent (subst_tm ξ0 a) (subst_tm ξ1 b).
+  Coherent (a[σ0]) (b[σ1]).
 Proof.
   hauto q:on use:pars_morphing_star unfold:Coherent.
 Qed.
 
-Lemma coherent_cong_helper : forall a0 c, Pars a0 c -> good_pars_morphing a0.. c.. .
+Lemma coherent_cong_helper : forall a0 c, (a0 ⇒* c) -> good_pars_morphing a0.. c.. .
 Proof.
   move => a0 c h2.
   elim : a0 c / h2.
     sfirstorder.
     move => a b c ? ?.
     apply : good_pars_morphing_cons.
-    hauto lq:on inv:nat use:Par_refl.
+    sauto lq:on inv:nat use:Par_refl. 
 Qed.
 
 Lemma coherent_cong a0 a1 b0 b1
   (h : Coherent a0 b0)
   (h1 : Coherent a1 b1) :
-  Coherent (subst_tm (a0..) a1) (subst_tm (b0..) b1).
+  Coherent (a1 [a0..]) (b1 [b0..]).
 Proof.
   apply coherent_morphing_star=>//.
   sfirstorder use:coherent_cong_helper.
 Qed.
 
-Lemma par_cong a0 a1 b0 b1 (h : Par a0 a1) (h1 : Par b0 b1) :
-  Par (subst_tm (b0..) a0) (subst_tm (b1..) a1).
+Lemma par_cong a0 a1 b0 b1 (h : a0 ⇒ a1) (h1 : b0 ⇒ b1) :
+  (a0 [b0..] ⇒ a1 [b1..]).
 Proof.
   apply par_morphing; auto.
   case; auto.
   sfirstorder use:Par_refl.
 Qed.
 
-Lemma par_subst a0 a1 (h : Par a0 a1) (ξ : fin -> tm) :
-  Par (subst_tm ξ a0) (subst_tm ξ a1).
+Lemma par_subst a0 a1 (h : a0 ⇒ a1) (σ : fin -> tm) :
+  (a0[σ] ⇒ a1[σ]).
 Proof. hauto l:on use:Par_refl, par_morphing. Qed.
 
-Lemma par_morphing_star a0 a1 (h : Pars a0 a1) (ξ0 ξ1 : fin -> tm) :
-  (forall i, Par (ξ0 i) (ξ1 i)) ->
-  Pars (subst_tm ξ0 a0) (subst_tm ξ1 a1).
+Lemma par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
+  (forall i, (σ0 i) ⇒ (σ1 i)) ->
+  (a0[σ0] ⇒* a1 [σ1]).
 Proof.
   induction h.
   - move => h. apply @rtc_once. eauto using par_morphing, Par_refl.
@@ -331,25 +334,25 @@ Proof.
 Qed.
 
 Lemma Par_Coherent a b :
-  Par a b -> Coherent a b.
+  (a ⇒ b) -> Coherent a b.
 Proof. hauto lq:on use:@rtc_once, @rtc_refl. Qed.
 
-Lemma Coherent_morphing a0 a1 (h : Coherent a0 a1) (ξ0 ξ1 : fin -> tm) :
-  (forall i, Par (ξ0 i) (ξ1 i)) ->
-  Coherent (subst_tm ξ0 a0) (subst_tm ξ1 a1).
+Lemma Coherent_morphing a0 a1 (h : Coherent a0 a1) (σ0 σ1 : fin -> tm) :
+  (forall i, (σ0 i) ⇒ (σ1 i)) ->
+  Coherent (a0[σ0]) (a1[σ1]).
 Proof.
   hauto l:on use:par_morphing_star, Par_refl, Par_Coherent unfold:Coherent.
 Qed.
 
-Lemma par_subst_star a0 a1 (h : Pars a0 a1) (ξ : fin -> tm) :
-  Pars (subst_tm ξ a0) (subst_tm ξ a1).
+Lemma par_subst_star a0 a1 (h : a0 ⇒* a1) (σ : fin -> tm) :
+  (a0 [σ]) ⇒* (a1 [σ]).
 Proof. hauto l:on use:par_morphing_star, Par_refl. Qed.
 
-Lemma Coherent_subst_star a0 a1 (h : Coherent a0 a1) (ξ : fin -> tm) :
-  Coherent (subst_tm ξ a0) (subst_tm ξ a1).
+Lemma Coherent_subst_star a0 a1 (h : Coherent a0 a1) (σ : fin -> tm) :
+  Coherent (a0[ σ]) (a1 [σ]).
 Proof. hauto lq:on use:Coherent_morphing, Par_refl. Qed.
 
-Derive Inversion Par_inv with (forall a b, Par a b).
+Derive Inversion Par_inv with (forall a b, a ⇒ b).
 
 (* Takahashi translation *)
 Function tstar (a : tm) :=
@@ -359,7 +362,7 @@ Function tstar (a : tm) :=
   | tVoid => a
   | tPi A B => tPi (tstar A) (tstar B)
   | tAbs a => tAbs (tstar a)
-  | tApp (tAbs a) b => subst_tm ((tstar b)..) (tstar a)
+  | tApp (tAbs a) b =>  (tstar a) [(tstar b)..]
   | tApp a b => tApp (tstar a) (tstar b)
   | tTrue => tTrue
   | tFalse => tFalse
@@ -373,7 +376,7 @@ Function tstar (a : tm) :=
   | tJ t a b p => tJ (tstar t) (tstar a) (tstar b) (tstar p)
   end.
 
-Lemma par_triangle a : forall b, Par a b ->  Par b (tstar a).
+Lemma par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
 Proof.
   apply tstar_ind; hauto lq:on inv:Par use:Par_refl,par_cong ctrs:Par.
 Qed.
