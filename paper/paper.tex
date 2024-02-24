@@ -2801,7 +2801,9 @@ In a system with type-directed reduction,
 confluence is not immediately available because it
 depends on $\Pi$-injectivity, which is usually only proven after the
 fundamental theorem.\scw{confluence depends on Pi injectivity? I thought
-it was only needed for subject reduction}
+it was only needed for subject reduction}\yl{it's
+transitive. Confluence depends on subject reduction, which in turn
+depends on pi injectivity. Maybe it's worth spelling out the details}
 Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
 problem that allow us to recover confluence property independently
 from the logical relation. \citet{siles2012pure} generalize the
@@ -2809,11 +2811,19 @@ notion of Type Parallel One Step Reduction from \citet{adams2006pure}
 to syntactically prove $\Pi$-injectivity for arbitrary Pure Type
 Systems. \citet{weirich:systemd} add $\Pi$-injectivity to their
 equational theory, thus allowing subject reduction to be proven
-independently from confluence. Therefore, we believe that even in a
-system where type-directed reduction is required (e.g. a system with
-the unit $\eta$-law) in the logical relation, the proof can still be carried
-out in a structure similar to the one we have presented. \scw{Not sure that
-I understand this paragraph}
+independently from confluence. By adopting these techniques that allow
+us to derive confluence early even for systems with type-directed
+reduction, we believe our proof technique can significantly shorten
+the existing logical relation proofs for systems with typed judgmental
+equality and more complex $\eta$ laws. We leave that as part of our
+future work.
+% Therefore, we believe that even in a
+% system where type-directed reduction is required (e.g. a system with
+% the unit $\eta$-law) in the logical relation, the proof can still be carried
+% out in a structure similar to the one we have presented.
+\scw{Not sure that I understand this paragraph}
+\yl{Reworded slightly to emphasize it's future work that we haven't
+  done and it is speculative}
 
 Finally, despite our earlier claim that our metatheoretic properties
 are not as strong as some of the related work, we can strengthen our
