@@ -2726,30 +2726,24 @@ cumulativity. We don't include Prop. We don't include universe polymorphism.
   open terms. I don't know why unary relations are shorter.
 \item CoqHammer leads to short proofs.
 \end{itemize}
-\yl{
-  Just one more technical point to add, though it's in the text already:
+}
+\yl{ Just one more technical point to add, though it's in the text already:
   the logical relation is closed backward by full reduction rather
   than weak-head/deterministic reduction. This requires an early
   confluence result to show that the logrel is
   deterministic/functional but simplifies everything else
   (e.g. conversion is justified immediately by our preservation
-  theorem, but that is not the case if you use weak head reduction).
-
+  theorem, but that is not the case if you use weak head reduction).\\ \\
   Also, regarding the first point, cumulativity only exists in
   Barras's work. Inductive, (maybe coinductive?), can be found in
-  nuprl, metacoq, and maybe Barras's work.
-
+  nuprl, metacoq, and maybe Barras's work.\\ \\
   The 20,000 - 30,000 LoC mechanization are all about small languages
   with pretty much the same features as our language except for your
   second and third bullet point. martin-lof a la coq, Abel's work, and
   nbe in coq aren't that richer in feature otherwise. None includes
-  cumulativity (they only have one predicative universe)
-
+  cumulativity (they only have one predicative universe)\\ \\
   The 400,000 NuPRL in Coq probably falls into a different cateogry
-  because they are trying to mechanize a full practical language
-}
-
-}
+  because they are trying to mechanize a full practical language}
 
 
 The short consistency proof we present achieves the goal of
