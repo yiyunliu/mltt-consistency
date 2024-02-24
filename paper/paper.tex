@@ -1590,104 +1590,133 @@ hold in the \rref{I-Set} case.
 \section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
 \yl{todo: rename all variables from i,j to n}
-\begin{figure}[h]
-\[
-\begin{array}{lcl}
+\scw{Would it make sense to define the notation $a \in [\![A]\!]^i$ when
+there exists some $S$ such that $[[InterpR i A S]]$ and $[[a in S]]$ ?}
+% \begin{figure}[h]
+% \[
+% \begin{array}{lcl}
 
-      [[rho |= G]] &:= & \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
-                     } [[InterpR j (G i < up Suc i > ) { rho } S ]] \text{, then } [[rho i in S]] \\
-      [[G |= a : A]] &:= & \forall [[rho]], \text{ if }[[rho |=
-                       G]]\text{ then there exists some } [[j]] \text{
-                       and } [[S]] \text{ such that } [[InterpR j A
-                       {rho} S]] \text{ and } [[a {rho} in S]] \\
-      [[|= G]] &:= & \forall [[i < |G|]], \exists [[j]], [[drop Suc i G |= G i : Set j]]
-\end{array}
-\]
-  \caption{Semantic Typing for \lang}
-  \label{fig:semtyping}
-\end{figure}
+%       [[rho |= G]] &:= & \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
+%                      } [[InterpR j (G i < up Suc i > ) { rho } S ]] \text{, then } [[rho i in S]] \\
+%       [[G |= a : A]] &:= & \forall [[rho]], \text{ if }[[rho |= G]]
+%    \text{ then there exists some } [[j]] \text{
+%                        and } [[S]] \text{ such that } [[InterpR j A {rho} S]]
+%        \text{ and } [[a {rho} in S]] \\
+%       [[|= G]] &:= & \forall [[i < |G|]], \exists [[j]], [[drop Suc i G |= G i : Set j]]
+% \end{array}
+% \]
+%   \caption{Semantic Typing for \lang}
+%   \label{fig:semtyping}
+% \end{figure}x
 
 % The logical relation we define in Figure~\ref{fig:logrel} does not
 % include cases for variables. Likewise, for the base types such as
 % boolean and equality, the output set $[[S]]$ contains only terms that
 % evaluate to closed terms.
 
-% \scw{What is the motivation for this section? Why do we want to generalize
-% the logical relation?}
-In this section, we define the notion of semantic typing based on the
-logical relation we have defined in Section~\ref{sec:logreldep} and
-prove the fundamental lemma, which states that syntactic typing
-implies semantic typing.
+In this section, we show that all closed, well-typed terms are contained
+within their type-indexed sets. In other words, $[[empty |- a : A]]$ implies
+$[[InterpR i A S]]$ and $[[a in S]]$.  This result gives us consistency
+because we know that $[[InterpR i Void S]]$ is defined, and that $[[S]]$ must
+be the empty set. Therefore, if there were some closed, well-typed term of type
+$[[Void]]$, it would need to be a member of the empty set, a contradiction.
 
-The necessity of semantic typing as an extra layer of definition on
-top of the logic relation can be understood in simply typed
+To prove this result, we define a notion of semantic typing based on the
+logical relation we have defined in Section~\ref{sec:logreldep} and prove the
+fundamental lemma, which states that syntactic typing implies semantic typing.
+Semantic typing extends our logical relation from being a (type-indexed)
+family of predicates on closed terms, to a type-indexed family of predicates
+on open terms. 
+
+The necessity of semantic typing as an extra layer of
+definition on top of the logic relation can be understood in simply typed
 languages~\citep{skorstengaard2019introduction, harpertait,
-  pierce2002types}. In our setting, attempting to show that $[[empty
-|- a : A]]$ implies $[[InterpR i A S]]$ and $[[a in S]]$ will fail in
-\rref{T-Abs}, where the induction hypothesis is not helpful since the body
-of the lambda term is typed under a non-empty context. Through
-the definition of semantic typing, we can state a strengthened
-property that is actually provable.
+  pierce2002types}. In our setting, attempting to show that
+$[[empty |- a : A]]$ implies $[[InterpR i A S]]$ and $[[a in S]]$ will fail in
+\rref{T-Abs}, where the induction hypothesis is not helpful since the body of
+the lambda term is typed under a non-empty context. Through the definition of
+semantic typing, we can state a strengthened property that is actually
+provable.
+
+\begin{definition}[Semantic well-formed substitution\footnote{\dotv{soundness.v}{$\rho$\_ok}}]
+Define $[[rho |= G]]$ when 
+\[ \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
+                     } [[InterpR j (G i < up Suc i > ) { rho } S ]] \text{, then } [[rho i in S]] \]
+\end{definition}
 
 % To generalize our logical relation to open
 % terms, we define the semantic typing judgment by closing the open
 % terms with a substitution whose codomain consists of terms that
 % respect the interpretation of the types from the context.
-The full
-definitions of well-formed substitution ($[[rho |= G]]$), semantic
-typing ($[[ G |= a : A]]$), and semantic context well-formedness
-($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
+% The full
+% definitions of well-formed substitution ($[[rho |= G]]$), semantic
+% typing ($[[ G |= a : A]]$), and semantic context well-formedness
+% ($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
 
-The $[[rho |= G]]$ notation denotes the semantic well-formedness of
-a substitution $[[rho]]$ with respect to a context
-$[[G]]$. Intuitively, for variable $[[i]]$ in the context (thus the
-restriction $[[i < | G |]]$), $[[rho i]]$ is a term that inhabits all
-possible interpretations of the type $[[G i]]$ from the
-context.
+The $[[rho |= G]]$ notation denotes the semantic well-formedness of a
+substitution $[[rho]]$ with respect to a context $[[G]]$. Intuitively, for any
+variable $[[i]]$ in the context (thus the restriction $[[i < | G |]]$),
+$[[rho i]]$ is a term that inhabits all possible interpretations of the type
+$[[G i]]$ from the context.
+
+
 Since we are in a dependently typed system, there
 may be variables in $[[G i]]$, too. The type $[[(G i < up Suc i > ) {
   rho }]]$ applies $[[rho]]$ to replace those variables. The shifting
 operation $[[up Suc i]]$ can be viewed as an artifact of the de Bruijn
 representation to lift the type $[[G i]]$ to the right scope before
 substitution can be carried out.
+
 Finally, despite the for all quantification over the interpreted set
 $[[S]]$ and the universe level $[[j]]$ in the definition of $[[rho |=
 G]]$, we only need show that there exists some $[[j]]$ and $[[S]]$
 such that $[[InterpR j (G i < up Suc i > ) { rho } S]]$ and $[[rho i
 in S]]$. This idea is encapsulated in the second of the two structural
 law about $[[rho |= G]]$.
-\begin{lemma}[Well-formed $[[rho]]$ empty\footnote{\dotv{soundness.v}{$\gamma$\_ok\_nil}}]
+\begin{lemma}[Well-formed $[[rho]]$ empty\footnote{\dotv{soundness.v}{$\rho$\_ok\_nil}}]
   \label{lemma:rhowfempty}
   $[[rho |= G]]$ whenever $[[G]]$ is the empty context.
 \end{lemma}
-\begin{lemma}[Well-formed $[[rho]]$ cons\footnote{\dotv{soundness.v}{$\gamma$\_ok\_cons}}]
+\begin{lemma}[Well-formed $[[rho]]$ cons\footnote{\dotv{soundness.v}{$\rho$\_ok\_cons}}]
   If $[[InterpR i A S]]$, $[[a in S]]$, and $[[rho |= G]]$, then
   $[[rho .: a |= G ++ A]]$.
 \end{lemma}
 
-We refer to $[[G |= a : A]]$ as semantic well-typedness. Its definition says the term $[[a]]$ can be
-semantically typed $[[A]]$ under the context $[[G]]$ if for all
-substitutions $[[rho]]$ such that $[[rho |= G]]$, the type $[[A { rho }]]$ can be interpreted
-as the set $[[S]]$, and $[[a { rho } in S]]$. Our definition of
-semantic well-typedness is standard, though dependent types add a
-small twist that we apply the $[[rho]]$ to $[[A]]$ and require that
-$[[A { rho }]]$ has some interpretation, which is not always the case
-for arbitrary types.
+We next define semantic well-typedness.
 
-Analogous to $[[|- G]]$, the syntactic well-formedness of the typing
-context, $[[|= G]]$ defines when a context is semantically
-well-formed. In the
-definition of $[[|= G]]$, we use the notation $[[drop i G]]$ to denote
+\begin{definition}[Semantic typing\footnote{\dotv{soundness.v}{SemWt}}]
+Define $[[G |= a : A]]$  when
+\[ \forall [[rho]], \text{ if }[[rho |=
+                       G]]\text{ then there exists some } [[j]] \text{
+                       and } [[S]] \text{ such that } [[InterpR j A
+                       {rho} S]] \text{ and } [[a {rho} in S]]  \]
+\end{definition}
+
+This definition says the term $[[a]]$ can be semantically typed $[[A]]$ under
+the context $[[G]]$ if for all substitutions $[[rho]]$ such that
+$[[rho |= G]]$, the type $[[A { rho }]]$ can be interpreted as the set
+$[[S]]$, and $[[a { rho } in S]]$. Our definition of semantic well-typedness
+is standard, though dependent types add a small twist that we apply the
+$[[rho]]$ to $[[A]]$ and require that $[[A { rho }]]$ has some interpretation.
+
+Finally, we define semantic well-formedness for contexts, analogous to the 
+relation $[[|-G]]$.
+
+\begin{definition}[Semantic context well-formedness\footnote{\dotv{soundness.v}{SemWff}}]
+Define $[[|= G]]$ when
+\[
+   \forall [[i < |G|]],\text{ there exists some } [[j]] \text{ such that } [[drop Suc i G |= G i : Set j]] \]
+\end{definition}
+
+In this definition, we use the notation $[[drop i G]]$ to denote
 the typing context obtained by dropping the last $[[i]]$ elements of
-$[[G]]$. When $[[G]]$ has less than $[[i]]$ elements, $[[drop i G]]$
-returns the empty list. Intuitively, the definition of $[[|= G]]$
-simply says all types in the context must correspond to some set
-according to the logical relation. The truncation to the context
-$[[G]]$ is due to the different scoping of the types in the
-context. An alternative way of defining $[[|= G]]$ would look more
-similar to $[[|- G]]$, though we find it easier to define $[[|= G]]$
-through for all quantification of $[[i]]$ and recover the structural
-rules as lemmas.
+$[[G]]$. When $[[G]]$ has fewer than $[[i]]$ elements, $[[drop i G]]$ returns
+the empty list. Intuitively, $[[|= G]]$ says that all
+types in the context must correspond to some set according to the logical
+relation. The truncation to the context $[[G]]$ is due to the telescopic
+scoping of the types in the context. An alternative approach would be to define $[[|= G]]$
+inductively, similar to $[[|- G]]$, but we find it easier to use this definition and
+recover the structural rules as lemmas.
 \begin{lemma}[Semantic context well-formedness cons]
   \label{lemma:semwffcons}
   If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ A]]$.
@@ -1738,7 +1767,8 @@ work with.
 % \end{proof}
 
 Next, we show some non-trivial cases of the fundamental theorem as
-top-level lemmas.
+top-level lemmas. For example, we can define the semantic analogue to the 
+syntactic typing rule for variables (\rref{T-Var}).
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
   If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= var i : G i < up Suc i  >]]$.
@@ -1767,7 +1797,7 @@ need to show that there exists some $[[j]]$ and $[[S]]$ such that
   some term $[[b]]$ is semantically well-typed under some truncated
   context $[[G]]$, then it must also be semantically well-typed under
   the context $[[G]]$ up to shifting.
-
+%
   Knowing that $[[G |= G i {up Suc i} : Set j]]$ holds, we can then
   apply Lemma~\ref{lemma:setinv} to show that
   $[[InterpR j G i < up Suc i > { rho } S]]$. It now
@@ -1937,12 +1967,12 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
 \begin{proof}
   Proof by mutual induction over the derivation of $[[G |- a :
   A]]$ and $[[|- G]]$.   The cases related to context well-formedness immediately follows
-  from Lemma~\ref{lemma:semwffcons}.
-Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp}
-  can be used to discharge their syntactic counterpart
+  from Lemma~\ref{lemma:semwffcons}. The semantic typing rules
+(Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp})
+  can be used to discharge their syntactic counterparts
   (e.g. Lemma~\ref{lemma:stabs} for case \rref{T-Abs}). The remaining
   cases not covered by the lemmas are similar to the ones already
-  shown or simpler and therefore omitted from the text.
+  shown.
 \end{proof}
 
 Recall the logical consistency property
@@ -1957,12 +1987,12 @@ property using the fundamental lemma.
   that $[[InterpR j Void S]]$, we have $[[a {rho} in S]]$. By
   Lemma~\ref{lemma:rhowfempty}, any $[[rho]]$ we pick trivially
   satisfies $[[rho |= G]]$. For convenience, we pick $[[rho]]$ as
-  $[[idtm]]$ (though any $[[rho]]$ would work since
+  $[[idtm]]$, though any $[[rho]]$ would work since
   $[[empty |- a : Void]]$ ensures there is no free variable in
-  $[[a]]$), we have $[[a {idtm}]] = [[a in S]]$. By the $[[Void]]$
+  $[[a]]$. We have $[[a {idtm}]] = [[a in S]]$. By the $[[Void]]$
   case of the inversion property (Lemma~\ref{lemma:interpinv}), we
   know that $[[S]]$ must be the empty set and therefore contradicts
-  the assupmtion that $[[a in S]]$. Done.
+  the assumption that $[[a in S]]$.
 \end{proof}
 
 

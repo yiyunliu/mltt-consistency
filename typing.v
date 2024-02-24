@@ -99,3 +99,7 @@ Scheme wt_ind := Induction for Wt Sort Prop
     with wff_ind := Induction for Wff Sort Prop.
 
 Combined Scheme wt_mutual from wt_ind, wff_ind.
+
+(* TODO: use notations in rules *)
+Notation "Γ ⊢ a ∈ A" := (Wt Γ a A) (at level 70).
+Notation "⊢ Γ" := (Wff Γ) (at level 70).
