@@ -2670,7 +2670,30 @@ of mechanizing mathematical objects such as sets and domains.
   middle point where we claim that adding moderate features like typed
   reduction doesn't instantly make our code size expand all the way from 1000
   to 20,000 without saying the other developments are just verbose for no good
-  reason} The short consistency proof we present achieves the goal of
+  reason} 
+\scw{I think we can find reasons for much of the differences. Am I missing any?
+While it would be difficult to assign numbers to each of the deltas, I think it 
+is believable that when put together they add up to a lot.
+\begin{itemize}
+\item We don't include inductive or coinductive datatypes. We don't include 
+cumulativity. We don't include Prop. We don't include universe polymorphism.
+\item We state our equality algorithmically instead of declaratively. On one
+  hand, this gives us automatic inversion principles when working with
+  definition. Furthermore, we don't need to prove the equivalence between an
+  algorithmic version and a declarative specification.
+\item Our equality requires a simple decision algorithm and isn't type directed.
+\item We don't prove decidability of type checking. (And, it is not provable
+  for our system, because we lack type annotations on functions. We should
+  point this out.)
+\item Our logical relation is unary and untyped. The latter means that we don't 
+  require the bookkeeping of a Kripke logical relation when reasoning about 
+  open terms. I don't know why unary relations are shorter.
+\item CoqHammer leads to short proofs.
+\end{itemize}
+}
+
+
+The short consistency proof we present achieves the goal of
 demonstrating the technique of proof by logical relation for dependently typed
 languages. However, what remains unanswered is what makes our development
 significantly shorter compared to others. Are we proving simpler results, for
