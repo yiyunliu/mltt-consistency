@@ -1070,8 +1070,9 @@ S]]$, is defined as an inductively generated relation (Figure~\ref{fig:logrel}).
 Metavariables $[[A]]$ and $[[i]]$ stand for terms and natural
 numbers respectively, as introduced earlier in
 Figure~\ref{fig:syntax}.
-\scw{Many introductory texts define the relation as a recursive function
-over type structure, or step-indices. You use an inductive relation instead, why?}
+% \scw{Many introductory texts define the relation as a recursive function
+% over type structure, or step-indices. You use an inductive relation instead, why?}
+%\yl{resolved}
 % \scw{Can we view this inductive relation as the graph of the partial function
 % that is defined recursively over types?} \yl{reolsved}
 % \scw{What is this form extensible too? impredicative quantification? recursive
@@ -1184,71 +1185,9 @@ Bool]]$. The derivation that $[[Interp I i (\ var 0) Bool { a | a =>+
 and \rref{I-Bool}.
 
 
-\Rref{I-Pi} is the most interesting. To explain what it means, we
-need to perform a few steps of transformations to its precondition.
-The precondition consists of a
-mysterious relation $[[R]]$ over the set $[[S]]$, an interpretation
-of the type $[[A]]$, and returns a subset of terms. $[[R]]$ is further
-subject to the following two constraints:
-\begin{itemize}
-\item $[[forall a, (# exists S0  , ( a , S0 ) in R #)]]$
-\item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)]]$
-\end{itemize}
-The first condition allows us to induce a function $[[F in S ->
-PowerSet STm]]$ such that $[[(a , F a) in R]]$. Then we can easily
-show that $[[forall a, (# a in S implies Interp I i B { a } F a #)]]$.
-
-For the other direction, given a function $[[F]]$ satisfying the
-property $[[forall a, (# a in S implies Interp I i B { a } F a #) ]]$, it
-is possible to  define a relation $[[R]]=[[
-{ ( a , F a )  | a in S }]]$. It is easy to verify that $[[R]]$ satisfy
-the the constraint required in the precondition of \rref{I-Pi}.
-
-Furthermore, the skolemization process allows us to conclude the
-following equivalence:
-\[ \exists F, [[forall a, (# a in S implies Interp I i B { a } F a #)]] \iff [[forall a, (# a in S implies (# exists S0 , Interp I i B {a} S0 #) #)]]  \]
-% Ignoring the content below the horizontal bar of
-% the derivation, we claim the statements from the precondition are equivalent to
-% the conjunction of the following statements:
-% \begin{itemize}
-% \item $[[Interp I i A S]]$
-% \item $\forall [[a]], \text{ if }[[a in S]]\text{, then } \exists
-%   [[S0]]\text{, } [[Interp I i B { a } S0 ]] $
-% \end{itemize}
-% In general, let $R$ be a binary relation over the sets $[[A]]$ and
-% $[[B]]$, it easy to verify the following equivalence, which is used to
-% justify the skolemization process~\citep{skolemization}.
-% \scw{Is this true constructively? If not, is that ok?}
-% \[\forall a \in A, \exists b \in B \text{ such that } (a,b) \in R
-%   \iff \exists F \in A \rightarrow B \text, \forall a \in A, (a, F(a))
-%   \in R\]
-% The left-hand side is equivalent to the right-hand side, but has no
-% mentioning of any functions.
-The precondition of \rref{I-Pi} therefore can be formulated as the
-following statements:
-\begin{itemize}
-\item $[[Interp I i A S]]$
-\item $[[forall a, (# a in S implies (# exists S0 , Interp I i B {a} S0 #) #)]]$
-\end{itemize}
-From this alternative formulation, we can more easily tell what is
-happening in \rref{I-Pi}: the
-function type $[[Pi A B]]$ has an interpretation if its input
-type $[[A]]$ can be
-interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
-type $[[B {a}]]$, obtained by substituing $[[a]]$ into the output type
-$[[B]]$, has some semantic interpretation.
-
-If we look at $[[Interp I i Pi A B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$, the conclusion of \rref{I-Pi}, we see why the
-presentation with an explicit $[[R in S * PowerSet STm]]$ is
-useful. We want to state the fact that $[[B {a}]]$ has a semantic
-interpretation of some set $[[S0]]$, but we also want to refer to the
-set $[[S0]]$ when we talk about the set that $[[Pi A B]]$ corresponds
-to. With the relation $[[R]]$ in scope, we can refer to the
-witness sets $[[S0]]$ such that $[[Interp I i B {a} S0]]$ for $[[a in S]]$.
-With the alternative representation that is free of the relation $[[R]]$, we
-might want to reformulate our logical relation in the following more
-concise but equivalent form, whose admissibility follows directly from
-\rref{I-Pi}.
+\Rref{I-Pi} is the most complicated rule in our logical
+relation. Instead of explaining it directly, we consider the following
+simplified admissible \rref{I-PiAlt} that follows directly from \rref{I-Pi}.
 \begin{center}
   \drule[]{I-PiAlt}
 \end{center}
@@ -1260,22 +1199,55 @@ concise but equivalent form, whose admissibility follows directly from
 Immediate from \rref{I-Pi} with $[[R]]$ instantiated to the relation $[[{ (a
 , S0 ) | a in S , Interp I i B { a } S0 }]]$.
 \end{proof}
+Compared to the \rref{I-Pi}, which contains the mysterious relation
+$[[R]]$, \rref{I-PiAlt} directly captures the meaning of
+a well-behaved dependent function type. The precondition of
+\rref{I-PiAlt} says that
+the function type $[[Pi A B]]$ has an interpretation if its input
+type $[[A]]$ can be
+interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
+type $[[B {a}]]$, obtained by substituing $[[a]]$ into the output type
+$[[B]]$, has some semantic interpretation. In its conclusion, we say
+that a term $[[b]]$ belongs to an interpretation of $[[Pi A B]]$ if
+for all $[[a in S]]$, where $[[S]]$ is an interpretation $[[A]]$, the
+application form $[[b a]]$ belongs to all possible interpretations of
+$[[B {a}]]$ (the pre-condition ensures at least one interpretation
+exists for each $[[B {a}]]$ where $[[a in S]]$).
+
+In fact, while \rref{I-PiAlt} is an instantiation of \rref{I-Pi},
+these two rules are equivalent in the sense that every derivation of
+involving \rref{I-Pi} can be systematically replaced by
+\rref{I-PiAlt}. This equivalence follows directly from the fact
+that the logical relation is a partial function, a result we will show
+in Lemma~\ref{lemma:logreldeter}. The preconditions of \rref{I-Pi},
+when combined with the functionality of the logical relation, uniquely
+determine the relation $[[R in S * PowerSet STm]]$ to be the relation
+$[[{ (a , S0 ) | a in S , Interp I  i B { a } S0 }]]$. This result is
+formally shown through the improved inversion lemma for function types
+(Lemma~\ref{lemma:piinvalt}).
 
 Unfortunately, we cannot define the function case of our logical
-relation directly using \rref{I-PiAlt} since it not only violates the
+relation directly using \rref{I-PiAlt} since the occurrence of
+$[[Interp I i B {a} S0]]$ in its conclusion not only violates the
 syntactic strict positivity constraint required in proof assistants,
-but is genuinely non-monotone when written as an endofunction over the
-domain of relations.
+but is genuinely non-monotone when we rewrite the inductive definition
+as an endofunction over the domain of relations.
 Intuitively, the failure of monotonicity stems from the fact
 that the witness picked in the precondition is not necessarily the
-same witness being referred to in the post condition. While it might
+same witness being referred to in the post condition as the relation
+grows, whereas the
+relation $[[R]]$ in \rref{I-Pi} ``fixes'' the witnesses $[[S0]]$ and
+prevents the set of witnesses from growing. While it might
 be possible to restrict the domain with additional constraints such as
-functionality and inversion properties, we opt for our current
+functionality and inversion properties to justify the existence of a
+fixed point with \rref{I-PiAlt}, we opt for our current
 formulation of \rref{I-Pi} so we immediately obtain a
 well-defined inductive relation and a usable induction principle. The
 slight disadvantage of \rref{I-Pi} is that we need to construct the
 function $[[R]]$ each time we apply it, though this is mitigated by
-the immediate admissibility of \rref{I-PiAlt}.
+the immediate admissibility of \rref{I-PiAlt} and the inversion
+principle (Lemma~\ref{lemma:piinvalt}) we derive after proving functionality.
+
 
 In the rest of the section, we prove four important facts about
 our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
@@ -1356,7 +1328,7 @@ preservation holds in the usual forward direction too.
   (Lemma~\ref{lemma:pardiamond}), there exists some term $[[B]]$ such
   that $[[B0 => B]]$ and $[[B1 => B]]$. By the induction hypothesis,
   we deduce $[[Interp I i B S]]$ from $[[B0 => B]]$ and $[[Interp I i
-  B0 S]]$. By \rref{I-Par} and $[[B1 => B]]$, we conclude that
+  B0 S]]$. By \rref{I-Red} and $[[B1 => B]]$, we conclude that
   $[[Interp I i B S]]$.
 
   The remaining cases all fall from induction hypotheses and basic
@@ -1466,7 +1438,7 @@ hold in the \rref{I-Set} case.
   want to show that the set $[[I j]]$ is closed under expansion for
   all $[[j < i]]$. However, by the definition of $[[I]]$, we know that
   $[[A in I j]]$ if only if there exists some $[[S]]$ such that
-  $[[Interp I i A S]]$. By \rref{I-Par}, we must also have $[[B in I
+  $[[Interp I i A S]]$. By \rref{I-Red}, we must also have $[[B in I
   j]]$ for all $[[B => A]]$.
 \end{proof}
 
@@ -1509,7 +1481,7 @@ logical relation we have defined in Section~\ref{sec:logreldep} and prove the
 fundamental lemma, which states that syntactic typing implies semantic typing.
 Semantic typing extends our logical relation from being a (type-indexed)
 family of predicates on closed terms, to a type-indexed family of predicates
-on open terms. 
+on open terms.
 
 The necessity of semantic typing as an extra layer of
 definition on top of the logic relation can be understood in simply typed
@@ -1522,7 +1494,7 @@ semantic typing, we can state a strengthened property that is actually
 provable.
 
 \begin{definition}[Semantic well-formed substitution\footnote{\dotv{soundness.v}{$\rho$\_ok}}]
-Define $[[rho |= G]]$ when 
+Define $[[rho |= G]]$ when
 \[ \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
                      } [[InterpR j (G i < up Suc i > ) { rho } S ]] \text{, then } [[rho i in S]] \]
 \end{definition}
@@ -1582,7 +1554,7 @@ $[[S]]$, and $[[a { rho } in S]]$. Our definition of semantic well-typedness
 is standard, though dependent types add a small twist that we apply the
 $[[rho]]$ to $[[A]]$ and require that $[[A { rho }]]$ has some interpretation.
 
-Finally, we define semantic well-formedness for contexts, analogous to the 
+Finally, we define semantic well-formedness for contexts, analogous to the
 relation $[[|-G]]$.
 
 \begin{definition}[Semantic context well-formedness\footnote{\dotv{soundness.v}{SemWff}}]
@@ -1650,7 +1622,7 @@ work with.
 % \end{proof}
 
 Next, we show some non-trivial cases of the fundamental theorem as
-top-level lemmas. For example, we can define the semantic analogue to the 
+top-level lemmas. For example, we can define the semantic analogue to the
 syntactic typing rule for variables (\rref{T-Var}).
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
@@ -2079,7 +2051,7 @@ since we prove it through nested induction.
 %   If $[[wne A]]$, then we have $[[Interp I i A {a | wne a }]]$.
 % \end{lemma}
 % \begin{proof}
-%   Immediately from \rref{I-Ne} and \rref{I-Par}.
+%   Immediately from \rref{I-Ne} and \rref{I-Red}.
 % \end{proof}
 
 % \begin{lemma}[Adequacy: $CR$ for interpreted sets]
@@ -2711,7 +2683,7 @@ predicate.
 
 
 In terms of our proof technique, we close over our semantically valid types
-and terms in \rref{I-Par, I-Bool} using the non-deterministic parallel
+and terms in \rref{I-Red, I-Bool} using the non-deterministic parallel
 reduction relation, while \citet{decagda,nbeincoq} employ a deterministic weak
 head reduction relation. Our use of a non-deterministic reduction strategy
 means that we need confluence to prove the functionality of our logical
