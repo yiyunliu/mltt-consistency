@@ -776,13 +776,17 @@ the newly introduced binder to refer to the correct binding
 location. The substitution operator is referred to as simultaneous
 substitution as it substitutes all variables at once. It is possible
 to recover single substitution by composing the extension operator and
-the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$.
+the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$. Since
+the definition of semantic typing in Section~\ref{sec:logrelproof}
+relies on simultaneous substitution, we find it more convenient to
+formulate simultaneous substitution directly rather than recovering it
+from single substitution.
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
 \drules[P]{$[[a => b]]$}{Parallel Reduction}{AppAbs, IfTrue, IfFalse, JRefl}
 \drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{Refl, Step}
-\drules[C]{$[[a <=> b]]$}{Coherence}{Intro}
+\drules[C]{$[[a <=> b]]$}{Convertibility}{Intro}
 \end{minipage}
 \caption{Parallel reduction ($\beta$-rules only) and convertibility }
 \label{fig:par}
@@ -793,7 +797,8 @@ the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$.
 Before we specify the typing rules, we need to first specify its
 untyped equational theory. We choose to represent the untyped
 equational theory in an algorithmic style using the notion of parallel
-reduction, defined in Figure~\ref{fig:par} (congruence rules are omitted). Parallel reduction takes
+reduction, defined in Figure~\ref{fig:par} (congruence rules are omitted).
+ Parallel reduction takes
 the form $[[a => b]]$ and we denote its transitive as $[[a =>+
 b]]$. We say that two terms $[[a0]]$ and $[[a1]]$ are convertible,
 denoted by the notation $[[a0 <=> a1]]$, if there exists some term
@@ -821,20 +826,20 @@ same technique can be found in \citet{plfa22.08}.
   If $[[a => b0]]$ and $[[a => b1]]$, then there exists some term
   $[[c]]$ such that $[[b0 => c]]$ and $[[b1 => c]]$.
 \end{lemma}
-\begin{lemma}[Coherence refl\footnote{\dotv{join.v}{Coherent\_reflexive}}]
+\begin{lemma}[Convertibility refl\footnote{\dotv{join.v}{Coherent\_reflexive}}]
   \label{lemma:coherencerefl}
   For all terms $[[a]]$, $[[a <=> a]]$.
 \end{lemma}
-\begin{lemma}[Coherence sym\footnote{\dotv{join.v}{Coherent\_symmetric}}]
+\begin{lemma}[Convertibility sym\footnote{\dotv{join.v}{Coherent\_symmetric}}]
   \label{lemma:coherencesym}
   If $[[a <=> b]]$, then $[[b <=> a]]$.
 \end{lemma}
-\begin{lemma}[Coherence trans\footnote{\dotv{join.v}{Coherent\_transitive}}]
+\begin{lemma}[Convertibility trans\footnote{\dotv{join.v}{Coherent\_transitive}}]
   \label{lemma:coherencetrans}
   If $[[a0 <=> a1]]$ and $[[a1 <=> a2]]$, then $[[a0 <=> a2]]$.
 \end{lemma}
 From Lemma~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
-\ref{lemma:coherencetrans}, we conclude that coherence is indeed an
+\ref{lemma:coherencetrans}, we conclude that convertibility is indeed an
 equivalence relation. It is then trivial to show that all untyped
 $\beta$-equivalence rules are admissible, though we omit this proof
 from our mechanization and will from now on focus on parallel
@@ -843,6 +848,15 @@ makes it easier to work with. A detailed argument of the equivalence
 between $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
 \citet{barendregt:lambda-calculi-with-types} and
 \citet{takahashi-parallel-reduction}.
+
+Untyped equality allows us to show the
+equivalence between our more structured notion of convertibility
+ ($[[a <=> b]]$) and the declarative, untyped $\beta$-equivalence
+independently from the type system and the logical relation through
+well-established syntactic approaches. The directedness of the
+convertibility relation will be leveraged in
+Section~\ref{sec:logreldep} to justify the conversion rule of our
+typing judgment, which we will introduce shortly.
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
@@ -853,102 +867,11 @@ between $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
 \caption{Syntactic typing for \lang}
 \label{fig:typing}
 \end{figure}
-% Figure~\ref{fig:par} shows the definition of the parallel reduction
-% relation, which takes the form $[[a => b]]$. We use $[[a =>+ b]]$ to
-% represent its transitive and reflexive closure, which in turn allows us to define
-% the coherence relation $[[a <=> b]]$.\scw{where is the terminology ``coherence''
-% from? I'm not familiar with it. Maybe you can replace it with ``definitional
-% equivalence'' as that is how it is used in \lang?}
-% We say that two terms $[[a]]$
-% and $[[b]]$ are coherent if they can eventually reduce to some common
-% term $[[c]]$ through parallel reduction. The symmetric notation of
-% coherence suggests\scw{but you prove it below?} it is an equivalence relation.
-
-% We sketch out some key properties about parallel reduction and
-% coherence without giving their proofs. Our technique for establishing
-% those results is based on
-
-% \scw{cite barendregt?}
-% \yl{resolved}
-
-% TODO: remove the lengthy discussion below
-
-% Now, we prove that coherence is indeed an equivalence relation.
-
-% First, we show that coherence is reflexive through the following
-% sequence of lemmas.
-
-
-% Lemma~\ref{lemma:parrefl} can be proven by structural induction over
-% the term $[[a]]$. Lemmas~\ref{lemma:parsrefl} and \ref{lemma:coherencerefl}
-% immediately follow as corollaries of Lemma~\ref{lemma:parrefl}.
-
-% The reflexivity of parallel reduction enables us to embed rules from
-% call-by-name semantics into parallel reduction, as the following lemma
-% shows.
-% \begin{lemma}[Par AbsCbn\footnote{\dotv{join.v}{P\_AppAbs\_cbn}}] For all $[[A]], [[a]],$ and $[[b]]$,
-%   \label{lemma:parabscbn}
-%   $[[(\ A a) b => b {a}]]$
-% \end{lemma}
-% \begin{proof}
-%   Immediate from Lemma~\ref{lemma:parrefl} and \rref{P-AppAbs}.
-% \end{proof}
-
-% Symmetry of coherence immediately falls from its definition.
-
-% Before we can prove transitivity, we need to show that parallel
-% reduction satisfies the diamond property.
-
-
-% The congruence property (Lemma~\ref{lemma:parcong}) can be proven by
-% structural induction over the derivation of $[[a0 => a1]]$.
-% Likewise, Lemma~\ref{lemma:pardiamond} can be proven by structural induction
-% over the derivation of $[[a => b0]]$. The \rref{P-AppAbs} case requires
-% the use of Lemma~\ref{lemma:parcong}.
-
-% From Lemma~\ref{lemma:parcong} and \ref{lemma:parrefl}, we recover the
-% single substitution property as a simple corollary.
-
-
-% A relation that satisfies the
-% diamond property must also be confluent, meaning that its transitive
-% and reflexive closure is confluent.
-% \begin{lemma}[Par confluent\footnote{\dotv{join.v}{pars\_confluent}}]
-%   \label{lemma:parconfluent}
-%   If $[[a =>+ b0]]$ and $[[a =>+ b1]]$, then there exists some term
-%   $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$.
-% \end{lemma}
-% While $[[a =>+ b]]$ is defined as the transitive closure of $[[a => b]]$,
-% it coincides with the transitive and reflexive closure of $[[a => b]]$ since $[[a => b]]$ is reflexive (Lemma~\ref{lemma:parrefl}).
-
-% The transitivity of the coherence relation follows as a corollary of
-% Lemma~\ref{lemma:parconfluent}.
-% By the definition of coherence, there exists some term $[[b]]$ such that $[[a0 =>+ b0]]$,
-% $[[a1 =>+ b0]]$ and some term $[[b1]]$ such that $[[a1 =>+ b1]]$ and
-% $[[a2 =>+ b1]]$. By Lemma~\ref{lemma:parconfluent}, there exists some
-% term $[[c]]$ such that $[[b0 =>+ c]]$ and $[[b1 =>+ c]]$. It sufficies
-% to show that $[[a0 =>+ c]]$ and $[[a2 =>+ c]]$, both of which
-% trivially hold since the transitive closure $[[a =>+ b]]$ is transitive.
-% This concludes the proof that coherence is an equivalence relation.
-% \begin{lemma}[Coherence Equivalence]
-%   \label{lemma:coherenceequiv}
-%   The relation $[[a <=> b]]$ satisfies reflexivity, symmetry, and
-%   transitivity and therefore is an equivalence relation.
-% \end{lemma}
-
 
 Figure~\ref{fig:typing} gives the full typing rules for
 \lang{}. The premises wrapped in \colorbox{lightgray}{gray} boxes can be shown to be
 admissible syntactically, though some of them are required to
 strengthen the inductive hypothesis of the fundamental theorem.
-% \scw{Is the precondition for T-ABS really admissible? Isn't it required
-% to ensure predicativity? Have you proved it? Have you proved regularity?}
-% \yl{I proved regularity. \Rref{T-Abs} is admissible if cumulativity
-%   was formulated correctly (which wasn't the case in the version
-%   of the paper you read). I revised \rref{T-Univ} so the premise is
-%   not admissible }
-% \scw{Do you have a formation rule for identity types?}
-% \yl{Added}
 
 In \rref{T-Var}, $[[G n]]$ is the partial function defined
 by the equations $[[ (G ++ A)  0 ]] := [[A]]$ and $[[ (G ++ A) Suc
@@ -977,9 +900,12 @@ subject reduction.
 Pure Type System~\citep{barendregt1991introduction}, which employs
 untyped equality, and its variant that uses typed judgmental
 equality. This assures us that we do not lose much generality working
-with a system with untyped conversion. We include a detailed
-discussion in Section~\ref{sec:relatedwork} on how type-directed and
-untyped equality affect the applicability of our technique.
+with a system with untyped conversion.
+We include a detailed discussion in Section~\ref{sec:discuss} on how
+type-directed and untyped equality affect the applicability of our
+technique.
+
+
 
 % As a result, there is no loss of generality from
 
@@ -992,8 +918,6 @@ untyped equality affect the applicability of our technique.
 % types).
 % and we discuss in Section~\ref{sec:extension} how we can extend
 % our proof to handle those rules.
-\yl{Unresolved: is it ok to say our system's conversion rule is untyped like
-Coq?}
 % \scw{Maybe move more of this paragraph and the next to the discussion/related
 %   work section, and add a forward pointer here.}
 % \scw{Just say that like Coq, the definition of the system uses untyped
@@ -1078,6 +1002,12 @@ Coq?}
   all quantified things are types. And we might need that information to interpret, say,
   identity types in the right way.
 }
+\yl{I don't think identity types and dependent function types should
+  be listed as reasons why the logrel can't be a recursive
+  function. System DE has both dependent function types and identity
+  types but the logical fragment doesn't have type-level computation
+  so it can be defined structurally by specifying some kind of size metric
+}
 \scw{ We also need to explicitly point out that our logical relation is untyped.
   This has two benefits: it allows semantic typing to be meaningful independent from
   syntactic typing (cite Derek, forward reference to next section) and it avoids
@@ -1085,6 +1015,7 @@ Coq?}
   what these are).
   Is there a cost to an untyped relation?
 }
+
 Before we define our logical relation, we first formally specify the
 consistency property that we want to prove.
 \begin{theorem}[Logical Consistency]
@@ -1117,7 +1048,8 @@ theorem, we will be able to derive consistency as a corollary.
 The complexity of applying proof by logical relation to dependent types stem
 from the fact that the logical relation is much harder to define. In
 simply typed languages, the logical relation is defined as a recursive
-function over the type $[[A]]$. In dependent types, the type
+function over the type $[[A]]$.
+In dependent types, the type
 $[[A]]$ can take the form $[[(\ var 0) Bool]]$. To assign meaning to
 this type, we need to first reduce it to $[[Bool]]$. However, we
 cannot write a function that performs the reduction because we do not
@@ -2269,6 +2201,7 @@ independently derived from the logical relation through syntactic
 means.
 
 \section{Existence of $\beta\eta$-normal forms}
+\label{sec:betaeta}
 We can easily incorporate the function $\eta$ law to the equational
 theory of \lang{} by adding the following parallel reduction rule.
 \begin{center}
