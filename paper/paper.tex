@@ -2588,6 +2588,7 @@ an induction metric to define an executable algorithm\footnote{Coq's
   include large eliminations? type-directed equivalence? impredicative prop?
   inductive datatypes? what are their line counts?}
 
+\subsection{Logical relations}
 Proof by logical relations does not come with a precise definition. In
 the most general sense, a logical relation can be viewed as a
 practical technique that uses a type-indexed relation to assign
@@ -2653,6 +2654,8 @@ derive the correctness of their conversion algorithms. In our work, we
 use the semantic universe hierarchy directly because it is sufficient
 for deriving consistency and later normalization.
 
+\subsection{Mechanized logical relations about dependent types}
+
 \citet{decagda} mechanizes in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
 universe level and typed judgmental equality with function
@@ -2682,6 +2685,9 @@ mechanization. However, instead of explaining the inductive
 logical relation as a convoluted workaround to the lack of
 induction-recursion in Coq, we give a self-contained explanation of
 our logical relation.
+
+\subsection{Other mechanized metatheory of dependent types}
+
 
 Finally, \citet{barras2010sets, Wang2013SemanticsOI} assign
 set-theoretic semantics to dependent type theory in Coq. Unlike the
