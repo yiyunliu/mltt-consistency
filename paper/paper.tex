@@ -222,8 +222,10 @@ predicative universe hierarchy, large eliminations, an intensional identity
 type, a boolean base type, and dependent elimination forms.
 
 Our goal with this work is to demonstrate how the proof technique of
-\emph{logical relations} can be applied to reason about dependent type theories.
-Tutorial material on this topic~\cite{lr-tutorials} is primarily focussed on
+\emph{logical relations} can be applied to reason about dependent type
+theories.
+Tutorial material on this topic~\citep{skorstengaard2019introduction,
+  harpertait, harperkripke, pierce2002types, pierce2004advanced,harper2016practical} is primarily focussed on
 systems with simple or polymorphic types. In that context, logical relations
 can be define as simple recursive functions over the structure of types, or
 (in the case of recursive types) defined over the evaluation steps of the
@@ -232,9 +234,7 @@ computation.
 
 Neither of these techniques make sense for predicative dependent type theory,
 so a young researcher might be excused for thinking that proofs that use
-logical relations are not applicable.  \scw{Well, actually, we did use a
-  step-indexed relation for Trellys\ldots}\yl{The core calculus of Trellys'
-  logical fragment is simple type + identity so I don't think that counts..}
+logical relations are not applicable.
 But this is not the case. Recent authors have developed tour-de-force
 mechanizations for the metatheory of modern proof
 assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
@@ -259,8 +259,8 @@ consistency proof can be extended (at a moderate cost of 500 lines of code) to
 show the existence of $\beta\eta$-normal form for well-typed open \emph{and}
 closed terms. We include a full predicative universe hiercharchy and
 type-level computation, to demonstrate the logical strength of the
-approach. \scw{Say that we don't have impredicativity, but neither does anyone
-  else?}\yl{Nobody else but Barras. I'll find the citation}
+approach. % \scw{Say that we don't have impredicativity, but neither does anyone
+  % else?}\yl{Nobody else but Barras. I'll find the citation}
 %%
 %% SCW: save specific comparisons with other systems for later
 %%
@@ -838,7 +838,7 @@ same technique can be found in \citet{plfa22.08}.
   \label{lemma:coherencetrans}
   If $[[a0 <=> a1]]$ and $[[a1 <=> a2]]$, then $[[a0 <=> a2]]$.
 \end{lemma}
-From Lemma~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
+From Lemmas~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
 \ref{lemma:coherencetrans}, we conclude that convertibility is indeed an
 equivalence relation. It is then trivial to show that all untyped
 $\beta$-equivalence rules are admissible, though we omit this proof
@@ -885,7 +885,12 @@ both $[[a]]$ and $[[A]]$ to have the same scope. However, the closer a
 type is to the head of $[[G]]$, the smaller de Bruijn it has since
 there is less variables in the context it can refer to (see \rref{Ctx-Cons}). Shifting $[[G
 n]]$ by $[[Suc n]]$ weakens the type so it is scoped consistently with
-the full context $[[G]]$ rather than a truncated version of $[[G]]$.
+the full context $[[G]]$ rather than a truncated version of
+$[[G]]$. In \rref{T-J}, the elimination form for the idnetity type,
+$[[a]]$ and $[[A]]$ need to be shifted in the context for a similar
+reason; an extra type $[[A]]$ appears after the $[[G]]$ and therefore
+the terms $[[a]]$ and $[[A]]$ in the identity type both need to be shifted
+to refer to the same binders.
 
 \Rref{T-Conv} uses the convertibility relation from earlier
 as our equality judgment for type conversion. The use of an untyped
@@ -1165,12 +1170,31 @@ $[[I]]$. As a result, we usually state our lemmas in terms of
 $[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
 A S]]$.
 
-To derive consistency, it suffices to restrict $[[S]]$ to the set of
-terms that reduce to closed terms. \Rref{I-Void, I-Bool} are
-unsurprising; when considering only closed terms, the empty type
-should not be inhabited and therefore corresponds to the empty set,
-whereas the boolean type is semantically inhabited by terms that
-evaluate to the boolean values $[[true]]$ or $[[false]]$. \Rref{I-Eq}
+% To derive consistency, it suffices to restrict $[[S]]$ to the set of
+% terms that reduce to closed terms.
+\Rref{I-Void, I-Bool} capture terms that \emph{behave like} the inhabitants
+of the $[[Void]]$ and $[[Bool]]$ types under an empty context. For
+example, the $[[Void]]$ type should not have any inhabitants under the
+empty context, where as the $[[Bool]]$ type corresponds to terms that
+evaluate to $[[true]]$ or $[[false]]$. However, the characterization
+of $[[Bool]]$ in our logical relation does not always correspond to
+well-typed or even closed terms. For example, we have $[[if false var 0
+true]]$ is ill-typed under the empty context but still belongs to the set $[[{ a | a =>+
+  true \/ a =>+ false }]]$ since it evalutes to $[[true]]$.
+The independence of syntactic typing in our logical relation allows
+our semantic typing definition in Section~\ref{sec:logrelproof} to be
+meaningful on its own. Furthermore, not having to embed scoping
+information into the logical relation avoids extra bookkeeping and the
+need for a Kripke-style logical relation.
+\yl{Not sure what to cite from Derek Dreyer. I know his blog post
+  about semantic type soundness but is there a good paper to cite? one
+of the rust papers?}
+
+% unsurprising; when considering only closed terms, the empty type
+% should not be inhabited and therefore corresponds to the empty set,
+% whereas the boolean type is semantically inhabited by terms that
+% evaluate to the boolean values $[[true]]$ or $[[false]]$.
+\Rref{I-Eq}
 says that an equality type $[[a ~ b : A]]$ corresonds to the
 set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ holds and
 otherwise corresponds to the empty set. Side conditions like $[[a <=>
@@ -1191,7 +1215,7 @@ simplified admissible \rref{I-PiAlt} that follows directly from \rref{I-Pi}.
 \begin{center}
   \drule[]{I-PiAlt}
 \end{center}
-\begin{lemma}
+\begin{lemma}[I-PiAlt admissibility]
   \label{lemma:piintroalt}
   \Rref{I-PiAlt} is admissible.
 \end{lemma}
@@ -1239,14 +1263,14 @@ grows, whereas the
 relation $[[R]]$ in \rref{I-Pi} ``fixes'' the witnesses $[[S0]]$ and
 prevents the set of witnesses from growing. While it might
 be possible to restrict the domain with additional constraints such as
-functionality and inversion properties to justify the existence of a
-fixed point with \rref{I-PiAlt}, we opt for our current
+functionality and inversion properties to justify the well-definedness of our
+inductive relation with \rref{I-PiAlt}, we opt for our current
 formulation of \rref{I-Pi} so we immediately obtain a
 well-defined inductive relation and a usable induction principle. The
 slight disadvantage of \rref{I-Pi} is that we need to construct the
 function $[[R]]$ each time we apply it, though this is mitigated by
-the immediate admissibility of \rref{I-PiAlt} and the inversion
-principle (Lemma~\ref{lemma:piinvalt}) we derive after proving functionality.
+the immediate admissibility of \rref{I-PiAlt} and the alternative $\Pi$ inversion
+principle (Lemma~\ref{lemma:piinvalt}), which we derive after proving functionality.
 
 
 In the rest of the section, we prove four important facts about
@@ -1371,7 +1395,7 @@ logical relation is indeed functional.
 Lemma~\ref{lemma:logreldeter} enables us to show the following
 improved inversion lemma for function types whose statement is free of
 the relation $[[R]]$, analogous to the admissible rule \rref{I-PiAlt}.
-\begin{lemma}[Pi Inv Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
+\begin{lemma}[Pi Inversion Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
   \label{lemma:piinvalt}
   Suppose $[[Interp I i Pi A B S]]$, then there exists some $[[S0]]$
   such that the following constraints hold:
@@ -1856,9 +1880,6 @@ property using the fundamental lemma.
 In this section, we show how the logical relation from
 Section~\ref{sec:logreldep} can be extended to show the existence of
 $\beta$ normal forms for (open and closed) well-typed terms.
-\scw{Why is this a sketch? We've done the whole proof and we will
-explain it all, right?}\yl{s/sketch out/show. I used sketch because we
-didn't spell out the full proofs}
 
 \scw{The goal of this section is also to demonstrate that our logical relations
   proof technique can be extended to reason about the (parallel) reduction of
@@ -1907,7 +1928,7 @@ We can read $[[wne a]]$ and $[[wn a]]$ as the term $[[a]]$ weakly normalizes to 
 
 \begin{figure}[h]
   \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
-  \caption{Extended logical relation}
+  \caption{Extended logical relation (new and changed rules)}
   \label{fig:logrelopen}
 \end{figure}
 
@@ -1971,6 +1992,18 @@ neutral forms.
   \item $[[nf a]]$ implies $[[nf b]]$
   \end{itemize}
 \end{lemma}
+Lemma~\ref{lemma:parnenf} could have been strengthened to say that if
+$[[ne a]]$ or $[[nf a]]$ and $[[a => b]]$, then $[[a = b]]$. Since
+$\ottkw{ne}$ and $\ottkw{nf}$ captures terms free of $\beta$ redexes,
+parallel reduction can not take any real reduction steps and can only
+step into a term itself. However, for the purpose of our proof,
+Lemma~\ref{lemma:parnenf} is sufficient. Furthermore,
+Lemma~\ref{lemma:parnenf}, in its current weaker form, would still hold after we extend our vequational
+theory with the function $\eta$ rule, where parallel reduction can
+take $\eta$ steps but still preserves $\beta\eta$-normal form.
+
+
+
 
 \begin{lemma}[Wn extensionality]
   \label{lemma:extwn}
@@ -1978,7 +2011,7 @@ neutral forms.
 \end{lemma}
 \begin{proof}
   By induction over the length of the reduction sequence in $[[wn (a
-  var i)]]$. The conclusion follows from Lemma~\ref{lemma:parantirenaming} and
+  var i)]]$. The conclusion follows from Lemmas~\ref{lemma:parantirenaming} and
   \ref{lemma:parnenf}.
 \end{proof}
 
@@ -2038,7 +2071,7 @@ since we prove it through nested induction.
   $[[A]]$. We have $[[InterpR j A S]]=[[Interp I j A S]]$ where $[[I]]$
   has the same definition from earlier but its domain restricted to
   numbers less than $[[j]]$. We perform another induction on
-  $[[j]]$. All cases are trivial except for the case for
+  the derivation of $[[Interp I j A S]]$. All cases are trivial except for the case for
   \rref{I-Pi}. Our induction hypothesis immediately gives us $[[wn
   A]]$. To derive $[[wn Pi A B]]$, it remains to show $[[wn B]]$. We
   use the outermost induction hypothesis to show that $[[var 0]]$
@@ -2107,7 +2140,7 @@ since we prove it through nested induction.
 % \end{proof}
 
 The formulation of the valuation and semantic well-typedness from
-Figure~\ref{fig:semtyping} and the fundamental lemma remains
+Section~\ref{sec:logrelproof} and the fundamental lemma remains
 unchanged.
 The proof of the fundamental lemma is still carried out by induction
 over the typing derivation, where the additional neutral term related
@@ -2134,19 +2167,20 @@ fundamental theorem.
   conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
 \end{proof}
 
-Due to the non-deterministic nature of parallel reduction, we need to take a
-few more steps to convert the existence of $\beta$-normal form into a decision
-procedure for type conversion. More specifically, we can show that a
-deterministic evaluation strategy such as leftmost-outermost reduction can
-always find the $\beta$-normal form if there exists one. Then the termination
-of that strategy immediately follows from Corollary~\ref{corollary:exbetanf}
-However, we omit such proofs since they can can be formulated on untyped
-lambda terms and thus are orthogonal to the specifics of dependently typed
-systems. Instead, we redirect readers to \citet{factorization-essentially,
-  takahashi-parallel-reduction} for the details.
+\yl{commented out the following paragraph because I accidentally wrote
+the same thing twice. Will do a comparison and if this is better
+written I'll replace the part from the $\beta\eta$ section with it}
+% Due to the non-deterministic nature of parallel reduction, we need to take a
+% few more steps to convert the existence of $\beta$-normal form into a decision
+% procedure for type conversion. More specifically, we can show that a
+% deterministic evaluation strategy such as leftmost-outermost reduction can
+% always find the $\beta$-normal form if there exists one. Then the termination
+% of that strategy immediately follows from Corollary~\ref{corollary:exbetanf}
+% However, we omit such proofs since they can can be formulated on untyped
+% lambda terms and thus are orthogonal to the specifics of dependently typed
+% systems. Instead, we redirect readers to \citet{factorization-essentially,
+%   takahashi-parallel-reduction} for the details.
 
-\scw{Name and foreshadow these lemmas when they are introduced so that
-it is easier to refer to them in the discussion.}
 Finally, we want to point out that
 the adequacy property (Lemma~\ref{lemma:adequacy}) are in fact required in the normalization proof
 for simply typed languages~\citep{abel2019poplmark}. Similar to the
@@ -2277,6 +2311,8 @@ terms of the logical relation itself (e.g. in
 Lemma~\ref{lemma:piintroalt}). \scw{I'm having trouble connecting the rule in
 the figure with rule \texttt{InterpExtFun} in the coq development. Would it make
 sense to include the definition of ProdSpace? What is the Coq type of R?}
+\yl{I think I might just inline the definition of ProdSpace and then
+  rename the variables from the Coq code to match the ones from the paper}
 
 In the Coq mechanized proof, the definition of $[[Interp I i A S]]$ has type
 \texttt{Prop}, when \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S}
@@ -2325,7 +2361,7 @@ In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm ->
 Prop}, a predicate over \lang{} terms.
 In axiom-free Coq, predicates do not come with the extensionality
 property. Given two predicates $P$ and $Q$, we can prove that $\forall
-x, P(x) \iff Q(x)$, but we can not concldue that $P = Q$. While
+x, P(x) \iff Q(x)$, but we can not conclude that $P = Q$. While
 predicate extensionality is not necessary in our development, we
 assume it as an axiom since it is known to be consistent with Coq's
 metatheory and helps bridge the gap between our mechanization and the
@@ -2442,8 +2478,7 @@ algorithm is referred to as normalize-and-compare by
 The soundness of the algorithm is immediate. The completeness of the
 algorithm is justified the confluence property of the untyped
 reduction relation. Suppose $[[a <=> b]]$, $[[a =>+ f0]]$, $[[b =>+
-f1]]$ but $[[f0]]$ is syntactically distinct from each
-other. By the transitivity of convertibility, we have $[[f0 <=> f1]]$.
+f1]]$ but $[[f0]]$ is syntactically distinct from $[[f1]]$. By the transitivity of convertibility, we have $[[f0 <=> f1]]$.
 Because $[[f0]]$ and $[[f1]]$ are both in
 $\beta\eta$-normal forms and can only reduce to themselves, we must
 have $[[f0 = f1]]$. Contradiction.
@@ -2465,10 +2500,13 @@ normalizing property is standard and can be proven using the
 factorization technique discussed in
 \citet{takahashi-parallel-reduction, factorization-essentially}. By
 composing the existence of normal form and the fact that the
-deterministic relation is normalizing, we can derive show the
+deterministic relation is normalizing, we can derive the
 accessibility of the deterministic reduction relation
 (\mintinline{coq}{Acc} in Coq), and use the accessibility proof as
-an induction metric to define an executable algorithm.
+an induction metric to define an executable algorithm\footnote{Coq's
+  singleton elimination principle allows \mintinline{coq}{Acc}, a
+  \texttt{Prop} data type with a single constructor, to be eliminated
+  to construct runtime relevant data}.
 
 \section{Related Work}
 \label{sec:relatedwork}
@@ -2533,7 +2571,7 @@ to constantly juggle between the impredicative but irrelevant sort
 More recent works such as \citet{Abel12}
 and\citet{abel2008betaeta} make their definitions more explicit and
 precise and thus easier to encode in proof assistants. Our definition
-of logical relation is reminiscent to their definition of a
+of logical relation is reminiscent of their definition of a
 semantic universe hierarchy, though our logical relation is defined to
 be closed under expansion with respect to parallel reduction rather
 than weak head reduction. Furthermore, \citet{Abel12} and
@@ -2680,6 +2718,7 @@ predicate.
   it is sound and complete with respect to the type-directed
   equality. Instead, to show the decidability of our untyped equivalence, we
   need only show that terms have $\beta\eta$ normal forms. }
+\yl{Makes perfect sense!}
 
 
 In terms of our proof technique, we close over our semantically valid types
