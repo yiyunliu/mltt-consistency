@@ -1878,24 +1878,29 @@ property using the fundamental lemma.
 \section{Existence of $\beta$-normal forms}
 \label{sec:extension}
 In this section, we show how the logical relation from
-Section~\ref{sec:logreldep} can be extended to show the existence of
-$\beta$ normal forms for (open and closed) well-typed terms.
-
-\scw{The goal of this section is also to demonstrate that our logical relations
-  proof technique can be extended to reason about the (parallel) reduction of
-  open terms, not just the reduction of terms after closing
-  substitutions. This is important, in particular, for dependently-typed languages
-  because type checking involves reasoning about open terms. But even simple type
-  systems may wish to employ this sort of reasoning, in the case of, say, reasoning
-  about compiler correctness in open environments. (Does Amal do anthing like this?)
-}
-
-The goal of this section is to prove that all well-typed terms have
-$\beta$-normal forms. In other words, we can repeatedly use our parallel
-reduction relation to reduce any term to a unique normal form, where no
-further reductions can be applied. This result can be used to show that our
-type conversion relation is decidable, as computation of the normal form will
+Section~\ref{sec:logreldep} can be extended to show the existence of $\beta$
+normal forms for (open and closed) well-typed terms.  In other words, we prove
+that it is possible to repeatedly use the parallel reduction relation to
+reduce any term to its unique normal form, where no further (non-identity)
+reductions can be applied. This result can be used to show that our type
+conversion relation is decidable, as computation of the normal form will
 always terminate.
+
+The goal of this section is also to demonstrate that our logical relations
+proof technique can be extended to reason about the reduction properties of
+open terms, not just the reduction of terms after closing substitutions.
+Reasoning about open terms is particularly important for dependently-typed
+languages because type checking involves working with open terms.
+\scw{
+  Add when we can find a reference:
+  However, even non dependently-typed languages employ such techniques, 
+  especially in the case of relational semantics. 
+}
+While this extension employs well-known techniques, it continues to be short and 
+demonstrates the robustness of our initial framework. 
+
+We begin this part with a description of the $\beta$-normal forms 
+of \lang{}. 
 
 \begin{figure}[h]
   \[
@@ -1914,7 +1919,9 @@ always terminate.
 \end{figure}
 
 The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
-neutral terms and normal forms with respect to $\beta$-reduction. We sometimes
+neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite 
+\footnote{\dotv{normalform.v}{nf\_refl}} }. Instead of the 
+metavariables $e$ and $f$, we also
 use the judgment forms $[[ne a]]$ and $[[nf a]]$ to indicate that there exists
 $[[e]]$ or $[[f]]$ such that $[[a = e]]$ or $[[a = f]]$.
 
@@ -1922,69 +1929,68 @@ The predicates $[[wne a]]$ and $[[wn
 a]]$ describe terms that can evaluate into $\beta$-neutral or
 $\beta$-normal form through parallel reduction and are defined as
 follows.
-\[ [[wne a]] \iff \exists [[e]], [[a =>+ e]] \]
-\[ [[wn a]] \iff \exists [[f]], [[a =>+ f]] \]
-We can read $[[wne a]]$ and $[[wn a]]$ as the term $[[a]]$ weakly normalizes to a neutral or a normal form respectively.
+\[
+\begin{array}{llcl}
+\mbox{\emph{weakly normalizes to a neutral form}} & [[wne a]] &\iff& \exists [[e]], [[a =>+ e]] \\
+\mbox{\emph{weakly normalizes to a normal form}}  & [[wn a]]  &\iff& \exists [[f]], [[a =>+ f]] \\
+\end{array}
+\]
 
 \begin{figure}[h]
   \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
-  \caption{Extended logical relation (new and changed rules)}
+  \caption{Extended logical relation (new and changed rules) }
   \label{fig:logrelopen}
 \end{figure}
 
-The updated logical relation is shown
-in Figure~\ref{fig:logrelopen}.
+The updated logical relation is shown in
+Figure~\ref{fig:logrelopen}.~\footnote{\dotv{semtypingopen.v}{InterpExt}}
+There is one new rule in this figure, \rref{I-Ne}. In a non-empty context, a
+type itself may evaluate to a neutral term and in turn can only be inhabited
+by neutral terms.  Otherwise, the rest of the rules in this figure are updates
+to the analogous rules in Figure~\ref{fig:logrel}. Note that, we omit the
+rules for the function and universe cases because they are identical to the
+original version.
+
 % The idea of a term blocked from $\beta$ reduction is
 % captured by $[[e]]$, the set of neutral terms. We augment the
 % interpretation of booleans and the empty types with terms that
 % evaluate to neutral terms. Furthermore, types that are neutral terms
 % can also be assigned a meaning since they may be inhabited by other
 % neutral terms.
-In the definition of the logical relation, we omit the rules for
-the function and universe cases since they remain identical to the
-original version in Figure~\ref{fig:logrel}.
-The changes to \rref{I-Bool} and \rref{I-Void} follow the exact same pattern.
-An open term of type $[[Bool]]$ does
-not necessarily reduce to $[[true]]$ or $[[false]]$, but may reduce to
-a variable, or more generally, a neutral term. Likewise, the
-$[[Void]]$ type, while remains uninhabited under an empty context, may
-be inherited by the set of neutral terms when there is a variable in
-the context that allows us to inhabit $[[Void]]$.
+The changes to \rref{I-Bool} and \rref{I-Void}
+follow the same pattern: an open term of type $[[Bool]]$ does not necessarily
+reduce to $[[true]]$ or $[[false]]$, but may reduce to a variable, or more
+generally, a neutral term. Likewise, while the $[[Void]]$ type remains
+uninhabited under an empty context, it may be inhabited when there is a
+variable in the context that has type $[[Void]]$ or that can be eliminated to
+type $[[Void]]$.
 
-The rule for equality type $[[a ~ b : A]]$ is augmented with the preconditions that
-$[[a]]$, $[[b]]$, and $[[A]]$ are all in their normal forms since
+The rule for equality type $[[a ~ b : A]]$ is augmented with the precondition that
+$[[a]]$, $[[b]]$, and $[[A]]$ are all normal forms because
 otherwise our model would include equality types that are themselves
-not normalizing. Furthermore, the side condition $[[a <=> b]]$ is only
-available when the equality proof reduces to $[[refl]]$. If the proof
-term reduces to a neutral term, then there is nothing we can learn
+not normalizing.
+\scw{I don't see this precondition in the figure!}
+Furthermore, the side condition $[[a <=> b]]$ is only
+required/available when the equality proof reduces to $[[refl]]$. If the proof
+term reduces to a neutral term, then there is nothing we need to show/can learn
 about the relationship between $[[a]]$ and $[[b]]$.
 
-Finally, in a
-non-empty context, a type itself may evaluate to a neutral term and in
-turn can only inhabited by neutral terms, thus the addition of \rref{I-Ne}.
-
-Interestingly, all the properties we have shown in
-Section~\ref{sec:logreldep} and \ref{sec:logrelproof} before the
-fundamental lemma can be proven in the exact same order, where the new
-cases due to \rref{I-Ne} and the augmentation of neutral terms
-to \rref{I-Void, I-Eq, I-Bool} can be immediately discharged by
-Lemma~\ref{lemma:parnenf}.
-
-Before we can prove the fundamental theorem and derive the
-normalization property as its corollary, we need to additionally
-formulate and prove the adequacy property.
-
-\yl{Moved renaming back to Sec 5 because they are needed for the
-  non-eta development too}
-Let us first start with some auxiliary lemmas and definitions.
-\begin{lemma}[Par anti-renaming]
+Because we are working with open terms, we need a few additional syntactic
+lemmas about reduction. First, a renaming $\xi$ is a generalization of
+weakening when working with de Bruijn indices. It consistently renumbers the
+variables that appears in terms. If a renamed term has been reduced, we can
+always recover the result of the reduction without the renaming.
+%
+\scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
+used more generally. Maybe we should replace it with that?}
+\begin{lemma}[Par anti-renaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
   \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
 exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
 \end{lemma}
 
 We can show that parallel reduction preserves $\beta$-normal and
 neutral forms.
-\begin{lemma}[Par preserves $\beta$-neutral and normal forms]
+\begin{lemma}[Par preserves $\beta$-neutral and normal forms\footnote{\dotv{normalform.v}{nf\_ne\_preservation}}]
   \label{lemma:parnenf}
   If $[[a => b]]$, then
   \begin{itemize}
@@ -1994,18 +2000,36 @@ neutral forms.
 \end{lemma}
 Lemma~\ref{lemma:parnenf} could have been strengthened to say that if
 $[[ne a]]$ or $[[nf a]]$ and $[[a => b]]$, then $[[a = b]]$. Since
-$\ottkw{ne}$ and $\ottkw{nf}$ captures terms free of $\beta$ redexes,
-parallel reduction can not take any real reduction steps and can only
-step into a term itself. However, for the purpose of our proof,
-Lemma~\ref{lemma:parnenf} is sufficient. Furthermore,
-Lemma~\ref{lemma:parnenf}, in its current weaker form, would still hold after we extend our vequational
-theory with the function $\eta$ rule, where parallel reduction can
-take $\eta$ steps but still preserves $\beta\eta$-normal form.
+$\ottkw{ne}$ and $\ottkw{nf}$ captures terms free of $\beta$ redexes, parallel
+reduction can not take any real reduction steps and can only step into a term
+itself. However, for the purpose of our proof, Lemma~\ref{lemma:parnenf} is
+sufficient.  In fact, all the properties we have shown in
+Section~\ref{sec:logreldep} and \ref{sec:logrelproof} before the fundamental
+lemma can be proven in the same order, where the new cases due to \rref{I-Ne}
+and the augmentation of neutral terms to \rref{I-Void, I-Eq, I-Bool} can be
+immediately discharged by Lemma~\ref{lemma:parnenf}.
 
+Furthermore, Lemma~\ref{lemma:parnenf}, in its current weaker form, would
+still hold after we extend our equational theory with the function $\eta$
+rule, where parallel reduction can take $\eta$ steps but still preserves
+$\beta\eta$-normal form.
 
+We also need to know that the $[[wne a]]$ and $[[wn a]]$ relations can be
+justified compositionally. For example, an application has a neutral form when
+the function has a neutral form and the argument has a normal form.
 
+\begin{lemma}[Wne application\footnote{\dotv{normalform.v}{wne\_app}}]
+  \label{lemma:wnewn}
+  If $[[wne a]]$ and $[[wn b]]$, then $[[wne (a b)]]$.
+\end{lemma}
+\begin{proof}
+  Immediate by lexicographical induction over the length of the reduction sequences in
+  $[[wne a]]$ and $[[wn b]]$.
+\end{proof}
 
-\begin{lemma}[Wn extensionality]
+Furthermore, if we know that an application of a term to a variable 
+has a normal form, then we know tha the term must have a normal form.
+\begin{lemma}[Wn extensionality\footnote{\dotv{normalform.v}{ext\_wn}}]
   \label{lemma:extwn}
   If $[[wn (a var i)]]$, then $[[wn a]]$.
 \end{lemma}
@@ -2015,36 +2039,35 @@ take $\eta$ steps but still preserves $\beta\eta$-normal form.
   \ref{lemma:parnenf}.
 \end{proof}
 
-\begin{lemma}[wne wn]
-  \label{lemma:wnewn}
-  If $[[wne a]]$ and $[[wn b]]$, then $[[wne a b]]$.
-\end{lemma}
-\begin{proof}
-  Immediate by lexicographical induction over the length of the reduction sequences in
-  $[[wne a]]$ and $[[wn b]]$.
-\end{proof}
 
-To state the adequacy lemma, we first define the notion
-of reducibility candidates (shortened as $CR$), predicates over sets
-of lambda terms that capture the properties we need from our logical
-relation. \scw{Need to provide intuition for these two properties that need
-to be proved similtaneously. Also, cite where this form of proof originally
+Before we can prove the fundamental theorem and derive the normalization
+property as its corollary, we need to additionally formulate and prove an
+\emph{adequacy property} about the logical relation.  This property, that the
+interpretation of each type is a \emph{reducibility candidate}, allows us to
+conclude that every term in each interpretation has a normal form. In the
+previous section, we only needed a property of the interpretation of the
+$[[Void]]$ type. However, for this section, we need to know something about
+the interpretation of every type.
+
+Furthermore, to prove this adequacy property, we need to strengthen it to also
+give us more information about neutral terms as we proceed by induction. In
+particular, we need to know that all terms that reduce to neutral forms are
+contained within the interpretation.
+\scw{Also, cite where this form of proof originally
 appeared? This part is standard.}
-\begin{definition}[CR]
-  Let $[[S]]$ be a set of lambda terms. We say that
+Therefore, we formally define when a set is a \emph{reducibility candidate}
+(shortened as $CR$) as follows.
+\begin{definition}[Reducibility Candidates (CR)\footnote{\dotv{semtypingopen.v}{CR}}]
+  Let $[[S]]$ be a set of lambda terms. We say that $[[S]] \in CR$ 
+  if and only if conditions $CR_1$ and $CR_2$ hold.
   \begin{itemize}
-  \item $[[S]] \in CR_1 \iff $  $[[forall a, (#  wne a implies a in S #)]]$
-  \item $[[S]] \in CR_2 \iff$ $[[forall a, (# a in S implies wn a #)]]$
-  \item $[[S]] \in CR \iff $ $[[S]] \in CR_1$ and $[[S]] \in CR_2$
+  \item $[[S]] \in CR_1 \iff\ [[forall a, (#  wne a implies a in S #)]]$ 
+  \item $[[S]] \in CR_2 \iff\ [[forall a, (# a in S implies wn a #)]]$   
   \end{itemize}
 \end{definition}
 
-\yl{Merged all the separate adequacy related properties into a single
-  property proved through nested induction. (The mechanization has
-  been adjusted accordingly)}
-We now state and prove the adequacy lemma. We give some more details
-since we prove it through nested induction.
-\begin{lemma}[Adequacy\footnote{\dotv{soundnessopen.v}{soundness}}]
+We now state and prove the adequacy lemma.
+\begin{lemma}[Adequacy\footnote{\dotv{semtypingopen.v}{adequacy}}]
   \label{lemma:adequacy}
   If $[[InterpR i A S]]$, then we have $[[S]] \in CR$.
 \end{lemma}
@@ -2073,9 +2096,9 @@ since we prove it through nested induction.
   numbers less than $[[j]]$. We perform another induction on
   the derivation of $[[Interp I j A S]]$. All cases are trivial except for the case for
   \rref{I-Pi}. Our induction hypothesis immediately gives us $[[wn
-  A]]$. To derive $[[wn Pi A B]]$, it remains to show $[[wn B]]$. We
+  A]]$. To derive $[[wn (Pi A B)]]$, it remains to show $[[wn B]]$. We
   use the outermost induction hypothesis to show that $[[var 0]]$
-  semantically inhabits $[[A]]$, from which we derive $[[wn B {var 0}]]$
+  semantically inhabits $[[A]]$, from which we derive $[[wn (B {var 0})]]$
   and conclude $[[wn B]]$ through antirenaming (Lemma~\ref{lemma:parantirenaming}).
 \end{proof}
 
@@ -2142,13 +2165,13 @@ since we prove it through nested induction.
 The formulation of the valuation and semantic well-typedness from
 Section~\ref{sec:logrelproof} and the fundamental lemma remains
 unchanged.
-The proof of the fundamental lemma is still carried out by induction
+The proof of the fundamental lemma\footnote{\dotv{soundnessopen.v}{soundness}} is still carried out by induction
 over the typing derivation, where the additional neutral term related
 cases are handled by Lemma~\ref{lemma:adequacy}, the adequacy property.
 
 The normalization property then follows as a corollary of the
 fundamental theorem.
-\begin{corollary}[Existence of $\beta$-normal form]
+\begin{corollary}[Existence of $\beta$-normal form\footnote{\dotv{soundnessopen.v}{mltt\_normalizing}}]
   \label{corollary:exbetanf}
   If $[[G |- a : A]]$, then $[[wn a]]$ and $[[wn A]]$.
 \end{corollary}
@@ -2181,30 +2204,27 @@ written I'll replace the part from the $\beta\eta$ section with it}
 % systems. Instead, we redirect readers to \citet{factorization-essentially,
 %   takahashi-parallel-reduction} for the details.
 
-Finally, we want to point out that
-the adequacy property (Lemma~\ref{lemma:adequacy}) are in fact required in the normalization proof
-for simply typed languages~\citep{abel2019poplmark}. Similar to the
-simply typed scenario, adequacy needs to be proven before the
+The extension of our logical relation to prove normalization of open
+\emph{and} closed terms closely mirrors the progression from
+normalization of closed terms~\citep{harpertait} to normalization of
+open terms~\citep{harperkripke} in the simply typed lambda calculus.
+Indeed, a mechanization of the latter proof appears in ~\citet{abel2019poplmark}.
+In this setting, as above, adequacy must be proven before the
 fundamental theorem so we can handle elimination rules such as
 \rref{T-If} and \rref{T-App} where the scrutinee is a neutral term. % In
 % \citet{abel2019poplmark}, a variant of Lemma~\ref{lemma:extwn} is used
 % in the exact same way to show the normalization of lambda forms
-Dependent types make the adequacy proof slightly more complicated
-as we also need to know that every type has a normal form, not just
-the terms.
-This complicates our proof specifically in the \rref{I-Set} case for
+%
+Dependent types make the adequacy proof slightly more complicated because we
+also need to know that every \emph{type} has a normal form, not just
+terms. This complicates our proof specifically in the \rref{I-Set} case for
 our adequacy property (Lemma~\ref{lemma:adequacy}).
 
-Overall, despite the dependently typed setting,
-the extension of our logical relation to prove normalization of open
-\emph{and} closed terms closely mirrors the progression from
-normalization of closed terms~\citep{harpertait} to normalization of
-open terms~\citep{harperkripke} in the simply typed lambda calculus.
-It is in fact reassuring that once we have laid the foundational
-technique for handling dependent types in our logical relation, the
-extension to open terms mostly boil down to properties that can be
-independently derived from the logical relation through syntactic
-means.
+Overall, despite the dependently typed setting, it is in fact reassuring that
+once we have laid the foundational technique for handling dependent types in
+our logical relation, the extension to open terms mostly boil down to
+properties that can be independently derived from the logical relation through
+syntactic means.
 
 \section{Existence of $\beta\eta$-normal forms}
 \label{sec:betaeta}

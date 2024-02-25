@@ -58,6 +58,10 @@ Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
                                   | right _ => False
                                   end).
 
+(* TODO: use this notation in the definition of InterpExt *)
+Notation "⟦ A ⟧ i , I ↘ S" := (InterpExt i I A S) (at level 70).
+Notation "⟦ A ⟧ i ↘ S" := (InterpUnivN i A S) (at level 70).
+
 (* ---------------------------------------------------- *)
 
 (* The definition of InterpUnivN is more complicated than
@@ -462,10 +466,12 @@ Qed.
 
 (* ------------------------ adequacy ------------------------------- *)
 
+(* P identifies a set of "reducibility candidates" *)
 Definition CR (P : tm -> Prop) :=
   (forall a, P a -> wn a) /\
     (forall a, wne a -> P a).
 
+(* Every interpretation of types is a reducibility candidate *)
 Lemma adequacy n A PA
   (h : InterpUnivN n A PA) :
   CR PA.

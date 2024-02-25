@@ -69,7 +69,7 @@ elim : a b / h => // ; hauto b:on.
 Qed.
 
 (* Normal and neural forms are preserved by parallel reduction. *)
-Lemma nf_ne_preservation a b (h : a ⇒ b) : (nf a ==> nf b) /\ (ne a ==> ne b).
+Local Lemma nf_ne_preservation a b (h : a ⇒ b) : (nf a ==> nf b) /\ (ne a ==> ne b).
 Proof.
   elim : a b / h => //; hauto lqb:on depth:2.
 Qed.
@@ -88,7 +88,7 @@ Create HintDb nfne.
 
 (* Next we show that if a renamed term reduces, then 
    we can extract the unrenamed term from the derivation. *)
-Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
+Local Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : a⟨ξ⟩ ⇒ b0) : exists b, (a ⇒ b) /\ b0 = b⟨ξ⟩.
 Proof.
   move E : (a⟨ξ⟩) h => a0 h.
@@ -129,7 +129,7 @@ Proof.
     hauto q:on ctrs:Par.
 Qed.
 
-Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
+Local Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : (a⟨ξ⟩ ⇒* b0)) : exists b, b0 = b⟨ξ⟩ /\ (a ⇒* b).
 Proof.
   move E : (a⟨ξ⟩) h => a0 h.
@@ -302,8 +302,8 @@ Qed.
 
 (* --------------------------------------------------------------- *)
 
-(* This lemma is used for reasoning about eta-equivalence. It is like an
-   inversion principle for weakly normal terms. If a term applied to a
+(* This lemma is is like an
+   inversion principle for terms with normal forms. If a term applied to a
    variable is normal, then the term itself is normal. *)
 
 Lemma ext_wn (a : tm) i :
