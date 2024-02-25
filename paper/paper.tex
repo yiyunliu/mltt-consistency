@@ -2721,13 +2721,51 @@ predicate.
 \yl{Makes perfect sense!}
 
 
-In terms of our proof technique, we close over our semantically valid types
-and terms in \rref{I-Red, I-Bool} using the non-deterministic parallel
-reduction relation, while \citet{decagda,nbeincoq} employ a deterministic weak
-head reduction relation. Our use of a non-deterministic reduction strategy
-means that we need confluence to prove the functionality of our logical
-relation. However, the benefit is that it immediately gives us a semantic
-justification of the conversion rule (Lemma~\ref{lemma:logrelcoherence}).
+On the other hand, our definition of our logical relation does
+contribute to a more concise proof.
+In \rref{I-Red, I-Bool}, we choose parallel reduction, a full
+reduction relation, to close over our semantic interpretation of types
+and terms. Parallel reduction is non-deterministic, but it satisfies
+useful structural properties such as congruence
+(Lemma~\ref{lemma:parcong}) and the diamond property
+(Lemma~\ref{lemma:pardiamond}). We pay the price of using a
+non-deterministic reduction relation when we want to prove that our
+logical relation is a partial function; because of \rref{I-Red}, we
+can have $[[A => B0]]$ and $[[A => B1]]$, where $[[B0]]$ and $[[B1]]$
+each have their separate interpretations that we have to prove to be
+equal. Fortunately, this complexity is easily reconciled by the
+diamond property, which is easy to derive syntactically.
+\citet{decagda,nbeincoq} employ a deterministic weak
+head reduction relation. The use of a deterministic reduction relation
+makes the functionality of a logical relation trivial to prove, but
+the downside is that weak head reduction (denoted by $\leadsto^{wh}$)
+or leftmost-outermost reduction (denoted by $\leadsto^{lo}$) does
+not satisfy even the weaker substitution property
+(Lemma~\ref{lemma:parsubst}). That is, given a term $[[A]]$
+and $a \leadsto^{lo} b$, we do not necessarily have $[[A {a}]]
+\leadsto^{lo} [[A {b}]]$ since the variable might appear to the
+right of some redex. Eventually, one has to prove how the
+deterministic reduction relates to a full non-deterministic reduction
+relation to prove the fundamental theorem. In our setup, this would amount
+to proving the factorization theorem of the deterministic reduction
+relation with respect to full non-deterministic reduction. Instead,
+using parallel reduction in \rref{I-Red} allows us to delay the
+factorization property until we need to extract a normalization
+algorithm from our fundamental theorem (Section~\ref{sec:conversionalgo}).
+
+
+
+% In terms of our proof technique, the choice of parallel reduction, a full reduction
+% relation, to close over our semantic interpretation in \rref{I-Red,I-Bool} has a non-negligible effect on the
+% size of our development.
+
+% we close over our semantically valid types
+% and terms in \rref{I-Red, I-Bool} using the non-deterministic parallel
+% reduction relation, while \citet{decagda,nbeincoq} employ a deterministic weak
+% head reduction relation. Our use of a non-deterministic reduction strategy
+% means that we need confluence to prove the functionality of our logical
+% relation. However, the benefit is that it immediately gives us a semantic
+% justification of the conversion rule (Lemma~\ref{lemma:logrelcoherence}).
 % In particular, we obtain the confluence
 % result of reduction at a very early stage before we even define our
 % logical relation.
@@ -2790,134 +2828,6 @@ Do we even need nondeterministic parallel reduction?}
   (confluence is no longer required before the fundamental
   lemma). }
 
-% Finally, it is worth pointing out that all systems we have discussed
-% so far builds a relational model for their logical relation.
-
-% Recall
-% that our logical relation takes the form $[[InterpR i A S]]$ where
-% $[[S]]$ is a set of terms. In a relational model, each type is
-% interpreted as a partial equivalence relation over terms rather than a
-% set. A relational model is necessary for an extensional type theory
-% such as Nuprl, though \citet{nbeincoq,decagda,martin-lof-a-la-coq} all
-% use a relational model either to justify the function $\eta$-law or to
-% derive $\Pi$-injectivity. In Section~\ref{sec:extension}, our $\eta$
-% law for function is baked into the untyped reduction
-% relation and therefore a relational model is not needed.
-% \scw{would it be difficult to extend your proof to be a PER?}
-
-% The dependently typed systems we have discussed so far also vary
-% greatly in expressiveness. For example, the Calculus of
-% Constructions~\citep{CoC} and MLTT without universe levels are unable
-% to encode large elimination. \citet{decagda} and \citet{nbeincoq} lack
-% identity types. % \citet{nbeincoq} lacks $\eta$-law for functions.
-% Among
-% the mechanized systems we have discussed so far, only
-% \citet{anand2014towards} has a full universe hierarchy.
-% Our object language \lang{}, while small, has a decent coverage of
-% features commonly seen in dependently typed languages, including
-% dependent pattern matching, dependent function types, a full universe
-% hierarchy, an intensional identity type. We hope features such as
-% type-directed reduction (necessary for unit $\eta$-law) and
-% impredicative sorts can be implemented in a similarly streamlined
-% fashion and we will leave those extensions as part of our future work.
-
-% To end this section, we
-% \scw{should this be a new subsection?}
-% The final question we want to address is: why is our proof,
-% even with the extension from Section~\ref{sec:extension}, so much
-% shorter than the proofs from \citet{decagda, nbeincoq,
-%   martin-lof-a-la-coq}?
-
-
-% This contrasts our development with
-% \citet{martin-lof-a-la-coq}, where the irrelevance property turns out to be the most
-% difficult property to prove due to the complexity of the equality
-% judgment used to define the logical relation. In our system, the
-% irrelevance property (Corollary~\ref{lemma:logrelcoherence}) is a
-% direct consequence of Lemma~\ref{lemma:interppreservation},\scw{refer to
-% lemma name} which is
-% straightforward after we prove the results about parallel
-% reduction in Section~\ref{sec:spec}. In other words, we keep the
-% the logical relation itself minimal at the cost of extra lemmas that can be proven
-% through syntactic means independently from the logical relation.
-% For example, as commented near the end of Section~\ref{sec:extension},
-% our normalization property (Corollary~\ref{corollary:exbetanf})
-% % can induce a decision procedure for type conversion by reducing two
-% % terms to $\beta\eta$-normal form and check for their syntactic
-% % equivalence. This decision procedure would be inefficient compared to
-% % NbE or the algorithm from \citet{martin-lof-a-la-coq} that reduces terms
-% % to weak head normal and checks for the equivalence of subterms
-% % recursively
-% does not immediately induce an efficient decision procedure, but it is
-% possible to recover an efficient algorithm by reasoning about untyped
-% lambda terms.
-
-% the concision of
-% our proof can be largely attributed to the fact that we bake into the
-% logical relation only the minimum amount of information that is the
-% most conducive to the proof of the metatheoretic result.
-
-% Another key to our proof is the very early establishment of the confluence
-% property of the paralell reduction relation
-% (Lemma~\ref{lemma:pardiamond}). This property is used in
-% Lemma~\ref{lemma:interppreservation} to show that the interpretation
-% of a type is preserved under evaluation. That is, if $[[InterpR i A S]]$ and $[[A => B]]$, then we also have $[[InterpR i B S]]$.
-% In a system with typed directed reduction, the confluence result is
-% harder to establish since confluence requires subject reduction, which
-% circularly depends on $\Pi$-injectivity, a consequence of
-% confluence~\citep{siles2012pure}. There are different workarounds to
-% this problem. \citet{siles2012pure} proposes a syntactic approach by
-% defining a type system where the confluence result is
-% directly provable and later show that the system of interest is
-% equivalent to the system with the confluence property.
-% \citet{decagda} uses a relational model and the relational counterpart
-% of Lemma~\ref{lemma:extwn} to derive $\Pi$-injectivity. The relational
-% model is parameterized by a typed indexed equivalence relation and
-% is reused to prove derive different properties in their
-% development. Another perhaps simpler approach is to simply
-% extend the judgmental equality with rules about
-% $\Pi$-injectivity~\citep{weirich:systemd}. This allows subject
-% reduction to be proven independently from confluence and
-% $\Pi$-injectivity can later be shown to be admissible. We find the
-% approach from \citep{weirich:systemd} the most lightweight as it
-% allows us to derive confluence early on even in systems with typed
-% conversion. \scw{Maybe mention my $\eta$-equivalence paper here somewhere?}
-
-% In cases where the judgmental equality does not leverage type information heavily
-% (e.g. $\eta$-law for the unit type), it might be possible to show that
-% $\Gamma \vdash a \equiv b : A$ is equivalent to the conjunction of
-% $[[G |- a : A]]$, $[[G |- b : A ]]$, and $[[a <=> b]]$. If such a
-% property holds (we believe this is likely true for both
-% \citet{decagda} and \citet{martin-lof-a-la-coq}), we can reuse our existing logical relation in
-% terms of untyped parallel reduction to show the decidability of type
-% conversion. Otherwise, to fully model the system, we need to bake
-% typing information into our logical relation and we need to redefine
-% our logical relation in Kripke-style so we can relax the scoping
-% constraint in order to prove adequacy, though a relational model would
-% still be unnecessary as long as the $\eta$ laws are baked into the
-% typed directed relation. \scw{not sure I understand this last bit}
-
-% Since confluence plays such as key role in our proof, we are uncertain
-% how to generalize our technique to systems where confluence does not
-% hold, and we will investigate those scenarios in our future work.
-% \scw{What systems are you thinking of? Or do you mean more generally
-% that this technique only works for languages where the definition of
-% equality is based on joinability of parallel reduction?}
-
-% We are able to avoid the complexivity of a Kripke-style logical relation
-% by defining our logical relation in terms of untyped parallel
-% reduction, which does not impose any scoping constraint on the
-% terms.
-
-
-% Why is it that the justification of $\eta$ law
-% requires a Kripke-style relational model in all three developments
-% but not ours? Are we ``cheating'' by defining \lang{}'s equational
-% theory using an untyped conversion rule? Instead of answering the
-% questions one by one, we clarify the design of our type system and our
-% proof technique so the answers to those questions are self-evident.
-
-% The key to the shortness of
 
 \section{Conclusion}
 \label{sec:conclusion}
