@@ -1895,14 +1895,14 @@ Reasoning about open terms is particularly important for dependently-typed
 languages because type checking involves working with open terms.
 \scw{
   Add when we can find a reference:
-  However, even non dependently-typed languages employ such techniques, 
-  especially in the case of relational semantics. 
+  However, even non dependently-typed languages employ such techniques,
+  especially in the case of relational semantics.
 }
-While this extension employs well-known techniques, it continues to be short and 
-demonstrates the robustness of our initial framework. 
+While this extension employs well-known techniques, it continues to be short and
+demonstrates the robustness of our initial framework.
 
-We begin this part with a description of the $\beta$-normal forms 
-of \lang{}. 
+We begin this part with a description of the $\beta$-normal forms
+of \lang{}.
 
 \begin{figure}[h]
   \[
@@ -1921,8 +1921,8 @@ of \lang{}.
 \end{figure}
 
 The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
-neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite 
-\footnote{\dotv{normalform.v}{nf\_refl}} }. Instead of the 
+neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite
+\footnote{\dotv{normalform.v}{nf\_refl}} }. Instead of the
 metavariables $e$ and $f$, we also
 use the judgment forms $[[ne a]]$ and $[[nf a]]$ to indicate that there exists
 $[[e]]$ or $[[f]]$ such that $[[a = e]]$ or $[[a = f]]$.
@@ -2029,7 +2029,7 @@ the function has a neutral form and the argument has a normal form.
   $[[wne a]]$ and $[[wn b]]$.
 \end{proof}
 
-Furthermore, if we know that an application of a term to a variable 
+Furthermore, if we know that an application of a term to a variable
 has a normal form, then we know tha the term must have a normal form.
 \begin{lemma}[Wn extensionality\footnote{\dotv{normalform.v}{ext\_wn}}]
   \label{lemma:extwn}
@@ -2060,11 +2060,11 @@ appeared? This part is standard.}
 Therefore, we formally define when a set is a \emph{reducibility candidate}
 (shortened as $CR$) as follows.
 \begin{definition}[Reducibility Candidates (CR)\footnote{\dotv{semtypingopen.v}{CR}}]
-  Let $[[S]]$ be a set of lambda terms. We say that $[[S]] \in CR$ 
+  Let $[[S]]$ be a set of lambda terms. We say that $[[S]] \in CR$
   if and only if conditions $CR_1$ and $CR_2$ hold.
   \begin{itemize}
-  \item $[[S]] \in CR_1 \iff\ [[forall a, (#  wne a implies a in S #)]]$ 
-  \item $[[S]] \in CR_2 \iff\ [[forall a, (# a in S implies wn a #)]]$   
+  \item $[[S]] \in CR_1 \iff\ [[forall a, (#  wne a implies a in S #)]]$
+  \item $[[S]] \in CR_2 \iff\ [[forall a, (# a in S implies wn a #)]]$
   \end{itemize}
 \end{definition}
 
@@ -2544,16 +2544,17 @@ an induction metric to define an executable algorithm\footnote{Coq's
       & \header{Large Elim} \\
     \hline
     \lang{} & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} \\
-    \hline
+    % \hline
+    $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗}\\
     NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} \\
-    \hline
-    POPLmark2 & 1 & Nat & T & {\boxedsymbols ✓} \\
-    \hline
+    % \hline
+    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat & T & {\boxedsymbols ✓} \\
+    % \hline
     MLTT-a-la-Coq & 1 & Id, Nat & T & {\boxedsymbols ✓} \\
-    \hline
-    Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} \\
-    \hline
-    Coq-in-Coq & $\mathbb{P}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}
+    % \hline
+    Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} \\
+    % \hline
+    CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
     %   & \lang{} & \citet{anand2014towards} &
     %                                          \citet{barras2012semantical}
     % & \citet{martin-lof-a-la-coq}  \\
@@ -2570,16 +2571,19 @@ an induction metric to define an executable algorithm\footnote{Coq's
 
   \begin{tabular}{l}
   \\
+    $\lambda^\theta$ (logical fragment only) \citet{casinghino:combining-proofs-programs} \\
     NBE-in-Coq \citet{nbeincoq} \\
-    POPLmark reloaded \citet{decagda} \\
+    $\lambda^{\Pi U\mathbb{N}}$ \citet{decagda} \\
     MLTT-a-la-Coq \citet{martin-lof-a-la-coq} \\
-    Nuprl \citet{anand2014towards} \\
-  \\ 
-  Universes: Countable ($\mathbb{N}$), One (1), Impredicative ($\mathbb{P}$) \\
+    Core Nuprl \citet{anand2014towards} \\
+    CIC \citet{barras2012semantical} \\
+  \\
+  Universes: Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
   Convertibility: Typed (T), Untyped (U), Extensional (E) \\
   \end{tabular}
 
-  \caption{Overview of Language Features}
+  \caption{Feature matrix for dependently typed languages with
+    mechanized proofs by logical relation}
   \label{fig:linecount}
 \end{figure}
 

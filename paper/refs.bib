@@ -1136,3 +1136,22 @@ isbn="978-3-540-70594-9"
   volume={7},
   year={2012}
 }
+
+@inproceedings{casinghino:combining-proofs-programs,
+author = {Casinghino, Chris and Sj\"{o}berg, Vilhelm and Weirich, Stephanie},
+title = {Combining Proofs and Programs in a Dependently Typed Language},
+year = {2014},
+isbn = {9781450325448},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2535838.2535883},
+doi = {10.1145/2535838.2535883},
+abstract = {Most dependently-typed programming languages either require that all expressions terminate (e.g. Coq, Agda, and Epigram), or allow infinite loops but are inconsistent when viewed as logics (e.g. Haskell, ATS, Ωmega. Here, we combine these two approaches into a single dependently-typed core language. The language is composed of two fragments that share a common syntax and overlapping semantics: a logic that guarantees total correctness, and a call-by-value programming language that guarantees type safety but not termination. The two fragments may interact: logical expressions may be used as programs; the logic may soundly reason about potentially nonterminating programs; programs can require logical proofs as arguments; and "mobile" program values, including proofs computed at runtime, may be used as evidence by the logic. This language allows programmers to work with total and partial functions uniformly, providing a smooth path from functional programming to dependently-typed programming.},
+booktitle = {Proceedings of the 41st ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {33–45},
+numpages = {13},
+keywords = {termination, dependent types, general recursion},
+location = {San Diego, California, USA},
+series = {POPL '14},
+plclub = {yes}
+}
