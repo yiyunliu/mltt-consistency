@@ -79,6 +79,8 @@
 \documentclass[acmsmall,screen=true,
 \ifpublic review=false\else,review=true\fi
   ,anonymous=\ifanonymous true\else false\fi]{acmart}
+\usepackage{fontspec}
+\newfontfamily\boxedsymbols{DejaVu Sans}
 \usepackage{ottalt}
 \usepackage{minted}
 \usepackage{xspace}
@@ -2530,6 +2532,42 @@ an induction metric to define an executable algorithm\footnote{Coq's
 
 \section{Related Work}
 \label{sec:relatedwork}
+
+\begin{figure}[h]
+% \begin{minipage}{0.8\textwidth}
+  \begin{tabular}{ l |  l  | l | l | l }
+      & Universe & Inductives & Convertibility & Large Elim \\
+    \hline
+    \lang{} & Countable & Id, Bool & Untyped & {\boxedsymbols ✓} \\
+    \hline
+    \citet{nbeincoq} & One & Nat & Typed & {\boxedsymbols ✗} \\
+    \hline
+    \citet{decagda} & One & Nat & Typed & {\boxedsymbols ✓} \\
+    \hline
+    \citet{martin-lof-a-la-coq} & One & Id, Nat & Typed & {\boxedsymbols ✓} \\
+    \hline
+    \citet{anand2014towards} & Countable & W-Types & Extensional &
+                                                                   {\boxedsymbols
+                                                                   ✓} \\
+    \hline
+    \citet{barras2012semantical} & Impred,Countable & General
+                                   & Untyped & {\boxedsymbols ✓}
+    %   & \lang{} & \citet{anand2014towards} &
+    %                                          \citet{barras2012semantical}
+    % & \citet{martin-lof-a-la-coq}  \\
+    % \hline
+    % Universe & Countable & Countable & Impredicative + Countable & One\\
+    % % \hline
+    % % Large Elimination & {\boxedsymbols ✓} & {\boxedsymbols ✓} & {\boxedsymbols ✓} \\
+    % \hline
+    % Inductive Types & Id, Bool & W types & General inductive types & Nat \\
+    % \hline
+    % Convertibility & Untyped & Untyped,Extensional & Untyped & Typed \\
+  \end{tabular}
+% \end{minipage}
+  \caption{Overview of Language Features}
+  \label{fig:linecount}
+\end{figure}
 
 \scw{Maybe it would be useful to include a chart here, so that readers can
   easily keep track of the features of the various languages.  i.e. which ones
