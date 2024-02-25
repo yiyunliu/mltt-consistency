@@ -139,7 +139,7 @@ Proof.
       apply (InterpUnivN_back_clos_star i) with (A := (subst_tm (tTrue .: ρ) A)) (b := (subst_tm ρ b)) => //.
       abstract : t.
       apply InterpUnivN_preservation_star with (B := subst_tm (tTrue .: ρ) A) in hPA0=>//.
-      hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, good_pars_morphing_ext.
+      hauto lq:on ctrs:rtc use:Pars_morphing_star, good_Pars_morphing_ext.
       by apply P_IfTrue_star.
       suff : PA = PA0 by congruence.
       hauto lq:on use:InterpUnivN_deterministic'.
@@ -147,7 +147,7 @@ Proof.
       apply (InterpUnivN_back_clos_star i) with (A := (subst_tm (tFalse .: ρ) A)) (b := (subst_tm ρ c)) => //.
       abstract : t.
       apply InterpUnivN_preservation_star with (B := subst_tm (tFalse .: ρ) A) in hPA0=>//.
-      hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, good_pars_morphing_ext.
+      hauto lq:on ctrs:rtc use:Pars_morphing_star, good_Pars_morphing_ext.
       by apply P_IfFalse_star.
       suff : PB = PA0 by congruence.
       hauto lq:on use:InterpUnivN_deterministic'.
@@ -165,7 +165,7 @@ Proof.
     + asimpl in hPA.
       apply : InterpUnivN_Coherent; eauto.
       exists (subst_tm (tRefl .: (q .: ρ)) C).
-      hauto lq:on ctrs:good_pars_morphing use:pars_morphing_star, @rtc_refl, good_pars_morphing_ext2.
+      hauto lq:on ctrs:rtc use:Pars_morphing_star, @rtc_refl, good_Pars_morphing_ext2.
     + asimpl.
       eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
       sfirstorder use: P_JRefl_star.

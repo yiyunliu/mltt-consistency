@@ -148,7 +148,7 @@ Proof.
   elim : T P / h => //.
   - hauto l:on.
   - move => *; subst.
-    hauto lq:on inv:Par ctrs:InterpExt use:par_subst.
+    hauto lq:on inv:Par ctrs:InterpExt use:Par_subst.
 Qed.
 
 
@@ -212,7 +212,7 @@ Proof.
     apply InterpExt_Fun; auto.
     move => a PB hPB0.
     apply : ihPB; eauto.
-    sfirstorder use:par_cong, Par_refl.
+    sfirstorder use:Par_cong, Par_refl.
   - hauto lq:on inv:Par ctrs:InterpExt.
   - move => a b A B.
     elim /Par_inv=>// h ? ? ? a0 b0 A0 ? ? ? [] *. subst.
@@ -222,7 +222,7 @@ Proof.
     apply propositional_extensionality.
     hauto lq:on use:Par_Coherent, Coherent_transitive, Coherent_symmetric.
   - move => A B P h0 h1 ih1 C hC.
-    have [D [h2 h3]] := par_confluent _ _ _ h0 hC.
+    have [D [h2 h3]] := Par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpExt.
 Qed.
 

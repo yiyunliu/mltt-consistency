@@ -125,13 +125,13 @@ Proof.
       * exists j, PA.
         split.
         move /InterpUnivN_back_preservation_star  : hPA.
-        apply. asimpl. qauto l:on use:pars_morphing, good_pars_morphing_ext, good_pars_morphing_one, Par_refl.
+        apply. asimpl. qauto l:on ctrs:rtc use:Pars_morphing, good_Pars_morphing_ext, Par_refl.
         apply : InterpUnivN_back_clos_star; eauto.
         eauto using P_IfTrue_star.
       * exists k, PB.
         split.
         move /InterpUnivN_back_preservation_star  : hPB.
-        apply. asimpl. qauto l:on use:pars_morphing, good_pars_morphing_ext, good_pars_morphing_one, Par_refl.
+        apply. asimpl. qauto l:on ctrs:rtc use:Pars_morphing, good_Pars_morphing_ext, Par_refl.
         apply : InterpUnivN_back_clos_star; eauto.
         eauto using P_IfFalse_star.
     (* New case for when the scrutinee is neutral *)
@@ -166,12 +166,12 @@ Proof.
         case : hco => ab ?.
         exists (subst_tm (tRefl .: (ab .: ρ)) C).
         split.
-        ** apply pars_morphing_star; last by apply rtc_refl.
-           apply good_pars_morphing_ext2;
-             hauto lq:on ctrs:good_pars_morphing.
-        ** apply pars_morphing_star; last by apply rtc_refl.
-           apply good_pars_morphing_ext2. apply rtc_refl.
-           tauto. apply good_pars_morphing_one.
+        ** apply Pars_morphing_star; last by apply rtc_refl.
+           apply good_Pars_morphing_ext2;
+             hauto lq:on ctrs:rtc.
+        ** apply Pars_morphing_star; last by apply rtc_refl.
+           apply good_Pars_morphing_ext2. apply rtc_refl.
+           tauto. apply rtc_refl.
       * asimpl.
         eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
         sfirstorder use: P_JRefl_star.

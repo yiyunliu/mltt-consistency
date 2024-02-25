@@ -35,21 +35,21 @@ Definition tm_to_head (a : tm) :=
   | tJ _ _ _ _ => None
   end.
 
-Lemma par_head a b (h : a ⇒ b) :
+Lemma Par_head a b (h : a ⇒ b) :
   forall hd, tm_to_head a = Some hd ->
         tm_to_head b = Some hd.
 Proof. induction h => //. Qed.
 
-Lemma par_head_star a b (h : a ⇒* b) :
+Lemma Par_head_star a b (h : a ⇒* b) :
   forall hd, tm_to_head a = Some hd ->
         tm_to_head b = Some hd.
-Proof. induction h; eauto using par_head. Qed.
+Proof. induction h; eauto using Par_head. Qed.
 
 Lemma Coherent_consistent a b (h : Coherent a b) :
   forall hd hd1, tm_to_head a = Some hd ->
             tm_to_head b = Some hd1 ->
             hd = hd1.
-Proof. qblast use:par_head_star. Qed.
+Proof. qblast use:Par_head_star. Qed.
 
 (* -------------------------------------------------- *)
 
@@ -558,8 +558,8 @@ Proof.
     apply : Coherent_transitive; eauto.
     apply Coherent_symmetric.
     apply Par_Coherent.
-    apply par_morphing; last by apply Par_refl.
-    hauto q:on ctrs:Par inv:nat simp:asimpl.
+    apply Par_morphing; last by apply Par_refl.
+    hauto q:on unfold:Par_m ctrs:Par inv:nat simp:asimpl.
   - move => a a0 b0 b1 haa0 iha hbb0 ihb Γ A0 /Wt_App_inv.
     intros (A1 & B & ha & hb0 & hCoherent & i & hA0).
     have /Wt_Abs_inv := ha; intros (A & B0 & k & hPi & ha0 & hCoherent' & j & hPi').
@@ -581,7 +581,7 @@ Proof.
     apply : T_Conv. apply T_If with (i := i); eauto. eauto.
     transitivity (subst_tm (a0..) A0)=>//.
     symmetry.
-    apply Coherent_morphing. reflexivity. hauto lq:on inv:nat.
+    apply Coherent_morphing. reflexivity. hauto lq:on inv:nat unfold:Par_m.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - qauto l:on use:Wt_If_inv ctrs:Wt.
   - move => a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ A /Wt_Eq_inv.
@@ -598,7 +598,7 @@ Proof.
     + eapply preservation_helper with (i := 0) (j := 0); eauto.
       * hauto drew:off ctrs:Wt use:T_Eq_simpl, weakening_Syn' db:wff.
       * hauto drew:off ctrs:Wt use:T_Eq_simpl, weakening_Syn' db:wff.
-      * sfirstorder use:Par_Coherent, P_Eq, par_renaming, Par_refl.
+      * sfirstorder use:Par_Coherent, P_Eq, Par_renaming, Par_refl.
     + apply T_Conv with (A := subst_tm (tRefl .: a0..) C) (i := i);auto.
       * move : morphing_Syn hC0. move/[apply].
         move /(_ Γ (tRefl .: a1..)).
@@ -611,12 +611,12 @@ Proof.
         ** case : q => [_ | /= q /Arith_prebase.lt_S_n ?] /=;
                         asimpl; hauto q:on ctrs:Wt.
       * apply Par_Coherent.
-        apply par_morphing; hauto lq:on use:Par_refl inv:nat.
+        apply Par_morphing; hauto lq:on unfold:Par_m use:Par_refl inv:nat.
     + apply : Coherent_transitive; eauto.
       apply Coherent_symmetric.
       apply Par_Coherent.
-      apply par_morphing; last by apply Par_refl.
-      hauto lq:on inv:nat use:Par_refl.
+      apply Par_morphing; last by apply Par_refl.
+      hauto lq:on unfold:Par_m inv:nat use:Par_refl.
   - move => t0 a b t1 ht iht Γ U /Wt_J_inv.
     intros (A & C & i & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (k & hU')).
     apply iht.
@@ -627,8 +627,8 @@ Proof.
       with (subst_tm (a..)(subst_tm (tRefl..) C)); last by asimpl.
     replace (subst_tm (tRefl .: b..) C)
       with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl.
-    apply coherent_cong; first by auto.
-    apply coherent_cong; last by apply Coherent_reflexive.
+    apply Coherent_cong; first by auto.
+    apply Coherent_cong; last by apply Coherent_reflexive.
     apply Coherent_reflexive.
 Qed.
 
