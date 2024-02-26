@@ -88,7 +88,7 @@
 \usepackage[para]{footmisc}
 \definecolor{lightgray}{gray}{0.85}
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
-\newcommand{\lang}{$\lambda^H$\xspace}
+\newcommand{\lang}{$\lambda^{U\mathbb{B}\ottkw{Id}}$\xspace}
 \inputott{rules}
 %%
 %% \BibTeX command to typeset BibTeX logo in the docs
@@ -194,7 +194,7 @@ to derive metatheoretic properties of type systems, such as
 consistency and parametricity. While there exists a
 plethora of introductory materials about logical relation in the
 context of simply typed or polymorphic lambda calculus, a streamlined
-presentation of proof by logical relation for a dependently language
+presentation of proof by logical relation for a dependently typed language
 is lacking. In this paper, we present a short
 consistency proof for a dependently typed language that contains a
 rich set of features, including a full universe
@@ -228,7 +228,7 @@ predicative universe hierarchy, large eliminations, an intensional identity
 type, a boolean base type, and dependent elimination forms.
 
 Our goal with this work is to demonstrate how the proof technique of
-\emph{syntatic logical relations} can be applied to reason about dependent
+\emph{syntactic logical relations} can be applied to reason about dependent
 type theories.  Logical relations are a powerful proof technique for reasoning
 about lambda calculi and their operational semantics. They have been used to
 show diverse properties such as strong normalization, contextual equivalence,
@@ -238,7 +238,7 @@ with syntactic logical relations.}
 
 Tutorial material on logical relations~\citep{skorstengaard2019introduction,
   harpertait, harperkripke, pierce2002types,
-  pierce2004advanced,harper2016practical} is primarily focussed on systems
+  pierce2004advanced,harper2016practical} is primarily focused on systems
 with simple or polymorphic types. In that context, syntactic logical relations
 can be define as simple recursive functions over the structure of types, or
 (in the case of recursive types) defined over the evaluation steps of the
@@ -265,16 +265,16 @@ of less than 1000 lines of code, developed using the Coq/Rocq proof
 assistant~\cite{coq}.
 
 We have streamlined our proof through a number of means: the careful selection
-of the features that we include in the object type type system and the results
+of the features that we include in the object type system and the results
 that we prove about it, in addition to the judicious use of automation.  Our
 language is small, but includes enough to be illustrative. For example, we
-eschew inductive datatypes or W-types, but we do include propositionality
+eschew inductive datatypes or W-types, but we do include propositional
 equality and booleans in order to capture the challenges presented by indexed
 types and dependent pattern matching. We do not show the decidability of type
 checking, nor do we develop a PER semantics, but we do demonstrate how our
 consistency proof can be extended (at a moderate cost of 500 lines of code) to
 show the existence of $\beta\eta$-normal form for well-typed open \emph{and}
-closed terms. We include a full predicative universe hiercharchy and
+closed terms. We include a full predicative universe hierarchy and
 type-level computation, to demonstrate the logical strength of the
 approach. % \scw{Say that we don't have impredicativity, but neither does anyone
   % else?}\yl{Nobody else but Barras. I'll find the citation}
@@ -306,15 +306,15 @@ navigate and understand. We accompany this mechanized proof with an informal
 description, presented here using set theory notation and terminology so that
 the material is accessible to readers with general mathematical background,
 That said, our explanations do not stray too far away from our proof scripts.
-We label each lemma directly to their counterpart in the proof script,
+We label each lemma directly to its counterpart in the proof script,
 anticipating that readers may wish to reference and validate our formalism.
-Our typeset representation are purposefully made to directly follow our
+Our typeset representations are purposefully made to directly follow our
 mechanical proofs, while avoiding, as much as possible, the introduction
 of artifacts that are specific to theorem provers.
 
 Not only does this connection aid readers that wish to, like us, adopt proof
 assistants for their day-to-day use. We also find that this precision is
-important for conveying the proof techique itself. Unlike properties that are
+important for conveying the proof technique itself. Unlike properties that are
 derivable through syntactic means, proofs by logical relation make demands on
 the strength of the logic in which they are expressed. An informal proof that
 attempts to be agnostic or ambiguous about the underlying
@@ -376,7 +376,7 @@ implies semantic typing. Consistency follows from this result as a corollary.
 In Section~\ref{sec:extension}, extends the definition of the logical relation
 to include terms with free variables, and proves that every well-typed term
 has a $\beta$-normal form. After laying the foundation for handling type-level
-computation in Section~\ref{sec:logreldep}, this extension requries mechanical
+computation in Section~\ref{sec:logreldep}, this extension requires mechanical
 changes that directly mirror an analogous extension for a simply typed
 language. We use this section to demonstrate the idea that once we have
 established the base techniques, we can port ideas that have been studied in
@@ -384,7 +384,7 @@ the context of a simpler system to the dependently-typed setting.  We believe
 it is possible to extend our logical relation to a Kripke-style and relational
 model in a similar fashion.
 
-In Section~\ref{sec:eta} we show how to incorporate the function $\eta$-law
+In Section~\ref{sec:betaeta} we show how to incorporate the function $\eta$-law
 into the conversion rule for \lang{}.
 
 In Section~\ref{sec:logrelmech}, we discuss the details about our
@@ -395,6 +395,9 @@ CoqHammer~\citep{czajka2018hammer} for general-purpose automation.
 In Section~\ref{sec:relatedwork}, we discuss how our proof relates to
 existing proofs by logical relations and other proof techniques for
 proving consistency and normalization.
+
+In Section~\ref{sec:discuss}, we explain the various factors that contribute
+to our short proof.
 
 We hope our success at creating a short and mechanized proof for a
 relatively feature-complete language will encourage future researchers
@@ -649,7 +652,7 @@ proofs for dependent types.
 % \mathit{Renaming}\\
 % [[xi]] & \in & [[SNat -> SNat]] & \\ \\
 \mathit{Substitutions}\\
-[[rho]] & \in & [[SNat -> STm]] & \\ \\ 
+[[rho]] & \in & [[SNat -> STm]] & \\ \\
 \mathit{Typing Contexts}\\
  [[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
 \end{array}
@@ -783,7 +786,7 @@ $[[var 0]]$ unchanged during substitution and replaces each $[[var
 Suc i]]$ with $[[rho i {up 1}]]$. The shifting with $[[up 1]]$
 is required so the variables in terms from the codomain of $[[rho]]$ skip over
 the newly introduced binder to refer to the correct binding
-location. 
+location.
 
 The substitution operator is referred to as simultaneous substitution as it
 substitutes for all variables at once. It is possible to recover single
@@ -864,7 +867,7 @@ same technique can be found in \citet{plfa22.08}.
 \end{lemma}
 % From Lemmas~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
 % \ref{lemma:coherencetrans}, we conclude that convertibility is indeed an
-% equivalence relation. 
+% equivalence relation.
 
 Our definition of convertibility for \lang{} is unusual in that it is directly
 defined via parallel reduction, instead of using the related notion of
@@ -931,7 +934,7 @@ Although the use of de Bruijn indices complicates the variable rule, the rules
 that involve binding, such as \rref{T-Pi,T-Abs} are straightforward.
 
 \Rref{T-Conv} uses the convertibility relation from earlier
-as our equality judgment for type conversion. 
+as our equality judgment for type conversion.
 
 The elimination form for booleans, \rref{T-If} demonstrates dependent pattern
 matching.  The result type of this expression $[[A {a}]]$, is composed of some
@@ -1224,7 +1227,7 @@ evaluate to $[[true]]$ or $[[false]]$. However, the characterization
 of $[[Bool]]$ in our logical relation does not always correspond to
 well-typed or even closed terms. For example, we have $[[if false var 0
 true]]$ is ill-typed under the empty context but still belongs to the set $[[{ a | a =>+
-  true \/ a =>+ false }]]$ since it evalutes to $[[true]]$.
+  true \/ a =>+ false }]]$ since it evaluates to $[[true]]$.
 The independence of syntactic typing in our logical relation allows
 our semantic typing definition in Section~\ref{sec:logrelproof} to be
 meaningful on its own. Furthermore, not having to embed scoping
@@ -1239,7 +1242,7 @@ of the rust papers?}
 % whereas the boolean type is semantically inhabited by terms that
 % evaluate to the boolean values $[[true]]$ or $[[false]]$.
 \Rref{I-Eq}
-says that an equality type $[[a ~ b : A]]$ corresonds to the
+says that an equality type $[[a ~ b : A]]$ corresponds to the
 set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ holds and
 otherwise corresponds to the empty set. Side conditions like $[[a <=>
 b]]$ are typically required for indexed types, of which equality types
@@ -1274,7 +1277,7 @@ a well-behaved dependent function type. The precondition of
 the function type $[[Pi A B]]$ has an interpretation if its input
 type $[[A]]$ can be
 interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
-type $[[B {a}]]$, obtained by substituing $[[a]]$ into the output type
+type $[[B {a}]]$, obtained by substituting $[[a]]$ into the output type
 $[[B]]$, has some semantic interpretation. In its conclusion, we say
 that a term $[[b]]$ belongs to an interpretation of $[[Pi A B]]$ if
 for all $[[a in S]]$, where $[[S]]$ is an interpretation $[[A]]$, the
@@ -1717,7 +1720,7 @@ need to show that there exists some $[[i]]$ and $[[S]]$ such that
 
   Intuitively, a substitution $[[rho]]$
   that closes over a context should always induce a truncated
-  substituion for each truncated context. As a result, if
+  substitution for each truncated context. As a result, if
   some term $[[b]]$ is semantically well-typed under some truncated
   context $[[G]]$, then it must also be semantically well-typed under
   the context $[[G]]$ up to shifting.
@@ -2074,7 +2077,7 @@ the function has a neutral form and the argument has a normal form.
 \end{proof}
 
 Furthermore, if we know that an application of a term to a variable
-has a normal form, then we know tha the term must have a normal form.
+has a normal form, then we know the term must have a normal form.
 \begin{lemma}[Wn extensionality\footnote{\dotv{normalform.v}{ext\_wn}}]
   \label{lemma:extwn}
   If $[[wn (a var i)]]$, then $[[wn a]]$.
@@ -2312,7 +2315,7 @@ If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
 In \citet{nbeincoq,decagda,martin-lof-a-la-coq}, a relational model is
 needed to justify the $\eta$-law for functions. Instead, we prove
 confluence for our parallel reduction extended with $\eta$-law for functions
-and continue using a logical predicate (i.e. a 1-ary logical relation) to justify
+and continue using a logical predicate (i.e. a unary logical relation) to justify
 $\eta$-law as part of our equational theory.
 A well-known issue with our approach is the failure of syntactic
 confluence when the lambda term contains type annotations. A simple
@@ -2464,7 +2467,7 @@ relation. This property allows us to recover the simple equation for $[[InterpR 
 Finally, in set theory, to show that two sets $[[S0]]$ and $[[S1]]$
 are equal, it suffices to show the extensional property that $\forall
 x, x \in [[S0]] \iff x \in [[S1]]$. We leverage this fact
-occassionally in our presented proofs.
+occasionally in our presented proofs.
 In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm ->
 Prop}, a predicate over \lang{} terms.
 In axiom-free Coq, predicates do not come with the extensionality
@@ -2525,7 +2528,7 @@ defining custom tactics, we rely mostly on off-the-shelf tools such as
 Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
 
 We use the Autosubst 2 framework to specify our syntax in HOAS and
-produce Coq syntax files in de Bruijn representation. Additionallly,
+produce Coq syntax files in de Bruijn representation. Additionally,
 Autosubst 2 provides a powerful tactic \texttt{asimpl} that
 can be used to prove the equivalence of two terms constructed using
 the primitive operators provided by the framework. This greatly
@@ -2566,7 +2569,7 @@ configurations and provides us with a replacement with the tuned performance
 flags that save time for future re-execution of the proof script.
 
 The automation provided by CoqHammer not only gives us a proof that is shorter
-and more resiliant to changes, but also gives useful documentation for readers
+and more resilient to changes, but also gives useful documentation for readers
 who wish to understand the mechanized proof. Although automation performs
 extensive search, it does not use lemmas or invert derivations that are not
 specified in the \texttt{use} or \texttt{inv} flag.
@@ -2746,7 +2749,7 @@ of logical relation is reminiscent of their definition of a
 semantic universe hierarchy, though our logical relation is defined to
 be closed under expansion with respect to parallel reduction rather
 than weak head reduction. Furthermore, \citet{Abel12} and
-\citet{abel2008betaeta} use the semantic universe hierachy as a
+\citet{abel2008betaeta} use the semantic universe hierarchy as a
 measure to define Kripke-style logical relations, from which they
 derive the correctness of their conversion algorithms. In our work, we
 use the semantic universe hierarchy directly in our definition of
@@ -2785,14 +2788,14 @@ universe level and typed judgmental equality with function
 $\eta$-law. They
 use a Kripke-style logical relation parameterized over a
 type-directed equivalence relation satisfying certain
-properties to facillitate the reuse of their definition. The
+properties to facilitate the reuse of their definition. The
 logical relation is defined using the induction-recursion scheme,
 which is available in Agda but not in Coq.
 \citet{martin-lof-a-la-coq} manages to encode the logical relation
 from \citet{decagda} in the predicative fragment of Coq and further
 extends the decidability of type conversion result
 from~\citet{decagda} to the decidability type checking of a
-bidrectional type system.
+bidirectional type system.
 
 \citet{anand2014towards} mechanizes the metatheory of
 Nuprl~\citep{constable1986implementing} in Coq. The metatheory is an
@@ -2887,7 +2890,7 @@ cumulativity. We don't include Prop. We don't include universe polymorphism.
   second and third bullet point. martin-lof a la coq, Abel's work, and
   nbe in coq aren't that richer in feature otherwise. None includes
   cumulativity (they only have one predicative universe)\\ \\
-  The 400,000 NuPRL in Coq probably falls into a different cateogry
+  The 400,000 NuPRL in Coq probably falls into a different category
   because they are trying to mechanize a full practical language}
 \scw{The Coq-Coq-Correct paper (extended version) includes a (predicative) universe hierarchy, universe polymorphism, inductive/coinductive types. But they don't show consistency. Their development is 300k LOC.}
 
