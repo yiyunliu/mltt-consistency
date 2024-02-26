@@ -151,7 +151,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{Short and Mechanized Logical Relation for Dependent Type Theory}
+\title{Short and Mechanized Logical Relation for Dependent Types}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -195,12 +195,16 @@ consistency and parametricity. While there exists a
 plethora of introductory materials about logical relation in the
 context of simply typed or polymorphic lambda calculus, a streamlined
 presentation of proof by logical relation for a dependently language
-is lacking. In this paper, I present a short
+is lacking. In this paper, we present a short
 consistency proof for a dependently typed language that contains a
-rich set of features, including a full cumulative universe
-hierarchy, booleans, and an intensional identity type. We have
+rich set of features, including a full universe
+hierarchy, booleans, and an intensional identity type. We show that
+the logical relation can be easily extended to prove the existence of
+$\beta\eta$-normal forms.
+We have
 fully mechanized the consistency proof using the Coq proof assistant
-in under 1000 lines of code.
+in under 1000 lines of code, with 500 lines of additional code for the
+$\beta\eta$-normal form extension.
 \end{abstract}
 
 %%
@@ -253,7 +257,7 @@ significant reduction through a number of means: the careful selection of the
 features that we include in the object type type system and the results that
 we prove about it, in addition to the judicious use of automation.  Our
 language is small, but includes enough to be illustrative. For example, we
-eschew inductive datatypes or W-types, the but we do include propositionality
+eschew inductive datatypes or W-types, but we do include propositionality
 equality and booleans in order to capture the challenges presented by indexed
 types and dependent pattern matching. We do not show the decidability of type
 checking, nor do we develop a PER semantics, but we do demonstrate how our
@@ -331,7 +335,7 @@ In Section~\ref{sec:spec}, we introduce \lang{}, the object language
 of interest, and establish some elementary properties about parallel
 reduction, which will be used as the equational theory of our language
 and play a central role in defining our logical relation. The design
-of \lang{} is reminiscent of Martin-Löf style predicatvie type
+of \lang{} is reminiscent of Martin-Löf style predicative type
 systems. The untyped conversion rule of \lang{} is inspired by Pure
 Type Systems~\citet{barendregt1991introduction}, though we discuss how
 our proof can be easily adjusted for systems with typed judgmental
@@ -787,10 +791,10 @@ from single substitution.
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
 \drules[P]{$[[a => b]]$}{Parallel Reduction}{AppAbs, IfTrue, IfFalse, JRefl}
-\drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{Refl, Step}
-\drules[C]{$[[a <=> b]]$}{Convertibility}{Intro}
+% \drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{Refl, Step}
+% \drules[C]{$[[a <=> b]]$}{Convertibility}{Intro}
 \end{minipage}
-\caption{Parallel reduction ($\beta$-rules only) and convertibility }
+\caption{Parallel reduction ($\beta$-rules only)  }
 \label{fig:par}
 \end{figure}
 
@@ -888,8 +892,8 @@ type is to the head of $[[G]]$, the smaller de Bruijn it has since
 there is less variables in the context it can refer to (see \rref{Ctx-Cons}). Shifting $[[G
 n]]$ by $[[Suc n]]$ weakens the type so it is scoped consistently with
 the full context $[[G]]$ rather than a truncated version of
-$[[G]]$. In \rref{T-J}, the elimination form for the idnetity type,
-$[[a]]$ and $[[A]]$ need to be shifted in the context for a similar
+$[[G]]$. In \rref{T-J}, the elimination form for the identity type,
+the terms $[[a]]$ and $[[A]]$ need to be shifted in the context for a similar
 reason; an extra type $[[A]]$ appears after the $[[G]]$ and therefore
 the terms $[[a]]$ and $[[A]]$ in the identity type both need to be shifted
 to refer to the same binders.
@@ -1052,7 +1056,7 @@ relation can be seen as a sophisticated way of strengthening the
 induction hypothesis. From the strengthened property, the fundamental
 theorem, we will be able to derive consistency as a corollary.
 
-The complexity of applying proof by logical relation to dependent types stem
+The complexity of applying proof by logical relation to dependent types stems
 from the fact that the logical relation is much harder to define. In
 simply typed languages, the logical relation is defined as a recursive
 function over the type $[[A]]$.
@@ -1439,8 +1443,10 @@ numbers less than $[[i1]]$.
   \ref{lemma:logrelcumulativity}.
 \end{proof}
 
-We say that a set of terms $[[S]]$ is closed under expansion if given
-$[[a in S]]$, then $[[b in S]]$ for all $[[b => a]]$.
+\begin{definition}[Sets closed under expansion]
+  We say that a set of terms $[[S]]$ is closed under expansion if
+  given $[[a in S]]$, then $[[b in S]]$ for all $[[b => a]]$.
+\end{definition}
 The final property we want to show is that the output set $[[S]]$ from
 the logical relation is closed under expansion. Unlike the previous
 lemmas, we directly state the lemma
@@ -1450,7 +1456,7 @@ hold in the \rref{I-Set} case.
 
 \yl{Can lift this lemma somewhere earlier in the section since it doesn't really
   depend on anything}
-\begin{lemma}[Interpreted sets are closed under expansion\footnote{\dotv{semtyping.v}{InterpExt\_back\_clos}}]
+\begin{lemma}[Interpreted sets are closed under expansion\footnote{\dotv{semtyping.v}{InterpUnivN\_back\_clos}}]
   \label{lemma:logrelbackclos}
   If $[[InterpR i A S]]$, then the set $[[S]]$ is closed under expansion.
 \end{lemma}
@@ -1522,8 +1528,8 @@ provable.
 
 \begin{definition}[Semantic well-formed substitution\footnote{\dotv{soundness.v}{$\rho$\_ok}}]
 Define $[[rho |= G]]$ when
-\[ \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
-                     } [[InterpR j (G i < up Suc i > ) { rho } S ]] \text{, then } [[rho i in S]] \]
+\[ \forall n\ i\ S, \text{ if }[[n < |G|]]\text{ and
+                     } [[InterpR i (G n < up Suc n > ) { rho } S ]] \text{, then } [[rho n in S]] \]
 \end{definition}
 
 % To generalize our logical relation to open
@@ -1537,23 +1543,23 @@ Define $[[rho |= G]]$ when
 
 The $[[rho |= G]]$ notation denotes the semantic well-formedness of a
 substitution $[[rho]]$ with respect to a context $[[G]]$. Intuitively, for any
-variable $[[i]]$ in the context (thus the restriction $[[i < | G |]]$),
-$[[rho i]]$ is a term that inhabits all possible interpretations of the type
-$[[G i]]$ from the context.
+variable $[[n]]$ in the context (thus the restriction $[[n < | G |]]$),
+$[[rho n]]$ is a term that inhabits all possible interpretations of the type
+$[[G n]]$ from the context.
 
 
 Since we are in a dependently typed system, there
-may be variables in $[[G i]]$, too. The type $[[(G i < up Suc i > ) {
+may be variables in $[[G n]]$, too. The type $[[(G n < up Suc n > ) {
   rho }]]$ applies $[[rho]]$ to replace those variables. The shifting
-operation $[[up Suc i]]$ can be viewed as an artifact of the de Bruijn
-representation to lift the type $[[G i]]$ to the right scope before
+operation $[[up Suc n]]$ can be viewed as an artifact of the de Bruijn
+representation to lift the type $[[G n]]$ to the right scope before
 substitution can be carried out.
 
 Finally, despite the for all quantification over the interpreted set
-$[[S]]$ and the universe level $[[j]]$ in the definition of $[[rho |=
-G]]$, we only need show that there exists some $[[j]]$ and $[[S]]$
-such that $[[InterpR j (G i < up Suc i > ) { rho } S]]$ and $[[rho i
-in S]]$. This idea is encapsulated in the second of the two structural
+$[[S]]$ and the universe level $[[i]]$ in the definition of $[[rho |=
+G]]$, we only need show that there exists some $[[i]]$ and $[[S]]$
+such that $[[InterpR i (G n < up Suc n > ) { rho } S]]$ and $[[rho n
+in S]]$ since the logical relation is a partial function (Lemma~\ref{lemma:logreldeter}). This idea is encapsulated in the second of the two structural
 law about $[[rho |= G]]$.
 \begin{lemma}[Well-formed $[[rho]]$ empty\footnote{\dotv{soundness.v}{$\rho$\_ok\_nil}}]
   \label{lemma:rhowfempty}
@@ -1587,27 +1593,26 @@ relation $[[|-G]]$.
 \begin{definition}[Semantic context well-formedness\footnote{\dotv{soundness.v}{SemWff}}]
 Define $[[|= G]]$ when
 \[
-   \forall [[i < |G|]],\text{ there exists some } [[j]] \text{ such that } [[drop Suc i G |= G i : Set j]] \]
+   \forall [[n < |G|]],\text{ there exists some } [[i]] \text{ such that } [[drop Suc n G |= G n : Set i]] \]
 \end{definition}
 
-In this definition, we use the notation $[[drop i G]]$ to denote
-the typing context obtained by dropping the last $[[i]]$ elements of
-$[[G]]$. When $[[G]]$ has fewer than $[[i]]$ elements, $[[drop i G]]$ returns
+In this definition, we use the notation $[[drop n G]]$ to denote
+the typing context obtained by dropping the last $[[n]]$ elements of
+$[[G]]$. When $[[G]]$ has fewer than $[[i]]$ elements, $[[drop n G]]$ returns
 the empty list. Intuitively, $[[|= G]]$ says that all
 types in the context must correspond to some set according to the logical
 relation. The truncation to the context $[[G]]$ is due to the telescopic
 scoping of the types in the context. An alternative approach would be to define $[[|= G]]$
 inductively, similar to $[[|- G]]$, but we find it easier to use this definition and
 recover the structural rules as lemmas.
-\begin{lemma}[Semantic context well-formedness cons]
-  \label{lemma:semwffcons}
-  If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ A]]$.
-\end{lemma}
 \begin{lemma}[Semantic context well-formedness empty]
   \label{lemma:semwffempty}
   $[[|= G]]$ holds when $[[G]]$ is empty.
 \end{lemma}
-
+\begin{lemma}[Semantic context well-formedness cons]
+  \label{lemma:semwffcons}
+  If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ A]]$.
+\end{lemma}
 
 The following lemma makes the statement $[[G |= A : Set i]]$ easier to
 work with.
@@ -1653,21 +1658,21 @@ top-level lemmas. For example, we can define the semantic analogue to the
 syntactic typing rule for variables (\rref{T-Var}).
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
-  If $[[|= G]]$ and $[[i < |G|]]$, then $[[G |= var i : G i < up Suc i  >]]$.
+  If $[[|= G]]$ and $[[n < |G|]]$, then $[[G |= var n : G n < up Suc n  >]]$.
 \end{lemma}
 \begin{proof}
   Suppose $[[rho |= G]]$. By the definition of semantic typing, we
-need to show that there exists some $[[j]]$ and $[[S]]$ such that
+need to show that there exists some $[[i]]$ and $[[S]]$ such that
   \begin{itemize}
-  \item $[[InterpR j G i < up Suc i > { rho } S]]$
-  \item $[[rho i in S]]$
+  \item $[[InterpR i G n < up Suc n > { rho } S]]$
+  \item $[[rho n in S]]$
   \end{itemize}
   From the definition of $[[|= G]]$, we know that there exists some
-  $[[j]]$ such that $[[drop Suc i G |= G i : Set j]]$. This is not
+  $[[i]]$ such that $[[drop Suc n G |= G n : Set i]]$. This is not
   immediately useful since $[[rho |= G]]$, not the truncated
-  context. We claim, without giving the proof, that from $[[drop Suc i
-  G |= G i  : Set j]]$, we can derive $[[G |= G i {up Suc i} : Set
-  j]]$. A rigorous justification would require us to formally state
+  context. We claim, without giving the proof, that from $[[drop Suc n
+  G |= G n  : Set i]]$, we can derive $[[G |= G n {up Suc n} : Set
+  i]]$. A rigorous justification would require us to formally state
   and show renaming/weakening lemma for semantic typing. We instead
   provide an informal justification since the proof of renaming
   is uninteresting and only requires unfolding definitions, but its
@@ -1680,10 +1685,10 @@ need to show that there exists some $[[j]]$ and $[[S]]$ such that
   context $[[G]]$, then it must also be semantically well-typed under
   the context $[[G]]$ up to shifting.
 %
-  Knowing that $[[G |= G i {up Suc i} : Set j]]$ holds, we can then
+  Knowing that $[[G |= G n {up Suc n} : Set i]]$ holds, we can then
   apply Lemma~\ref{lemma:setinv} to show that
-  $[[InterpR j G i < up Suc i > { rho } S]]$. It now
-  suffices to show $[[rho i in S]]$, but that is immediate from the
+  $[[InterpR i G n < up Suc n > { rho } S]]$. It now
+  suffices to show $[[rho n in S]]$, but that is immediate from the
   definition of $[[rho |= G]]$.
 \end{proof}
 
@@ -1759,7 +1764,7 @@ need to show that there exists some $[[j]]$ and $[[S]]$ such that
   If $[[i < j]]$, then $[[G |= Set i : Set j]]$.
 \end{lemma}
 \begin{proof}
-  Immediate by Lemma~\ref{lemma:setinv} and \rref{I-Set}.
+  Immediate by Lemma~\ref{lemma:setinv} and \rref{IR-Set}.
 \end{proof}
 
 \begin{lemma}[ST-Pi]
@@ -1775,7 +1780,7 @@ need to show that there exists some $[[j]]$ and $[[S]]$ such that
   there exists some set $[[S0]]$ such that $[[InterpR i A {rho} S0]]$.
 From $[[G ++ A |= B : Set i]]$, we know that there must
 exists $[[S]]$ such that $[[InterpR i B {rho .: a} S]]$ for every $[[a
-in S0]]$. The conclusion immediately follows from Lemma~\ref{lemma:piintroalt}.
+in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
 \end{proof}
 
 \begin{lemma}[ST-Abs]
@@ -1793,7 +1798,8 @@ in S0]]$. The conclusion immediately follows from Lemma~\ref{lemma:piintroalt}.
   i]]$, there exists some set $[[S]]$ such that
   $[[InterpR i Pi A {rho} B {up rho} S]]$. It now suffices to show that
   $[[\A{rho} b{up rho} in S
-  ]]$. By Lemma~\ref{lemma:piinvalt}, there exists some $[[S0]]$ such
+  ]]$. By Lemma~\ref{lemma:piinvalt}, the alternative inversion
+  principle for \rref{I-Pi}, there exists some $[[S0]]$ such
   that all following conditions hold:
   \begin{itemize}
   \item $[[InterpR i A{rho} S0]]$
@@ -1849,7 +1855,7 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
 \begin{proof}
   Proof by mutual induction over the derivation of $[[G |- a :
   A]]$ and $[[|- G]]$.   The cases related to context well-formedness immediately follows
-  from Lemma~\ref{lemma:semwffcons}. The semantic typing rules
+  from Lemmas~\ref{lemma:semwffempty} and \ref{lemma:semwffcons}. The semantic typing rules
 (Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp})
   can be used to discharge their syntactic counterparts
   (e.g. Lemma~\ref{lemma:stabs} for case \rref{T-Abs}). The remaining
@@ -2015,7 +2021,7 @@ immediately discharged by Lemma~\ref{lemma:parnenf}.
 Furthermore, Lemma~\ref{lemma:parnenf}, in its current weaker form, would
 still hold after we extend our equational theory with the function $\eta$
 rule, where parallel reduction can take $\eta$ steps but still preserves
-$\beta\eta$-normal form.
+$\beta$-normal form.
 
 We also need to know that the $[[wne a]]$ and $[[wn a]]$ relations can be
 justified compositionally. For example, an application has a neutral form when
@@ -2059,7 +2065,9 @@ contained within the interpretation.
 \scw{Also, cite where this form of proof originally
 appeared? This part is standard.}
 Therefore, we formally define when a set is a \emph{reducibility candidate}
-(shortened as $CR$) as follows.
+(shortened as $CR$) as follows. Our definition of $CR$ is inspired by
+\citet{girard1989proofs}, but not identical since we only care about
+weak normalization.
 \begin{definition}[Reducibility Candidates (CR)\footnote{\dotv{semtypingopen.v}{CR}}]
   Let $[[S]]$ be a set of lambda terms. We say that $[[S]] \in CR$
   if and only if conditions $CR_1$ and $CR_2$ hold.
@@ -2273,6 +2281,7 @@ Section~\ref{sec:conversionalgo}.
 \section{Mechanization}
 \label{sec:logrelmech}
 \begin{figure}[h]
+  \begin{minipage}{0.9\textwidth}
   \begin{tabular}{ l |  c  | c | c }
     & Consistency & Normalization & Syntactic metatheory \\
     \hline
@@ -2287,6 +2296,7 @@ Section~\ref{sec:conversionalgo}.
     \hline
     Total & 963 & 1357 & 1123 \\
   \end{tabular}
+  \end{minipage}
   \caption{Statistics of the Coq Development}
   \label{fig:linecount}
 \end{figure}
@@ -2383,8 +2393,9 @@ occassionally in our presented proofs.
 In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm ->
 Prop}, a predicate over \lang{} terms.
 In axiom-free Coq, predicates do not come with the extensionality
-property. Given two predicates $P$ and $Q$, we can prove that $\forall
-x, P(x) \iff Q(x)$, but we can not conclude that $P = Q$. While
+property. Given two predicates $P$ and $Q$, we can not conclude that
+$P = Q$ when given a proof of $\forall
+x, P(x) \iff Q(x)$. While
 predicate extensionality is not necessary in our development, we
 assume it as an axiom since it is known to be consistent with Coq's
 metatheory and helps bridge the gap between our mechanization and the
@@ -2481,7 +2492,7 @@ flags that save time for future re-execution of the proof script.
 
 The automation provided by CoqHammer not only gives us a proof that is shorter
 and more resiliant to changes, but also gives useful documentation for readers
-who wish to understand how the underlying proof. Although automation performs
+who wish to understand the mechanized proof. Although automation performs
 extensive search, it does not use lemmas or invert derivations that are not
 specified in the \texttt{use} or \texttt{inv} flag.
 
@@ -2541,7 +2552,7 @@ an induction metric to define an executable algorithm\footnote{Coq's
 
 % \begin{minipage}{0.8\textwidth}
   \begin{tabular}{ l |  l  | l | l | l }
-      & \header{Universes} & \header{Inductives} & \header{Convertibility}
+      & \header{Universes} & \header{Inductives} & \header{Conversion}
       & \header{Large Elim} \\
     \hline
     \lang{} & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} \\
@@ -2580,7 +2591,7 @@ an induction metric to define an executable algorithm\footnote{Coq's
     CIC \citet{barras2012semantical} \\
   \\
   Universes: Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
-  Convertibility: Typed (T), Untyped (U), Extensional (E) \\
+  Conversion: Typed (T), Untyped (U), Extensional (E) \\
   \end{tabular}
 
   \caption{Feature matrix for dependently typed languages with
@@ -2673,15 +2684,13 @@ impactful to the definition of the logical relation.
 
 \citet{casinghino:combining-proofs-programs} introduce $\lambda^\theta$, a dependently typed
 programming language that uses modality to distinguish between logical
-proofs and programs. The programmatic fragment
-includes recursive data types and supports general recursion at the
-cost of introducing divergence. Its logical fragment supports a
-proof-irrelevant identity type, which can be used to reason about the
-behavior of its programmatic fragment.
-However, the $\lambda^\theta$
-language is limited in its expressiveness since it does not support
-type-level computation or polymorphism and therefore is not a fully dependently
-typed language according to \citet{abel2013normalization}.
+proofs and programs. % The programmatic fragment
+% includes recursive data types and supports general recursion at the
+% cost of introducing divergence.
+% However, the $\lambda^\theta$
+% language is limited in its expressiveness since it does not support
+% type-level computation or polymorphism and therefore is not a fully dependently
+% typed language according to \citet{abel2013normalization}.
 The consistency proof of $\lambda^\theta$'s logical fragment has been
 mechanized in Coq through a step-indexed logical relation;
 step-indexing is required to model the programmatic fragment, which
@@ -2930,6 +2939,7 @@ future work.
 \yl{Reworded slightly to emphasize it's future work that we haven't
   done and it is speculative}
 
+\ifextended
 Finally, despite our earlier claim that our metatheoretic properties
 are not as strong as some of the related work, we can strengthen our
 results through syntactic means. For example, the
@@ -2952,7 +2962,7 @@ Do we even need nondeterministic parallel reduction?}
   development but it definitely simplifies the determinism proof
   (confluence is no longer required before the fundamental
   lemma). }
-
+\fi
 
 \section{Conclusion}
 \label{sec:conclusion}
