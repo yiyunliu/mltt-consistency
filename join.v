@@ -105,6 +105,7 @@ Infix "⇒*" := (rtc Par) (at level 60, right associativity).
 (* Two types are Coherent when they reduce to a common type. *)
 
 Definition Coherent a0 a1 := (exists b, a0 ⇒* b /\ a1 ⇒* b).
+Infix "⇔" := Coherent (at level 70, no associativity).
 
 (* ------------------------------------------------------------ *)
 
@@ -217,7 +218,8 @@ Lemma Coherent_morphing a0 a1 (h : Coherent a0 a1) (σ0 σ1 : fin -> tm) :
   (σ0 ⇒ς σ1) ->
   Coherent (a0[σ0]) (a1[σ1]).
 Proof.
-  hauto l:on use:Par_morphing_star, Par_refl, Par_Coherent unfold:Coherent, Par_m.
+  hauto l:on use:Par_morphing_star, Par_refl, 
+    Par_Coherent unfold:Coherent, Par_m.
 Qed.
 
 Lemma Pars_morphing a b (σ0 σ1 : fin -> tm)
@@ -320,9 +322,9 @@ Proof.
 Qed.
 
 Lemma Coherent_cong a0 a1 b0 b1
-  (h : Coherent a0 b0)
-  (h1 : Coherent a1 b1) :
-  Coherent (a1 [a0..]) (b1 [b0..]).
+  (h : Coherent a0 a1)
+  (h1 : Coherent b0 b1) :
+  Coherent (a0 [b0..]) (a1 [b1..]).
 Proof.
   apply Coherent_morphing_star=>//.
   sfirstorder use:Coherent_cong_helper.
@@ -420,6 +422,8 @@ Qed.
 
 (* ------------------------------------------------------------ *)
 
+(* Derived inversion principle for "Par" that doesn't 
+   generate free names with use. *)
 Derive Inversion Par_inv with (forall a b, a ⇒ b).
 
 (* ------------------------------------------------------------ *)

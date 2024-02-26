@@ -7,8 +7,6 @@ From WR Require Import syntax join imports.
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) : tm -> Prop :=
   fun b => forall a PB, PA a -> PF a PB -> PB (tApp b a).
 
-Notation "a ~ b @ A"   := (tEq a b A) (at level 70, right associativity).
-
 (* Logical Relation: 
 
   InterpExp i I S
@@ -59,7 +57,7 @@ where "⟦ A ⟧ i , I ↘ S" := (InterpExt i I A S).
 
 Lemma InterpExt_Eq' i I PA a b A :
   PA = (fun p => p ⇒* tRefl /\ Coherent a b) ->
-  ⟦ a ~ b @ A ⟧ i , I ↘ PA.
+  ⟦ tEq a b A ⟧ i , I ↘ PA.
 Proof. hauto lq:on use:InterpExt_Eq. Qed.
 
 Lemma InterpExt_Univ' i I j PF :

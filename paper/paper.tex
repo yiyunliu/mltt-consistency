@@ -151,7 +151,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{Short and Mechanized Logical Relation for Dependent Types}
+\title{Functional Pearl: Short and Mechanized Logical Relation for Dependent Type Theories}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -633,26 +633,25 @@ proofs for dependent types.
 \begin{figure}[h]
 \[
 \begin{array}{lcll}
-\mathit{Natural\ numbers}\\
-[[i]],[[j]],[[n]] & \in &  [[SNat]] &  \\ \\
-
-\mathit{Contexts}\\
-[[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
+% \mathit{Natural\ numbers}\\
+% [[i]],[[j]],[[n]] & \in &  [[SNat]] &  \\ \\
 \mathit{Terms}\\
 [[a]],[[b]],[[c]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[var n]]\  |\ [[Void]]
                   & \mbox{universes, variables, empty type} \\
-            & |   & [[Pi A B]]\ |\ [[\ A a]]\ |\ [[a b]]
+            & |   & [[Pi A B]]\ |\ [[\ a]]\ |\ [[a b]]
                   & \mbox{function types, abstractions, applications} \\
             & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J c a b p]]
                   & \mbox{equality types, reflexivity proof, J eliminator} \\
             & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ % |\  [[if a b0 b1]]
                   & \mbox{boolean type, true, false} \\
             & |   & [[if a b0 b1]]
-                  & \mbox{if} \\ \\
+                  & \mbox{conditional expression} \\ \\
 % \mathit{Renaming}\\
 % [[xi]] & \in & [[SNat -> SNat]] & \\ \\
-\mathit{Substitution}\\
-[[rho]] & \in & [[SNat -> STm]] &
+\mathit{Substitutions}\\
+[[rho]] & \in & [[SNat -> STm]] & \\ \\ 
+\mathit{Typing Contexts}\\
+ [[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
 \end{array}
 \]
   \caption{Syntax of \lang \scw{Where does the name come from?}\yl{H =
@@ -661,37 +660,32 @@ proofs for dependent types.
 \end{figure}
 
 
-In this section, we present the dynamics and statics of the
-dependent type theory whose logical consistency will be proven in
-Section~\ref{sec:logrelproof}. For conciseness, we refer to this system
-as \lang.
+In this section, we present the dependent type theory whose logical
+consistency will be proven in Section~\ref{sec:logrelproof}. For conciseness,
+we refer to this system as \lang.
 
-The syntax of \lang can be found in Figure~\ref{fig:syntax}.
-We use the unscoped de Bruijn representation for both our Coq development and
-the informal presentation in our paper since it is more amenable to
-automation (Section~\ref{sec:automation}) and leaves no ambiguity
-about variable freeness conditions.
-
-%  \scw{Give an overview of the figure}
-% \scw{Define a convention that separates your use of natural numbers. Sometimes they
-% are universe levels and sometimes they are de Bruijn indices. Better to have separate
-% metavariables for each. (And it is possible to generalize universe
-% levels to structures other than natural numbers. Ask Jonathan.} \yl{resolved?}
-As a dependent type theory, terms and types are collapsed into the same
-syntactic category. The type $[[Set i]]$ represent universe
-types and $[[var n]]$ represent de Bruijn variables. While
-$[[i]],[[j]],$ and $[[n]]$ are all metavariables representing natural
-numbers, we always use $[[n]]$ to represent term variables that
-participate in substitution and $[[i]],[[j]]$ to represent universe levels.
-Dependent functions take the form $[[Pi A B]]$ and
-we use the notation $[[A -> B]]$ when the output type $[[B]]$ is not
-dependent on the input variable.
-Finally, we include in \lang{} the intensional identity type $[[a ~ b : A]]$ whose
-proofs can be eliminated by the J-eliminator $[[J c a b p]]$, where
-$[[p]]$ is an equality proof between $[[a]]$ and $[[b]]$, and $[[c]]$
-is the term whose type is to be casted.
-\scw{Example of what you can use identity types for? Or an example of
-a program that uses J?}
+The syntax of \lang can be found in Figure~\ref{fig:syntax}.  As a dependent
+type theory, terms and types are collapsed into the same syntactic
+category. The type $[[Set i]]$ represent universe types and $[[var n]]$
+represent de Bruijn variables~\cite{debruijn}.  While $[[i]],[[j]],$ and
+$[[n]]$ are all metavariables representing natural numbers, we always use
+$[[i]],[[j]]$ to represent universe levels and $[[n]]$ to represent term
+variables.  We use de Bruijn indices for both our Coq development and the
+informal presentation here because it is more amenable to automation
+(Section~\ref{sec:automation}) and leaves no ambiguity about variable freeness
+conditions. As a result, variables do not appear in binding forms, such as in
+abstractions $[[ \ a ]]$ and dependent function types $[[Pi A B]]$.  This latter
+form binds a new variable of type $[[A]]$ that can appear in the codomain of
+the type $[[B]]$.  We use the notation $[[A -> B]]$ when the output type
+$[[B]]$ is not dependent on the input variable.
+We include in \lang{} the intensional identity type
+$[[a ~ b : A]]$ whose proofs can be eliminated by the J-eliminator
+$[[J c a b p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
+$[[b]]$, and $[[c]]$ is the term whose type is to be casted.
+Finally, \lang{} includes booleans, with standard syntax.
+\scw{Example of
+ what you can use identity types for? Or an example of a program that uses
+J?}
 
 % We find de Bruijn
 % representation advantageous for specification since it leaves very
@@ -714,25 +708,27 @@ a program that uses J?}
       \begin{array}{lll}
         % \mathit{IdentityRen} \\
         % [[id i]] & := & [[i]] \\ \\
-        \mathit{IdentityTm} \\
+        \multicolumn{3}{l}{\mbox{\emph{Identity substitution: }} \mathsf{id}_{\mathit{tm}}} \\
         [[idtm n]] & := & [[var n]] \\ \\
+        \multicolumn{3}{l}{\mbox{\emph{Weakening substitution: }} \uparrow^{n}} \\
+        [[up n m]] & := & \ottkw{v}_{[[n]] + [[m]]} \\ \\
+        %
         % \mathit{ConsRen ([[xi .: n]])} \\
         % ([[xi .: n]])([[0]]) & := & [[n]] \\
         % ([[xi .: n]])([[Suc i]]) & := & [[xi i]] \\ \\
-        \mathit{ConsSubst ([[rho .: a]])} \\
+        %
+        \multicolumn{3}{l}{\mbox{\emph{Extension operation: }} ([[rho .: a]]) } \\
         ([[rho .: a]])([[0]]) & := & [[a]] \\
         ([[rho .: a]])([[Suc n]]) & := & [[rho n]] \\ \\
-        \mathit{Curried\ Add} \\
-        [[up n m]] & := & \ottkw{v}_{[[n]] + [[m]]}
       \end{array}
     \end{split}
     \qquad \qquad
     \begin{split}
       \begin{array}{lll}
-        \mathit{Lifting} \\
+        \multicolumn{3}{l}{\mbox{\emph{Lifting operation: }} \Uparrow\rho} \\
         [[( up rho ) 0]] & := & [[var 0]] \\
         [[( up rho ) Suc n]] & := & [[ rho n < up 1 > ]] \\ \\
-        \mathit{Substitution ([[ a { rho }  ]])} \\
+        \multicolumn{3}{l}{\mbox{\emph{Substitution operation:}} ([[ a { rho } ]])} \\
         [[var n { rho }  ]] & := &  [[rho n]] \\
         [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
         [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
@@ -760,23 +756,22 @@ a program that uses J?}
 
 The \lang language is expressive enough to support large
 eliminations, the ability to compute a type using a term as input. For
-example, the function $[[\ Bool if var 0 Bool Bool -> Bool]]$ returns
+example, the function $[[\ if var 0 Bool Bool -> Bool]]$ returns
 either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
 is $[[true]]$ or $[[false]]$.
 
-We adapt from \citet{autosubst2} the notations for simultaneous
-renaming, substitution, and other auxiliary definitions used in
-our paper, summarized in Figure~\ref{fig:auxdef}. We need those
-definitions to specify the reduction relation and the typing relation
-for \lang{}. The metavariable $[[rho]]$ represents substitutions,
-mappings from de Bruijn indices to terms.
-One example of a substitution is
-the function $\ottkw{id}_{tm}$, which takes a de Bruijn index directly
-injects it as a term variable. The $\uparrow^{[[n]]}$ operator is
-more general and adds $[[n]]$ to the index before injecting it as a
-term. The $[[(rho .: a)]]$ operation allows us to extend a substitution
-$[[rho]]$ with an extra element $[[a]]$; the extended substitution maps the variable
-$[[var 0]]$ to $[[a]]$ and variables $[[var Suc i]]$ to $[[rho i]]$.
+We adapt from \citet{autosubst2} the notations for simultaneous renaming,
+substitution, and other auxiliary definitions used in our paper, summarized in
+Figure~\ref{fig:auxdef}. We need these definitions to specify the reduction
+and typing relations for \lang{}. The metavariable $[[rho]]$ represents
+substitutions, which are mappings from de Bruijn indices to terms.  One
+example of a substitution is the function $\ottkw{id}_{tm}$, the identity
+substitution that maps each index to the corresponding term variable.  The
+$\uparrow^{[[n]]}$ substitution is more general and adds $[[n]]$ to the index
+before injecting it as a term. The extension operation, $[[(rho .: a)]]$,
+allows us to extend a substitution $[[rho]]$ with an extra element $[[a]]$;
+the result maps the variable $[[var 0]]$ to $[[a]]$ and variables
+$[[var Suc i]]$ to $[[rho i]]$.
 
 The substitution operator, which takes the form $[[a {rho}]]$,
 traverses the syntax of $[[a]]$ and replaces each variable $[[var i]]$
@@ -785,17 +780,21 @@ $[[(\ a) { rho }]]$ case), the $\Uparrow$ operator prevents $[[var
 0]]$, the bound variable, from being replaced by
 $[[rho]]$. From the definition of $[[up rho]]$, we see that it keeps
 $[[var 0]]$ unchanged during substitution and replaces each $[[var
-Suc i]]$ with $[[rho i {up 1}]]$. The extra shifting with $[[up 1]]$
+Suc i]]$ with $[[rho i {up 1}]]$. The shifting with $[[up 1]]$
 is required so the variables in terms from the codomain of $[[rho]]$ skip over
 the newly introduced binder to refer to the correct binding
-location. The substitution operator is referred to as simultaneous
-substitution as it substitutes all variables at once. It is possible
-to recover single substitution by composing the extension operator and
-the identity substitution: $[[a { b }]] := [[a { idtm .: b }]]$. Since
-the definition of semantic typing in Section~\ref{sec:logrelproof}
-relies on simultaneous substitution, we find it more convenient to
-formulate simultaneous substitution directly rather than recovering it
-from single substitution.
+location. 
+
+The substitution operator is referred to as simultaneous substitution as it
+substitutes for all variables at once. It is possible to recover single
+substitution by composing the extension operator and the identity
+substitution: $[[a { b }]] := [[a { idtm .: b }]]$. In our proofs, we find it
+more convenient to formulate simultaneous substitution directly rather than
+recovering it from single substitution.  In particular, this shows up in the
+definition of semantic typing in Section~\ref{sec:logrelproof}, which relies
+on simultaneous substitution.
+
+\subsection{Definitional equality via parallel reduction}
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
@@ -803,27 +802,37 @@ from single substitution.
 % \drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{Refl, Step}
 % \drules[C]{$[[a <=> b]]$}{Convertibility}{Intro}
 \end{minipage}
-\caption{Parallel reduction ($\beta$-rules only)  }
+\caption{Parallel reduction ($\beta$-rules only) }
 \label{fig:par}
 \end{figure}
 
 % \scw{motivate parallel reduction. Why are you telling us this now. Is this
 %   an explanation of definitional equality and its properties?}
-Before we specify the typing rules, we need to first specify its
-untyped equational theory. We choose to represent the untyped
-equational theory in an algorithmic style using the notion of parallel
-reduction, defined in Figure~\ref{fig:par} (congruence rules are omitted).
- Parallel reduction takes
-the form $[[a => b]]$ and we denote its transitive as $[[a =>+
-b]]$. We say that two terms $[[a0]]$ and $[[a1]]$ are convertible,
-denoted by the notation $[[a0 <=> a1]]$, if there exists some term
-$[[b]]$ such that $[[a0 =>+ b]]$ and $[[a1 =>+ b]]$. The symmetric
-notation of convertibility suggests that it is an equivalence
-relation. We sketch out the sequence of lemmas required to derive this
-property below and omit the details. Our technique for proving the
-properties about parallel reduction is based on
-\citet{takahashi-parallel-reduction}. A modern exposition of the
+Before we specify the typing rules, we first specify the equational theory
+used in its conversion rule (\rref{T-Conv} in Figure~\ref{fig:typing}). This
+relation is often called ``definitional equality'' in dependent type theories
+because it defines the equivalence that the syntactic type system works
+``up-to''.
+
+For \lang{}, we use an untyped equational theory, defined in an algorithmic
+style using the notion of parallel reduction, written $[[a => b]]$, and shown
+in Figure~\ref{fig:par}. (For brevity, reflexivity and congruence rules are
+omitted from this figure). The notation $[[a =>+ b]]$ indicates the transitive
+closure of parallel reduction.
+
+\begin{definition}[Convertibility]
+  Two terms $[[a0]]$ and $[[a1]]$ are \emph{convertible}, written
+  $[[a0 <=> a1]]$, if there exists some term $[[b]]$ such that $[[a0 =>+ b]]$
+  and $[[a1 =>+ b]]$.
+\end{definition}
+
+Convertibility is an equivalence relation. We sketch the sequence of lemmas
+required to derive this property below and omit the details. The key step in
+proving transitivity, is showing that parallel reduction satisfies the diamond
+property.  Our technique for proving the properties about parallel reduction
+is based on \citet{takahashi-parallel-reduction}. A modern exposition of the
 same technique can be found in \citet{plfa22.08}.
+
 \begin{lemma}[Par Refl\footnote{\dotv{join.v}{Par\_refl}}]
   \label{lemma:parrefl}
   For all terms $[[a]]$, $[[a => a]]$.
@@ -853,78 +862,97 @@ same technique can be found in \citet{plfa22.08}.
   \label{lemma:coherencetrans}
   If $[[a0 <=> a1]]$ and $[[a1 <=> a2]]$, then $[[a0 <=> a2]]$.
 \end{lemma}
-From Lemmas~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
-\ref{lemma:coherencetrans}, we conclude that convertibility is indeed an
-equivalence relation. It is then trivial to show that all untyped
-$\beta$-equivalence rules are admissible, though we omit this proof
-from our mechanization and will from now on focus on parallel
-reduction since the diamond property (Lemma~\ref{lemma:pardiamond})
-makes it easier to work with. A detailed argument of the equivalence
-between $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
-\citet{barendregt:lambda-calculi-with-types} and
-\citet{takahashi-parallel-reduction}.
+% From Lemmas~\ref{lemma:coherencerefl}, \ref{lemma:coherencesym}, and
+% \ref{lemma:coherencetrans}, we conclude that convertibility is indeed an
+% equivalence relation. 
 
-Untyped equality allows us to show the
-equivalence between our more structured notion of convertibility
- ($[[a <=> b]]$) and the declarative, untyped $\beta$-equivalence
-independently from the type system and the logical relation through
-well-established syntactic approaches. The directedness of the
-convertibility relation will be leveraged in
-Section~\ref{sec:logreldep} to justify the conversion rule of our
-typing judgment, which we will introduce shortly.
+Our definition of convertibility for \lang{} is unusual in that it is directly
+defined via parallel reduction, instead of using the related notion of
+$\beta$-equivalence~\cite{barendregt:pts,cic}. This choice does not change the
+language definition; a detailed argument of the equivalence between
+$[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
+\citet{barendregt:lambda-calculi-with-types} and
+\citet{takahashi-parallel-reduction}. However, this choice simplifies later
+proofs, as we discuss in Section~\ref{XXX}. \scw{Forward reference to further
+  discussion, comparing with whnf reduction?}
+
+Our definition of equality is untyped: the judgement does not require the two
+terms to type check and have the same type. The use of an untyped relation for
+type conversion is reminiscent of Barendregt's Pure Type
+Systems~\citet{barendregt1991introduction} and makes our formulation different
+from languages such as MLTT~\citep{Martin-Lof-1973}, where the judgmental
+equality takes the form $\Gamma \vdash a \equiv b : A$, from which one can
+usually derive $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving subject
+reduction. By working with an untyped judgement, we can establish its
+properties independently from the type system and the logical relation, using
+well-established syntactic approaches.
+
+\citet{siles2012pure} shows the equivalence of Barendregt's Pure Type
+System~\citep{barendregt1991introduction}, which employs untyped equality, and
+its variant that uses typed judgmental equality. This assures us that we do
+not lose generality working with a system with untyped
+conversion. Furthermore, discuss how this definition can be extended with
+$\eta$-equivalence of functions in Section~\ref{XXX}. Finally, we compare this
+definition with type-directed approaches to equality in
+Section~\ref{sec:discuss}.
+
+
+\subsection{Syntactic Typing}
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
 \drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
 \drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv,
-  Refl, Eq, J, If, Bool, True, False, Void}
+  Eq, Refl, J, If, Bool, True, False, Void}
 \end{minipage}
 \caption{Syntactic typing for \lang}
 \label{fig:typing}
 \end{figure}
 
-Figure~\ref{fig:typing} gives the full typing rules for
-\lang{}. The premises wrapped in \colorbox{lightgray}{gray} boxes can be shown to be
-admissible syntactically, though some of them are required to
-strengthen the inductive hypothesis of the fundamental theorem.
+Figure~\ref{fig:typing} gives the full typing rules for \lang{}. The premises
+wrapped in \colorbox{lightgray}{gray} boxes can be shown to be admissible
+syntactically, though some of them are required to strengthen the inductive
+hypothesis of the fundamental theorem.
 
-In \rref{T-Var}, $[[G n]]$ is the partial function defined
-by the equations $[[ (G ++ A)  0 ]] := [[A]]$ and $[[ (G ++ A) Suc
-n ]] := [[G n]]$.
-The precondition $[[n < | G | ]]$, where $[[ | G |
-]]$ represents the length of the context $[[G]]$, ensures that $[[G
-n]]$ has a defined output. The type $[[G n]]$ needs to be shifted
-by $[[Suc n]]$ since the types stored in the context $[[G]]$ are
-scoped differently. In the typing judgment $[[G |- a : A]]$, we want
-both $[[a]]$ and $[[A]]$ to have the same scope. However, the closer a
-type is to the head of $[[G]]$, the smaller de Bruijn it has since
-there is less variables in the context it can refer to (see \rref{Ctx-Cons}). Shifting $[[G
-n]]$ by $[[Suc n]]$ weakens the type so it is scoped consistently with
-the full context $[[G]]$ rather than a truncated version of
-$[[G]]$. In \rref{T-J}, the elimination form for the identity type,
-the terms $[[a]]$ and $[[A]]$ need to be shifted in the context for a similar
-reason; an extra type $[[A]]$ appears after the $[[G]]$ and therefore
-the terms $[[a]]$ and $[[A]]$ in the identity type both need to be shifted
-to refer to the same binders.
+In \rref{T-Var}, $[[G n]]$ is the partial function defined by the equations
+$[[ (G ++ A) 0 ]] := [[A]]$ and $[[ (G ++ A) Suc n ]] := [[G n]]$.  The
+precondition $[[n < | G | ]]$, where $[[ | G | ]]$ represents the length of
+the context $[[G]]$, ensures that $[[G n]]$ has a defined output. The type
+$[[G n]]$ needs to be shifted by $[[Suc n]]$ since the types stored in the
+context $[[G]]$ are scoped differently. In the typing judgment
+$[[G |- a : A]]$, we want both $[[a]]$ and $[[A]]$ to have the same
+scope. However, the closer a type is to the head of $[[G]]$, the smaller de
+Bruijn it has since there is less variables in the context it can refer to
+(see \rref{Ctx-Cons}). Shifting $[[G n]]$ by $[[Suc n]]$ weakens the type so
+it is scoped consistently with the full context $[[G]]$ rather than a
+truncated version of $[[G]]$.
+
+Although the use of de Bruijn indices complicates the variable rule, the rules
+that involve binding, such as \rref{T-Pi,T-Abs} are straightforward.
 
 \Rref{T-Conv} uses the convertibility relation from earlier
-as our equality judgment for type conversion. The use of an untyped
-relation for type conversion is reminiscent of Barendregt's Pure Type
-Systems~\citet{barendregt1991introduction} and makes our formulation different
-from languages such as MLTT~\citep{Martin-Lof-1973}, where the judgmental equality
-takes the form $\Gamma \vdash a \equiv b : A$, from which one can
-usually derive  $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving
-subject reduction.
+as our equality judgment for type conversion. 
 
-\citet{siles2012pure} shows the equivalence of Barendregt's
-Pure Type System~\citep{barendregt1991introduction}, which employs
-untyped equality, and its variant that uses typed judgmental
-equality. This assures us that we do not lose much generality working
-with a system with untyped conversion.
-We include a detailed discussion in Section~\ref{sec:discuss} on how
-type-directed and untyped equality affect the applicability of our
-technique.
+The elimination form for booleans, \rref{T-If} demonstrates dependent pattern
+matching.  The result type of this expression $[[A {a}]]$, is composed of some
+\emph{motive} $[[A]]$, a type where its single free variable has been replaced
+with the condition of the if expression. When typing the true branch, this
+substitution replaces the variable by $[[true]]$, and similar for the false
+branch. As a result, the type system communicates the information gained from
+the run-time test to each of the branches of the expression.
 
+A similar sort of dependent pattern matching occurs when eliminating identity
+types. Such types are checked for well-formedness with \rref{T-Eq} and
+introduced by \rref{T-Refl}. In \rref{T-J}, the elimination form, the subterm
+$p$ is a proof of an equality between $[[a]]$ and $[[b]]$. The subterm $[[c]]$
+is the body of the elimination form. In this rule, $[[B]]$ is called a
+\emph{motive} and has two free variables.  The substitution for these
+variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
+witnessing the information gained through dependent pattern matching.  In the
+typing rule, the terms $[[a]]$ and $[[A]]$ need to be shifted in the context
+for a similar reason; an extra type $[[A]]$ appears after the $[[G]]$ and
+therefore the terms $[[a]]$ and $[[A]]$ in the identity type both need to be
+shifted to refer to the same binders.
 
 
 % As a result, there is no loss of generality from
@@ -2574,8 +2602,10 @@ an induction metric to define an executable algorithm\footnote{Coq's
     MLTT-a-la-Coq & 1 & Id, Nat & T & {\boxedsymbols ✓} \\
     % \hline
     Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} \\
-    % \hline
+    \hline
     CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
+    CoreSpec & \\
+    PCUIC & \\
     %   & \lang{} & \citet{anand2014towards} &
     %                                          \citet{barras2012semantical}
     % & \citet{martin-lof-a-la-coq}  \\
@@ -2590,17 +2620,20 @@ an induction metric to define an executable algorithm\footnote{Coq's
   \end{tabular}
 % \end{minipage}
 
-  \begin{tabular}{l}
+  \begin{tabular}{ll}
   \\
-    $\lambda^\theta$ (logical fragment only) \citet{casinghino:combining-proofs-programs} \\
-    NBE-in-Coq \citet{nbeincoq} \\
-    $\lambda^{\Pi U\mathbb{N}}$ \citet{decagda} \\
-    MLTT-a-la-Coq \citet{martin-lof-a-la-coq} \\
-    Core Nuprl \citet{anand2014towards} \\
-    CIC \citet{barras2012semantical} \\
+    $\lambda^\theta$  & \citet{casinghino:combining-proofs-programs} (logical fragment only) \\
+    NBE-in-Coq& \citet{nbeincoq} \\
+    $\lambda^{\Pi U\mathbb{N}}$ &\citet{decagda} \\
+    MLTT-a-la-Coq &\citet{martin-lof-a-la-coq} \\
+    Core Nuprl &\citet{anand2014towards} \\
+    CIC &\citet{barras2012semantical} \\
+    CoreSpec & \\
+    PCUIC & \\
+
   \\
-  Universes: Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
-  Conversion: Typed (T), Untyped (U), Extensional (E) \\
+  Universes: &Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
+  Conversion:& Typed (T), Untyped (U), Extensional (E) \\
   \end{tabular}
 
   \caption{Feature matrix for dependently typed languages with
