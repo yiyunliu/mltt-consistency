@@ -1119,7 +1119,8 @@ $[[S]]$.
 
 \begin{figure}[h]
 \begin{equation*}
-    [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I i]] := [[{A | exists S , InterpR i A S}]]
+    [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I j]]
+    := [[{A | exists S , InterpR j A S}]] \text{ for } [[j < i]]
 \end{equation*}
 \caption{Logical relation for all universe levels}
 \label{fig:logrelrec}
@@ -1127,7 +1128,7 @@ $[[S]]$.
 The definition of in Figure~\ref{fig:logrelrec} explains how the $[[j
 < i]]$ constraint in \rref{I-Set} makes our system predicative; the
 interpretation of the $[[i]]_{th}$ universe is only dependent on
-universes at strictly lower than $[[i]]$, which have been defined earlier.
+universes strictly lower than $[[i]]$, which have been defined earlier.
 Removing the ordering constraint would result in a
 system where one can encode Girard's
 paradox~\citep{girard-thesis}. Our proof would no longer work with the
@@ -1201,13 +1202,13 @@ says that an equality type $[[a ~ b : A]]$ corresonds to the
 set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ holds and
 otherwise corresponds to the empty set. Side conditions like $[[a <=>
 b]]$ are typically required for indexed types, of which equality types
-are an instance. \Rref{I-Par} enables us to reduce our types in order
+are an instance. \Rref{I-Red} enables us to reduce our types in order
 to assign meanings. Recall the type expression $[[(\ var 0)
-Bool]]$. \Rref{I-Par} says to know that
+Bool]]$. \Rref{I-Red} says to know that
 $[[Interp I i  (\ var 0) Bool S ]]$ for some $[[S]]$, it suffices to
 show that $[[Interp I i Bool S]]$ since $[[(\var 0) Bool =>
 Bool]]$. The derivation that $[[Interp I i (\ var 0) Bool { a | a =>+
-  true \/ a =>+ false }]]$ therefore follows by composing \rref{I-Par}
+  true \/ a =>+ false }]]$ therefore follows by composing \rref{I-Red}
 and \rref{I-Bool}.
 
 
@@ -2584,13 +2585,14 @@ an induction metric to define an executable algorithm\footnote{Coq's
 
   \caption{Feature matrix for dependently typed languages with
     mechanized proofs by logical relation}
-  \label{fig:linecount}
+  \label{fig:featurematrix}
 \end{figure}
 
-\scw{Maybe it would be useful to include a chart here, so that readers can
-  easily keep track of the features of the various languages.  i.e. which ones
-  include large eliminations? type-directed equivalence? impredicative prop?
-  inductive datatypes? what are their line counts?}
+% \scw{Maybe it would be useful to include a chart here, so that readers can
+%   easily keep track of the features of the various languages.  i.e. which ones
+%   include large eliminations? type-directed equivalence? impredicative prop?
+%   inductive datatypes? what are their line counts?}
+% \yl{resolved}
 
 \subsection{Logical relations}
 Proof by logical relations does not come with a precise definition. In
@@ -2613,10 +2615,11 @@ normalization for different dependently type systems using Tait's notion of
 reducibility.
 
 \scw{Should give Martin L\"of credit for first consistency proof.}
-\scw{What techniques do these three proofs use? How is it different from
-your proof? What about Luo, which
-introduced a universe hierarchy? What about categories with families, or
-other ways of showing consistency?}
+% \scw{What techniques do these three proofs use? How is it different from
+% your proof? What about Luo, which
+% introduced a universe hierarchy? What about categories with families, or
+% other ways of showing consistency?}
+% \yl{resolved}
 
 % Some of these proofs are still reapplied in more recent works. For
 % example, the technique for proving strong normalization by
@@ -2655,10 +2658,37 @@ than weak head reduction. Furthermore, \citet{Abel12} and
 \citet{abel2008betaeta} use the semantic universe hierachy as a
 measure to define Kripke-style logical relations, from which they
 derive the correctness of their conversion algorithms. In our work, we
-use the semantic universe hierarchy directly because it is sufficient
+use the semantic universe hierarchy directly in our definition of
+semantic typing because it is sufficient
 for deriving consistency and later normalization.
 
 \subsection{Mechanized logical relations about dependent types}
+In Figure~\ref{fig:featurematrix}, we give an overview of features of
+the object languages from mechanized logical relations about dependent
+types. The table is far from exhaustive. For example,
+\citet{casinghino:combining-proofs-programs} and
+\citet{anand2014towards} both have support for partial
+programs. However, we include features that we believe to be most
+impactful to the definition of the logical relation.
+
+\citet{casinghino:combining-proofs-programs} introduce $\lambda^\theta$, a dependently typed
+programming language that uses modality to distinguish between logical
+proofs and programs. The programmatic fragment
+includes recursive data types and supports general recursion at the
+cost of introducing divergence. Its logical fragment supports a
+proof-irrelevant identity type, which can be used to reason about the
+behavior of its programmatic fragment.
+However, the $\lambda^\theta$
+language is limited in its expressiveness since it does not support
+type-level computation or polymorphism and therefore is not a fully dependently
+typed language according to \citet{abel2013normalization}.
+The consistency proof of $\lambda^\theta$'s logical fragment has been
+mechanized in Coq through a step-indexed logical relation;
+step-indexing is required to model the programmatic fragment, which
+interacts with the logical fragment.
+The lack of polymorphism and type-level computation means their
+logical relation can be defined recursively for well-formed types using
+a size metric, which has been explored in~\citet{liu2023dependently}.
 
 \citet{decagda} mechanizes in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
@@ -2702,6 +2732,19 @@ $CC^\omega$, a system that incorporates a predicative universe on top
 of the impredicative sort in Calculus of Constructions. We choose to
 focus on a simple term model so we do not have to take the extra step
 of mechanizing mathematical objects such as sets and domains.
+
+There are other mechanized developments for dependently typed systems
+that only involve properties that are derivable through syntactic
+means. For example, \citet{coqcoqcorrect2019} proves the correctness
+of a type checker for the Polymorphic, Cumulative Calculus of
+Inductive Constructions (PCUIC), Coq's core calculus, assuming the
+strong normalization property of the object
+language. \citet{weirich:systemd} define System D, a core calculus of
+dependent Haskell, and prove the syntactic type soundness of the type
+system. Compared to properties such as consistency, normalization, and
+parametricity, syntactic type soundness is less intimidating for
+dependent types since one is most unlikely to run into issues related
+to the strength of the metatheory.
 
 \section{Discussion}
 \label{sec:discuss}
