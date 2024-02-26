@@ -627,9 +627,7 @@ Proof.
       with (subst_tm (a..)(subst_tm (tRefl..) C)); last by asimpl.
     replace (subst_tm (tRefl .: b..) C)
       with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl.
-    apply Coherent_cong; first by auto.
-    apply Coherent_cong; last by apply Coherent_reflexive.
-    apply Coherent_reflexive.
+    apply Coherent_cong. reflexivity. auto.
 Qed.
 
 
