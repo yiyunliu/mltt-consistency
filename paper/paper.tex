@@ -228,34 +228,45 @@ predicative universe hierarchy, large eliminations, an intensional identity
 type, a boolean base type, and dependent elimination forms.
 
 Our goal with this work is to demonstrate how the proof technique of
-\emph{logical relations} can be applied to reason about dependent type
-theories.
-Tutorial material on this topic~\citep{skorstengaard2019introduction,
-  harpertait, harperkripke, pierce2002types, pierce2004advanced,harper2016practical} is primarily focussed on
-systems with simple or polymorphic types. In that context, logical relations
+\emph{syntatic logical relations} can be applied to reason about dependent
+type theories.  Logical relations are a powerful proof technique for reasoning
+about lambda calculi and their operational semantics. They have been used to
+show diverse properties such as strong normalization, contextual equivalence,
+representation independence, noninterference, compiler correctness, and the
+decidability of conversion algorithms. \scw{add citations? emphasize that we are working 
+with syntactic logical relations.}
+
+Tutorial material on logical relations~\citep{skorstengaard2019introduction,
+  harpertait, harperkripke, pierce2002types,
+  pierce2004advanced,harper2016practical} is primarily focussed on systems
+with simple or polymorphic types. In that context, syntactic logical relations
 can be define as simple recursive functions over the structure of types, or
 (in the case of recursive types) defined over the evaluation steps of the
-computation.
-\scw{need one sentence to motivate why logical relations are important}
+computation. However, neither of these techniques can be used to define a
+logical relation in the context of a predicative dependent type theory, so a
+young researcher might be excused for thinking that proofs that use logical
+relations are not applicable for such languages.
 
-Neither of these techniques make sense for predicative dependent type theory,
-so a young researcher might be excused for thinking that proofs that use
-logical relations are not applicable.
-But this is not the case. Recent authors have developed tour-de-force
+But this is not the case. \scw{Add a sentence about pen-and-paper LR proofs for dependent type theories}
+Recent authors have developed tour-de-force
 mechanizations for the metatheory of modern proof
 assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
 have relied on logical relations defined as part of their
 developments. However, because these proofs show diverse results about real
 systems and algorithms, these developments range in size from 20,000 to
-400,000 lines of code, these definitions are easy to miss and difficult to
-isolate from their surrounding contexts. As a result, they are not accessible
+400,000 lines of code. As a result, their use of logical relations arguments
+difficult to isolate from their surrounding contexts, and thus, not accessible
 to casual readers.
 
-Our proof, designed to capture the essence of this proof technique in this
-setting, requires less than 1000 lines of code. We have achieved this
-significant reduction through a number of means: the careful selection of the
-features that we include in the object type type system and the results that
-we prove about it, in addition to the judicious use of automation.  Our
+Thus, our paper provides a gentle and accessible introduction to a powerful
+technique for dependent type theories. To promote the use of machine-assisted
+reasoning, our development is accompanied by a short mechanized proof script,
+of less than 1000 lines of code, developed using the Coq/Rocq proof
+assistant~\cite{coq}.
+
+We have streamlined our proof through a number of means: the careful selection
+of the features that we include in the object type type system and the results
+that we prove about it, in addition to the judicious use of automation.  Our
 language is small, but includes enough to be illustrative. For example, we
 eschew inductive datatypes or W-types, but we do include propositionality
 equality and booleans in order to capture the challenges presented by indexed
@@ -299,7 +310,7 @@ We label each lemma directly to their counterpart in the proof script,
 anticipating that readers may wish to reference and validate our formalism.
 Our typeset representation are purposefully made to directly follow our
 mechanical proofs, while avoiding, as much as possible, the introduction
-of artifacts that are specific to certain theorem prover.
+of artifacts that are specific to theorem provers.
 
 Not only does this connection aid readers that wish to, like us, adopt proof
 assistants for their day-to-day use. We also find that this precision is
@@ -331,47 +342,50 @@ to our typeset proof, such as avoiding the clunky syntax for well-founded
 recursion in Coq, we keep the overall structure of our typeset proofs
 consistent with our mechanization.
 
-In Section~\ref{sec:spec}, we introduce \lang{}, the object language
-of interest, and establish some elementary properties about parallel
-reduction, which will be used as the equational theory of our language
-and play a central role in defining our logical relation. The design
-of \lang{} is reminiscent of Martin-Löf style predicative type
-systems. The untyped conversion rule of \lang{} is inspired by Pure
-Type Systems~\citet{barendregt1991introduction}, though we discuss how
-our proof can be easily adjusted for systems with typed judgmental
-equality.  We design \lang{} to incorporate some of the most common
-features of dependent type theory, including an intensional identity
-type, a boolean type, large elimination, dependent elimination, and a
-full universe hierarchy. We believe a good coverage of features will
-make our proof applicable to a broad range of type systems.
+The key contributions of each section of our paper are as follows.
+\scw{I'm still not happy with this overview / contributions list. }
 
-In Section~\ref{sec:logreldep}, we formulate the consistency property
-and motivate why proof by logical relation is needed to derive it.
-We define our logical relation as an inductively defined relation. We first
-show that the logical relation respects evaluation (referred to as the
-irrelevance property in \citet{martin-lof-a-la-coq}), then proceed to
-prove that the logical relation is a partial function; that is, each
-type can have at most one unique interpretation.
+In Section~\ref{sec:spec}, we introduce \lang{}, the dependent type theory of
+interest, reminiscent of Martin-Löf style predicative type systems. A key
+design choice that impacts our proofs is the use of an untyped conversion
+rule, inspired by Pure Type Systems~\citet{barendregt1991introduction}, and
+specified through parallel reduction to normal form~\citet{barendregt}.
+Because we believe that a good coverage of features makes our proof applicable
+to a broad range of type systems, \lang{} incorporates some of the most common
+features of dependent type theory, including an intensional identity type, a
+boolean type, large elimination, dependent elimination, and a full universe
+hierarchy. While our use of untyped conversion is nonstandard for MLTT, we
+discuss how our proof can be adjusted for systems with a typed, judgmental
+equality.
 
-In Section~\ref{sec:logrelproof}, we give the definition of semantic
-typing in terms of our logical relation so we can state and prove the
-fundamental theorem, which states that syntactic typing implies
-semantic typing, from which consistency follows as a corollary.
+In Section~\ref{sec:logreldep}, we formulate the consistency property and
+motivate where a proof by logical relations is required. The most important
+contribution of this section is the definition of the logical relation as an
+inductively defined relation and demonstrate how to reason about this
+definition. We also show that the logical relation respects evaluation
+(referred to as the irrelevance property in \citet{martin-lof-a-la-coq}), and
+prove that the logical relation is a partial function; that is, each type can
+have at most one unique interpretation.
 
-In Section~\ref{sec:extension}, we extend our logical relation to
-prove the stronger property that every well-typed term has a
-$\beta\eta$-normal form. After laying the foundation for handling
-type-level computation in Section~\ref{sec:logreldep}, the extension
-to include open terms in the logical relation requries mechanical
-changes that directly mirrors the same extension for a simply typed
-language. We use this extension to demonstrate the idea that once we
-have established the base technique for proof by logical relation for
-dependent types, we can factor out the complexities of an extension
-the are not specifically related to dependent types; such an
-extension, if desired, may be studied in the context of a simply typed
-language and later ported into a dependently typed setting. We believe
-it is possible to extend our logical relation to a Kripke-style and
-relational model in a similar fashion.
+In Section~\ref{sec:logrelproof}, shows that our definitions can be the
+subject of well-established reasoning techniques for logical relations. In
+particular, we define a notion of semantic typing in terms of our logical
+relation and prove the fundamental theorem, which states that syntactic typing
+implies semantic typing. Consistency follows from this result as a corollary.
+
+In Section~\ref{sec:extension}, extends the definition of the logical relation
+to include terms with free variables, and proves that every well-typed term
+has a $\beta$-normal form. After laying the foundation for handling type-level
+computation in Section~\ref{sec:logreldep}, this extension requries mechanical
+changes that directly mirror an analogous extension for a simply typed
+language. We use this section to demonstrate the idea that once we have
+established the base techniques, we can port ideas that have been studied in
+the context of a simpler system to the dependently-typed setting.  We believe
+it is possible to extend our logical relation to a Kripke-style and relational
+model in a similar fashion.
+
+In Section~\ref{sec:eta} we show how to incorporate the function $\eta$-law
+into the conversion rule for \lang{}.
 
 In Section~\ref{sec:logrelmech}, we discuss the details about our
 mechanization, including our use of existing libraries such as
@@ -384,7 +398,7 @@ proving consistency and normalization.
 
 We hope our success at creating a short and mechanized proof for a
 relatively feature-complete language will encourage future researchers
-to leverage the tool of logical relation more often in mechanized
+to leverage the tool of logical relations in mechanized
 proofs for dependent types.
 % % For
 % % example, \citet{geuvers1994short} requires impredicativity to encode
@@ -591,8 +605,6 @@ proofs for dependent types.
 % existing literature related to logical consistency about dependent
 % type theory.
 
-\scw{The end of this section needs to include an explicit summar of the
-contributions of the paper. }
 
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
@@ -651,14 +663,11 @@ contributions of the paper. }
 
 In this section, we present the dynamics and statics of the
 dependent type theory whose logical consistency will be proven in
-Section~\ref{sec:logrelproof}. For concision, we refer to this system
+Section~\ref{sec:logrelproof}. For conciseness, we refer to this system
 as \lang.
 
 The syntax of \lang can be found in Figure~\ref{fig:syntax}.
-% \scw{Why so many metavariables for terms? Do you need $c$, $p$ and $t$?}
-% \yl{need at least 4 vars for J. removed the unnecessary t and C}
-We use
-the unscoped de Bruijn representation for both our Coq development and
+We use the unscoped de Bruijn representation for both our Coq development and
 the informal presentation in our paper since it is more amenable to
 automation (Section~\ref{sec:automation}) and leaves no ambiguity
 about variable freeness conditions.
