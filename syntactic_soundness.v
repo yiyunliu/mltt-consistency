@@ -1,3 +1,5 @@
+(* TODO: use autosubst notation for substitutions. *)
+
 (* For comparison, this file shows the syntactic metatheory of the language.
    The main lemmas are preservation and progress. Together, these lemmas 
    imply that well-typed terms either diverge or produce values.
@@ -91,54 +93,54 @@ Qed.
 
 Lemma T_Var' Γ i A :
   A = dep_ith Γ i ->
-  Wff Γ ->
+  (⊢ Γ) ->
   i < length Γ ->
   (* ------ *)
-  Wt Γ (var_tm i) A.
+  Γ ⊢ (var_tm i) ∈ A.
 Proof. qauto ctrs:Wt. Qed.
 
 Lemma T_If' Γ t a b c A i :
   t = (subst_tm (a..) A) ->
   Wt (tBool :: Γ) A (tUniv i) ->
-  Wt Γ a tBool ->
-  Wt Γ b (subst_tm (tTrue..) A) ->
-  Wt Γ c (subst_tm (tFalse..) A) ->
+  Γ ⊢ a ∈ tBool ->
+  Γ ⊢ b ∈ (subst_tm (tTrue..) A) ->
+  Γ ⊢ c ∈ (subst_tm (tFalse..) A) ->
   (* ------------ *)
-  Wt Γ (tIf a b c) t.
+  Γ ⊢ (tIf a b c) ∈ t.
 Proof. move =>> ->. eauto using T_If. Qed.
 
 Lemma T_App' Γ a A B0 B b :
   B0 = (subst_tm (b..) B) ->
-  Wt Γ a (tPi A B) ->
-  Wt Γ b A ->
+  Γ ⊢ a ∈ (tPi A B) ->
+  Γ ⊢ b ∈ A ->
   (* -------------------- *)
-  Wt Γ (tApp a b) B0.
+  Γ ⊢ (tApp a b) ∈ B0.
 Proof. qauto ctrs:Wt. Qed.
 
 Lemma T_J' (Γ : context) (t a b p A : tm) (i j : fin) (C C0 : tm) :
   C0 = (subst_tm (p .: b..) C) ->
-  Wt Γ a A ->
-  Wt Γ b A ->
-  Wt Γ A (tUniv j) ->
-  Wt Γ p (tEq a b A) ->
-  Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) ->
-  Wt Γ t (subst_tm (tRefl .: a..) C) ->
-  Wt Γ (tJ t a b p) C0.
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ b ∈ A ->
+  Γ ⊢ A ∈ (tUniv j) ->
+  Γ ⊢ p ∈ (tEq a b A) ->
+  (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) ->
+  Γ ⊢ t ∈ (subst_tm (tRefl .: a..) C) ->
+  Γ ⊢ (tJ t a b p) ∈ C0.
 Proof. hauto lq:on use:T_J. Qed.
 
 (* -------------------------------------------------- *)
 
 Lemma wff_nil :
-  Wff nil.
+  ⊢ nil.
 Proof.
   apply Wff_intro with (F := fun x => x) => /= //.
   lia.
 Qed.
 
 Lemma wff_cons Γ A i
-  (h0 : Wt Γ A (tUniv i))
-  (h1 : Wff Γ) :
-  Wff (A :: Γ).
+  (h0 : Γ ⊢ A ∈ (tUniv i))
+  (h1 : ⊢ Γ) :
+  ⊢ (A :: Γ).
 Proof.
   inversion h1 as [F h].
   apply Wff_intro with (F := i .: F).
@@ -150,15 +152,15 @@ Qed.
 
 (* If a term is well-typed, then the context must be well-formed. *)
 
-Lemma Wt_Wff Γ a A (h : Wt Γ a A) : Wff Γ.
+Lemma Wt_Wff Γ a A (h : Γ ⊢ a ∈ A) : ⊢ Γ.
 Proof. elim : Γ a A / h => //. Qed.
 
 #[export]Hint Resolve Wt_Wff : wff.
 
 
 Lemma Wt_Univ Γ a A i
-  (h : Wt Γ a A) :
-  exists j, Wt Γ (tUniv i) (tUniv j).
+  (h : Γ ⊢ a ∈ A) :
+  exists j, Γ ⊢ (tUniv i) ∈ (tUniv j).
 Proof.
   exists (S i).
   qauto l:on use:Wt_Wff ctrs:Wt.
@@ -167,11 +169,11 @@ Qed.
 (* -------------------------------------------------- *)
 (* Inversion lemmas for well-typed terms. *)
 
-Lemma Wt_Pi_inv Γ A B U (h : Wt Γ (tPi A B) U) :
-  exists i, Wt Γ A (tUniv i) /\
-         Wt (A :: Γ) B (tUniv i) /\
+Lemma Wt_Pi_inv Γ A B U (h : Γ ⊢ (tPi A B) ∈ U) :
+  exists i, Γ ⊢ A ∈ (tUniv i) /\
+         (A :: Γ) ⊢ B ∈(tUniv i) /\
          Coherent (tUniv i) U /\
-         exists i, Wt Γ U (tUniv i).
+         exists i, Γ ⊢ U ∈ (tUniv i).
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
@@ -180,18 +182,18 @@ Proof.
   - qauto l:on use:Coherent_transitive.
 Qed.
 
-Lemma Wt_Pi_Univ_inv Γ A B i (h : Wt Γ (tPi A B) (tUniv i)) :
-  Wt Γ A (tUniv i) /\
-  Wt (A :: Γ) B (tUniv i).
+Lemma Wt_Pi_Univ_inv Γ A B i (h : Γ ⊢ (tPi A B) ∈ (tUniv i)) :
+  Γ ⊢ A ∈ (tUniv i) /\
+  (A :: Γ) ⊢ B ∈ (tUniv i).
 Proof.
   qauto l:on use:Coherent_univ_inj, Wt_Pi_inv.
 Qed.
 
-Lemma Wt_Abs_inv Γ a T (h : Wt Γ (tAbs a) T) :
-  exists A B i, Wt Γ (tPi A B) (tUniv i) /\
-         Wt (A :: Γ) a B /\
+Lemma Wt_Abs_inv Γ a T (h : Γ ⊢ (tAbs a) ∈ T) :
+  exists A B i, Γ ⊢ (tPi A B) ∈ (tUniv i) /\
+         (A :: Γ) ⊢ a ∈ B /\
          Coherent (tPi A B) T /\
-         exists i, (Wt Γ T (tUniv i)).
+         exists i, (Γ ⊢ T ∈ (tUniv i)).
 Proof.
   move E : (tAbs a) h => a0 h.
   move : a E.
@@ -205,7 +207,7 @@ Lemma renaming_Syn_helper ξ a b C :
   subst_tm (ren_tm ξ a .: (ren_tm ξ b)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C) = ren_tm ξ (subst_tm (a .: b ..) C).
 Proof. by asimpl. Qed.
 
-Lemma renaming_Syn Γ a A (h : Wt Γ a A) : forall Δ ξ,
+Lemma renaming_Syn Γ a A (h : Γ ⊢ a ∈ A) : forall Δ ξ,
     good_renaming ξ Γ Δ ->
     Wff Δ ->
     Wt Δ (ren_tm ξ a) (ren_tm ξ A).
@@ -248,9 +250,9 @@ Proof.
 Qed.
 
 Lemma weakening_Syn Γ a A B i
-  (h0 : Wt Γ B (tUniv i))
-  (h1 : Wt Γ a A) :
-  Wt (B :: Γ) (ren_tm shift a) (ren_tm shift A).
+  (h0 : Γ ⊢ B ∈ (tUniv i))
+  (h1 : Γ ⊢ a ∈ A) :
+  (B :: Γ) ⊢ (ren_tm shift a) ∈ (ren_tm shift A).
 Proof.
   apply : renaming_Syn; eauto with wff.
   sfirstorder unfold:good_renaming.
@@ -258,9 +260,9 @@ Qed.
 
 Lemma weakening_Syn' Γ a A A0 B i
   (he : A0 = ren_tm shift A)
-  (h0 : Wt Γ B (tUniv i))
-  (h1 : Wt Γ a A) :
-  Wt (B :: Γ) (ren_tm shift a) A0.
+  (h0 : Γ ⊢ B ∈ (tUniv i))
+  (h1 : Γ ⊢ a ∈ A) :
+  (B :: Γ) ⊢ (ren_tm shift a) ∈ A0.
 Proof. sfirstorder use:weakening_Syn. Qed.
 
 Definition good_morphing ρ Γ Δ :=
@@ -279,7 +281,7 @@ Qed.
 
 Lemma good_morphing_up ρ k Γ Δ A
   (h : good_morphing ρ Γ Δ) :
-  Wt Δ (subst_tm ρ A) (tUniv k) ->
+  Δ ⊢ (subst_tm ρ A) ∈ (tUniv k) ->
   good_morphing (up_tm_tm ρ) (A :: Γ) (subst_tm ρ A :: Δ).
 Proof.
   rewrite /good_morphing => h1.
@@ -296,10 +298,10 @@ Proof.
     + sfirstorder.
 Qed.
 
-Lemma morphing_Syn Γ a A (h : Wt Γ a A) : forall Δ ρ,
+Lemma morphing_Syn Γ a A (h : Γ ⊢ a ∈ A) : forall Δ ρ,
     good_morphing ρ Γ Δ ->
-    Wff Δ ->
-    Wt Δ (subst_tm ρ a) (subst_tm ρ A).
+    ⊢ Δ ->
+    Δ ⊢ (subst_tm ρ a) ∈ (subst_tm ρ A).
 Proof.
   elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_morphing.
   - move => *.
@@ -343,9 +345,9 @@ Proof.
 Qed.
 
 Lemma subst_Syn Γ A a b B
-  (h0 : Wt (A :: Γ) b B)
-  (h1 : Wt Γ a A) :
-  Wt Γ (subst_tm (a..) b) (subst_tm (a..) B).
+  (h0 : (A :: Γ) ⊢ b ∈ B)
+  (h1 : Γ ⊢ a ∈ A) :
+  Γ ⊢ (subst_tm (a..) b) ∈ (subst_tm (a..) B).
 Proof.
   apply : morphing_Syn; eauto with wff.
   case => [_ | i /Arith_prebase.lt_S_n ?] /=.
@@ -354,8 +356,8 @@ Proof.
 Qed.
 
 Lemma Wt_regularity Γ a A
-  (h : Wt Γ a A) :
-  exists i, Wt Γ A (tUniv i).
+  (h : Γ ⊢ a ∈ A) :
+  exists i, Γ ⊢ A ∈ (tUniv i).
 Proof.
   elim: Γ a A/h; try qauto ctrs:Wt depth:2.
   - inversion 1.
@@ -377,11 +379,11 @@ Proof.
         eauto using T_Var with wff.
 Qed.
 
-Lemma Wt_App_inv Γ b a T (h : Wt Γ (tApp b a) T) :
-  exists A B, Wt Γ b (tPi A B) /\
-         Wt Γ a A /\
+Lemma Wt_App_inv Γ b a T (h : Γ ⊢ (tApp b a) ∈ T) :
+  exists A B, Γ ⊢ b ∈ (tPi A B) /\
+         Γ ⊢ a ∈ A /\
          Coherent (subst_tm (a..) B) T /\
-         exists i, Wt Γ T (tUniv i).
+         exists i, Γ ⊢ T ∈ (tUniv i).
 Proof.
   move E : (tApp b a) h => ba h.
   move : b a E.
@@ -397,13 +399,13 @@ Proof.
   - hauto lq:on rew:off use:Coherent_transitive.
 Qed.
 
-Lemma Wt_If_inv Γ a b c T (h : Wt Γ (tIf a b c) T) :
-  exists A, Wt Γ a tBool /\
-         Wt Γ b (subst_tm (tTrue..) A) /\
-         Wt Γ c (subst_tm (tFalse..) A) /\
+Lemma Wt_If_inv Γ a b c T (h : Γ ⊢ (tIf a b c) ∈ T) :
+  exists A, Γ ⊢ a ∈ tBool /\
+         Γ ⊢ b ∈ (subst_tm (tTrue..) A) /\
+         Γ ⊢ c ∈ (subst_tm (tFalse..) A) /\
          Coherent (subst_tm (a..) A) T /\
-         (exists j, Wt (tBool :: Γ) A (tUniv j)) /\
-         exists i, Wt Γ T (tUniv i).
+         (exists j, (tBool :: Γ) ⊢ A ∈ (tUniv j)) /\
+         exists i, Γ ⊢ T ∈ (tUniv i).
 Proof.
   move E : (tIf a b c) h => a0 h.
   move : a b c E.
@@ -418,12 +420,12 @@ Proof.
       eauto using subst_Syn.
 Qed.
 
-Lemma Wt_Eq_inv Γ a b A U (h : Wt Γ (tEq a b A) U) :
-  Wt Γ a A /\
-  Wt Γ b A /\
+Lemma Wt_Eq_inv Γ a b A U (h : Γ ⊢ (tEq a b A) ∈ U) :
+  Γ ⊢ a ∈ A /\
+  Γ ⊢ b ∈A /\
   (exists q,
-  Wt Γ A (tUniv q)) /\
-  (exists i, Coherent (tUniv i) U) /\ exists j, Wt Γ U (tUniv j).
+  Γ ⊢ A ∈ (tUniv q)) /\
+  (exists i, Coherent (tUniv i) U) /\ exists j, Γ ⊢ U ∈ (tUniv j).
 Proof.
   move E : (tEq a b A) h => T h.
   move : a b A E.
@@ -436,33 +438,33 @@ Qed.
 (* Simpler forms of typing rules *)
 
 Lemma T_Eq_simpl Γ a b A i :
-  Wt Γ a A ->
-  Wt Γ b A ->
-  Wt Γ (tEq a b A) (tUniv i).
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ b ∈ A ->
+  Γ ⊢ (tEq a b A) ∈ (tUniv i).
 Proof. hauto lq:on use:T_Eq, Wt_regularity. Qed.
 
 Lemma T_J_simpl Γ t a b p A C i
-  (h : Wt Γ p (tEq a b A)) :
-  Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) ->
-  Wt Γ t (subst_tm (tRefl .: a ..) C) ->
-  Wt Γ (tJ t a b p) (subst_tm (p .: b..) C).
+  (h : Γ ⊢ p ∈ (tEq a b A)) :
+  (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) ->
+  Γ ⊢ t ∈ (subst_tm (tRefl .: a ..) C) ->
+  Γ ⊢ (tJ t a b p) ∈ (subst_tm (p .: b..) C).
 Proof.
   case /Wt_regularity : (h) => j /Wt_Eq_inv ?.
-  have [? ?] : exists i, Wt Γ A (tUniv i)
+  have [? ?] : exists i, Γ ⊢ A ∈ (tUniv i)
       by sfirstorder use:Wt_regularity ctrs:Wt.
        hauto l:on use:T_J.
 Qed.
 
-Lemma Wt_J_inv Γ t a b p U (h : Wt Γ (tJ t a b p) U) :
+Lemma Wt_J_inv Γ t a b p U (h : Γ ⊢ (tJ t a b p) ∈ U) :
   exists A C i,
-    Wt Γ p (tEq a b A) /\
-    Wt Γ a A /\
-    Wt Γ b A /\
-    (exists j, Wt Γ A (tUniv j)) /\
-    Wt (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) C (tUniv i) /\
-    Wt Γ t (subst_tm (tRefl .: a ..) C) /\
+    Γ ⊢ p ∈ (tEq a b A) /\
+    Γ ⊢ a ∈ A /\
+    Γ ⊢ b ∈A /\
+    (exists j, Γ ⊢ A ∈ (tUniv j)) /\
+    (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) /\
+    Γ ⊢ t ∈ (subst_tm (tRefl .: a ..) C) /\
     Coherent (subst_tm (p .: b..) C) U /\
-    exists j, Wt Γ U (tUniv j).
+    exists j, Γ ⊢ U ∈ (tUniv j).
 Proof.
   move E : (tJ t a b p) h => T h.
   move : t a b p E.
@@ -472,16 +474,16 @@ Proof.
     exists A, C, i. repeat split => //.
     sfirstorder.
     sfirstorder use:Coherent_reflexive.
-    have ? : Wt Γ (tJ t a b p) (subst_tm (p .: b..) C) by hauto l:on use:T_J.
+    have ? : Γ ⊢ (tJ t a b p) ∈ (subst_tm (p .: b..) C) by hauto l:on use:T_J.
     sfirstorder ctrs:Wt use:Wt_regularity.
 Qed.
 
 Lemma preservation_helper A0 A1 i j Γ a A :
-  Wt (A0 :: Γ) a A ->
-  Wt Γ A0 (tUniv i) ->
-  Wt Γ A1 (tUniv j) ->
+  (A0 :: Γ) ⊢ a ∈ A ->
+  Γ ⊢ A0 ∈ (tUniv i) ->
+  Γ ⊢ A1 ∈ (tUniv j) ->
   Coherent A0 A1 ->
-  Wt (A1 :: Γ) a A.
+  (A1 :: Γ) ⊢ a ∈ A.
 Proof.
   move => h0 h1 h2 h3.
   replace a with (subst_tm ids a); last by asimpl.
@@ -503,11 +505,11 @@ Proof.
 Qed.
 
 Lemma T_Refl' Γ a0 a1 A
-  (hΓ : Wff Γ)
+  (hΓ : ⊢ Γ)
   (h : a0 ⇒ a1) :
-  Wt Γ a0 A ->
-  Wt Γ a1 A ->
-  Wt Γ tRefl (tEq a0 a1 A).
+  Γ ⊢ a0 ∈ A ->
+  Γ ⊢ a1 ∈ A ->
+  Γ ⊢ tRefl ∈ (tEq a0 a1 A).
 Proof.
   move => *.
   apply T_Conv with (A := tEq a0 a0 A) (i := 0).
@@ -517,10 +519,10 @@ Proof.
     sfirstorder use:P_Eq,Par_refl.
 Qed.
 
-Lemma Wt_Refl_inv Γ T (h : Wt Γ tRefl T) :
-  exists a A, Wt Γ tRefl (tEq a a A)  /\
-         Wt Γ a A /\
-         Coherent (tEq a a A) T /\ exists i, Wt Γ T (tUniv i).
+Lemma Wt_Refl_inv Γ T (h : Γ ⊢ tRefl ∈ T) :
+  exists a A, Γ ⊢ tRefl ∈ (tEq a a A)  /\
+         Γ ⊢ a ∈ A /\
+         Coherent (tEq a a A) T /\ exists i, Γ ⊢ T ∈ (tUniv i).
 Proof.
   move E : tRefl h => p h.
   move : E.
@@ -529,19 +531,19 @@ Proof.
   - hauto lq:on ctrs:Wt use:T_Eq_simpl, Coherent_reflexive.
 Qed.
 
-Lemma Wt_Refl_Coherent Γ a b A (h : Wt Γ tRefl (tEq a b A)) :
+Lemma Wt_Refl_Coherent Γ a b A (h : Γ ⊢ tRefl ∈ (tEq a b A)) :
   Coherent a b.
 Proof.
   qauto l:on use:Wt_Refl_inv, Coherent_eq_inj, Coherent_transitive, Coherent_symmetric.
 Qed.
 
 Lemma subject_reduction a b (h : a ⇒ b) : forall Γ A,
-    Wt Γ a A -> Wt Γ b A.
+    Γ ⊢ a ∈ A -> Γ ⊢ b ∈ A.
 Proof.
   elim : a b /h => //.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Pi_inv.
     intros (i & hA0 & hAB0 & hACoherent & j & hA).
-    have ? : Wff Γ by eauto with wff.
+    have ? : ⊢ Γ by eauto with wff.
     apply T_Conv with (A := tUniv i) (i := j) => //.
     qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
   - move => a0 a1 h0 ih0 Γ A /Wt_Abs_inv.
@@ -653,8 +655,8 @@ Definition is_value (a : tm) :=
 
 
 Lemma Wt_Univ_winv Γ i U :
-  Wt Γ (tUniv i) U ->
-  exists j, Coherent (tUniv j) U.
+  Γ ⊢ (tUniv i) ∈ U ->
+  exists j, Coherent (tUniv j)  U.
 Proof.
   move E : (tUniv i) => U0 h.
   move : i E.
@@ -662,7 +664,7 @@ Proof.
 Qed.
 
 Lemma Wt_Void_winv Γ U :
-  Wt Γ tVoid U ->
+  Γ ⊢ tVoid∈ U ->
   exists j, Coherent (tUniv j) U.
 Proof.
   move E : tVoid => U0 h.
@@ -670,12 +672,12 @@ Proof.
   induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive.
 Qed.
 
-Lemma Wt_True_False_winv Γ a A (h : Wt Γ a A) :
+Lemma Wt_True_False_winv Γ a A (h : Γ ⊢ a ∈ A) :
   is_bool_val a -> Coherent tBool A.
 Proof. induction h => //; qauto l:on ctrs:Wt use:Coherent_transitive, Coherent_reflexive. Qed.
 
 Lemma Wt_Bool_winv Γ A :
-  Wt Γ tBool A ->
+  Γ ⊢ tBool ∈ A ->
   exists i, Coherent (tUniv i) A.
 Proof.
   move E : tBool => a h. move : E.
@@ -685,7 +687,7 @@ Qed.
 (* Canonical forms lemmas *)
 
 Lemma wt_pi_canon a A B :
-  Wt nil a (tPi A B) ->
+  nil ⊢ a ∈ (tPi A B) ->
   is_value a ->
   exists a0, a = tAbs a0.
 Proof.
@@ -702,7 +704,7 @@ Proof.
 Qed.
 
 Lemma wt_switch_canon a :
-  Wt nil a tBool ->
+  nil ⊢ a ∈ tBool ->
   is_value a ->
   is_bool_val a.
 Proof.
@@ -717,7 +719,7 @@ Proof.
 Qed.
 
 Lemma wt_refl_canon p a b A :
-  Wt nil p (tEq a b A) ->
+  nil ⊢ p ∈ (tEq a b A) ->
   is_value p ->
   p = tRefl.
 Proof.
@@ -732,7 +734,7 @@ Proof.
   - qauto l:on use:Wt_Eq_inv, Coherent_consistent.
 Qed.
 
-Lemma wt_progress a A (h :Wt nil a A) : is_value a \/ exists a0, a ⇒ a0.
+Lemma wt_progress a A (h :nil ⊢ a ∈ A) : is_value a \/ exists a0, a ⇒ a0.
 Proof.
   move E : nil h => Γ h.
   move : E.
