@@ -2,11 +2,13 @@ From WR Require Import syntax join semtypingopen normalform typing common import
 
 Definition ρ_ok Γ ρ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm ρ (dep_ith Γ i)) PA -> PA (ρ i).
 Definition SemWt Γ a A := forall ρ, ρ_ok Γ ρ -> exists m PA, InterpUnivN m (subst_tm ρ A) PA /\ PA (subst_tm ρ a).
+Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
+
 Definition SemWff Γ := forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i)).
+Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 Lemma ρ_ok_cons i Γ ρ a PA A :
-  InterpUnivN i (subst_tm ρ A) PA ->
-  PA a ->
+ ⟦ A [ρ] ⟧ i ↘ PA -> PA a ->
   ρ_ok Γ ρ ->
   ρ_ok (A :: Γ) (a .: ρ).
 Proof.
@@ -36,10 +38,10 @@ Proof.
 Qed.
 
 Lemma renaming_SemWt Γ a A :
-  SemWt Γ a A ->
+  (Γ ⊨ a ∈ A) ->
   forall Δ ξ,
     good_renaming ξ Γ Δ ->
-    SemWt Δ (ren_tm ξ a) (ren_tm ξ A).
+    Δ ⊨ a⟨ξ⟩ ∈ A⟨ξ⟩ .
 Proof.
   rewrite /SemWt => h Δ ξ hξ ρ hρ.
   have hρ' : (ρ_ok Γ (ξ >> ρ)) by eauto using ρ_ok_renaming.
@@ -48,9 +50,11 @@ Proof.
   by asimpl.
 Qed.
 
+
+(* Well-formed types have interpretations *)
 Lemma SemWt_Univ Γ A i :
-  SemWt Γ A (tUniv i) <->
-  forall ρ, ρ_ok Γ ρ -> exists PA , InterpUnivN i (subst_tm ρ A) PA.
+  (Γ ⊨ A ∈ tUniv i) <->
+  forall ρ, ρ_ok Γ ρ -> exists S , ⟦ A[ρ] ⟧ i ↘ S.
 Proof.
   rewrite /SemWt.
   split.
@@ -63,9 +67,10 @@ Proof.
     + hauto lq:on.
 Qed.
 
+(* Fundamental theorem: Syntactic typing implies semantic typing *)
 Theorem soundness Γ :
-  (forall a A, Wt Γ a A -> SemWt Γ a A) /\
-  (Wff Γ -> SemWff Γ).
+  (forall a A, (Γ ⊢ a ∈ A) -> (Γ ⊨ a ∈ A)) /\
+  ((⊢ Γ) -> (⊨ Γ)).
 Proof.
   move : Γ.
   apply wt_mutual.
@@ -191,7 +196,7 @@ Proof.
   - hauto l:on.
 Qed.
 
-Lemma mltt_normalizing Γ a A : Wt Γ a A -> wn a /\ wn A.
+Lemma mltt_normalizing Γ a A : (Γ ⊢ a ∈ A) -> wn a /\ wn A.
 Proof.
   move => h.
   apply soundness in h.
