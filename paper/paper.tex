@@ -4,7 +4,7 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentstrue         %% toggle comments here
+\commentsfalse         %% toggle comments here
 \extendedfalse
 \anonymoustrue
 
@@ -240,7 +240,7 @@ Tutorial material on logical relations~\citep{skorstengaard2019introduction,
   harpertait, harperkripke, pierce2002types,
   pierce2004advanced,harper2016practical} is primarily focused on systems
 with simple or polymorphic types. In that context, syntactic logical relations
-can be define as simple recursive functions over the structure of types, or
+can be defined as simple recursive functions over the structure of types, or
 (in the case of recursive types) defined over the evaluation steps of the
 computation. However, neither of these techniques can be used to define a
 logical relation in the context of a predicative dependent type theory, so a
@@ -254,7 +254,7 @@ assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
 have relied on logical relations defined as part of their
 developments. However, because these proofs show diverse results about real
 systems and algorithms, these developments range in size from 20,000 to
-400,000 lines of code. As a result, their use of logical relations arguments
+400,000 lines of code. As a result, their use of logical relations are
 difficult to isolate from their surrounding contexts, and thus, not accessible
 to casual readers.
 
@@ -313,7 +313,7 @@ mechanical proofs, while avoiding, as much as possible, the introduction
 of artifacts that are specific to theorem provers.
 
 Not only does this connection aid readers that wish to, like us, adopt proof
-assistants for their day-to-day use. We also find that this precision is
+assistants for their day-to-day use, we also find that this precision is
 important for conveying the proof technique itself. Unlike properties that are
 derivable through syntactic means, proofs by logical relation make demands on
 the strength of the logic in which they are expressed. An informal proof that
@@ -332,7 +332,7 @@ in modern proof assistants.
 %dependent types, we find our approach advantageous for a few reasons.
 Furthermore, while a proof assistant may reject perfectly valid definitions,
 it helps us keep our definition precise and unambiguous. A precise definition
-is crucial as the reasoning principles we are allowed to use is directly tied
+is crucial as the reasoning principles we are allowed to use are directly tied
 to the definition, which is sometimes obscured by concise notations that
 diverge too far from a formal proof.
 
@@ -348,8 +348,10 @@ The key contributions of each section of our paper are as follows.
 In Section~\ref{sec:spec}, we introduce \lang{}, the dependent type theory of
 interest, reminiscent of Martin-Löf style predicative type systems. A key
 design choice that impacts our proofs is the use of an untyped conversion
-rule, inspired by Pure Type Systems~\citet{barendregt1991introduction}, and
-specified through parallel reduction to normal form~\citet{barendregt}.
+rule, inspired by Pure Type Systems~\citep{barendregt1991introduction}, and
+specified through parallel
+reduction~\citep{takahashi-parallel-reduction, barendregt:lambda-calculi-with-types} % to normal form~\citet{barendregt}
+.
 Because we believe that a good coverage of features makes our proof applicable
 to a broad range of type systems, \lang{} incorporates some of the most common
 features of dependent type theory, including an intensional identity type, a
@@ -361,22 +363,22 @@ equality.
 In Section~\ref{sec:logreldep}, we formulate the consistency property and
 motivate where a proof by logical relations is required. The most important
 contribution of this section is the definition of the logical relation as an
-inductively defined relation and demonstrate how to reason about this
+inductively defined relation and demonstration of how to reason about this
 definition. We also show that the logical relation respects evaluation
 (referred to as the irrelevance property in \citet{martin-lof-a-la-coq}), and
 prove that the logical relation is a partial function; that is, each type can
 have at most one unique interpretation.
 
-In Section~\ref{sec:logrelproof}, shows that our definitions can be the
+In Section~\ref{sec:logrelproof}, we show that our definitions can be the
 subject of well-established reasoning techniques for logical relations. In
 particular, we define a notion of semantic typing in terms of our logical
 relation and prove the fundamental theorem, which states that syntactic typing
 implies semantic typing. Consistency follows from this result as a corollary.
 
-In Section~\ref{sec:extension}, extends the definition of the logical relation
-to include terms with free variables, and proves that every well-typed term
+In Section~\ref{sec:extension}, we extend the definition of the logical relation
+to include terms with free variables, and prove that every well-typed term
 has a $\beta$-normal form. After laying the foundation for handling type-level
-computation in Section~\ref{sec:logreldep}, this extension requires mechanical
+computation in Section~\ref{sec:logreldep}, we show how this extension requires mechanical
 changes that directly mirror an analogous extension for a simply typed
 language. We use this section to demonstrate the idea that once we have
 established the base techniques, we can port ideas that have been studied in
@@ -384,7 +386,7 @@ the context of a simpler system to the dependently-typed setting.  We believe
 it is possible to extend our logical relation to a Kripke-style and relational
 model in a similar fashion.
 
-In Section~\ref{sec:betaeta} we show how to incorporate the function $\eta$-law
+In Section~\ref{sec:betaeta}, we show how to incorporate the function $\eta$-law
 into the conversion rule for \lang{}.
 
 In Section~\ref{sec:logrelmech}, we discuss the details about our
@@ -2932,7 +2934,7 @@ technique genuinely more efficient?
 % predicate.
 
 First, the metatheoretic properties that we prove are indeed
-simpler. Compared to Core Nuprl\citet{anand2014towards}, our system
+simpler. Compared to Core Nuprl~\citep{anand2014towards}, our system
 lacks extensionality, which would require a relational model to
 justify consistency. Compared to the systems from
 \citet{decagda,nbeincoq, martin-lof-a-la-coq}, the conversion rule for
