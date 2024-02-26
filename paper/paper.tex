@@ -233,7 +233,7 @@ type theories.  Logical relations are a powerful proof technique for reasoning
 about lambda calculi and their operational semantics. They have been used to
 show diverse properties such as strong normalization, contextual equivalence,
 representation independence, noninterference, compiler correctness, and the
-decidability of conversion algorithms. \scw{add citations? emphasize that we are working 
+decidability of conversion algorithms. \scw{add citations? emphasize that we are working
 with syntactic logical relations.}
 
 Tutorial material on logical relations~\citep{skorstengaard2019introduction,
@@ -2308,13 +2308,51 @@ $\beta\eta$ normal form trivially follows.
 \label{corollary:exbetaeta}
 If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
 \end{corollary}
-Due to some technical
-details, our proof about the existence of $\beta\eta$ form does not
+
+In \citet{nbeincoq,decagda,martin-lof-a-la-coq}, a relational model is
+needed to justify the $\eta$-law for functions. Instead, we prove
+confluence for our parallel reduction extended with $\eta$-law for functions
+and continue using a logical predicate (i.e. a 1-ary logical relation) to justify
+$\eta$-law as part of our equational theory.
+A well-known issue with our approach is the failure of syntactic
+confluence when the lambda term contains type annotations. A simple
+counterexample is $[[\- B ((\- A a) {up 1} var 0)]]$; depending on
+whether \rref{P-AbsEta} is performed on the whole term or
+\rref{P-AppAbs} is used on the inner $\beta$ redex, we end up with the
+terms $[[\- B a]]$ or $[[\- A a]]$, where $[[A]]$ and $[[B]]$ are not
+necessarily syntactically equal terms. \citet{choudhury:ddc} resolve
+this problem by stating their confluence result in terms of an
+equivalence relation that quotients out parts of the terms that are
+computationally irrelevant; the annotations of lambda terms are
+ignored since the behavior of a lambda term is not affected by its
+type annotation. We believe the same approach is applicable to our
+proof if we add type annotations to our lambda terms.
+
+The bigger issue is extensions such as $\eta$-laws for unit and
+products. Surjective pairing, for example, is an equational law that
+is known to cause trouble since it is not confluent for untyped lambda
+terms~\citet{KLOP198997}. The relational, type-annotated, and Kripke-style models from
+\citet{nbeincoq,decagda,martin-lof-a-la-coq} can be more easily
+extended to support these rules.
+We note, however, that the issue with $\eta$ rules is not exclusive to dependently
+typed languages and has been studied in more limited languages that
+are either simply
+typed~\citep{pierce2004advanced,pfenning1997computation} or
+dependently typed but without large
+elimination~\citep{harper2005equivalence,
+abel2005untypedconvsurjective}. Common workarounds include
+type-directed conversion and shifting the focus to obtaining
+$\eta$-long forms~\citet{Abel12}.
+We believe our simple proof will help readers
+see how techniques from these simpler settings generalize to fully
+dependently typed languages and better understand the more complex
+mechanized developments.
+
+Finally, due to some technical
+details, our mechanized proof about the existence of $\beta\eta$ form does not
 immediately induce a decision procedure for type conversion in
 \lang{}. We discuss this issue and its workaround in
 Section~\ref{sec:conversionalgo}.
-
-
 \section{Mechanization}
 \label{sec:logrelmech}
 \begin{figure}[h]
@@ -2762,14 +2800,21 @@ extensional type theory with features such as dependent functions,
 inductive types, and a full universe hierarchy. \citet{nbeincoq}
 mechanizes the normalization-by-evaluation algorithm in Coq for a
 dependently typed language with one predicative universe, similar to
-\citet{decagda} and \citet{martin-lof-a-la-coq}. Both
-\citet{anand2014towards} and \citet{nbeincoq} leverage the
+\citet{decagda} and \citet{martin-lof-a-la-coq}. However, since their
+type system has no elimination form for natural numbers, the
+only base type from the object language, large elimination is not
+supported despite the one predicative universe.
+Both \citet{anand2014towards} and \citet{nbeincoq} leverage the
 impredicative \texttt{Prop} sort of Coq to define the interpretation
 of dependent function types and thus are closely related to our
-mechanization. However, instead of explaining the inductive
-logical relation as a convoluted workaround to the lack of
-induction-recursion in Coq, we give a self-contained explanation of
-our logical relation.
+mechanization. \citet{anand2014towards} further shows it is possible
+to encode a finite universe hierarchy without the use of
+either impredicativity or induction-recursion.
+% \yl{commented out because I think this paragraph is too subjective}
+% However, instead of explaining the inductive
+% logical relation as a convoluted workaround to the lack of
+% induction-recursion in Coq, we give a self-contained explanation of
+% our logical relation.
 
 \subsection{Other mechanized metatheory of dependent types}
 
@@ -2970,9 +3015,8 @@ equational theory, thus allowing subject reduction to be proven
 independently from confluence. By adopting these techniques that allow
 us to derive confluence early even for systems with type-directed
 reduction, we believe our proof technique can significantly shorten
-the existing logical relation proofs for systems with typed judgmental
-equality and more complex $\eta$ laws. We leave that as part of our
-future work.
+the existing logical relation proofs for systems with typed
+judgmental. We leave that as part of our future work.
 % Therefore, we believe that even in a
 % system where type-directed reduction is required (e.g. a system with
 % the unit $\eta$-law) in the logical relation, the proof can still be carried

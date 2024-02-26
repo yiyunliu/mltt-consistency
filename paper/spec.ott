@@ -68,6 +68,9 @@ tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
   | \ a :: :: Abs
     {{ tex \lambda [[a]] }}
     {{ com function }}
+  | \- A a :: :: AnnAbs
+    {{ tex \lambda [[A]] . [[a]] }}
+    {{ com annotated functions }}
   | a b :: :: App
     {{ tex [[a]] \; [[b]] }}
     {{ com function application }}
