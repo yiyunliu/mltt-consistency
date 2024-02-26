@@ -4,7 +4,7 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentsfalse         %% toggle comments here
+\commentstrue         %% toggle comments here
 \extendedfalse
 \anonymoustrue
 
@@ -1109,6 +1109,7 @@ define the logical relation as an inductively defined relation,
 reminiscent of how we specify the reduction graph of a partial
 function; the functionality of the relation can later be recovered in Lemma~\ref{lemma:logreldeter}.
 
+\subsection{Definition of the Logical Relation}
 \label{sec:logreldep}
 \begin{figure}[h]
 \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Void, Bool, Eq, Pi, Set, Red}
@@ -1320,7 +1321,8 @@ the immediate admissibility of \rref{I-PiAlt} and the alternative $\Pi$ inversio
 principle (Lemma~\ref{lemma:piinvalt}), which we derive after proving functionality.
 
 
-In the rest of the section, we prove four important facts about
+\subsection{Properties about the Logical Relation}
+In this section, we prove four important facts about
 our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
 functionality (Lemma~\ref{lemma:logreldeter}), cumulativity
 (Lemma~\ref{lemma:logrelcumulativity}), and the backward closure
@@ -2906,29 +2908,43 @@ technique genuinely more efficient?
 % nbeincoq, martin-lof-a-la-coq}?
 
 
-First, the metatheoretic properties that we prove are indeed simpler.  Unlike
-developments that mechanize the correctness of a type-directed conversion
-algorithm, we only show the existence of normal forms for open and closed
-terms and state our properties in terms of an untyped reduction relation. This
-avoids a lot of the scaffolding related to the specification of the algorithm
-and the proof obligations that the algorithm is sound and complete with
-respect to the declarative specification of the type system.
-As a result, our logical relation, unlike the ones from \citet{decagda,
-  nbeincoq, martin-lof-a-la-coq, anand2014towards}, maps from types to
-predicates rather than relations. \scw{How does this follow? Why do we need unary relations where they need binary relations?} The need for a relational model is
-directly related to the metatheoretic property one wants to
-prove. \citet{anand2014towards} requires a relational model to capture
-the extensionality of their type system, whereas \citet{decagda,
-  martin-lof-a-la-coq, nbeincoq} uses a relational model to derive the
-injectivity of $\Pi$ types and justify the validity of
-$\eta$-conversion among other properties.
-Since \lang{} uses an untyped conversion rule, type conversion can be
-done through the \emph{normalize-and-compare}
-strategy described in \citet{pierce2004advanced}. The decidability of
-normalize-and-compare is implied by the existence of
-$\beta\eta$-normal form, which follows from our logical
-predicate.
+% First, the metatheoretic properties that we prove are indeed simpler.  Unlike
+% developments that mechanize the correctness of a type-directed conversion
+% algorithm, we only show the existence of normal forms for open and closed
+% terms and state our properties in terms of an untyped reduction relation. This
+% avoids a lot of the scaffolding related to the specification of the algorithm
+% and the proof obligations that the algorithm is sound and complete with
+% respect to the declarative specification of the type system.
+% As a result, our logical relation, unlike the ones from \citet{decagda,
+%   nbeincoq, martin-lof-a-la-coq, anand2014towards}, maps from types to
+% predicates rather than relations. \scw{How does this follow? Why do we need unary relations where they need binary relations?} The need for a relational model is
+% directly related to the metatheoretic property one wants to
+% prove. \citet{anand2014towards} requires a relational model to capture
+% the extensionality of their type system, whereas \citet{decagda,
+%   martin-lof-a-la-coq, nbeincoq} uses a relational model to derive the
+% injectivity of $\Pi$ types and justify the validity of
+% $\eta$-conversion among other properties.
+% Since \lang{} uses an untyped conversion rule, type conversion can be
+% done through the \emph{normalize-and-compare}
+% strategy described in \citet{pierce2004advanced}. The decidability of
+% normalize-and-compare is implied by the existence of
+% $\beta\eta$-normal form, which follows from our logical
+% predicate.
 
+First, the metatheoretic properties that we prove are indeed
+simpler. Compared to Core Nuprl\citet{anand2014towards}, our system
+lacks extensionality, which would require a relational model to
+justify consistency. Compared to the systems from
+\citet{decagda,nbeincoq, martin-lof-a-la-coq}, the conversion rule for
+\lang{} is untyped and therefore we do not
+need a Kripke-style relational model to prove $\Pi$-injectivity
+among other properties. Furthermore, we prove the existence of normal
+forms, which induces a simple \emph{normalize-and-compare}
+procedure for type
+conversion~\citet{pierce2004advanced}. \citet{nbeincoq, decagda}, on
+the other hand, need
+to show how their algorithmic conversion procedure is sound and complete
+with respect to their respective declarative equational theory.
 \scw{I'm getting confused by this paragraph. Does this reorganization sense:
   Our language is simpler than Nuprl, because it doesn't have extensional
   equality. It is simpler than Agda, because it doesn't have type-directed
@@ -2942,10 +2958,11 @@ predicate.
   it is sound and complete with respect to the type-directed
   equality. Instead, to show the decidability of our untyped equivalence, we
   need only show that terms have $\beta\eta$ normal forms. }
-\yl{Makes perfect sense!}
+\yl{Makes sense. Though Abel's work doesn't use nbe but a recursive
+  binary algorithm. Rewrote the paragraph above and commented out the original}
 
 
-On the other hand, our definition of our logical relation does
+Second, the definition of our logical relation does
 contribute to a more concise proof.
 In \rref{I-Red, I-Bool}, we choose parallel reduction, a full
 reduction relation, to close over our semantic interpretation of types
@@ -2957,7 +2974,7 @@ non-deterministic reduction relation when we want to prove that our
 logical relation is a partial function; because of \rref{I-Red}, we
 can have $[[A => B0]]$ and $[[A => B1]]$, where $[[B0]]$ and $[[B1]]$
 each have their separate interpretations that we have to prove to be
-equal. Fortunately, this complexity is easily reconciled by the
+equal. Fortunately, this complexity is reconciled by the
 diamond property, which is easy to derive syntactically.
 \citet{decagda,nbeincoq} employ a deterministic weak
 head reduction relation. The use of a deterministic reduction relation
@@ -2965,12 +2982,13 @@ makes the functionality of a logical relation trivial to prove, but
 the downside is that weak head reduction (denoted by $\leadsto^{wh}$)
 or leftmost-outermost reduction (denoted by $\leadsto^{lo}$) does
 not satisfy even the weaker substitution property
-(Lemma~\ref{lemma:parsubst}). That is, given a term $[[A]]$
-and $a \leadsto^{lo} b$, we do not necessarily have $[[A {a}]]
-\leadsto^{lo} [[A {b}]]$ since the variable might appear to the
-right of some redex. Eventually, one has to prove how the
+(Lemma~\ref{lemma:parsubst}). % That is, given a term $[[A]]$
+% and $a \leadsto^{lo} b$, we do not necessarily have $[[A {a}]]
+% \leadsto^{lo} [[A {b}]]$ since the variable might appear to the
+% right of some redex.
+With this alternative formulation, we would have to prove how the
 deterministic reduction relates to a full non-deterministic reduction
-relation to prove the fundamental theorem. In our setup, this would amount
+relation to prove the fundamental theorem. This would amount
 to proving the factorization theorem of the deterministic reduction
 relation with respect to full non-deterministic reduction. Instead,
 using parallel reduction in \rref{I-Red} allows us to delay the
@@ -3024,9 +3042,9 @@ judgmental. We leave that as part of our future work.
 % system where type-directed reduction is required (e.g. a system with
 % the unit $\eta$-law) in the logical relation, the proof can still be carried
 % out in a structure similar to the one we have presented.
-\scw{Not sure that I understand this paragraph}
-\yl{Reworded slightly to emphasize it's future work that we haven't
-  done and it is speculative}
+% \scw{Not sure that I understand this paragraph}
+% \yl{Reworded slightly to emphasize it's future work that we haven't
+%   done and it is speculative}
 
 \ifextended
 Finally, despite our earlier claim that our metatheoretic properties
