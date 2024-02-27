@@ -711,9 +711,9 @@ proofs for dependent types.
 % \mathit{Natural\ numbers}\\
 % [[i]],[[j]],[[n]] & \in &  [[SNat]] &  \\ \\
 \mathit{Terms}\\
-[[a]],[[b]],[[c]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[var n]]\  |\ [[Void]]
+[[a]],[[b]],[[c]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[x]]\  |\ [[Void]]
                   & \mbox{universes, variables, empty type} \\
-            & |   & [[Pi A B]]\ |\ [[\ a]]\ |\ [[a b]]
+            & |   & [[Pi x : A . B]]\ |\ [[\ x . a]]\ |\ [[a b]]
                   & \mbox{function types, abstractions, applications} \\
             & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J c a b p]]
                   & \mbox{equality types, reflexivity proof, J eliminator} \\
@@ -724,9 +724,9 @@ proofs for dependent types.
 % \mathit{Renaming}\\
 % [[xi]] & \in & [[SNat -> SNat]] & \\ \\
 \mathit{Substitutions}\\
-[[rho]] & \in & [[SNat -> STm]] & \\ \\
+[[rho]] & \in & [[SVar -> STm]] & \\ \\
 \mathit{Typing Contexts}\\
- [[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
+ [[G]]       & ::= & [[empty]]\ |\ [[G ++ x : A]] &  \\ \\
 \end{array}
 \]
   \caption{Syntax of \lang}
@@ -740,15 +740,18 @@ we refer to this system as \lang.
 
 The syntax of \lang can be found in Figure~\ref{fig:syntax}.  As a dependent
 type theory, terms and types are collapsed into the same syntactic
-category. The type $[[Set i]]$ represent universe types and $[[var n]]$
-represent de Bruijn variables~\cite{debruijn}.  While $[[i]],[[j]],$ and
-$[[n]]$ are all metavariables representing natural numbers, we always use
-$[[i]],[[j]]$ to represent universe levels and $[[n]]$ to represent term
-variables.  We use de Bruijn indices for both our Coq development and the
-informal presentation here because it is more amenable to automation
-(Section~\ref{sec:automation}) and leaves no ambiguity about variable freeness
-conditions. As a result, variables do not appear in binding forms, such as in
-abstractions $[[ \ a ]]$ and dependent function types $[[Pi A B]]$.  This latter
+category. The type $[[Set i]]$ represent universe types.%  and $[[x]]$
+% represent de Bruijn variables~\cite{debruijn}.  While $[[i]],[[j]],$ and
+% $[[n]]$ are all metavariables representing natural numbers, we always use
+% $[[i]],[[j]]$ to represent universe levels and $[[n]]$ to represent term
+% variables.
+% We use de Bruijn indices for our Coq development, but use nominal
+% representation in the paper because it is more amenable to automation
+% (Section~\ref{sec:automation}) and leaves no ambiguity about variable freeness
+% conditions.
+\yl{need to fix the text}
+As a result, variables do not appear in binding forms, such as in
+abstractions $[[ \ x . a ]]$ and dependent function types $[[Pi x : A . B]]$.  This latter
 form binds a new variable of type $[[A]]$ that can appear in the codomain of
 the type $[[B]]$.  We use the notation $[[A -> B]]$ when the output type
 $[[B]]$ is not dependent on the input variable.
@@ -780,33 +783,23 @@ J?}
   \begin{equation*}
     \begin{split}
       \begin{array}{lll}
-        % \mathit{IdentityRen} \\
-        % [[id i]] & := & [[i]] \\ \\
         \multicolumn{3}{l}{\mbox{\emph{Identity substitution: }} [[idtm]]} \\
-        [[idtm n]] & := & [[var n]] \\ \\
-        \multicolumn{3}{l}{\mbox{\emph{Weakening substitution: }} \uparrow^{n}} \\
-        [[up n m]] & := & \ottkw{v}_{[[n]] + [[m]]} \\ \\
-        %
-        % \mathit{ConsRen ([[xi .: n]])} \\
-        % ([[xi .: n]])([[0]]) & := & [[n]] \\
-        % ([[xi .: n]])([[Suc i]]) & := & [[xi i]] \\ \\
-        %
-        \multicolumn{3}{l}{\mbox{\emph{Extension operation: }} ([[rho .: a]]) } \\
-        ([[rho .: a]])([[0]]) & := & [[a]] \\
-        ([[rho .: a]])([[Suc n]]) & := & [[rho n]] \\ \\
+        [[idtm x]] & := & [[x]] \\ \\
+        \multicolumn{3}{l}{\mbox{\emph{Extension operation: }} ([[rho
+        .: x -> a]]) } \\
+        ([[rho .: x -> a]])([[x]]) & := & [[a]] \\
+        ([[rho .: x -> a]])([[y]]) & := & [[rho y]] \text { if  } y
+                                          \neq x\\ \\
       \end{array}
     \end{split}
     \qquad \qquad
     \begin{split}
       \begin{array}{lll}
-        \multicolumn{3}{l}{\mbox{\emph{Lifting operation: }} \Uparrow\rho} \\
-        [[( up rho ) 0]] & := & [[var 0]] \\
-        [[( up rho ) Suc n]] & := & [[ rho n < up 1 > ]] \\ \\
         \multicolumn{3}{l}{\mbox{\emph{Substitution operation: }} ([[ a { rho } ]])} \\
-        [[var n { rho }  ]] & := &  [[rho n]] \\
-        [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
+        [[x { rho }  ]] & := &  [[rho x]] \\
+        [[(Pi x : A . B) { rho }]] & := & [[Pi x : A { rho } . B { rho .: x -> x }]] \\
         [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
-        [[(\ a) { rho }]] & := & [[\ (a { up rho })]] \\
+        [[(\ x . a) { rho }]] & := & [[\ x . (a { rho .: x -> x })]] \\
         \ldots
       \end{array}
     \end{split}
@@ -830,39 +823,38 @@ J?}
 
 The \lang language is expressive enough to support large
 eliminations, the ability to compute a type using a term as input. For
-example, the function $[[\ if var 0 Bool Bool -> Bool]]$ returns
-either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
-is $[[true]]$ or $[[false]]$.
+example, the function $[[\ x . if x Bool Void]]$ returns
+either $[[Bool]]$ or $[[Void]]$ depending on whether its
+input is $[[true]]$ or $[[false]]$.
 
+\yl{Need to fix the de bruijn text}
 We adapt from \citet{autosubst2} notation for simultaneous renaming,
 substitution, and other auxiliary definitions used in our paper, summarized in
 Figure~\ref{fig:auxdef}. We need these definitions to specify the reduction
 and typing relations for \lang{}. The metavariable $[[rho]]$ represents
 substitutions, which are mappings from de Bruijn indices to terms.  One
 example of a substitution is the function $\ottkw{id}_{tm}$, the identity
-substitution that maps each index to the corresponding term variable.  The
-$\uparrow^{[[n]]}$ substitution is more general and adds $[[n]]$ to the index
-before injecting it as a term. The extension operation, $[[(rho .: a)]]$,
-allows us to extend a substitution $[[rho]]$ with an extra element $[[a]]$;
-the result maps the variable $[[var 0]]$ to $[[a]]$ and variables
-$[[var Suc i]]$ to $[[rho i]]$.
+substitution that maps each index to the corresponding term variable.  % The
+% $...$ substitution is more general and adds $[[n]]$ to the index
+% before injecting it as a term.
+The extension operation, $[[(rho .: x -> a)]]$,
+allows us to update the substitution $[[rho]]$ to map the variable
+$[[x]]$ to $[[a]]$ rather than $[[rho x]]$.
 
 The substitution operator, which takes the form $[[a {rho}]]$,
-traverses the syntax of $[[a]]$ and replaces each variable $[[var i]]$
-with the term $[[rho i]]$. When traversing under binders (e.g. in the
-$[[(\ a) { rho }]]$ case), the $\Uparrow$ operator prevents $[[var
-0]]$, the bound variable, from being replaced by
-$[[rho]]$. From the definition of $[[up rho]]$, we see that it keeps
-$[[var 0]]$ unchanged during substitution and replaces each $[[var
-Suc i]]$ with $[[rho i {up 1}]]$. The shifting with $[[up 1]]$
-is required so the variables in terms from the codomain of $[[rho]]$ skip over
-the newly introduced binder to refer to the correct binding
-location.
+traverses the syntax of $[[a]]$ and replaces each variable $[[x]]$
+with the term $[[rho x]]$. When traversing under binders (e.g. in the
+$[[(\ x . a) { rho }]]$ case), we extend $[[rho]]$ to map the bound
+variable $[[x]]$ to itself, protecting it from being replaced.
 
 The substitution operator is referred to as simultaneous substitution as it
 substitutes for all variables at once. It is possible to recover single
 substitution by composing the extension operator and the identity
-substitution: $[[a { b }]] := [[a { idtm .: b }]]$. In our proofs, we find it
+substitution: $[[a { b / x }]] := [[a { idtm .: x -> b }]]$.
+
+\yl{Explain why iterated substitution is not good enough}
+
+In our proofs, we find it
 more convenient to formulate simultaneous substitution directly rather than
 recovering it from single substitution.  In particular, this shows up in the
 definition of semantic typing in Section~\ref{sec:logrelproof}, which relies
@@ -913,11 +905,12 @@ same technique can be found in \citet{plfa22.08}.
 \end{lemma}
 \begin{lemma}[Par cong\footnote{\dotv{join.v}{par\_cong}}]
   \label{lemma:parcong}
-  If $[[a0 => a1]]$ and $[[b0 => b1]]$, then $[[a0 { b0 } => a1 { b1 }]]$.
+  If $[[a0 => a1]]$ and $[[b0 => b1]]$, then $[[a0 { b0 / x } => a1 {
+    b1 / x }]]$.
 \end{lemma}
 \begin{corollary}[Par subst\footnote{\dotv{join.v}{par\_subst}}]
   \label{lemma:parsubst}
-  If $[[a0 => a1]]$, then $[[a0 {b} => a1 {b}]]$ for arbitrary $[[b]]$.
+  If $[[a0 => a1]]$, then $[[a0 {b / x } => a1 {b / x}]]$ for arbitrary $[[b]]$.
 \end{corollary}
 \begin{lemma}[Par diamond\footnote{\dotv{join.v}{par\_confluent}}]
   \label{lemma:pardiamond}
@@ -992,27 +985,28 @@ wrapped in \colorbox{lightgray}{gray} boxes can be shown to be admissible
 syntactically, though some of them are required to strengthen the inductive
 hypothesis of the fundamental theorem.
 
-In \rref{T-Var}, $[[G n]]$ is the partial function defined by the equations
-$[[ (G ++ A) 0 ]] := [[A]]$ and $[[ (G ++ A) Suc n ]] := [[G n]]$.  The
-precondition $[[n < | G | ]]$, where $[[ | G | ]]$ represents the length of
-the context $[[G]]$, ensures that $[[G n]]$ has a defined output. The type
-$[[G n]]$ needs to be shifted by $[[Suc n]]$ since the types stored in the
-context $[[G]]$ are scoped differently. In the typing judgment
-$[[G |- a : A]]$, we want both $[[a]]$ and $[[A]]$ to have the same
-scope. However, the closer a type is to the head of $[[G]]$, the smaller de
-Bruijn it has since there is less variables in the context it can refer to
-(see \rref{Ctx-Cons}). Shifting $[[G n]]$ by $[[Suc n]]$ weakens the type so
-it is scoped consistently with the full context $[[G]]$ rather than a
-truncated version of $[[G]]$.
+\yl{Var, T-Pi, T-Abs are self-explanatory now?}
+% In \rref{T-Var}, $G n$ is the partial function defined by the equations
+% $ (G ++ A) 0 := A$ and $ (G ++ A) Suc n  := G n$.  The
+% precondition $n < | G | $, where $ | G | $ represents the length of
+% the context $G$, ensures that $G n$ has a defined output. The type
+% $G n$ needs to be shifted by $Suc n$ since the types stored in the
+% context $G$ are scoped differently. In the typing judgment
+% $G |- a : A$, we want both $a$ and $A$ to have the same
+% scope. However, the closer a type is to the head of $G$, the smaller de
+% Bruijn it has since there is less variables in the context it can refer to
+% (see \rref{Ctx-Cons}). Shifting $G n$ by $Suc n$ weakens the type so
+% it is scoped consistently with the full context $G$ rather than a
+% truncated version of $G$.
 
-Although the use of de Bruijn indices complicates the variable rule, the rules
-that involve binding, such as \rref{T-Pi,T-Abs}, are straightforward.
+% Although the use of de Bruijn indices complicates the variable rule, the rules
+% that involve binding, such as \rref{T-Pi,T-Abs}, are straightforward.
 
 \Rref{T-Conv} uses the convertibility relation from earlier
 as our equality judgment for type conversion.
 
 The elimination form for booleans, \rref{T-If}, demonstrates dependent pattern
-matching.  The result type of this expression $[[A {a}]]$ is composed of some
+matching.  The result type of this expression $[[A {a / x}]]$ is composed of some
 \emph{motive} $[[A]]$, a type where its single free variable has been replaced
 with the condition of the if expression. When typing the true branch, this
 substitution replaces the variable by $[[true]]$, and similarly for the false
@@ -1069,11 +1063,6 @@ shifted to refer to the same binders.
 % \scw{Is there an advantage for Tarski universes even with infinite
 % hierarchy? or no?}
 
-
-% , the
-% statement that $\Gamma \vdash [[Pi A0 B0]] \equiv [[Pi A1 B1]]$
-% implies $\Gamma \vdash [[A0]] \equiv [[A1]]$ and
-% $\Gamma, [[A0]]\vdash [[B0]] \equiv [[B1]]$.
 
 
 
@@ -1158,11 +1147,11 @@ is commonly used in introductory materials such as
 A naive attempt to proving Theorem~\ref{theorem:consistency} by
 induction on the derivation $[[empty |- a : Void]]$ would succeed at
 almost all cases except for \rref{T-App}. In the application
-case, we are given $[[empty |- b : Pi A B]]$ and $[[empty |- a : A]]$, and
-the equality that $[[B {a} = Bool]]$. Our goal is to show that
+case, we are given $[[empty |- b : Pi x : A . B]]$ and $[[empty |- a : A]]$, and
+the equality that $[[B {a / x} = Bool]]$. Our goal is to show that
 $[[empty |- b a : Void]]$ is not possible. However, note that there is
 nothing we know of $[[b]]$ or $[[a]]$ from the induction hypothesis
-because neither $[[Pi A B]]$ nor $[[A]]$ is equal to $[[Bool]]$.
+because neither $[[Pi x : A . B]]$ nor $[[A]]$ is equal to $[[Bool]]$.
 We have no way of deriving a contradiction from $[[empty |- b a :
 Void]]$. The takeaway from this failed attempt is that, in order to
 derive the consistency, we need to know something about types other
@@ -1176,7 +1165,7 @@ from the fact that the logical relation is much harder to define. In
 simply typed languages, the logical relation is defined as a recursive
 function over the type $[[A]]$.
 In dependent types, the type
-$[[A]]$ can take the form $[[(\ var 0) Bool]]$. To assign meaning to
+$[[A]]$ can take the form $[[(\ x . x ) Bool]]$. To assign meaning to
 this type, we need to first reduce it to $[[Bool]]$. However, we
 cannot write a function that performs the reduction because we do not
 know the termination of well-typed terms a priori. As a result, we
@@ -1302,7 +1291,8 @@ example, the $[[Void]]$ type should not have any inhabitants under the
 empty context, where as the $[[Bool]]$ type corresponds to terms that
 evaluate to $[[true]]$ or $[[false]]$. However, the characterization
 of $[[Bool]]$ in our logical relation does not always correspond to
-well-typed or even closed terms. For example, we have $[[if false var 0
+well-typed or even closed terms. For example, we have $[[if false (#
+Void true #)
 true]]$ is ill-typed under the empty context but still belongs to the set $[[{ a | a =>+
   true \/ a =>+ false }]]$ since it evaluates to $[[true]]$.
 The independence of syntactic typing in our logical relation allows
@@ -1324,11 +1314,11 @@ set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ holds and
 otherwise corresponds to the empty set. Side conditions like $[[a <=>
 b]]$ are typically required for indexed types, of which equality types
 are an instance. \Rref{I-Red} enables us to reduce our types in order
-to assign meanings. Recall the type expression $[[(\ var 0)
+to assign meanings. Recall the type expression $[[(\ x . x )
 Bool]]$. \Rref{I-Red} says to know that
-$[[Interp I i  (\ var 0) Bool S ]]$ for some $[[S]]$, it suffices to
-show that $[[Interp I i Bool S]]$ since $[[(\var 0) Bool =>
-Bool]]$. The derivation that $[[Interp I i (\ var 0) Bool { a | a =>+
+$[[Interp I i  (\ x . x) Bool S ]]$ for some $[[S]]$, it suffices to
+show that $[[Interp I i Bool S]]$ since $[[(\ x . x) Bool =>
+Bool]]$. The derivation that $[[Interp I i (\ x . x) Bool { a | a =>+
   true \/ a =>+ false }]]$ therefore follows by composing \rref{I-Red}
 and \rref{I-Bool}.
 
@@ -1345,22 +1335,22 @@ simplified admissible \rref{I-PiAlt} that follows directly from \rref{I-Pi}.
 \end{lemma}
 \begin{proof}
 Immediate from \rref{I-Pi} with $[[R]]$ instantiated to the relation $[[{ (a
-, S0 ) | a in S , Interp I i B { a } S0 }]]$.
+, S0 ) | a in S , Interp I i B { a /x } S0 }]]$.
 \end{proof}
 Compared to the \rref{I-Pi}, which contains the mysterious relation
 $[[R]]$, \rref{I-PiAlt} directly captures the meaning of
 a well-behaved dependent function type. The precondition of
 \rref{I-PiAlt} says that
-the function type $[[Pi A B]]$ has an interpretation if its input
+the function type $[[Pi x : A . B]]$ has an interpretation if its input
 type $[[A]]$ can be
 interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
-type $[[B {a}]]$, obtained by substituting $[[a]]$ into the output type
+type $[[B {a / x}]]$, obtained by substituting $[[a]]$ into the output type
 $[[B]]$, has some semantic interpretation. In its conclusion, we say
-that a term $[[b]]$ belongs to an interpretation of $[[Pi A B]]$ if
+that a term $[[b]]$ belongs to an interpretation of $[[Pi x : A . B]]$ if
 for all $[[a in S]]$, where $[[S]]$ is an interpretation $[[A]]$, the
 application form $[[b a]]$ belongs to all possible interpretations of
-$[[B {a}]]$ (the pre-condition ensures at least one interpretation
-exists for each $[[B {a}]]$ where $[[a in S]]$).
+$[[B {a  / x}]]$ (the pre-condition ensures at least one interpretation
+exists for each $[[B {a / x}]]$ where $[[a in S]]$).
 
 In fact, while \rref{I-PiAlt} is an instantiation of \rref{I-Pi},
 these two rules are equivalent in the sense that every derivation of
@@ -1370,13 +1360,13 @@ that the logical relation is a partial function, a result we will show
 in Lemma~\ref{lemma:logreldeter}. The preconditions of \rref{I-Pi},
 when combined with the functionality of the logical relation, uniquely
 determine the relation $[[R in S * PowerSet STm]]$ to be the relation
-$[[{ (a , S0 ) | a in S , Interp I  i B { a } S0 }]]$. This result is
+$[[{ (a , S0 ) | a in S , Interp I  i B { a /x } S0 }]]$. This result is
 formally shown through the improved inversion lemma for function types
 (Lemma~\ref{lemma:piinvalt}).
 
 Unfortunately, we cannot define the function case of our logical
 relation directly using \rref{I-PiAlt} since the occurrence of
-$[[Interp I i B {a} S0]]$ in its conclusion not only violates the
+$[[Interp I i B {a/x} S0]]$ in its conclusion not only violates the
 syntactic strict positivity constraint required in proof assistants,
 but is genuinely non-monotone when we rewrite the inductive definition
 as an endofunction over the domain of relations.
@@ -1406,8 +1396,8 @@ property (Lemma~\ref{lemma:logrelbackclos}).
 
 First, we prove a family of simple properties, which we refer to as
 inversion principles for our logical relation. Given $[[Interp I i A
-S]]$ where $[[A]]$ is in some head form such as $[[Bool]]$ or $[[Pi A0
-B0]]$, the inversion lemma allows us to say something about the set
+S]]$ where $[[A]]$ is in some head form such as $[[Bool]]$ or $[[Pi x
+: A0 .B0]]$, the inversion lemma allows us to say something about the set
 $[[S]]$. Its proof is simple, but we sketch out the case for
 functions to help readers confirm their understanding of \rref{I-Pi}.
 \begin{lemma}[Inversion of the logical relation]
@@ -1416,12 +1406,14 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Void\_inv}} If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Bool\_inv}} If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}} If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
-  \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}} If $[[Interp I i Pi A B S1]]$, then there exists $[[S]],[[R]]$ such that:
+  \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}} If $[[Interp
+    I i Pi x : A . B S1]]$, then there exists $[[S]],[[R]]$ such that:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
     \item $[[R in S * PowerSet STm]]$
     \item $[[forall a, (# a in S implies (# exists S0 , (a , S0) in R #) #)]]$
-    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)]]$
+    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I
+      i B { a /x } S0 #)]]$
     \item $[[S1 = { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$
     \end{itemize}
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Univ\_inv}} If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
@@ -1430,29 +1422,31 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
 \begin{proof}
   As mentioned earlier, we only show the inversion property for the
   function type.
-  We start by inducting over the derivation of $[[Interp I i Pi A B S]]$. There
+  We start by inducting over the derivation of $[[Interp I i Pi x : A . B S]]$. There
   are only two possible cases we need to consider.
   \begin{description}
   \item[\Rref{I-Pi}:] Immediate.
-  \item[\Rref{I-Red}:] We are given that $[[Interp I i Pi A B S1]]$.
+  \item[\Rref{I-Red}:] We are given that $[[Interp I i Pi x : A . B S1]]$.
     We know that there exists some $[[A0]]$ and
-    $[[B0]]$ such that $[[Pi A B => Pi A0 B0]]$ and $[[Interp I i Pi
-    A0 B0 S1]]$. From the
+    $[[B0]]$ such that $[[Pi x : A . B => Pi x : A0 . B0]]$ and $[[Interp I i Pi
+    x : A0 . B0 S1]]$. From the
     induction hypothesis, there exists $[[S]]$ and $[[R]]$ such that :
     \begin{itemize}
     \item $[[Interp I i A0 S ]]$
     \item $[[R in S * PowerSet STm]]$
     \item $[[forall a, (# a in S implies (# exists S0 , (a , S0) in R #) #)]]$
-    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B0 { a } S0 #)]]$
+    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I
+      i B0 { a / x } S0 #)]]$
     \item $[[S1 = { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$
     \end{itemize}
-    By inverting the derivation of $[[Pi A B => Pi A0 B0]]$, we derive $[[A => A0]]$ and
-    $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a} => B0 {a} ]]$ for all
+    By inverting the derivation of $[[Pi x : A . B => Pi x : A0 . B0]]$, we derive $[[A => A0]]$ and
+    $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a /x} => B0 {a/x} ]]$ for all
     $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
     $[[R]]$ additionally satisfies the following properties:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
-    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)]]$
+    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I
+      i B { a /x } S0 #)]]$
     \end{itemize}
     These properties are exactly what we need to finish the proof.
   \end{description}
@@ -1522,14 +1516,15 @@ improved inversion lemma for function types whose statement is free of
 the relation $[[R]]$, analogous to the admissible rule \rref{I-PiAlt}.
 \begin{lemma}[Pi Inversion Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
   \label{lemma:piinvalt}
-  Suppose $[[Interp I i Pi A B S]]$, then there exists some $[[S0]]$
+  Suppose $[[Interp I i Pi x : A . B S]]$, then there exists some $[[S0]]$
   such that the following constraints hold:
   \begin{itemize}
   \item $[[Interp I i A S0]]$
-  \item $[[forall a, (# a in S0 implies (# exists S1 , Interp I i B {a}
+  \item $[[forall a, (# a in S0 implies (# exists S1 , Interp I i B {a
+    / x}
     S1 #) #)]]$
   \item $[[S = { b | forall a, (# a in S0 , forall
-    S1, (# Interp I i B {a} S1,  b a in S1 #) #) }]]$
+    S1, (# Interp I i B {a / x} S1,  b a in S1 #) #) }]]$
   \end{itemize}
 \end{lemma}
 \begin{proof}
@@ -1597,27 +1592,6 @@ hold in the \rref{I-Set} case.
 \label{sec:logrelproof}
 \scw{Would it make sense to define the notation $a \in [\![A]\!]^i$ when
 there exists some $S$ such that $[[InterpR i A S]]$ and $[[a in S]]$ ?}
-% \begin{figure}[h]
-% \[
-% \begin{array}{lcl}
-
-%       [[rho |= G]] &:= & \forall i\ j\ S, \text{ if }[[i < |G|]]\text{ and
-%                      } [[InterpR j (G i < up Suc i > ) { rho } S ]] \text{, then } [[rho i in S]] \\
-%       [[G |= a : A]] &:= & \forall [[rho]], \text{ if }[[rho |= G]]
-%    \text{ then there exists some } [[j]] \text{
-%                        and } [[S]] \text{ such that } [[InterpR j A {rho} S]]
-%        \text{ and } [[a {rho} in S]] \\
-%       [[|= G]] &:= & \forall [[i < |G|]], \exists [[j]], [[drop Suc i G |= G i : Set j]]
-% \end{array}
-% \]
-%   \caption{Semantic Typing for \lang}
-%   \label{fig:semtyping}
-% \end{figure}x
-
-% The logical relation we define in Figure~\ref{fig:logrel} does not
-% include cases for variables. Likewise, for the base types such as
-% boolean and equality, the output set $[[S]]$ contains only terms that
-% evaluate to closed terms.
 
 In this section, we show that all closed, well-typed terms are contained
 within their type-indexed sets. In other words, $[[empty |- a : A]]$ implies
@@ -1645,8 +1619,9 @@ provable.
 
 \begin{definition}[Semantic well-formed substitution\footnote{\dotv{soundness.v}{$\rho$\_ok}}]
 Define $[[rho |= G]]$ when
-\[ \forall n\ i\ S, \text{ if }[[n < |G|]]\text{ and
-                     } [[InterpR i (G n < up Suc n > ) { rho } S ]] \text{, then } [[rho n in S]] \]
+\[ \forall [[x]], [[A]], [[i]], \text { and } [[S]], \text{ if }[[x :
+  A in G]]\text{ and
+                     } [[InterpR i A { rho } S ]] \text{, then } [[rho x in S]] \]
 \end{definition}
 
 % To generalize our logical relation to open
@@ -1659,23 +1634,15 @@ Define $[[rho |= G]]$ when
 % ($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
 
 The $[[rho |= G]]$ notation denotes the semantic well-formedness of a
-substitution $[[rho]]$ with respect to a context $[[G]]$. Intuitively, for any
-variable $[[n]]$ in the context (thus the restriction $[[n < | G |]]$),
-$[[rho n]]$ is a term that inhabits all possible interpretations of the type
-$[[G n]]$ from the context.
-
-
-Since we are in a dependently typed system, there
-may be variables in $[[G n]]$, too. The type $[[(G n < up Suc n > ) {
-  rho }]]$ applies $[[rho]]$ to replace those variables. The shifting
-operation $[[up Suc n]]$ can be viewed as an artifact of the de Bruijn
-representation to lift the type $[[G n]]$ to the right scope before
-substitution can be carried out.
+substitution $[[rho]]$ with respect to a context $[[G]]$. For every
+variable $[[x]]$ with its associated type $[[A]]$ in the context,
+$[[rho x]]$ is a term that inhabits all possible interpretations of the type
+$[[A {rho}]]$.
 
 Finally, despite the for all quantification over the interpreted set
 $[[S]]$ and the universe level $[[i]]$ in the definition of $[[rho |=
 G]]$, we only need show that there exists some $[[i]]$ and $[[S]]$
-such that $[[InterpR i (G n < up Suc n > ) { rho } S]]$ and $[[rho n
+such that $[[InterpR i A { rho } S]]$ and $[[rho x
 in S]]$ since the logical relation is a partial function (Lemma~\ref{lemma:logreldeter}). This idea is encapsulated in the second of the two structural
 law about $[[rho |= G]]$.
 \begin{lemma}[Well-formed $[[rho]]$ empty\footnote{\dotv{soundness.v}{$\rho$\_ok\_nil}}]
@@ -1684,7 +1651,7 @@ law about $[[rho |= G]]$.
 \end{lemma}
 \begin{lemma}[Well-formed $[[rho]]$ cons\footnote{\dotv{soundness.v}{$\rho$\_ok\_cons}}]
   If $[[InterpR i A S]]$, $[[a in S]]$, and $[[rho |= G]]$, then
-  $[[rho .: a |= G ++ A]]$.
+  $[[rho .: x -> a |= G ++ x : A]]$.
 \end{lemma}
 
 We next define semantic well-typedness.
@@ -1708,28 +1675,29 @@ Finally, we define semantic well-formedness for contexts, analogous to the
 relation $[[|-G]]$.
 
 \begin{definition}[Semantic context well-formedness\footnote{\dotv{soundness.v}{SemWff}}]
-Define $[[|= G]]$ when
-\[
-   \forall [[n < |G|]],\text{ there exists some } [[i]] \text{ such that } [[drop Suc n G |= G n : Set i]] \]
+Define $[[|= G]]$ inductively as follows.
+\drules[SCtx]{$[[|= G]]$}{Semantic context well-formedness}{Empty, Cons}
+% \[
+%    \forall x : A in G,\text{ there exists some } i \text{ such that } drop Suc n G |= G n : Set i \]
 \end{definition}
 
-In this definition, we use the notation $[[drop n G]]$ to denote
-the typing context obtained by dropping the last $[[n]]$ elements of
-$[[G]]$. When $[[G]]$ has fewer than $[[i]]$ elements, $[[drop n G]]$ returns
-the empty list. Intuitively, $[[|= G]]$ says that all
-types in the context must correspond to some set according to the logical
-relation. The truncation to the context $[[G]]$ is due to the telescopic
-scoping of the types in the context. An alternative approach would be to define $[[|= G]]$
-inductively, similar to $[[|- G]]$, but we find it easier to use this definition and
-recover the structural rules as lemmas.
-\begin{lemma}[Semantic context well-formedness empty]
-  \label{lemma:semwffempty}
-  $[[|= G]]$ holds when $[[G]]$ is empty.
-\end{lemma}
-\begin{lemma}[Semantic context well-formedness cons]
-  \label{lemma:semwffcons}
-  If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ A]]$.
-\end{lemma}
+% In this definition, we use the notation $drop n G$ to denote
+% the typing context obtained by dropping the last $n$ elements of
+% $G$. When $G$ has fewer than $i$ elements, $drop n G$ returns
+% the empty list. Intuitively, $|= G$ says that all
+% types in the context must correspond to some set according to the logical
+% relation. The truncation to the context $G$ is due to the telescopic
+% scoping of the types in the context. An alternative approach would be to define $|= G$
+% inductively, similar to $|- G$, but we find it easier to use this definition and
+% recover the structural rules as lemmas.
+% \begin{lemma}[Semantic context well-formedness empty]
+%   \label{lemma:semwffempty}
+%   $|= G$ holds when $G$ is empty.
+% \end{lemma}
+% \begin{lemma}[Semantic context well-formedness cons]
+%   \label{lemma:semwffcons}
+%   If $|= G$ and $G |= A : Set i$, then $|= G ++ A$.
+% \end{lemma}
 
 The following lemma makes the statement $[[G |= A : Set i]]$ easier to
 work with.
@@ -1762,51 +1730,46 @@ work with.
 % counterpart $[[|- G]]$, is defined through a $\forall$ quantified statement rather
 % than inductively over the context. \scw{why is that the case?} It is easy to recover the same
 % structural rules:
-% \scw{point out that this lemma is the semantic analogue to Ctx-Cons. What about
-% Ctx-empty?}
-% \begin{proof}
-%   By the definition of semantic context well-formedness, the goal is
-%   to show that given $[[i < | G ++ A |]] = [[Suc |G|]]$, $[[drop Suc i   (G ++ A) |= (G ++ A) i : Set j]]$. The statement can be easily
-%   proven by case analysis on whether $[[i]]$ is zero.
-% \end{proof}
+
 
 Next, we show some non-trivial cases of the fundamental theorem as
 top-level lemmas. For example, we can define the semantic analogue to the
 syntactic typing rule for variables (\rref{T-Var}).
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
-  If $[[|= G]]$ and $[[n < |G|]]$, then $[[G |= var n : G n < up Suc n  >]]$.
+  If $[[|= G]]$ and $[[x : A in G]]$, then $[[G |= x : A]]$.
 \end{lemma}
 \begin{proof}
   Suppose $[[rho |= G]]$. By the definition of semantic typing, we
-need to show that there exists some $[[i]]$ and $[[S]]$ such that
+  need to show that there exists some $[[i]]$ and $[[S]]$ such that
   \begin{itemize}
-  \item $[[InterpR i G n < up Suc n > { rho } S]]$
-  \item $[[rho n in S]]$
+  \item $[[InterpR i A { rho } S]]$
+  \item $[[rho x in S]]$
   \end{itemize}
-  From the definition of $[[|= G]]$, we know that there exists some
-  $[[i]]$ such that $[[drop Suc n G |= G n : Set i]]$. This is not
-  immediately useful since $[[rho |= G]]$, not the truncated
-  context. We claim, without giving the proof, that from $[[drop Suc n
-  G |= G n  : Set i]]$, we can derive $[[G |= G n {up Suc n} : Set
-  i]]$. A rigorous justification would require us to formally state
-  and show renaming/weakening lemma for semantic typing. We instead
-  provide an informal justification since the proof of renaming
-  is uninteresting and only requires unfolding definitions, but its
-  statement introduces unnecessary line noise related to shifting.
+  \yl{todo}
+%   From the definition of $|= G$, we know that there exists some
+%   $i$ such that $drop Suc n G |= G n : Set i$. This is not
+%   immediately useful since $rho |= G$, not the truncated
+%   context. We claim, without giving the proof, that from $drop Suc n
+%   G |= G n  : Set i$, we can derive $G |= G n {up Suc n} : Set
+%   i$. A rigorous justification would require us to formally state
+%   and show renaming/weakening lemma for semantic typing. We instead
+%   provide an informal justification since the proof of renaming
+%   is uninteresting and only requires unfolding definitions, but its
+%   statement introduces unnecessary line noise related to shifting.
 
-  Intuitively, a substitution $[[rho]]$
-  that closes over a context should always induce a truncated
-  substitution for each truncated context. As a result, if
-  some term $[[b]]$ is semantically well-typed under some truncated
-  context $[[G]]$, then it must also be semantically well-typed under
-  the context $[[G]]$ up to shifting.
-%
-  Knowing that $[[G |= G n {up Suc n} : Set i]]$ holds, we can then
-  apply Lemma~\ref{lemma:setinv} to show that
-  $[[InterpR i G n < up Suc n > { rho } S]]$. It now
-  suffices to show $[[rho n in S]]$, but that is immediate from the
-  definition of $[[rho |= G]]$.
+%   Intuitively, a substitution $rho$
+%   that closes over a context should always induce a truncated
+%   substitution for each truncated context. As a result, if
+%   some term $b$ is semantically well-typed under some truncated
+%   context $G$, then it must also be semantically well-typed under
+%   the context $G$ up to shifting.
+% %
+%   Knowing that $G |= G n {up Suc n} : Set i$ holds, we can then
+%   apply Lemma~\ref{lemma:setinv} to show that
+%   $InterpR i G n < up Suc n > { rho } S$. It now
+%   suffices to show $rho n in S$, but that is immediate from the
+%   definition of $rho |= G$.
 \end{proof}
 
 % Next, we show some non-trivial cases of the fundamental theorem as
@@ -1830,47 +1793,6 @@ need to show that there exists some $[[i]]$ and $[[S]]$ such that
 % We say that $[[xi]]$ is
 % valid from the context $[[G]]$ to the context $[[D]]$ if the
 % following condition holds.
-% \[ \forall i \text{, if } i < | [[G]] |\text{, then }[[ ren xi i < |D| ]] \text{ and }
-%   [[D ren xi  i < up Suc ren xi i > = G i < up Suc i > < xi >]] \]
-
-% \begin{lemma}[Truncate is valid]
-%   \label{lemma:validtruncate}
-%   If $[[i < |G|]]$, then $[[up i]]$ is a valid renaming from $[[drop i   G]]$ to $[[G]]$.
-% \end{lemma}
-% \begin{proof}
-%   By the definition of a valid renaming, we must show that given $[[j   < |drop i G|]] = [[|G|]] - [[i]]$, then the following conditions hold:
-%   \begin{itemize}
-%   \item $[[ren up i j]] = i + j  < [[| G | ]]$
-%   \item $[[G ren up i j < up Suc ren up i j > = drop i G j < up Suc j > < up i >]]$
-%   \end{itemize}
-%   The first bullet point is immediate from the fact that $[[j]] <
-%   [[|G|]] - [[i]]$. The second bullet follows from unfolding the
-%   definitions, and the fact that $[[drop i G j]] = [[G]](i + j)$ when
-%   $[[i]] + [[j]] < [[|G|]]$.
-% \end{proof}
-
-% \begin{lemma}[Renaming for $[[rho |= G]]$]
-%   \label{lemma:renamingval}
-%   If $[[rho |= D]]$ and $[[xi]]$ is a valid renaming from $[[G]]$ to
-%   $[[D]]$, then we have $[[rho0 |= G]]$ where $[[rho0 i = rho ren xi i]]$.
-% \scw{could you use $[[rho]]\circ[[xi]]$ for $[[rho0]]$?}
-% \end{lemma}
-% \begin{proof}
-%   Unfolding the definition of $[[rho0 |= G]]$, the goal is to show
-%   that for all $i,j,$ and $S$, if $[[i < |G|]]$ and $[[InterpR j (G i   < up Suc i > ) { rho0 } S ]] \text{, then } [[rho0 i]] = [[rho ren xi i in S]]$.
-
-%   By the definition of $[[rho0]]$ and the validity of $[[xi]]$, we
-% have $[[G i < up Suc i > { rho0 }]] = [[G i < up Suc i > < xi > { rho } ]] = [[D ren xi i < up Suc ren xi i > { rho }]]$. From $[[rho |= D]]$ and $[[ren xi i < | D |]]$, we have $[[InterpR j D ren xi i < up Suc ren xi i > { rho } S]]$ and $[[rho ren xi i in S]]$.
-% \end{proof}
-
-% \begin{lemma}[Renaming for $[[G |= a : A]]$]
-%   \label{lemma:semrenaming}
-%   If $[[G |= a : A]]$ and $[[xi]]$ is a valid renaming from $[[G]]$ to
-%   $[[D]]$, then $[[D |= a < xi > : A < xi > ]]$.
-% \end{lemma}
-% \begin{proof}
-%   Immediate from the definition of semantic typing and Lemma~\ref{lemma:renamingval}.
-% \end{proof}
 
 % \scw{Need a transition here that you are starting to explain the semantic typing
 % rules.}
@@ -1886,77 +1808,81 @@ need to show that there exists some $[[i]]$ and $[[S]]$ such that
 
 \begin{lemma}[ST-Pi]
   \label{lemma:stpi}
-  If $[[G |= A : Set i]]$ and $[[G ++ A |= B : Set i]]$, then $[[G |= Pi
-  A B : Set i]]$.
+  If $[[G |= A : Set i]]$ and $[[G ++ x  : A |= B : Set i]]$, then $[[G |= Pi
+  x : A . B : Set i]]$.
 \end{lemma}
 \begin{proof}
   Applying Lemma~\ref{lemma:setinv} to the
   conclusion, it now suffices to show that given $[[rho |= G]]$, there
-  exists some $[[S]]$ such that $[[InterpR i Pi A{rho} B{up rho} S]]$.
+  exists some $[[S]]$ such that $[[InterpR i Pi x : A{rho} . B{rho .:
+    x -> x} S]]$.
   From Lemma~\ref{lemma:setinv} and $[[G |= A : Set i]]$, we know that
   there exists some set $[[S0]]$ such that $[[InterpR i A {rho} S0]]$.
-From $[[G ++ A |= B : Set i]]$, we know that there must
-exists $[[S]]$ such that $[[InterpR i B {rho .: a} S]]$ for every $[[a
+From $[[G ++ x : A |= B : Set i]]$, we know that there must
+exists $[[S]]$ such that $[[InterpR i B {rho .: x -> a} S]]$ for every $[[a
 in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
 \end{proof}
 
 \begin{lemma}[ST-Abs]
   \label{lemma:stabs}
-  If $[[G |= Pi A B : Set i]]$ and $[[G ++ A |= b : B]]$, then $[[G |=
-  \ A b : Pi A B]]$.
+  If $[[G |= Pi x : A . B : Set i]]$ and $[[G ++ x : A |= b : B]]$, then $[[G |=
+  \ x . b : Pi x : A . B]]$.
 \end{lemma}
 \begin{proof}
-  By unfolding the definition of $[[G |= \ A b : Pi A B]]$, we need to
+  By unfolding the definition of $[[G |= \ x . b : Pi x : A . B]]$, we need to
   show that given some $[[rho |= G]]$, there exists some $[[i]]$ and
-  $[[S]]$ such that $[[InterpR i Pi A {rho} B {up rho} S]]$ and $[[\
-  A{rho} b{up rho} in S]]$.
+  $[[S]]$ such that $[[InterpR i Pi x :  A {rho} . B {rho .: x -> x}
+  S]]$ and $[[\ x .
+   b{rho .: x -> x} in S]]$.
 
-  By Lemma~\ref{lemma:setinv} and the premise $[[G |= Pi A B : Set
+  By Lemma~\ref{lemma:setinv} and the premise $[[G |= Pi x : A . B : Set
   i]]$, there exists some set $[[S]]$ such that
-  $[[InterpR i Pi A {rho} B {up rho} S]]$. It now suffices to show that
-  $[[\A{rho} b{up rho} in S
+  $[[InterpR i Pi x : A {rho} . B {rho .: x -> x} S]]$. It now suffices to show that
+  $[[\ x . b{rho .: x -> x} in S
   ]]$. By Lemma~\ref{lemma:piinvalt}, the alternative inversion
   principle for \rref{I-Pi}, there exists some $[[S0]]$ such
   that all following conditions hold:
   \begin{itemize}
   \item $[[InterpR i A{rho} S0]]$
   \item $[[forall a, (# a in S0 implies (# exists S1 , InterpR i B
-    {rho .: a}
+    {rho .: x -> a}
     S1 #) #)]]$
   \item $[[S = { b | forall a, (# a in S0 , forall
-      S1, (# InterpR i B {rho .: a} S1,  b a in S1 #) #) }]]$
+      S1, (# InterpR i B {rho .: x -> a} S1,  b a in S1 #) #) }]]$
   \end{itemize}
-  To show that $[[\A{rho} b{up rho} in S]]$, we need to prove
+  To show that $[[\ x . b{rho .: x -> x} in S]]$, we need to prove
   that given $[[a in S0]]$,
-  $[[Interp I i B {rho .: a} S1]]$, we have  $[[( \A{rho} b{up rho} )
+  $[[Interp I i B {rho .: x -> a} S1]]$, we have  $[[( \ x . b{rho .: x
+    -> x} )
   a in S1]]$.
   By Lemma~\ref{lemma:logrelbackclos}, the set $[[S1]]$ is closed
-  under expansion. Since $[[( \A{rho} b{up rho} )
-  a => b {up rho} {a}]] = [[b {rho .: a}]]$, it suffices to show that
-  $[[b {rho .: a} in S1]]$, which is immediate from $[[G ++ A |= b :
+  under expansion. Since $[[( \ x . b{rho .: x -> x} )
+  a => b {rho .: x -> a}]]$, it suffices to show that
+  $[[b {rho .: x -> a} in S1]]$, which is immediate from $[[G ++ x : A |= b :
   B]]$ and the fact that the logical relation is deterministic and
   cumulative (Lemma~\ref{lemma:logreldeterhet}).
 \end{proof}
 
 \begin{lemma}[ST-App]
   \label{lemma:stapp}
-  If $[[G |= b : Pi A B]]$ and $[[G |= a : A]]$, then $[[G |= b a : B {a}]]$.
+  If $[[G |= b : Pi x : A . B]]$ and $[[G |= a : A]]$, then $[[G |= b
+  a : B {a / x}]]$.
 \end{lemma}
 \begin{proof}
 Suppose $[[rho |= G]]$. The goal is to show that there exists some
 $[[i]]$ and $[[S1]]$
-such that  $[[b {rho} a {rho} in S1 ]]$ and $[[InterpR i B {a} {rho}
-S1]]$, or equivalently, $[[InterpR i B {rho .: a {rho}} S1]]$ since
-$[[B {a}{rho}]] = [[B {rho .: a {rho}}]]$. By the premise $[[G |= b :
-Pi A B]]$, Lemma~\ref{lemma:setinv}, and Lemma~\ref{lemma:piinvalt},
+such that  $[[b {rho} a {rho} in S1 ]]$ and $[[InterpR i B {a / x} {rho}
+S1]]$, or equivalently, $[[InterpR i B {rho .: x -> a {rho}} S1]]$ since
+$[[B {a / x}{rho}]] = [[B {rho .: x -> a {rho}}]]$. By the premise $[[G |= b :
+Pi x : A . B]]$, Lemma~\ref{lemma:setinv}, and Lemma~\ref{lemma:piinvalt},
 there exists some $[[i]]$ and $[[S0]]$ such that:
   \begin{itemize}
   \item $[[InterpR i A{rho} S0]]$
   \item $[[forall a0, (# a0 in S0 implies (# exists S1 , InterpR i B
-    {rho .: a0}
+    {rho .: x ->  a0}
     S1 #) #)]]$
   \item $[[forall a0, (# a0 in S0 , forall
-      S1, (# InterpR i B {rho .: a0} S1,  b {rho} a0 in S1 #) #)]]$
+      S1, (# InterpR i B {rho .: x -> a0} S1,  b {rho} a0 in S1 #) #)]]$
   \end{itemize}
   Instantiating the variable $[[a0]]$ from the last two bullets with
   the term $[[a {rho}]]$, the conclusion immediately follows.
@@ -2035,9 +1961,9 @@ of \lang{}.
       [[e]] & ::= & [[i]]\ |\ [[e f]]\ |\ [[J e f f f]]\ |\ [[if e f
                     f]] \\ \\
       \beta\text{-}\mathit{normal\ terms} &
-      [[f]] & ::= & [[e]]\ |\ [[Set i]]\ |\ [[Void]]\ |\ [[Pi f f]]\
+      [[f]] & ::= & [[e]]\ |\ [[Set i]]\ |\ [[Void]]\ |\ [[Pi x : f . f]]\
                     |\ [[f ~ f : f]]\\
-            & & |   & [[\ f]]\ |\ [[refl]]\ |\ [[Bool]]\ |\ [[true]]\ |\ [[false]]
+            & & |   & [[\ x . f]]\ |\ [[refl]]\ |\ [[Bool]]\ |\ [[true]]\ |\ [[false]]
     \end{array}
   \]
   \caption{$\beta$-neutral and normal forms}
@@ -2157,11 +2083,11 @@ Furthermore, if we know that an application of a term to a variable
 has a normal form, then we know the term must have a normal form.
 \begin{lemma}[Wn extensionality\footnote{\dotv{normalform.v}{ext\_wn}}]
   \label{lemma:extwn}
-  If $[[wn (a var i)]]$, then $[[wn a]]$.
+  If $[[wn (a x)]]$, then $[[wn a]]$.
 \end{lemma}
 \begin{proof}
   By induction over the length of the reduction sequence in $[[wn (a
-  var i)]]$. The conclusion follows from Lemmas~\ref{lemma:parantirenaming} and
+  x)]]$. The conclusion follows from Lemmas~\ref{lemma:parantirenaming} and
   \ref{lemma:parnenf}.
 \end{proof}
 
@@ -2224,71 +2150,12 @@ We now state and prove the adequacy lemma.
   numbers less than $[[j]]$. We perform another induction on
   the derivation of $[[Interp I j A S]]$. All cases are trivial except for the case for
   \rref{I-Pi}. Our induction hypothesis immediately gives us $[[wn
-  A]]$. To derive $[[wn (Pi A B)]]$, it remains to show $[[wn B]]$. We
-  use the outermost induction hypothesis to show that $[[var 0]]$
-  semantically inhabits $[[A]]$, from which we derive $[[wn (B {var 0})]]$
+  A]]$. To derive $[[wn (Pi x : A . B)]]$, it remains to show $[[wn B]]$. We
+  use the outermost induction hypothesis to show that $[[x]]$
+  semantically inhabits $[[A]]$, from which we derive $[[wn (B {x / x})]]$
   and conclude $[[wn B]]$ through antirenaming (Lemma~\ref{lemma:parantirenaming}).
 \end{proof}
 
-% \begin{lemma}[Adequacy: $CR_1$ for type]
-%   \label{lemma:cr1ty}
-%   If $[[wne A]]$, then we have $[[Interp I i A {a | wne a }]]$.
-% \end{lemma}
-% \begin{proof}
-%   Immediately from \rref{I-Ne} and \rref{I-Red}.
-% \end{proof}
-
-% \begin{lemma}[Adequacy: $CR$ for interpreted sets]
-%   \label{lemma:crel}
-%   If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[S]] \in CR$.
-% \end{lemma}
-% \begin{proof}
-%   By induction over the derivation of $[[Interp I i A S]]$. The base
-%   cases are all immediate.
-
-%   In the function case ($[[Pi A B]]$), we use the induction
-%   hypothesis to show that variables, which are special cases of
-%   neutral terms, semantically inhabit the input type $[[A]]$. We apply the
-%   function to an arbitrary variable and we can then use
-%   Lemma~\ref{lemma:extwn} to conclude the $CR_2$ property.
-
-%   To show
-%   the $CR_1$ property, we need to prove that given a neutral term $[[b]]$
-%   such that $[[wne b]]$,
-%   and a term $[[a]]$ that semantically inhabits $[[A]]$, $[[b a]]$ gives
-%   us a term that semantically inhabits $[[B {a}]]$. From the induction
-%   hypothesis, $[[A]]$ also satisfies $CR_2$ and therefore $[[wn a]]$
-%   holds. By Lemma~\ref{lemma:wnewn}, we have $[[wne b a]]$. By $CR_2$
-%   from the induction hypothesis, since every term that evaluates to
-%   some neutral form semantically inhabits $[[B {a}]]$. Done.
-% \end{proof}
-
-
-% \begin{lemma}[Adequacy: $CR_2$ for type]
-%   \label{lemma:cr2ty}
-%   If $[[I]](j) \in CR$ for all $[[j < i]]$ and $[[Interp I i A S]]$, then $[[wn A]]$ holds.
-% \end{lemma}
-% \begin{proof}
-%   By induction over the derivation of $[[Interp I i A S]]$. The
-%   function case uses Lemma~\ref{lemma:crel} and Lemma~\ref{lemma:extwn}.
-% \end{proof}
-
-% \begin{lemma}[Adequacy: $CR_2$ for types (Rec)]
-%   \label{lemma:cr2tyrec}
-%   If $[[InterpR i A S]]$, then $[[wn A]]$.
-% \end{lemma}
-% \begin{proof}
-%   By strong induction over $[[i]]$ and Lemma~\ref{lemma:cr2ty}.
-% \end{proof}
-
-% \begin{lemma}[Adequacy: $CR$ for terms (Rec)]
-%   \label{lemma:crelrec}
-%   If $[[InterpR i A S]]$, then $[[S]] \in CR$.
-% \end{lemma}
-% \begin{proof}
-%   After unfolding the definition of $[[InterpR i A S]]$, trivial by
-%   Lemmas~\ref{lemma:cr1ty}, \ref{lemma:crel} and \ref{lemma:cr2tyrec}.
-% \end{proof}
 
 The formulation of the valuation and semantic well-typedness from
 Section~\ref{sec:logrelproof} and the fundamental lemma remains
@@ -2403,10 +2270,11 @@ If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
 % $\eta$-law as part of our equational theory.
 A well-known issue with our approach is the failure of syntactic
 confluence when the lambda term contains type annotations. A simple
-counterexample is $[[\- B ((\- A a) {up 1} var 0)]]$; depending on
+counterexample is $[[\- y : B . ((\- x : A . a) y)]]$ where $[[y notin
+fv (\- x : A . a)]]$; depending on
 whether \rref{P-AbsEta} is performed on the whole term or
 \rref{P-AppAbs} is used on the inner $\beta$ redex, we end up with the
-terms $[[\- B a]]$ or $[[\- A a]]$, where $[[A]]$ and $[[B]]$ are not
+terms $[[\- x : B . a]]$ (after $\alpha$-conversion) or $[[\- x : A . a]]$, where $[[A]]$ and $[[B]]$ are not
 necessarily syntactically equal terms. \citet{choudhury:ddc} resolve
 this problem by stating their confluence result in terms of an
 equivalence relation that quotients out parts of the terms that are
@@ -3068,10 +2936,7 @@ makes the functionality of a logical relation trivial to prove, but
 the downside is that weak head reduction (denoted by $\leadsto^{wh}$)
 or leftmost-outermost reduction (denoted by $\leadsto^{lo}$) does
 not satisfy even the weaker substitution property
-(Lemma~\ref{lemma:parsubst}). % That is, given a term $[[A]]$
-% and $a \leadsto^{lo} b$, we do not necessarily have $[[A {a}]]
-% \leadsto^{lo} [[A {b}]]$ since the variable might appear to the
-% right of some redex.
+(Lemma~\ref{lemma:parsubst}).
 With this alternative formulation, we would have to prove how the
 deterministic reduction relates to a full non-deterministic reduction
 relation to prove the fundamental theorem. This would amount

@@ -24,6 +24,8 @@ set, R , S, F, I :: '' ::= {{ com sets }}
     {{ tex [[dom]]([[S]]) }}
   | F a   :: :: App
     {{ tex [[F]]([[a]]) }}
+  | SVar  :: :: SetOfVars
+    {{ tex \textit{Var} }}
   | STm   :: :: SetOfTerms
     {{ tex \textit{Term} }}
   | PowerSet S :: :: PowerSet
@@ -45,41 +47,36 @@ rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
   | ( rho )      :: :: Parens
   | emptyS     :: :: emptyS
   | id        :: :: id
-  | rho .: A  :: :: cons
-    {{ tex [[rho]],[[A]] }}
-  | xi .: i  :: :: consInt
-    {{ tex [[xi]]:[[i]] }}
-  | up rho    :: :: up
-    {{ tex \Uparrow [[rho]]}}
-  | [ A ]         :: :: one
+  | rho .: x -> A  :: :: cons
+    {{ tex [[rho]] [ [[x]]\mapsto[[A]] ] }}
+  % | xi .: i  :: :: consInt
+  %   {{ tex [[xi]]:[[i]] }}
   | idtm          :: :: idtm
     {{ tex \ottkw{id}_{tm} }}
-  | up n      :: :: upn
-    {{ tex \uparrow^{[[n]]} }}
 
 tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
     {{ tex - }}
-  | var i :: :: Var
+  | x :: :: Var
     {{ com variable }}
-    {{ tex \ottkw{v}_{[[i]]} }}
-  | Pi A B :: :: Pi
+  | Pi x : A . B :: :: Pi
+    {{ tex  \Pi [[x]]:[[A]].[[B]] }}
     {{ com dependent function type }}
-  | \ a :: :: Abs
-    {{ tex \lambda [[a]] }}
+  | \ x . a :: :: Abs
+    {{ tex \lambda [[x]]. [[a]] }}
     {{ com function }}
-  | \- A a :: :: AnnAbs
-    {{ tex \lambda [[A]] . [[a]] }}
+  | \- x : A . a :: :: AnnAbs
+    {{ tex \lambda [[x]]:[[A]] . [[a]] }}
     {{ com annotated functions }}
   | a b :: :: App
     {{ tex [[a]] \; [[b]] }}
     {{ com function application }}
   | Set i :: :: Set
     {{ com universe }}
-  | a { A } :: S :: Subst {{ tex [[a]] \{ [[A]]  \} }}
+  | a { A / x } :: S :: Subst {{ tex [[a]] \{ [[A]] / [[x]]  \} }}
   | a < rho > :: S :: RenRho {{ tex [[a]] \{ [[rho]]  \} }}
   | a { rho } :: S :: SubstRho {{ tex [[a]] \{ [[rho]]  \} }}
-  | a { b0 , b1 } :: S :: SubstTwo {{ tex [[a]] \{ [[b0]] , [[b1]]  \} }}
+  | a { b0 , b1 / x , y } :: S :: SubstTwo {{ tex [[a]] \{ [[b0]] , [[b1]] / [[x]] , [[y]] \} }}
   | ( A )   :: M :: Paren {{ coq ([[A]]) }}
   | (# a #) :: S :: SecretParen
     {{ tex [[a]] }}
@@ -101,19 +98,19 @@ tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
   | false :: :: False
   | if a b0 b1 :: :: If
     {{ tex \ottkw{if} \; [[a]]\; \ottkw{then}\; [[b0]]\; \ottkw{else}\; [[b1]] }}
-  | G i :: S :: lookup
-    {{ tex [[G]]([[i]]) }}
-  | rho i :: S :: lookuprho
-    {{ tex [[rho]]([[i]]) }}
+  % | G x :: S :: lookup
+  %   {{ tex [[G]]([[x]]) }}
+  | rho x :: S :: lookuprho
+    {{ tex [[rho]]([[x]]) }}
   | A -> B :: M :: Arr
     {{ tex [[A]] \rightarrow [[B]] }}
 
 context, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com contexts }}
 					  {{ coq list ( atom * (grade * tm) ) }}
-   | drop n G        ::    :: Drop {{ tex [[G]] \downarrow_{[[n]]} }}
+%   | drop n G        ::    :: Drop {{ tex [[G]] \downarrow_{[[n]]} }}
    | empty           ::    :: Empty       {{ coq nil }}
 %   | A               :: M   :: One
-   | G ++ A          ::   :: Append      {{ tex [[G]], [[A]] }}
+   | G ++ x : A          ::   :: Append      {{ tex [[G]], [[x]]:[[A]] }}
    | G0 ++ G1        ::   :: Append2     {{ tex [[G0]], [[G1]] }}
    | ( G )           :: M  :: Paren       {{ coq ([[G]]) }}
    | (# G #)           :: M  :: SecretParen {{ tex [[G]] }}
@@ -203,6 +200,10 @@ formula :: 'formula_' ::=
   | a = b                     ::   :: TmEq
   | [ formula ]              ::   :: Regular
     {{ tex \colorbox{lightgray}{$[[formula]]$} }}
+  | x notin fv a             :: :: xnotinfv
+   {{ tex [[x]] \notin \ottkw{fv}([[a]]) }}
+  | x : A in G  :: :: gmember
+   {{ tex [[x]]:[[A]] \in [[G]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -219,7 +220,7 @@ defn
 by
 
 ----------- :: Var
-var i => var i
+x => x
 
 ---------------- :: Set
 Set i => Set i
@@ -230,11 +231,11 @@ Void => Void
 A0 => A1
 B0 => B1
 ----------------------- :: Pi
-Pi A0 B0 => Pi A1 B1
+Pi x:A0 . B0 => Pi x:A1 . B1
 
 a0 => a1
 ----------------------- :: Abs
-\ a0 => \ a1
+\ x. a0 => \ x. a1
 
 a0 => a1
 b0 => b1
@@ -244,7 +245,7 @@ a0 b0 => a1 b1
 a0 => a1
 b0 => b1
 ----------------------- :: AppAbs
-(\ a0) b0 => a1 { b1 }
+(\ x . a0) b0 => a1 { b1 / x }
 
 -------------- :: True
 true => true
@@ -289,9 +290,10 @@ c0 => c1
 -------------------- :: JRefl
 J c0 a0 b0 refl => c1
 
+y notin fv a0
 a => a0
 ----------------------- :: AbsEta
-(# \ ( a < up 1 > var 0 ) #) => a0
+ \ y . ( ( \ x . a)  y)  => a0
 
 
 defns
@@ -340,7 +342,7 @@ by
 |- G
 G |- A : Set i
 ------------------------- :: Cons
-|- G ++ A
+|- G ++ x : A
 
 defn
   G |- a : A ::  :: Typing :: 'T_' {{ com Typing }}
@@ -352,26 +354,25 @@ defn
 G |-  Set i : Set ( Suc i )
 
 |- G
-n < | G |
+x : A in G
 --------------------------------------------- :: Var
-G |- var n : G n < up Suc n >
+G |- x : A
 
 %% functions
-
 G |- A : Set i
-G ++ A |- B : Set i
+G ++ x : A |- B : Set i
 --------------------------------------- :: Pi
-G |- Pi A B : Set i
+G |- Pi x : A . B : Set i
 
-G |- Pi A B : Set i
-G ++ A |- b : B
+G |- Pi x : A . B : Set i
+G ++ x : A |- b : B
 ----------------------------------------------- :: Abs
-G |- \ b : Pi A B
+G |- \ x . b : Pi x : A . B
 
-G |- b : Pi A B
+G |- b : Pi x : A . B
 G |- a : A
 ------------------------------------------- :: App
-G |- b a : B { a }
+G |- b a : B { a / x }
 
 G |- a : A
 G |- B : Set i
@@ -394,10 +395,10 @@ G |- a ~ b : A : Set i
 [ G |- b : A ]
 [ G |- A : Set j ]
 G |- p : a ~ b : A
-(# G ++ A #) ++ var 0 ~ (# a < up 1 > #)  : (# A < up 1 > #) |- B : Set i
-G |- c : B { a ,  refl }
+(# G ++ x : A #) ++ y : x ~ a  : A |- B : Set i
+G |- c : B { a ,  refl / x ,  y }
 ------------------------------------ :: J
-G |- J c a b p : B { b , p }
+G |- J c a b p : B { b , p / x , y }
 
 |- G
 -------------------------- :: Bool
@@ -411,12 +412,12 @@ G |- true : Bool
 ----------------------------- :: False
 G |- false : Bool
 
-G ++ Bool |- A : Set i
+G ++ x : Bool |- A : Set i
 G |- a : Bool
-G |- b0 : A { true }
-G |- b1 : A { false }
+G |- b0 : A { true / x }
+G |- b1 : A { false / x }
 ----------------------------- :: If
-G |- if a b0 b1 : A { a }
+G |- if a b0 b1 : A { a / x }
 
 |- G
 ----------------------------- :: Void
@@ -459,9 +460,9 @@ Interp I i a ~ b : A { p | ( p =>+ refl , a <=> b )  \/ wne p  }
 Interp I i A S
 R in S * PowerSet STm
 forall a, (# exists S0  , ( a , S0 ) in R #)
-forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)
+forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a / x } S0 #)
 -------------------------------- :: Pi
-Interp I i Pi A B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }
+Interp I i Pi x :  A . B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }
 
 % Interp I i A S
 % F in S -> PowerSet STm
@@ -472,14 +473,14 @@ Interp I i Pi A B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S
 Interp I i A S
 R in S * PowerSet STm
 forall a, (# exists S0  , ( a , S0 ) in R #)
-forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a } S0 #)
+forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a / x } S0 #)
 -------------------------------- :: PiCoq
-Interp I i Pi A B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }
+Interp I i Pi x : A . B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }
 
 Interp I i A S
-forall a, (# a in S implies (# exists S0 , Interp I i B {a} S0 #) #)
+forall a, (# a in S implies (# exists S0 , Interp I i B { a / x } S0 #) #)
 ------------------------------------------- :: PiAlt
-Interp I i Pi A B { b | forall a, (# a in S , forall S0, (# Interp I i B {a} S0,  b a in S0 #) #) }
+Interp I i Pi x : A . B { b | forall a, (# a in S , forall S0, (# Interp I i B { a / x } S0,  b a in S0 #) #) }
 
 j < i
 --------------------------------- :: Set
@@ -526,3 +527,12 @@ defn
 |= G ::     :: SCtx :: 'SCtx_' {{ com Semantic Context Well-Formedness }}
 {{ tex \vDash [[G]] }}
 by
+
+------------- :: Empty
+|= empty
+
+
+|= G
+G |= A : Set i
+------------------------- :: Cons
+|= G ++ x : A

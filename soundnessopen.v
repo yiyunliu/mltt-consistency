@@ -1,10 +1,10 @@
 From WR Require Import syntax join semtypingopen normalform typing common imports.
 
-Definition ρ_ok Γ ρ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm ρ (dep_ith Γ i)) PA -> PA (ρ i).
+Definition ρ_ok Γ ρ := forall i, i ∈ dom Γ -> forall m PA, InterpUnivN m (subst_tm ρ (dep_ith Γ i)) PA -> PA (ρ i).
 Definition SemWt Γ a A := forall ρ, ρ_ok Γ ρ -> exists m PA, InterpUnivN m (subst_tm ρ A) PA /\ PA (subst_tm ρ a).
 Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
 
-Definition SemWff Γ := forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i)).
+Definition SemWff Γ := forall i, i ∈ dom Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i)).
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 Lemma ρ_ok_cons i Γ ρ a PA A :
