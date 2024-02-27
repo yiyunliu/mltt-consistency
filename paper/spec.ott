@@ -52,7 +52,7 @@ rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
   % | xi .: i  :: :: consInt
   %   {{ tex [[xi]]:[[i]] }}
   | idtm          :: :: idtm
-    {{ tex \ottkw{id}_{tm} }}
+    {{ tex \ottkw{id} }}
 
 tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
