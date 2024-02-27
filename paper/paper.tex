@@ -2709,17 +2709,18 @@ semantic typing because it is sufficient for our purposes
 
 \subsection{Mechanized logical relations for dependent types}
 
-\newcommand\dheader[1]{\rotatebox{60}{{#1}}}
-\newcommand\header[1]{\rotatebox{90}{{#1}}}
+%\newcommand\dheader[1]{\rotatebox{60}{{#1}}}
+\newcommand\header[1]{\rotatebox{60}{{#1}}}
 
 \begin{figure}[h]
 
 % \begin{minipage}{0.8\textwidth}
-  \begin{tabular}{ l |  l  | l | l | l }
+  \begin{tabular}{| l |  l  | l | l | l | }
+    \hline
       & \header{Universes} & \header{Inductives} & \header{Conversion}
       & \header{Large Elim} \\
     \hline
-    \lang{} & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} \\
+    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} \\
     % \hline
     $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗}\\
     NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} \\
@@ -2729,7 +2730,7 @@ semantic typing because it is sufficient for our purposes
     MLTT-a-la-Coq & 1 & Id, Nat & T & {\boxedsymbols ✓} \\
     % \hline
     Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} \\
-    % \hline
+    \hline 
     % CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
     % CoreSpec & \\
     % PCUIC & \\
@@ -2745,22 +2746,20 @@ semantic typing because it is sufficient for our purposes
     % \hline
     % Convertibility & Untyped & Untyped,Extensional & Untyped & Typed \\
   \end{tabular}
-% \end{minipage}
+
 
   \begin{tabular}{ll}
-  \\
-    $\lambda^\theta$  & \citet{casinghino:combining-proofs-programs} (logical fragment only) \\
-    NBE-in-Coq& \citet{nbeincoq} \\
-    $\lambda^{\Pi U\mathbb{N}}$ &\citet{decagda} \\
-    MLTT-a-la-Coq &\citet{martin-lof-a-la-coq} \\
-    Core Nuprl &\citet{anand2014towards} \\
-    CIC &\citet{barras2012semantical} \\
-    CoreSpec & \\
-    PCUIC & \\
-
-  \\
-  Universes: &Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
+  \textbf{Features:} \\
+  Universes: & Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
+  Inductives: & Identity types (Id), Natural numbers (Nat), W-types~\cite{w-types} \\
   Conversion:& Typed (T), Untyped (U), Extensional (E) \\
+    \\
+  \textbf{Citations:}\\
+  $\lambda^\theta$  & \citet{casinghino:combining-proofs-programs} (logical fragment only) \\
+  NBE-in-Coq& \citet{nbeincoq} \\
+  $\lambda^{\Pi U\mathbb{N}}$ &\citet{decagda} \\
+  MLTT-a-la-Coq &\citet{martin-lof-a-la-coq} \\
+  Core Nuprl &\citet{anand2014towards} \\
   \end{tabular}
 
   \caption{Feature matrix for dependently typed languages with
