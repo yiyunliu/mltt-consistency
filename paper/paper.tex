@@ -345,7 +345,7 @@ recursion in Coq, we keep the overall structure of our typeset proofs
 consistent with our mechanization.
 
 \yl{new overview starts here}
-Here is an overview of our contribution.
+More concretely, our paper makes the following contributions. 
 \begin{itemize}
 \item In Section~\ref{sec:spec},
 we present the type system of \lang{},
@@ -833,7 +833,8 @@ substitution, and other auxiliary definitions used in our paper, summarized in
 Figure~\ref{fig:auxdef}. We need these definitions to specify the reduction
 and typing relations for \lang{}. The metavariable $[[rho]]$ represents
 substitutions, which are mappings from de Bruijn indices to terms.  One
-example of a substitution is the function $\ottkw{id}_{tm}$, the identity
+example of a substitution is the function $\ottkw{id}_{tm}$,\scw{Can we just 
+call this \ottkw{id} now?} the identity
 substitution that maps each index to the corresponding term variable.  % The
 % $...$ substitution is more general and adds $[[n]]$ to the index
 % before injecting it as a term.

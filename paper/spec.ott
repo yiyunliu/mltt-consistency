@@ -60,13 +60,13 @@ tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
   | x :: :: Var
     {{ com variable }}
   | Pi x : A . B :: :: Pi
-    {{ tex  \Pi [[x]]:[[A]].[[B]] }}
+    {{ tex  \Pi [[x]]\!:\![[A]].[[B]] }}
     {{ com dependent function type }}
   | \ x . a :: :: Abs
     {{ tex \lambda [[x]]. [[a]] }}
     {{ com function }}
   | \- x : A . a :: :: AnnAbs
-    {{ tex \lambda [[x]]:[[A]] . [[a]] }}
+    {{ tex \lambda [[x]]\!:\![[A]] . [[a]] }}
     {{ com annotated functions }}
   | a b :: :: App
     {{ tex [[a]] \; [[b]] }}
