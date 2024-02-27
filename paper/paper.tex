@@ -2661,15 +2661,18 @@ semantic typing because it is sufficient for our purposes
 \subsection{Mechanized logical relations for dependent types}
 
 %\newcommand\dheader[1]{\rotatebox{60}{{#1}}}
-\newcommand\header[1]{\rotatebox{60}{{#1}}}
+\newcommand\header[1]{\rotatebox{0}{{#1}}}
 
 \begin{figure}[h]
 
 % \begin{minipage}{0.8\textwidth}
   \begin{tabular}{| l |  l  | l | l | l | l| }
     \hline
-      & \header{Universes} & \header{Inductives} & \header{Conversion}
-      & \header{Large Elim} & Main results \\
+%      & \header{Universes} & \header{Inductives} & \header{Conversion}
+%      & \header{Large Elim} & Main results \\
+      & \header{Univ} & \header{Ind} & \header{Conv}
+      & \header{Large E} & Main results \\
+
     \hline
     \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓}
     & Consistency and normalization \\
@@ -2703,10 +2706,10 @@ semantic typing because it is sufficient for our purposes
 
   \begin{tabular}{ll}
     \\
-  Universes: & Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
-  Inductives: & Identity types (Id), Natural numbers (Nat), W-types \\
-  Conversion:& Untyped (U), Typed (T),  Extensional (E) \\
-  Large Eliminations:& included ({\boxedsymbols ✓}), not included ({\boxedsymbols ✗}) \\
+  \underline{Univ}erses: & Countable ($\mathbb{N}$), Zero (0), One (1), Impredicative ($\mathbb{I}$) \\
+  \underline{Ind}uctives: & Identity types (Id), Natural numbers (Nat), W-types \\
+  \underline{Conv}ersion:& Untyped (U), Typed (T),  Extensional (E) \\
+  \underline{Large E}liminations:& Included ({\boxedsymbols ✓}), not included ({\boxedsymbols ✗}) \\
   \\
   $\lambda^\theta$  & \citet{casinghino:combining-proofs-programs} (logical fragment only) \\
   NBE-in-Coq& \citet{nbeincoq} \\
@@ -2720,11 +2723,12 @@ semantic typing because it is sufficient for our purposes
   \label{fig:featurematrix}
 \end{figure}
 
-
+\scw{Should we add a column for whether their logical relation is unary or binary?} 
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
 that feature logical-relations arguments for dependently-typed languages.
 Each of these proofs is significantly larger than than our development; but they
-also prove more results about different object languages.
+also prove more results about different object languages.\scw{Can we mention the 
+line counts in the text, when they are known?}
 The table provides a comparison between the various features of their
 object languages, but is not exhaustive. For example,
 \citet{casinghino:combining-proofs-programs} and
@@ -2747,7 +2751,8 @@ step-indexing is required to model the programmatic fragment, which
 interacts with the logical fragment.
 The lack of polymorphism and type-level computation means their
 logical relation can be defined recursively for well-formed types using
-a size metric, which has been explored in~\citet{liu2023dependently}.
+a size metric, which has been used in~\citet{liu2023dependently}.
+Their development is around 8,000 lines of Coq nonblank, noncomment code. 
 
 \citet{decagda} mechanize in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
@@ -2762,7 +2767,7 @@ which is available in Agda but not in Coq.
 from \citet{decagda} in the predicative fragment of Coq and further
 extends the decidability of type conversion result
 from~\citet{decagda} to the decidability type checking of a
-bidirectional type system.
+bidirectional type system. \scw{How big are these proofs?}
 
 \citet{anand2014towards} mechanize the metatheory of
 Nuprl~\citep{constable1986implementing} in Coq. The metatheory is an
