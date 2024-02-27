@@ -2401,7 +2401,7 @@ Section~\ref{sec:conversionalgo}.
 \end{figure}
 
 Figure~\ref{fig:linecount} shows the number of non-blank, non-comment lines of
-code\footnote{calculated by the \texttt{cloc} tool} for each file of our
+code\footnote{calculated by the \texttt{cloc} tool, available from \url{https://github.com/AlDanial/cloc}.} for each file of our
 development, including the base consistency proof from
 Section~\ref{sec:logreldep} and \ref{sec:logrelproof} and the extension to
 normalization for open and closed terms from Section~\ref{sec:extension}.
@@ -2644,7 +2644,72 @@ an induction metric to define an executable algorithm\footnote{Coq's
 \section{Related Work}
 \label{sec:relatedwork}
 
-\def\rot{\rotatebox}
+
+% \scw{Maybe it would be useful to include a chart here, so that readers can
+%   easily keep track of the features of the various languages.  i.e. which ones
+%   include large eliminations? type-directed equivalence? impredicative prop?
+%   inductive datatypes? what are their line counts?}
+% \yl{resolved}
+
+\subsection{Logical relations for dependent types}
+In the most general sense, a logical relation can be viewed as a
+practical technique that uses a type-indexed relation to assign
+meanings to types and strengthen the induction hypothesis for the
+property of interest. The original idea of this technique can be
+traced back to
+\citet{tait1967:reducibility}. This proof maps
+types to sets of terms satisfying certain properties related to reduction.
+The same idea is explained in \citet{girard1989proofs} and extended to
+prove the strong normalization property of System F.
+
+Tait's method has been successfully applied to dependently typed
+languages to prove strong normalization \cite{Martin-Lof-1973,luo1990extended,geuvers1994short, barendregt:lambda-calculi-with-types}.
+
+However, the pen-and-paper representation of logical relations proofs
+can be challenging to adapt to a theorem prover since many details
+are hidden behind concise notations.
+For example, \citet{geuvers1994short} presents the interpretation for types as
+an inductively defined total function over the set of syntactically
+well-formed types. \scw{The issue is that Geuver's metalogic is (untyped) set 
+theory, but Coq and Agda use type theory.}
+In untyped set theory, it makes sense to define the logical relation as a
+simply-typed function that takes a type and returns some set; however
+in constructive type theory, the metalogic of Coq and Agda, the
+interpretation function must be a dependently-typed function whose
+return type depends on the derivation of the well-typedness of its
+input. The well-typedness derivation and the proof of the
+classification theorem\scw{what is the classification theorem}
+are examined in the body
+of the interpretation function to decide whether an argument of an
+application should be erased during interpretation. As a result, this 
+definition causes difficulties for modern proof assistants.
+Due to the
+impredicativity of the object language, \citet{geuvers1994short}'s
+proof cannot be encoded in Agda, which has a predicative
+metatheory. Due to the use of proof-relevant derivations, even in
+Coq, a proof assistant that supports impredicativity, one would need
+to constantly juggle between the impredicative but irrelevant sort
+\texttt{Prop} sort and the predicative but relevant sort
+\texttt{Type}.
+
+More recent work such as \citet{Abel12}
+and \citet{abel2008betaeta} make their definitions more explicit and
+precise and thus more directly encodable in proof assistants. 
+Our logical relation resembles their definition of a
+semantic universe hierarchy, although we close our relation 
+under expansion with respect to parallel reduction rather
+than weak-head reduction. \scw{Why is this important?}
+Furthermore, \citet{Abel12} and
+\citet{abel2008betaeta} use their semantic universe hierarchy as a
+measure to define Kripke-style logical relations, from which they
+derive the correctness of their conversion algorithms. In our work, we
+use the semantic universe hierarchy directly in our definition of
+semantic typing because it is sufficient for our purposes
+(consistency and normalization).
+
+\subsection{Mechanized logical relations for dependent types}
+
+\newcommand\dheader[1]{\rotatebox{60}{{#1}}}
 \newcommand\header[1]{\rotatebox{90}{{#1}}}
 
 \begin{figure}[h]
@@ -2664,10 +2729,10 @@ an induction metric to define an executable algorithm\footnote{Coq's
     MLTT-a-la-Coq & 1 & Id, Nat & T & {\boxedsymbols ✓} \\
     % \hline
     Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} \\
-    \hline
-    CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
-    CoreSpec & \\
-    PCUIC & \\
+    % \hline
+    % CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
+    % CoreSpec & \\
+    % PCUIC & \\
     %   & \lang{} & \citet{anand2014towards} &
     %                                          \citet{barras2012semantical}
     % & \citet{martin-lof-a-la-coq}  \\
@@ -2703,81 +2768,7 @@ an induction metric to define an executable algorithm\footnote{Coq's
   \label{fig:featurematrix}
 \end{figure}
 
-% \scw{Maybe it would be useful to include a chart here, so that readers can
-%   easily keep track of the features of the various languages.  i.e. which ones
-%   include large eliminations? type-directed equivalence? impredicative prop?
-%   inductive datatypes? what are their line counts?}
-% \yl{resolved}
 
-\subsection{Logical relations}
-Proof by logical relations does not come with a precise definition. In
-the most general sense, a logical relation can be viewed as a
-practical technique that uses a type-indexed relation to assign
-meanings to types and strengthen the induction hypothesis for the
-property of interest. The original idea of this technique can be
-traced back to
-\citet{tait1967:reducibility}. \citet{tait1967:reducibility} maps
-types to sets of terms satisfying certain properties related to reduction.
-The same idea is explained in \citet{girard1989proofs} and extended to
-prove the strong normalization property of System F.
-
-Tait's method has been successfully applied to dependently typed
-languages.  \citet{Martin-Lof-1973}, \citet{luo1990extended},
-\citet{geuvers1994short}, and
-\citet{barendregt:lambda-calculi-with-types} are some of the earlier
-works that prove strong
-normalization for different dependently type systems using Tait's notion of
-reducibility.
-
-\scw{Should give Martin L\"of credit for first consistency proof.}
-% \scw{What techniques do these three proofs use? How is it different from
-% your proof? What about Luo, which
-% introduced a universe hierarchy? What about categories with families, or
-% other ways of showing consistency?}
-% \yl{resolved}
-
-% Some of these proofs are still reapplied in more recent works. For
-% example, the technique for proving strong normalization by
-% \citet{geuvers1994short} is adapted by \citet{moon2021graded} to show
-% the normalization property for a dependently typed system extended with
-% modalities.
-
-The pen and paper representation of the logical relation proofs
-can be challenging to adapt to a theorem prover since a lot of details
-are hidden behind the concise notations.
-As an example, \citet{geuvers1994short} presents the interpretation for types as
-an inductively defined total function over the set of syntactically
-well-formed types. Despite the notation for the logical relation as a
-simply typed function that takes a type and returns some set, the
-interpretation function in reality is a dependent function whose
-return type depends on the derivation of the well-typedness of its
-input. The well-typedness derivation and the proof of the
-classification theorem are needed relevantly in the body
-of the interpretation function to decide whether an argument of an
-application should be erased during interpretation. Due to the
-impredicativity of the object language, \citet{geuvers1994short}'s
-proof cannot be encoded in Agda, which has a predicative
-metatheory. Due to the use of proof-relevant derivations, even in
-Coq, a proof assistant that supports impredicativity, one would need
-to constantly juggle between the impredicative but irrelevant sort
-\texttt{Prop} sort and the predicative but relevant sort
-\texttt{Type}.
-
-More recent works such as \citet{Abel12}
-and\citet{abel2008betaeta} make their definitions more explicit and
-precise and thus easier to encode in proof assistants. Our definition
-of logical relation is reminiscent of their definition of a
-semantic universe hierarchy, though our logical relation is defined to
-be closed under expansion with respect to parallel reduction rather
-than weak head reduction. Furthermore, \citet{Abel12} and
-\citet{abel2008betaeta} use the semantic universe hierarchy as a
-measure to define Kripke-style logical relations, from which they
-derive the correctness of their conversion algorithms. In our work, we
-use the semantic universe hierarchy directly in our definition of
-semantic typing because it is sufficient
-for deriving consistency and later normalization.
-
-\subsection{Mechanized logical relations about dependent types}
 In Figure~\ref{fig:featurematrix}, we give an overview of features of
 the object languages from mechanized logical relations about dependent
 types. The table is far from exhaustive. For example,
