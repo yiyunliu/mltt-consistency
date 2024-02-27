@@ -8,7 +8,7 @@ Definition SemWt Γ a A := forall ρ, ρ_ok Γ ρ -> exists m PA, ( ⟦ A [ρ] �
 Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
 
 (* Semantic context wellformedness *)
-Definition SemWff Γ := forall i A, lookup i Γ A -> exists F, Γ ⊨ A ∈ tUniv (F i).
+Definition SemWff Γ := forall i A, lookup i Γ A -> exists j, Γ ⊨ A ∈ tUniv j.
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 Lemma ρ_ok_cons i Γ ρ a PA A :
@@ -52,6 +52,15 @@ Proof.
   exists PA. by asimpl.
 Qed.
 
+Lemma weakening_Sem Γ a A B i
+  (h0 : Γ ⊨ B ∈ tUniv i)
+  (h1 : Γ ⊨ a ∈ A) :
+   B :: Γ ⊨ a ⟨↑⟩ ∈ A ⟨↑⟩.
+Proof.
+  apply : renaming_SemWt; eauto.
+  hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
+Qed.
+
 (* Well-formed types have interpretations *)
 Lemma SemWt_Univ Γ A i :
   (Γ ⊨ A ∈ tUniv i) <->
@@ -68,19 +77,35 @@ Proof.
     + hauto lq:on.
 Qed.
 
-(* Fundamental theorem: Syntactic typing implies semantic typing *)
-Theorem soundness Γ :
-  (forall a A, (Γ ⊢ a ∈ A) -> (Γ ⊨ a ∈ A)) /\
-  ((⊢ Γ) -> (⊨ Γ)).
+(* Structural laws for Semantic context wellformedness *)
+Lemma SemWff_nil : SemWff nil. inversion 1. Qed.
+
+Lemma SemWff_cons Γ A i :
+    ⊨ Γ ->
+    Γ ⊨ A ∈ tUniv i ->
+    (* -------------- *)
+    ⊨ A :: Γ.
 Proof.
-  move : Γ.
+  move => h h0.
+  move => k h1. elim/lookup_inv.
+  - hauto q:on use:weakening_Sem.
+  - move => _ n A0 Γ0 B + ? []*. subst. move /h => [j ?].
+    exists j. change (tUniv j) with (tUniv j) ⟨↑⟩.
+    eauto using weakening_Sem.
+Qed.
+
+(* Fundamental theorem: Syntactic typing implies semantic typing *)
+Theorem soundness :
+  (forall Γ a A, Γ ⊢ a ∈ A -> Γ ⊨ a ∈ A) /\
+  (forall Γ, ⊢ Γ -> ⊨ Γ).
+Proof.
   apply wt_mutual.
   - move => Γ i A h ih l ρ hρ.
     move /(_ i ltac:(done) ltac:(auto)) in ih.
-    case : ih => F ih.
+    case : ih => j ih.
     rewrite SemWt_Univ in ih.
     move: (ih _ hρ) => [PA h1].
-    exists (F i). exists PA. split. auto.
+    exists j. exists PA. split. auto.
     move: (hρ _ _ l _ _ h1).
     by asimpl.
   - hauto l:on use:SemWt_Univ.
@@ -191,7 +216,8 @@ Proof.
       * move => PC hPC.
         exists i, PC. split; first tauto.
         qauto l:on use:adequacy,wne_j unfold:CR.
-  - hauto l:on.
+  - apply SemWff_nil.
+  - eauto using SemWff_cons.
 Qed.
 
 Lemma mltt_normalizing Γ a A : (Γ ⊢ a ∈ A) -> wn a /\ wn A.
