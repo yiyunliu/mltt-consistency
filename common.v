@@ -2,17 +2,6 @@ From WR Require Import imports.
 
 Definition context := list tm.
 
-Inductive lookup : nat -> context -> tm -> Prop :=
-  | here : forall {A Γ}, lookup 0 (A :: Γ) A 
-  | there : forall {n A Γ B},
-      lookup n Γ A -> lookup (S n) (B :: Γ) (A ⟨shift⟩).
-
-Definition lookup_good_renaming ξ Γ Δ :=
-  forall i A, lookup i Γ A -> lookup (ξ i) Δ A⟨ξ⟩.
-
-
-
-
 Fixpoint dep_ith Γ i :=
   match Γ , i with
   | (A :: Γ), 0 => ren_tm shift A
@@ -27,7 +16,7 @@ Lemma dep_ith_ren_tm (Γ : context) (A : tm) (x : fin) :
 Proof. done. Qed.
 
 Definition good_renaming ξ Γ Δ :=
-  forall i, i < length Γ -> ξ i < length Δ /\ dep_ith Δ (ξ i) = ren_tm ξ (dep_ith Γ i).
+  forall i, i ∈ dom Γ -> ξ i ∈ dom Δ /\ dep_ith Δ (ξ i) = ren_tm ξ (dep_ith Γ i).
 
 Lemma dep_ith_shift Γ i :
   dep_ith Γ i = ren_tm (Nat.add (S i)) (ith Γ i).

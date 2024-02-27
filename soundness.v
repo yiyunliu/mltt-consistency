@@ -1,15 +1,14 @@
 From WR Require Import syntax join semtyping typing common imports.
 
 (* Semantic substitution well-formedness *)
-Definition ρ_ok Γ ρ := forall i A, lookup i Γ A -> forall m PA, ⟦ A [ρ] ⟧ m ↘ PA -> PA (ρ i).
+Definition ρ_ok Γ ρ := forall i, i ∈ dom Γ -> forall m PA, ⟦ (dep_ith Γ i) [ρ] ⟧ m ↘ PA -> PA (ρ i).
 
 (* Semantic typing, written Γ ⊨ a : A in the paper *)
 Definition SemWt Γ a A := forall ρ, ρ_ok Γ ρ -> exists m PA, ( ⟦ A [ρ] ⟧ m ↘ PA)  /\ PA (a [ρ]).
 Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
 
 (* Semantic context wellformedness *)
-(* Why is this exists F, not exists j ? *)
-Definition SemWff Γ := forall i A, lookup i Γ A -> exists F, Γ ⊨ A ∈ tUniv (F i).
+Definition SemWff Γ := forall i, i ∈ dom Γ -> exists F, (skipn (S i) Γ) ⊨ ith Γ i ∈ tUniv (F i).
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 
@@ -20,43 +19,36 @@ Lemma ρ_ok_cons {i Γ ρ a PA A} :
   ρ_ok (A :: Γ) (a .: ρ).
 Proof.
   move => h0 h1 h2.
-  unfold ρ_ok.
-  move=> n B l.
-  inversion l; subst.
-Admitted.
-(*
-  - move=> m PA0 hPA0. asimpl.
-    (* need to know that B[ρ] = B[a .: ρ] *)
-    suff : PA = PA0 by congruence.
-    
-  case => [A0 Γ0 m PA0 | m A0 PA0].
+  case => /= [_ | m ? PA0].
   - move => j PA0 hPA0.
     asimpl in hPA0.
     suff : PA = PA0 by congruence.
     hauto l:on use:InterpUnivN_deterministic'.
   - asimpl. hauto lq:on unfold:ρ_ok solve+:lia.
-Qed. *)
+Qed.
 
 (* Well-formed substitutions are stable under renaming *)
 Lemma ρ_ok_renaming Γ ρ :
   forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    good_renaming ξ Γ Δ ->
     ρ_ok Δ ρ ->
     ρ_ok Γ (ξ >> ρ).
 Proof.
   move => Δ ξ hscope h1.
-  rewrite /ρ_ok => i A hi j PA.
-  move: (hscope _ _ hi) => ld.
-  move: (h1 _ _ ld j PA) =>  h2.
-  asimpl in h2.
-  auto.
+  rewrite /ρ_ok => i hi j PA.
+  replace (subst_tm (ξ >> ρ) (dep_ith Γ i)) with
+    (subst_tm ρ (ren_tm ξ (dep_ith Γ i))); last by asimpl.
+  rewrite /good_renaming in hscope.
+  case /(_ i hi) : hscope => ? h0.
+  rewrite -h0 => //.
+  by apply h1.
 Qed.
 
 (* Typing is stable under renaming *)
 Lemma renaming_SemWt Γ a A :
   (Γ ⊨ a ∈ A) ->
   forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    good_renaming ξ Γ Δ ->
     Δ ⊨ a⟨ξ⟩ ∈ A⟨ξ⟩ .
 Proof.
   rewrite /SemWt => h Δ ξ hξ ρ hρ.
@@ -88,15 +80,13 @@ Theorem soundness Γ :
 Proof.
   move : Γ.
   apply wt_mutual.
-  - move => Γ i A h ih l ρ hρ.
-    move /(_ i ltac:(done) ltac:(auto)) in ih.
+  - move => Γ i h ih ? ρ hρ.
+    move /(_ i ltac:(done)) in ih.
     case : ih => F ih.
-    rewrite -> SemWt_Univ in ih.
-    move: (ih _ hρ) => [PA h1].
-    exists (F i). exists PA. split. auto.    
-    unfold ρ_ok in hρ.
-    move: (hρ _ _ l _ _ h1) => h2.
-    asimpl. done.
+    suff /SemWt_Univ ih'  : SemWt Γ (dep_ith Γ i) (tUniv (F i)).
+    + move /ih' : (hρ) {ih'} => [PA hPA].
+      exists (F i), PA. sfirstorder.
+    + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
   - hauto l:on use:SemWt_Univ.
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.

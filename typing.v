@@ -4,11 +4,11 @@ Reserved Notation "Γ ⊢ a ∈ A" (at level 70).
 Reserved Notation "⊢ Γ" (at level 70).
 
 Inductive Wt (Γ : context) : tm -> tm -> Prop :=
-| T_Var i A :
+| T_Var i :
   ⊢ Γ ->
-  lookup i Γ A ->
+  i ∈ dom Γ ->
   (* ------ *)
-  Γ ⊢ (var_tm i) ∈ A
+  Γ ⊢ (var_tm i) ∈ (dep_ith Γ i)
 
 | T_Void i :
   ⊢ Γ ->
@@ -16,7 +16,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   Γ ⊢ tVoid ∈ (tUniv i)
 
 | T_Pi i A B :
-  Γ ⊢ A ∈ (tUniv i) ->
+  Γ ⊢ A ∈(tUniv i) ->
   (A :: Γ) ⊢ B ∈ (tUniv i) ->
   (* --------------------- *)
   Γ ⊢ (tPi A B) ∈ (tUniv i)
@@ -92,7 +92,8 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 
 with Wff (Γ : context) : Prop :=
 | Wff_intro F :
-  (forall n A, lookup n Γ A -> Γ ⊢ A ∈ tUniv (F n)) ->
+  (* each variable i is assigned its own universe level F i *)
+  (forall i, i ∈ dom Γ -> (skipn (S i) Γ) ⊢ (ith Γ i) ∈ (tUniv (F i))) ->
   (* ---------------------------------------------------------------- *)
   ⊢ Γ
 where 
@@ -103,5 +104,3 @@ Scheme wt_ind := Induction for Wt Sort Prop
     with wff_ind := Induction for Wff Sort Prop.
 
 Combined Scheme wt_mutual from wt_ind, wff_ind.
-
-

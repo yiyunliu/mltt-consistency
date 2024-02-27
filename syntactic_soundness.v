@@ -94,7 +94,7 @@ Qed.
 Lemma T_Var' Γ i A :
   A = dep_ith Γ i ->
   (⊢ Γ) ->
-  i < length Γ ->
+  i ∈ dom Γ ->
   (* ------ *)
   Γ ⊢ (var_tm i) ∈ A.
 Proof. qauto ctrs:Wt. Qed.
@@ -266,7 +266,7 @@ Lemma weakening_Syn' Γ a A A0 B i
 Proof. sfirstorder use:weakening_Syn. Qed.
 
 Definition good_morphing ρ Γ Δ :=
-  forall i, i < length Γ -> Wt Δ (ρ i) (subst_tm ρ (dep_ith Γ i)).
+  forall i, i ∈ dom Γ -> Wt Δ (ρ i) (subst_tm ρ (dep_ith Γ i)).
 
 Lemma good_morphing_suc Γ Δ A j ξ (h : good_morphing ξ Γ Δ)
   (hh : Wt Δ (subst_tm ξ A) (tUniv j)) :

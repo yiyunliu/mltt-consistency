@@ -11,5 +11,6 @@ From WR Require Export syntax.
 
 Notation "s [ sigmatm ]" := (subst_tm sigmatm s) (at level 7, left associativity) : subst_scope.
 Notation "s ⟨ xitm ⟩" := (ren_tm xitm s) (at level 7, left associativity) : subst_scope.
+Notation "n ∈ 'dom'  Γ " := (n < length Γ) (at level 70, no associativity).
 
 Global Open Scope subst_scope. 
