@@ -1255,3 +1255,94 @@ abstract = {We consider the equational theory λπ of λ-calculus extended with 
   plclub = yes,
   note = {Artifact available}
 }
+@InProceedings{pitts1998existential,
+author="Pitts, Andrew M.",
+editor="Larsen, Kim G.
+and Skyum, Sven
+and Winskel, Glynn",
+title="Existential types: Logical relations and operational equivalence",
+booktitle="Automata, Languages and Programming",
+year="1998",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="309--326",
+abstract="Existential types have proved useful for classifying various kinds of information hiding in programming languages, such as occurs in abstract datatypes and objects. In this paper we address the question of when two elements of an existential type are semantically equivalent. Of course, it depends what one means by `semantic equivalence'. Here we take a syntactic approach---so semantic equivalence will mean some kind of operational equivalence. The paper begins by surveying some of the literature on this topic involving `logical relations'. Matters become quite complicated if the programming language mixes existential types with function types and features involving non-termination (such as recursive definitions). We give an example (suggested by Ian Stark) to show that in this case the existence of suitable relations is sufficient, but not necessary for proving operational equivalences at existential types. Properties of this and other examples are proved using a new form of operationally-based logical relation which does in fact provide a useful characterisation of operational equivalence for existential types.",
+isbn="978-3-540-68681-1"
+}
+
+
+@inproceedings{10.1145/2784731.2784733,
+author = {Bowman, William J. and Ahmed, Amal},
+title = {Noninterference for free},
+year = {2015},
+isbn = {9781450336697},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2784731.2784733},
+doi = {10.1145/2784731.2784733},
+abstract = {The dependency core calculus (DCC) is a framework for studying a variety of dependency analyses (e.g., secure information flow). The key property provided by DCC is noninterference, which guarantees that a low-level observer (attacker) cannot distinguish high-level (protected) computations. The proof of noninterference for DCC suggests a connection to parametricity in System F, which suggests that it should be possible to implement dependency analyses in languages with parametric polymorphism. We present a translation from DCC into Fω and prove that the translation preserves noninterference. To express noninterference in Fω, we define a notion of observer-sensitive equivalence that makes essential use of both first-order and higher-order polymorphism. Our translation provides insights into DCC's type system and shows how DCC can be implemented in a polymorphic language without loss of the noninterference (security) guarantees available in DCC. Our contributions include proof techniques that should be valuable when proving other secure compilation or full abstraction results.},
+booktitle = {Proceedings of the 20th ACM SIGPLAN International Conference on Functional Programming},
+pages = {101–113},
+numpages = {13},
+keywords = {Noninterference, dependency, fully abstract compilation, information flow, logical relations, parametricity, polymorphism, secure compilation, security},
+location = {Vancouver, BC, Canada},
+series = {ICFP 2015}
+}
+
+  
+
+@article{bowman2015noninterference,
+author = {Bowman, William J. and Ahmed, Amal},
+title = {Noninterference for free},
+year = {2015},
+issue_date = {September 2015},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {50},
+number = {9},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/2858949.2784733},
+doi = {10.1145/2858949.2784733},
+abstract = {The dependency core calculus (DCC) is a framework for studying a variety of dependency analyses (e.g., secure information flow). The key property provided by DCC is noninterference, which guarantees that a low-level observer (attacker) cannot distinguish high-level (protected) computations. The proof of noninterference for DCC suggests a connection to parametricity in System F, which suggests that it should be possible to implement dependency analyses in languages with parametric polymorphism. We present a translation from DCC into Fω and prove that the translation preserves noninterference. To express noninterference in Fω, we define a notion of observer-sensitive equivalence that makes essential use of both first-order and higher-order polymorphism. Our translation provides insights into DCC's type system and shows how DCC can be implemented in a polymorphic language without loss of the noninterference (security) guarantees available in DCC. Our contributions include proof techniques that should be valuable when proving other secure compilation or full abstraction results.},
+journal = {SIGPLAN Not.},
+month = {aug},
+pages = {101–113},
+numpages = {13},
+keywords = {Noninterference, dependency, fully abstract compilation, information flow, logical relations, parametricity, polymorphism, secure compilation, security}
+}
+
+  
+
+
+@inproceedings{benton2009biorthogonality,
+author = {Benton, Nick and Hur, Chung-Kil},
+title = {Biorthogonality, step-indexing and compiler correctness},
+year = {2009},
+isbn = {9781605583327},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1596550.1596567},
+doi = {10.1145/1596550.1596567},
+abstract = {We define logical relations between the denotational semantics of a simply typed functional language with recursion and the operational behaviour of low-level programs in a variant SECD machine. The relations, which are defined using biorthogonality and stepindexing, capture what it means for a piece of low-level code to implement a mathematical, domain-theoretic function and are used to prove correctness of a simple compiler. The results have been formalized in the Coq proof assistant.},
+booktitle = {Proceedings of the 14th ACM SIGPLAN International Conference on Functional Programming},
+pages = {97–108},
+numpages = {12},
+keywords = {step-indexing, proof assistants, denotational semantics, compiler verification, biorthogonality},
+location = {Edinburgh, Scotland},
+series = {ICFP '09}
+}
+
+@InProceedings{perconti2014compiler,
+author="Perconti, James T.
+and Ahmed, Amal",
+editor="Shao, Zhong",
+title="Verifying an Open Compiler Using Multi-language Semantics",
+booktitle="Programming Languages and Systems",
+year="2014",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="128--148",
+abstract="Existing verified compilers are proved correct under a closed-world assumption, i.e., that the compiler will only be used to compile whole programs. We present a new methodology for verifying correct compilation of program components, while formally allowing linking with target code of arbitrary provenance. To demonstrate our methodology, we present a two-pass type-preserving open compiler and prove that compilation preserves semantics. The central novelty of our approach is that we define a combined language that embeds the source, intermediate, and target languages and formalizes a semantics of interoperability between them, using boundaries in the style of Matthews and Findler. Compiler correctness is stated as contextual equivalence in the combined language.",
+isbn="978-3-642-54833-8"
+}
+

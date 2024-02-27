@@ -4,7 +4,7 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentsfalse         %% toggle comments here
+\commentstrue         %% toggle comments here
 \extendedfalse
 \anonymoustrue
 
@@ -231,9 +231,12 @@ Our goal with this work is to demonstrate how the proof technique of
 \emph{syntactic logical relations} can be applied to reason about dependent
 type theories.  Logical relations are a powerful proof technique for reasoning
 about lambda calculi and their operational semantics. They have been used to
-show diverse properties such as strong normalization, contextual equivalence,
-representation independence, noninterference, compiler correctness, and the
-decidability of conversion algorithms. \scw{add citations? emphasize that we are working
+show diverse properties such as strong
+normalization~\citep{girard1989proofs,
+  geuvers1994short}, contextual equivalence~\citep{constable1986implementing},
+representation independence~\citep{pitts1998existential}, noninterference~\citep{bowman2015noninterference}, compiler correctness~\citep{benton2009biorthogonality,perconti2014compiler}, and the
+decidability of conversion algorithms~\citep{harper2005equivalence,Abel12,abel2013normalization}. \scw{% add citations?
+  emphasize that we are working
 with syntactic logical relations.}
 
 Tutorial material on logical relations~\citep{skorstengaard2019introduction,
@@ -2682,7 +2685,10 @@ in constructive type theory, the metalogic of Coq and Agda, the
 interpretation function must be a dependently-typed function whose
 return type depends on the derivation of the well-typedness of its
 input. The well-typedness derivation and the proof of the
-classification theorem\scw{what is the classification theorem}
+classification theorem\scw{what is the classification theorem}\yl{It
+  says all well-formed terms A (either G |- A : .. or G |- .. : A)
+then A is either an object, a type, or a kind. The classification is
+used to guide erasure}
 are examined in the body
 of the interpretation function to decide whether an argument of an
 application should be erased during interpretation. As a result, this
@@ -2702,7 +2708,9 @@ precise and thus more directly encodable in proof assistants.
 Our logical relation resembles their definition of a
 semantic universe hierarchy, although we close our relation
 under expansion with respect to parallel reduction rather
-than weak-head reduction. \scw{Why is this important?}
+than weak-head reduction. \scw{Why is this important?} \yl{if you are
+  referring to the sentence about weak-head reduction, it can
+  be deleted because it's discussed in Section 9 already}
 Furthermore, \citet{Abel12} and
 \citet{abel2008betaeta} use their semantic universe hierarchy as a
 measure to define Kripke-style logical relations, from which they
