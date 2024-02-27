@@ -269,13 +269,13 @@ of the features that we include in the object type system and the results
 that we prove about it, in addition to the judicious use of automation.  Our
 language is small, but includes enough to be illustrative. For example, we
 eschew inductive datatypes or W-types, but we do include propositional
-equality and booleans in order to capture the challenges presented by indexed
+equality and booleans to capture the challenges presented by indexed
 types and dependent pattern matching. We do not show the decidability of type
-checking, nor do we develop a PER semantics, but we do demonstrate how our
+checking, nor do we develop a PER semantics, but we prove logical consistency, which states that empty types are not inhabited in an empty context, and demonstrate how our
 consistency proof can be extended (at a moderate cost of 500 lines of code) to
-show the existence of $\beta\eta$-normal form for well-typed open \emph{and}
+show the existence of $\beta\eta$-normal forms for well-typed open \emph{and}
 closed terms. We include a full predicative universe hierarchy and
-type-level computation, to demonstrate the logical strength of the
+type-level computation to demonstrate the logical strength of the
 approach. % \scw{Say that we don't have impredicativity, but neither does anyone
   % else?}\yl{Nobody else but Barras. I'll find the citation}
 %%
@@ -303,14 +303,13 @@ approach. % \scw{Say that we don't have impredicativity, but neither does anyone
 
 The result of our work is a development that an interested researcher can
 navigate and understand. We accompany this mechanized proof with an informal
-description, presented here using set theory notation and terminology so that
-the material is accessible to readers with general mathematical background,
+description, presented here using set-theoretic notation and terminology so that
+the material is accessible to readers with a general mathematical background.
 That said, our explanations do not stray too far away from our proof scripts.
-We label each lemma directly to its counterpart in the proof script,
+We link each lemma directly to its counterpart in the proof script,
 anticipating that readers may wish to reference and validate our formalism.
-Our typeset representations are purposefully made to directly follow our
-mechanical proofs, while avoiding, as much as possible, the introduction
-of artifacts that are specific to theorem provers.
+The typeset proofs purposefully follow the
+mechanized proofs closely while avoiding, as much as possible, artifacts specific to Coq.
 
 Not only does this connection aid readers that wish to, like us, adopt proof
 assistants for their day-to-day use, we also find that this precision is
@@ -332,7 +331,7 @@ in modern proof assistants.
 %dependent types, we find our approach advantageous for a few reasons.
 Furthermore, while a proof assistant may reject perfectly valid definitions,
 it helps us keep our definition precise and unambiguous. A precise definition
-is crucial as the reasoning principles we are allowed to use are directly tied
+is crucial, as the reasoning principles we are allowed to use are directly tied
 to the definition, which is sometimes obscured by concise notations that
 diverge too far from a formal proof.
 
@@ -349,7 +348,7 @@ In Section~\ref{sec:spec}, we introduce \lang{}, the dependent type theory of
 interest, reminiscent of Martin-Löf style predicative type systems. A key
 design choice that impacts our proofs is the use of an untyped conversion
 rule, inspired by Pure Type Systems~\citep{barendregt1991introduction}, and
-specified through parallel
+specified by parallel
 reduction~\citep{takahashi-parallel-reduction, barendregt:lambda-calculi-with-types} % to normal form~\citet{barendregt}
 .
 Because we believe that a good coverage of features makes our proof applicable
@@ -362,11 +361,11 @@ equality.
 
 In Section~\ref{sec:logreldep}, we formulate the consistency property and
 motivate where a proof by logical relations is required. The most important
-contribution of this section is the definition of the logical relation as an
-inductively defined relation and demonstration of how to reason about this
+contributions of this section are the definition of the logical relation as an
+inductively defined relation and demonstrating how to reason about this
 definition. We also show that the logical relation respects evaluation
 (referred to as the irrelevance property in \citet{martin-lof-a-la-coq}), and
-prove that the logical relation is a partial function; that is, each type can
+prove that the logical relation is a partial function: that is, each type can
 have at most one unique interpretation.
 
 In Section~\ref{sec:logrelproof}, we show that our definitions can be the
@@ -382,14 +381,14 @@ computation in Section~\ref{sec:logreldep}, we show how this extension requires 
 changes that directly mirror an analogous extension for a simply typed
 language. We use this section to demonstrate the idea that once we have
 established the base techniques, we can port ideas that have been studied in
-the context of a simpler system to the dependently-typed setting.  We believe
+the context of a simpler system to the dependently typed setting.  We believe
 it is possible to extend our logical relation to a Kripke-style and relational
 model in a similar fashion.
 
-In Section~\ref{sec:betaeta}, we show how to incorporate the function $\eta$-law
+In Section~\ref{sec:betaeta}, we show how to incorporate the function $\eta$ law
 into the conversion rule for \lang{}.
 
-In Section~\ref{sec:logrelmech}, we discuss the details about our
+In Section~\ref{sec:logrelmech}, we discuss the details of our
 mechanization, including our use of existing libraries such as
 Autosubst 2~\citep{autosubst2} for handling bindings and
 CoqHammer~\citep{czajka2018hammer} for general-purpose automation.
@@ -720,7 +719,7 @@ J?}
       \begin{array}{lll}
         % \mathit{IdentityRen} \\
         % [[id i]] & := & [[i]] \\ \\
-        \multicolumn{3}{l}{\mbox{\emph{Identity substitution: }} \mathsf{id}_{\mathit{tm}}} \\
+        \multicolumn{3}{l}{\mbox{\emph{Identity substitution: }} [[idtm]]} \\
         [[idtm n]] & := & [[var n]] \\ \\
         \multicolumn{3}{l}{\mbox{\emph{Weakening substitution: }} \uparrow^{n}} \\
         [[up n m]] & := & \ottkw{v}_{[[n]] + [[m]]} \\ \\
@@ -740,7 +739,7 @@ J?}
         \multicolumn{3}{l}{\mbox{\emph{Lifting operation: }} \Uparrow\rho} \\
         [[( up rho ) 0]] & := & [[var 0]] \\
         [[( up rho ) Suc n]] & := & [[ rho n < up 1 > ]] \\ \\
-        \multicolumn{3}{l}{\mbox{\emph{Substitution operation:}} ([[ a { rho } ]])} \\
+        \multicolumn{3}{l}{\mbox{\emph{Substitution operation: }} ([[ a { rho } ]])} \\
         [[var n { rho }  ]] & := &  [[rho n]] \\
         [[(Pi A B) { rho }]] & := & [[Pi A { rho } B { up rho }]] \\
         [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
@@ -772,7 +771,7 @@ example, the function $[[\ if var 0 Bool Bool -> Bool]]$ returns
 either $[[Bool]]$ or $[[Bool -> Bool]]$ depending on whether the input
 is $[[true]]$ or $[[false]]$.
 
-We adapt from \citet{autosubst2} the notations for simultaneous renaming,
+We adapt from \citet{autosubst2} notation for simultaneous renaming,
 substitution, and other auxiliary definitions used in our paper, summarized in
 Figure~\ref{fig:auxdef}. We need these definitions to specify the reduction
 and typing relations for \lang{}. The metavariable $[[rho]]$ represents
@@ -822,9 +821,9 @@ on simultaneous substitution.
 %   an explanation of definitional equality and its properties?}
 Before we specify the typing rules, we first specify the equational theory
 used in its conversion rule (\rref{T-Conv} in Figure~\ref{fig:typing}). This
-relation is often called ``definitional equality'' in dependent type theories
+relation is often called \textit{definitional equality} in dependent type theories
 because it defines the equivalence that the syntactic type system works
-``up-to''.
+up to.
 
 For \lang{}, we use an untyped equational theory, defined in an algorithmic
 style using the notion of parallel reduction, written $[[a => b]]$, and shown
@@ -885,7 +884,7 @@ language definition; a detailed argument of the equivalence between
 $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
 \citet{barendregt:lambda-calculi-with-types} and
 \citet{takahashi-parallel-reduction}. However, this choice simplifies later
-proofs, as we discuss in Section~\ref{XXX}. \scw{Forward reference to further
+proofs, as we discuss in Section~\ref{sec:discuss}. \scw{Forward reference to further
   discussion, comparing with whnf reduction?}
 
 Our definition of equality is untyped: the judgement does not require the two
@@ -903,8 +902,12 @@ well-established syntactic approaches.
 System~\citep{barendregt1991introduction}, which employs untyped equality, and
 its variant that uses typed judgmental equality. This assures us that we do
 not lose generality working with a system with untyped
-conversion. Furthermore, discuss how this definition can be extended with
-$\eta$-equivalence of functions in Section~\ref{XXX}. Finally, we compare this
+conversion.
+\yl{removed the eta equivalence sentence because it might give the
+  wrong message that we extended Siles' work with eta}
+% Furthermore, discuss how this definition can be extended with
+% $\eta$-equivalence of functions in Section~\ref{XXX}
+Finally, we compare this
 definition with type-directed approaches to equality in
 Section~\ref{sec:discuss}.
 
@@ -940,25 +943,25 @@ it is scoped consistently with the full context $[[G]]$ rather than a
 truncated version of $[[G]]$.
 
 Although the use of de Bruijn indices complicates the variable rule, the rules
-that involve binding, such as \rref{T-Pi,T-Abs} are straightforward.
+that involve binding, such as \rref{T-Pi,T-Abs}, are straightforward.
 
 \Rref{T-Conv} uses the convertibility relation from earlier
 as our equality judgment for type conversion.
 
-The elimination form for booleans, \rref{T-If} demonstrates dependent pattern
-matching.  The result type of this expression $[[A {a}]]$, is composed of some
+The elimination form for booleans, \rref{T-If}, demonstrates dependent pattern
+matching.  The result type of this expression $[[A {a}]]$ is composed of some
 \emph{motive} $[[A]]$, a type where its single free variable has been replaced
 with the condition of the if expression. When typing the true branch, this
-substitution replaces the variable by $[[true]]$, and similar for the false
+substitution replaces the variable by $[[true]]$, and similarly for the false
 branch. As a result, the type system communicates the information gained from
-the run-time test to each of the branches of the expression.
+the % run-time \yl{commented out run-time per Jonathan's comment}
+test to each of the branches of the expression.
 
 A similar sort of dependent pattern matching occurs when eliminating identity
 types. Such types are checked for well-formedness with \rref{T-Eq} and
 introduced by \rref{T-Refl}. In \rref{T-J}, the elimination form, the subterm
 $p$ is a proof of an equality between $[[a]]$ and $[[b]]$. The subterm $[[c]]$
-is the body of the elimination form. In this rule, $[[B]]$ is called a
-\emph{motive} and has two free variables.  The substitution for these
+is the body of the elimination form. In this rule, $[[B]]$ is the motive and has two free variables.  The substitution for these
 variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
 witnessing the information gained through dependent pattern matching.  In the
 typing rule, the terms $[[a]]$ and $[[A]]$ need to be shifted in the context
@@ -2290,10 +2293,10 @@ syntactic means.
 
 \section{Existence of $\beta\eta$-normal forms}
 \label{sec:betaeta}
-\scw{Need an introduction to this section. Why do we care about this new 
+\scw{Need an introduction to this section. Why do we care about this new
 rule? What does this section demonstrate?}
 \scw{The way we describe this
-section should more clearly indicate that we have a mechanized version of this 
+section should more clearly indicate that we have a mechanized version of this
 proof. And include pointers on where readers might refer to it.}
 We can easily incorporate the function $\eta$ law to the equational
 theory of \lang{} by adding the following parallel reduction rule.
@@ -2313,8 +2316,8 @@ induction on a size metric of lambda terms; \rref{P-AbsEta} reduces a term
 that is not a strict subterm.
 
 Note that, after this extension, the specification of our logical relation does not require
-any updates. As before, $\ottkw{ne}$ and $\ottkw{nf}$ 
-represent $\beta$-neutral and $\beta-$normal forms, and the 
+any updates. As before, $\ottkw{ne}$ and $\ottkw{nf}$
+represent $\beta$-neutral and $\beta-$normal forms, and the
 fundamental lemma shows us that every well-typed term has a
 $\beta$-normal form. However, in the presence of the $\eta$ reduction
 rule, Lemma~\ref{lemma:parnenf} tells us that $\eta$ reduction
@@ -2330,7 +2333,7 @@ If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
 %% SCW: This is out of place, and redundant with the next paragraph.
 % In contrast to our approach, related work \cite{nbeincoq,decagda,martin-lof-a-la-coq}
 % employs a relational model to
-% justify the $\eta$-law for functions. 
+% justify the $\eta$-law for functions.
 % Instead, we prove
 % confluence for our parallel reduction extended with $\eta$-law for functions
 % and continue using a logical predicate (i.e. a unary logical relation) to justify
@@ -2365,12 +2368,12 @@ type-directed conversion and shifting the focus to obtaining
 $\eta$-long forms~\cite{Abel12}.
 
 While not without limitations, our simple proof demonstrates the core
-building blocks of more complex arguments, thus paving the way for experimentation 
-and eventual extension to more expressive systems.\scw{I tried to reword your 
-sentence, but I am still not happy with it.} 
+building blocks of more complex arguments, thus paving the way for experimentation
+and eventual extension to more expressive systems.\scw{I tried to reword your
+sentence, but I am still not happy with it.}
 
-\scw{Is this specific to $\eta$? Or is this also true for $\beta$? Can we move this 
-sentence elsewhere? I'd like to use the previous sentence as a conclusion for 
+\scw{Is this specific to $\eta$? Or is this also true for $\beta$? Can we move this
+sentence elsewhere? I'd like to use the previous sentence as a conclusion for
 this section.}
 Finally, due to technical
 details, our mechanized proof about the existence of $\beta\eta$ form does not
