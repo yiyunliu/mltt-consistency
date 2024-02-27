@@ -11,7 +11,7 @@ Inductive lookup : nat -> context -> tm -> Prop :=
 Definition lookup_good_renaming ξ Γ Δ :=
   forall i A, lookup i Γ A -> lookup (ξ i) Δ A⟨ξ⟩.
 
-
+Derive Inversion lookup_inv with (forall i Γ A, lookup i Γ A).
 
 (*
 Fixpoint dep_ith Γ i :=

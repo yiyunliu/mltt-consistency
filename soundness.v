@@ -9,7 +9,6 @@ Definition SemWt Γ a A := forall ρ, ρ_ok Γ ρ -> exists m PA, ( ⟦ A [ρ] �
 Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
 
 (* Semantic context wellformedness *)
-(* Why is this exists F, not exists j ? *)
 Definition SemWff Γ := forall i A, lookup i Γ A -> exists F, Γ ⊨ A ∈ tUniv (F i).
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
