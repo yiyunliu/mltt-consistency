@@ -2450,7 +2450,7 @@ sense to include the definition of ProdSpace? What is the Coq type of R?}
   rename the variables from the Coq code to match the ones from the paper}
 
 In the Coq mechanized proof, the definition of $[[Interp I i A S]]$ has type
-\texttt{Prop}, when \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S}
+\texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S}
 has type \texttt {tm -> Prop}.  However, if desired, we could consistently
 replace the use of \texttt{Prop} with Coq's predicative sort
 \texttt{Type}. This variation of the definition could be used to define the
@@ -2495,7 +2495,7 @@ occasionally in our presented proofs.
 In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm ->
 Prop}, a predicate over \lang{} terms.
 In axiom-free Coq, predicates do not come with the extensionality
-property. Given two predicates $P$ and $Q$, we can not conclude that
+property. Given two predicates $P$ and $Q$, we cannot conclude that
 $P = Q$ when given a proof of $\forall
 x, P(x) \iff Q(x)$. While
 predicate extensionality is not necessary in our development, we
@@ -2617,7 +2617,7 @@ reduction relation. Suppose $[[a <=> b]]$, $[[a =>+ f0]]$, $[[b =>+
 f1]]$ but $[[f0]]$ is syntactically distinct from $[[f1]]$. By the transitivity of convertibility, we have $[[f0 <=> f1]]$.
 Because $[[f0]]$ and $[[f1]]$ are both in
 $\beta\eta$-normal forms and can only reduce to themselves, we must
-have $[[f0 = f1]]$. Contradiction.
+have $[[f0 = f1]]$, which is a contradiction.
 
 In our development, since our countable universe hierarchy
 relies on impredicativity from the metatheory, we encode our
@@ -2627,7 +2627,8 @@ automated proof search, even if we were able to extract an algorithm from \textt
 the algorithm would be unpredictable because its definition depends on
 the specific choices made by the proof search algorithm.
 
-However, with a little more effort, it is possible to recover a
+However, % with a little more effort,
+it is possible to recover a
 precise algorithm. The first step is to define a deterministic
 small-step reduction relation that is normalizing; that is, the
 relation can always find a normal form if there exists one. A good
@@ -2635,14 +2636,14 @@ candidate is the leftmost-outermost reduction strategy. Its
 normalizing property is standard and can be proven using the
 factorization technique discussed in
 \citet{takahashi-parallel-reduction, factorization-essentially}. By
-composing the existence of normal form and the fact that the
+composing the existence of normal forms and the fact that the
 deterministic relation is normalizing, we can derive the
 accessibility of the deterministic reduction relation
 (\mintinline{coq}{Acc} in Coq), and use the accessibility proof as
 an induction metric to define an executable algorithm\footnote{Coq's
   singleton elimination principle allows \mintinline{coq}{Acc}, a
   \texttt{Prop} data type with a single constructor, to be eliminated
-  to construct runtime relevant data}.
+  to construct runtime relevant data.}.
 
 \section{Related Work}
 \label{sec:relatedwork}
@@ -2673,7 +2674,7 @@ can be challenging to adapt to a theorem prover since many details
 are hidden behind concise notations.
 For example, \citet{geuvers1994short} presents the interpretation for types as
 an inductively defined total function over the set of syntactically
-well-formed types. \scw{The issue is that Geuver's metalogic is (untyped) set 
+well-formed types. \scw{The issue is that Geuver's metalogic is (untyped) set
 theory, but Coq and Agda use type theory.}
 In untyped set theory, it makes sense to define the logical relation as a
 simply-typed function that takes a type and returns some set; however
@@ -2684,7 +2685,7 @@ input. The well-typedness derivation and the proof of the
 classification theorem\scw{what is the classification theorem}
 are examined in the body
 of the interpretation function to decide whether an argument of an
-application should be erased during interpretation. As a result, this 
+application should be erased during interpretation. As a result, this
 definition causes difficulties for modern proof assistants.
 Due to the
 impredicativity of the object language, \citet{geuvers1994short}'s
@@ -2697,9 +2698,9 @@ to constantly juggle between the impredicative but irrelevant sort
 
 More recent work such as \citet{Abel12}
 and \citet{abel2008betaeta} make their definitions more explicit and
-precise and thus more directly encodable in proof assistants. 
+precise and thus more directly encodable in proof assistants.
 Our logical relation resembles their definition of a
-semantic universe hierarchy, although we close our relation 
+semantic universe hierarchy, although we close our relation
 under expansion with respect to parallel reduction rather
 than weak-head reduction. \scw{Why is this important?}
 Furthermore, \citet{Abel12} and
@@ -2733,7 +2734,7 @@ semantic typing because it is sufficient for our purposes
     MLTT-a-la-Coq & 1 & Id, Nat & T & {\boxedsymbols ✓} \\
     % \hline
     Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} \\
-    \hline 
+    \hline
     % CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
     % CoreSpec & \\
     % PCUIC & \\
@@ -2796,10 +2797,10 @@ The lack of polymorphism and type-level computation means their
 logical relation can be defined recursively for well-formed types using
 a size metric, which has been explored in~\citet{liu2023dependently}.
 
-\citet{decagda} mechanizes in Agda the decidability of type
+\citet{decagda} mechanize in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
 universe level and typed judgmental equality with function
-$\eta$-law. They
+$\eta$ law. They
 use a Kripke-style logical relation parameterized over a
 type-directed equivalence relation satisfying certain
 properties to facilitate the reuse of their definition. The
@@ -2811,11 +2812,11 @@ extends the decidability of type conversion result
 from~\citet{decagda} to the decidability type checking of a
 bidirectional type system.
 
-\citet{anand2014towards} mechanizes the metatheory of
+\citet{anand2014towards} mechanize the metatheory of
 Nuprl~\citep{constable1986implementing} in Coq. The metatheory is an
 extensional type theory with features such as dependent functions,
 inductive types, and a full universe hierarchy. \citet{nbeincoq}
-mechanizes the normalization-by-evaluation algorithm in Coq for a
+mechanize the normalization-by-evaluation algorithm in Coq for a
 dependently typed language with one predicative universe, similar to
 \citet{decagda} and \citet{martin-lof-a-la-coq}. However, since their
 type system has no elimination form for natural numbers, the
