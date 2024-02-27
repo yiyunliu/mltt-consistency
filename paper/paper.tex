@@ -834,7 +834,7 @@ Figure~\ref{fig:auxdef}. We need these definitions to specify the reduction
 and typing relations for \lang{}. The metavariable $[[rho]]$ represents
 substitutions, which are mappings from de Bruijn indices to terms.  One
 example of a substitution is the function $\ottkw{id}_{tm}$,\scw{Can we just 
-call this \ottkw{id} now?} the identity
+call this $\ottkw{id}$ now?} the identity
 substitution that maps each index to the corresponding term variable.  % The
 % $...$ substitution is more general and adds $[[n]]$ to the index
 % before injecting it as a term.
@@ -859,6 +859,7 @@ substitution by composing the extension operator and the identity
 substitution: $[[a { b / x }]] := [[a { idtm .: x -> b }]]$.
 
 \yl{Explain why iterated substitution is not good enough}
+\scw{resolved below, right?}
 
 In our proofs, we find it
 more convenient to formulate simultaneous substitution directly rather than
@@ -980,7 +981,10 @@ Section~\ref{sec:discuss}.
 \begin{minipage}{0.9\textwidth}
 \drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
 \drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv,
-  Eq, Refl, J, If, Bool, True, False, Void}
+ Void, Bool, True, False}
+\[ \drule[width=5in]{T-If}\]
+\[ \drule[width=3in]{T-Eq} \qquad \drule{T-Refl} \]
+\[ \drule[width=4in]{T-J} \]
 \end{minipage}
 \caption{Syntactic typing for \lang}
 \label{fig:typing}
