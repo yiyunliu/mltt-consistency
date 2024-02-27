@@ -55,29 +55,42 @@ Proof. qblast use:Par_head_star. Qed.
 
 (* -------------------------------------------------- *)
 
+(* 
+Lemma Wff_intro Γ F : 
+  (forall n A, lookup n Γ A -> Γ ⊢ A ∈ tUniv (F n)) -> ⊢ Γ.
+Proof.
+  intros h. induction Γ.
+  eapply wff_nil. auto.
+  eapply wff_cons. 
+  - admit.
+  - eapply IHΓ.  *)
+
 Lemma good_renaming_up ξ Γ Δ A :
-  good_renaming ξ Γ Δ ->
-  good_renaming (upRen_tm_tm ξ)  (A :: Γ) (A⟨ξ⟩ :: Δ).
+  lookup_good_renaming ξ Γ Δ ->
+  lookup_good_renaming (upRen_tm_tm ξ)  (A :: Γ) (A⟨ξ⟩ :: Δ).
 Proof.
   move => h.
-  rewrite /good_renaming.
-  case => /= [ ?| i /Arith_prebase.lt_S_n h0].
-  - asimpl;
-    sfirstorder.
-  - split.
+  rewrite /lookup_good_renaming.
+  move => i B h1.
+Admitted.
+(*
+  induction h1.
+  - asimpl.
+    move: (@here A⟨ξ⟩ Δ) => h1. asimpl in h1. auto.
+  - move => B h2.
     + asimpl; sfirstorder.
     + case /h : h0 => h0 h1 /=.
       rewrite h1.
       by asimpl.
-Qed.
+Qed. *)
 
 Lemma good_renaming_suc ξ Γ A Δ
-  (h : good_renaming ξ Γ Δ) :
-  good_renaming (ξ >> S) Γ (A⟨ξ⟩ :: Δ).
+  (h : lookup_good_renaming ξ Γ Δ) :
+  lookup_good_renaming (ξ >> S) Γ (A⟨ξ⟩ :: Δ).
 Proof.
   move => i h0.
   rewrite /good_renaming in h.
-  specialize h with (1 := h0).
+Admitted. (*  specialize h with (1 := h0).
   case : h => ? h.
   split.
   - simpl.
@@ -87,14 +100,13 @@ Proof.
     simpl.
     rewrite h.
     by asimpl.
-Qed.
+Qed. *)
 
 (* -------------------------------------------------- *)
 
 Lemma T_Var' Γ i A :
-  A = dep_ith Γ i ->
+  lookup i Γ A ->
   (⊢ Γ) ->
-  i < length Γ ->
   (* ------ *)
   Γ ⊢ (var_tm i) ∈ A.
 Proof. qauto ctrs:Wt. Qed.
@@ -128,13 +140,78 @@ Lemma T_J' (Γ : context) (t a b p A : tm) (i j : fin) (C C0 : tm) :
   Γ ⊢ (tJ t a b p) ∈ C0.
 Proof. hauto lq:on use:T_J. Qed.
 
+
+(* ------------------------------------- *)
+
+
+Lemma Wt_Wff Γ a A (h : Γ ⊢ a ∈ A) : ⊢ Γ.
+Proof. elim : Γ a A / h => //. Qed.
+
+#[export]Hint Resolve Wt_Wff : wff.
+
+(* ------------------------------------- *)
+
+Lemma renaming_Syn_helper ξ a b C :
+  subst_tm (a ⟨ξ⟩ .: (b⟨ξ⟩)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C) = ren_tm ξ (subst_tm (a .: b ..) C).
+Proof. by asimpl. Qed.
+
+Lemma renaming_Syn Γ a A (h : Γ ⊢ a ∈ A) : forall Δ ξ,
+    lookup_good_renaming ξ Γ Δ ->
+    (Wff Δ -> Wt Δ (a⟨ξ⟩) (A⟨ξ⟩)).
+Proof.
+  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:lookup_good_renaming.
+  - move=> Γ n A B WtA h1 WtB h2.
+    move=> Δ ξ LGr GD.
+    asimpl.
+    eapply T_Pi. eauto. 
+    eapply h2.
+    eapply good_renaming_up; auto.
+    econstructor. intros. inversion H. subst.
+    + 
+      
+  - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
+  - move => * /=. apply : T_App'; eauto; by asimpl.
+  - qauto l:on ctrs:Wt use:Coherent_renaming.
+  - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
+    apply  T_If' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
+    + by asimpl.
+    + apply ihA. by apply good_renaming_up.
+      apply wff_cons with (i := 0); qauto l:on ctrs:Wt.
+    + hauto l:on.
+    + set q := (subst_tm _ _).
+      replace q with (ren_tm ξ (subst_tm (tTrue..) A)); auto.
+      subst q; by asimpl.
+    + set q := (subst_tm _ _).
+      replace q with (ren_tm ξ (subst_tm (tFalse..) A)); auto.
+      subst q; by asimpl.
+  - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
+             ihp hC ihC ht iht Δ ξ hξ hΔ /=.
+    rewrite -renaming_Syn_helper.
+    eapply T_J; try qauto ctrs:Wt.
+    + apply ihC.
+      * move /good_renaming_up in hξ.
+        move /(_ A) in hξ.
+        move /good_renaming_up in hξ.
+        move /(_ (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A))) in hξ.
+        by asimpl in hξ.
+      * move => [:hwff].
+        apply : wff_cons; last by (abstract : hwff; hauto q:on use:wff_cons).
+        eapply T_Eq with (i := 0).  asimpl.
+        sfirstorder use:good_renaming_suc.
+        apply :T_Var; sfirstorder ctrs:Wt.
+        asimpl.
+        sfirstorder use:good_renaming_suc.
+    + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
+Qed.
+
+
 (* -------------------------------------------------- *)
 
 Lemma wff_nil :
   ⊢ nil.
 Proof.
-  apply Wff_intro with (F := fun x => x) => /= //.
-  lia.
+  apply Wff_intro with (F := fun x => x) => /= //. 
+  move=> n A h. inversion h.
 Qed.
 
 Lemma wff_cons Γ A i
@@ -144,18 +221,13 @@ Lemma wff_cons Γ A i
 Proof.
   inversion h1 as [F h].
   apply Wff_intro with (F := i .: F).
-  case => [? | p /Arith_prebase.lt_S_n ? ];
-         sfirstorder ctrs:Wff.
-Qed.
+  move=> n B h2.
+  inversion h2; subst. asimpl.
+Admitted.
 
 #[export]Hint Resolve wff_nil wff_cons : wff.
 
 (* If a term is well-typed, then the context must be well-formed. *)
-
-Lemma Wt_Wff Γ a A (h : Γ ⊢ a ∈ A) : ⊢ Γ.
-Proof. elim : Γ a A / h => //. Qed.
-
-#[export]Hint Resolve Wt_Wff : wff.
 
 
 Lemma Wt_Univ Γ a A i
@@ -202,52 +274,6 @@ Proof.
   - hauto lq:on use:Coherent_transitive.
 Qed.
 
-(* ------------------------------------- *)
-Lemma renaming_Syn_helper ξ a b C :
-  subst_tm (ren_tm ξ a .: (ren_tm ξ b)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C) = ren_tm ξ (subst_tm (a .: b ..) C).
-Proof. by asimpl. Qed.
-
-Lemma renaming_Syn Γ a A (h : Γ ⊢ a ∈ A) : forall Δ ξ,
-    good_renaming ξ Γ Δ ->
-    Wff Δ ->
-    Wt Δ (ren_tm ξ a) (ren_tm ξ A).
-Proof.
-  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_renaming.
-  - hauto lq:on ctrs:Wt use:good_renaming_up db:wff.
-  - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
-  - move => * /=. apply : T_App'; eauto; by asimpl.
-  - qauto l:on ctrs:Wt use:Coherent_renaming.
-  - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
-    apply  T_If' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
-    + by asimpl.
-    + apply ihA. by apply good_renaming_up.
-      apply wff_cons with (i := 0); qauto l:on ctrs:Wt.
-    + hauto l:on.
-    + set q := (subst_tm _ _).
-      replace q with (ren_tm ξ (subst_tm (tTrue..) A)); auto.
-      subst q; by asimpl.
-    + set q := (subst_tm _ _).
-      replace q with (ren_tm ξ (subst_tm (tFalse..) A)); auto.
-      subst q; by asimpl.
-  - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
-             ihp hC ihC ht iht Δ ξ hξ hΔ /=.
-    rewrite -renaming_Syn_helper.
-    eapply T_J; try qauto ctrs:Wt.
-    + apply ihC.
-      * move /good_renaming_up in hξ.
-        move /(_ A) in hξ.
-        move /good_renaming_up in hξ.
-        move /(_ (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A))) in hξ.
-        by asimpl in hξ.
-      * move => [:hwff].
-        apply : wff_cons; last by (abstract : hwff; hauto q:on use:wff_cons).
-        eapply T_Eq with (i := 0).  asimpl.
-        sfirstorder use:good_renaming_suc.
-        apply :T_Var; sfirstorder ctrs:Wt.
-        asimpl.
-        sfirstorder use:good_renaming_suc.
-    + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
-Qed.
 
 Lemma weakening_Syn Γ a A B i
   (h0 : Γ ⊢ B ∈ (tUniv i))

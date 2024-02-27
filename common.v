@@ -3,7 +3,7 @@ From WR Require Import imports.
 Definition context := list tm.
 
 Inductive lookup : nat -> context -> tm -> Prop :=
-  | here : forall {A Γ}, lookup 0 (A :: Γ) A 
+  | here : forall {A Γ}, lookup 0 (A :: Γ) (A ⟨shift⟩)
   | there : forall {n A Γ B},
       lookup n Γ A -> lookup (S n) (B :: Γ) (A ⟨shift⟩).
 

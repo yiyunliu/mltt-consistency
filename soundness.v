@@ -1,5 +1,6 @@
 From WR Require Import syntax join semtyping typing common imports.
 
+
 (* Semantic substitution well-formedness *)
 Definition ρ_ok Γ ρ := forall i A, lookup i Γ A -> forall m PA, ⟦ A [ρ] ⟧ m ↘ PA -> PA (ρ i).
 
@@ -19,23 +20,15 @@ Lemma ρ_ok_cons {i Γ ρ a PA A} :
   ρ_ok Γ ρ ->
   ρ_ok (A :: Γ) (a .: ρ).
 Proof.
-  move => h0 h1 h2.
-  unfold ρ_ok.
-  move=> n B l.
-  inversion l; subst.
-Admitted.
-(*
-  - move=> m PA0 hPA0. asimpl.
-    (* need to know that B[ρ] = B[a .: ρ] *)
-    suff : PA = PA0 by congruence.
-    
-  case => [A0 Γ0 m PA0 | m A0 PA0].
-  - move => j PA0 hPA0.
+  move => h0 h1 h2 m B.
+  intros l. inversion l; subst.
+  - move=> m PA0 hPA0.
     asimpl in hPA0.
     suff : PA = PA0 by congruence.
-    hauto l:on use:InterpUnivN_deterministic'.
-  - asimpl. hauto lq:on unfold:ρ_ok solve+:lia.
-Qed. *)
+    hauto lq:on use:InterpUnivN_deterministic'.
+  - asimpl.
+    hauto lq:on unfold:ρ_ok.
+Qed.
 
 (* Well-formed substitutions are stable under renaming *)
 Lemma ρ_ok_renaming Γ ρ :
