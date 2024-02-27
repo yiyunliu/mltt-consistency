@@ -847,6 +847,11 @@ traverses the syntax of $[[a]]$ and replaces each variable $[[x]]$
 with the term $[[rho x]]$. When traversing under binders (e.g. in the
 $[[(\ x . a) { rho }]]$ case), we extend $[[rho]]$ to map the bound
 variable $[[x]]$ to itself, protecting it from being replaced.
+\scw{This substitution operation is pretty strange when it comes to the 
+BVC. What variables are we allowed to use when we get to a bound variable $x$ in this function? I'd prefer if we instead had a side condition that it must be 
+the case that $\rho(x) = x$ already, then we use BVC to pick such an $x$. But then we need to know that such an $x$ exists, and that isn't necessarily true.}
+\scw{Maybe we should handwave here, and note that we aren't covering all of the 
+details of the treatment of variable binding in the text. If readers want to understand that part, they should look at the Coq code, which uses de Bruijn indices anyways. Our goal is to convey the understanding of the Coq proof. }
 
 The substitution operator is referred to as simultaneous substitution as it
 substitutes for all variables at once. It is possible to recover single
