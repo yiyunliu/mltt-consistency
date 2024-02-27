@@ -2731,18 +2731,18 @@ semantic typing because it is sufficient for our purposes
       & \header{Universes} & \header{Inductives} & \header{Conversion}
       & \header{Large Elim} & Main results \\
     \hline
-    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} 
+    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓}
     & Consistency and normalization \\
     % \hline
     $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗} & Consistency \\
     NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} & Correctness of NBE \\
-    
+
     % \hline
     $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat & T & {\boxedsymbols ✓} & Decidability of conversion \\
     % \hline
     MLTT-a-la-Coq & 1 & Id, Nat & T & {\boxedsymbols ✓} & Decidibility of type checking \\
     % \hline
-    Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} & TODO \\
+    Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} & Consistency \\
     \hline
     % CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
     % CoreSpec & \\
@@ -2781,11 +2781,11 @@ semantic typing because it is sufficient for our purposes
 \end{figure}
 
 
-Figure~\ref{fig:featurematrix} presents several mechanized proofs 
+Figure~\ref{fig:featurematrix} presents several mechanized proofs
 that feature logical-relations arguments for dependently-typed languages.
-Each of these proofs is significantly larger than than our development; but they 
+Each of these proofs is significantly larger than than our development; but they
 also prove more results about different object languages.
-The table provides a comparison between the various features of their 
+The table provides a comparison between the various features of their
 object languages, but is not exhaustive. For example,
 \citet{casinghino:combining-proofs-programs} and
 \citet{anand2014towards} both have support for partial
@@ -2840,7 +2840,7 @@ impredicative \texttt{Prop} sort of Coq to define the interpretation
 of dependent function types and thus are closely related to our
 mechanization. \citet{anand2014towards} further shows it is possible
 to encode a finite universe hierarchy without the use of
-either impredicativity or induction-recursion.\scw{How did the Nuprl 
+either impredicativity or induction-recursion.\scw{How did the Nuprl
 proof include a full hierarchy? Did they use impredicativity?}
 % \yl{commented out because I think this paragraph is too subjective}
 % However, instead of explaining the inductive
