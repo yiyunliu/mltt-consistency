@@ -668,8 +668,7 @@ proofs for dependent types.
  [[G]]       & ::= & [[empty]]\ |\ [[G ++ A]] &  \\ \\
 \end{array}
 \]
-  \caption{Syntax of \lang \scw{Where does the name come from?}\yl{H =
-    hierarchy though it needs a better name}}
+  \caption{Syntax of \lang}
   \label{fig:syntax}
 \end{figure}
 
@@ -887,8 +886,8 @@ language definition; a detailed argument of the equivalence between
 $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
 \citet{barendregt:lambda-calculi-with-types} and
 \citet{takahashi-parallel-reduction}. However, this choice simplifies later
-proofs, as we discuss in Section~\ref{sec:discuss}. \scw{Forward reference to further
-  discussion, comparing with whnf reduction?}
+proofs, as we discuss in Section~\ref{sec:discuss}. % \scw{Forward reference to further
+  % discussion, comparing with whnf reduction?} \yl{resolved?}
 
 Our definition of equality is untyped: the judgement does not require the two
 terms to type check and have the same type. The use of an untyped relation for
@@ -907,9 +906,9 @@ its variant that uses typed judgmental equality. This assures us that we do
 not lose generality working with a system with untyped
 conversion.
 \yl{removed the eta equivalence sentence because it might give the
-  wrong message that we extended Siles' work with eta}
-% Furthermore, discuss how this definition can be extended with
-% $\eta$-equivalence of functions in Section~\ref{XXX}
+  wrong message that we extended Siles' work with eta:
+ Furthermore, discuss how this definition can be extended with
+ $\eta$-equivalence of functions in Section~\ref{XXX} }
 Finally, we compare this
 definition with type-directed approaches to equality in
 Section~\ref{sec:discuss}.
@@ -1144,11 +1143,12 @@ Figure~\ref{fig:syntax}.
 % that is defined recursively over types?} \yl{reolsved}
 % \scw{What is this form extensible too? impredicative quantification? recursive
 % types? } \yl{resolved? impredicativity is hard}
-\scw{Is it worth observing here that this definition is not over sets of typed
-terms. That it characterizes all terms that look like booleans (i.e. evaluate to
-true or false) or all terms that look like proofs (i.e. evaluate to refl). The
-fact that there is no connection between p and a and b in the I-Eq case is strange
-looking. Need to explain.  }
+% \scw{Is it worth observing here that this definition is not over sets of typed
+% terms. That it characterizes all terms that look like booleans (i.e. evaluate to
+% true or false) or all terms that look like proofs (i.e. evaluate to refl). The
+% fact that there is no connection between p and a and b in the I-Eq case is strange
+% looking. Need to explain.  }
+% \yl{resolved}
 The metavariables $[[I]]$ and $[[S]]$ are
 sets with the following signatures.
 \begin{equation*}
@@ -1534,7 +1534,6 @@ hold in the \rref{I-Set} case.
 
 \section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
-\yl{todo: rename all variables from i,j to n}
 \scw{Would it make sense to define the notation $a \in [\![A]\!]^i$ when
 there exists some $S$ such that $[[InterpR i A S]]$ and $[[a in S]]$ ?}
 % \begin{figure}[h]
