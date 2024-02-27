@@ -387,6 +387,7 @@ our proof applicable to a broad range of type systems.
   about the benefits of using existing libraries such as Autosubst 2
   and CoqHammer rather than rolling your own undocumented libraries that nobody
   want to (or can) reuse.}
+\scw{I'm not sure that this is the best place for this discussion.}
 Our development relies on off-the-shelf tools...
 \item We discuss in Section~\ref{sec:relatedwork} how our proof
 relates to existing proofs by logical relations and other proof
@@ -2329,9 +2330,9 @@ Section~\ref{sec:conversionalgo}.
     & Consistency & Normalization & Syntactic metatheory \\
     \hline
     % Library (Autosubst 2)  & 491 & - \\
-    Syntactic typing (specification) &  68 & - & - \\
-    Renaming & 46 & -  & - \\
-    Untyped reduction & 349 & - & - \\
+    Syntactic typing (specification) &  68 & = & = \\
+    Renaming & 46 & =  & = \\
+    Untyped reduction & 349 & = & = \\
     Neutral and normal forms & N/A & 269 & N/A \\
     Logical relation & 331 & 426 & N/A \\
     Semantic typing and soundness & 169 & 199 & N/A \\
@@ -2352,7 +2353,7 @@ normalization for open and closed terms from Section~\ref{sec:extension}.
 
 Because the normalization and the consistency development share the same
 syntactic and typing specification, they differ in only the categories
-that are relevant to the logical relation. We use - as a marker that
+that are relevant to the logical relation. We use = as a marker that
 the line count is the same.
 
 Autosubst 2 takes our syntax specification in higher-order abstract
