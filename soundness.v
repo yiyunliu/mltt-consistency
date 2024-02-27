@@ -40,9 +40,8 @@ Proof.
   move => Δ ξ hscope h1.
   rewrite /ρ_ok => i A hi j PA.
   move: (hscope _ _ hi) => ld.
-  move: (h1 _ _ ld j PA) =>  h2.
-  asimpl in h2.
-  auto.
+  move: (h1 _ _ ld j PA).
+  by asimpl.
 Qed.
 
 (* Typing is stable under renaming *)
@@ -87,9 +86,8 @@ Proof.
     rewrite -> SemWt_Univ in ih.
     move: (ih _ hρ) => [PA h1].
     exists (F i). exists PA. split. auto.    
-    unfold ρ_ok in hρ.
-    move: (hρ _ _ l _ _ h1) => h2.
-    asimpl. done.
+    move: (hρ _ _ l _ _ h1).
+    by asimpl.
   - hauto l:on use:SemWt_Univ.
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.
