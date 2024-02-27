@@ -2,6 +2,17 @@ From WR Require Import imports.
 
 Definition context := list tm.
 
+Inductive lookup : nat -> context -> tm -> Prop :=
+  | here : forall {A Γ}, lookup 0 (A :: Γ) A 
+  | there : forall {n A Γ B},
+      lookup n Γ A -> lookup (S n) (B :: Γ) (A ⟨shift⟩).
+
+Definition lookup_good_renaming ξ Γ Δ :=
+  forall i A, lookup i Γ A -> lookup (ξ i) Δ A⟨ξ⟩.
+
+
+
+
 Fixpoint dep_ith Γ i :=
   match Γ , i with
   | (A :: Γ), 0 => ren_tm shift A

@@ -4,11 +4,11 @@ Reserved Notation "Γ ⊢ a ∈ A" (at level 70).
 Reserved Notation "⊢ Γ" (at level 70).
 
 Inductive Wt (Γ : context) : tm -> tm -> Prop :=
-| T_Var i :
+| T_Var i A :
   ⊢ Γ ->
-  i < length Γ ->
+  lookup i Γ A ->
   (* ------ *)
-  Γ ⊢ (var_tm i) ∈ (dep_ith Γ i)
+  Γ ⊢ (var_tm i) ∈ A
 
 | T_Void i :
   ⊢ Γ ->
@@ -16,7 +16,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
   Γ ⊢ tVoid ∈ (tUniv i)
 
 | T_Pi i A B :
-  Γ ⊢ A ∈(tUniv i) ->
+  Γ ⊢ A ∈ (tUniv i) ->
   (A :: Γ) ⊢ B ∈ (tUniv i) ->
   (* --------------------- *)
   Γ ⊢ (tPi A B) ∈ (tUniv i)
@@ -92,7 +92,7 @@ Inductive Wt (Γ : context) : tm -> tm -> Prop :=
 
 with Wff (Γ : context) : Prop :=
 | Wff_intro F :
-  (forall i, i < length Γ -> (skipn (S i) Γ) ⊢ (ith Γ i) ∈ (tUniv (F i))) ->
+  (forall n A, lookup n Γ A -> Γ ⊢ A ∈ tUniv (F n)) ->
   (* ---------------------------------------------------------------- *)
   ⊢ Γ
 where 
