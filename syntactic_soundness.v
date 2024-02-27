@@ -117,6 +117,7 @@ Lemma Wt_Wff Γ a A (h : Γ ⊢ a ∈ A) : ⊢ Γ.
 Proof. elim : Γ a A / h => //. Qed.
 
 #[export]Hint Resolve Wt_Wff : wff.
+#[export]Hint Constructors Wff : wff.
 
 (* -------------------------------------------------- *)
 (* Inversion lemmas for well-typed terms. *)
@@ -215,7 +216,7 @@ Lemma weakening_Syn Γ a A B i
   (h1 : Γ ⊢ a ∈ A) :
   (B :: Γ) ⊢ (ren_tm shift a) ∈ (ren_tm shift A).
 Proof.
-  apply : renaming_Syn; eauto using Wff_cons with wff.
+  apply : renaming_Syn; eauto with wff.
   hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
 Qed.
 
@@ -226,45 +227,40 @@ Lemma weakening_Syn' Γ a A A0 B i
   (B :: Γ) ⊢ (ren_tm shift a) ∈ A0.
 Proof. sfirstorder use:weakening_Syn. Qed.
 
-Definition good_morphing ρ Γ Δ :=
-  forall i, i < length Γ -> Wt Δ (ρ i) (subst_tm ρ (dep_ith Γ i)).
+Definition lookup_good_morphing ρ Γ Δ :=
+  forall i A, lookup i Γ A -> Δ ⊢ ρ i ∈ A [ ρ ].
 
-Lemma good_morphing_suc Γ Δ A j ξ (h : good_morphing ξ Γ Δ)
-  (hh : Wt Δ (subst_tm ξ A) (tUniv j)) :
-  good_morphing (ξ >> ren_tm S) Γ (subst_tm ξ A :: Δ).
+Lemma good_morphing_suc Γ Δ A j ρ (h : lookup_good_morphing ρ Γ Δ)
+  (hh : Δ ⊢ A [ρ] ∈ tUniv j) :
+  lookup_good_morphing (ρ >> ren_tm S) Γ (A [ρ] :: Δ).
 Proof.
-  move => i h0.
-  rewrite /good_morphing in h.
-  specialize h with (1 := h0).
-  eapply weakening_Syn in h; eauto.
-  move : h. asimpl. by apply.
+  rewrite /lookup_good_morphing in h * => i A0 /h /weakening_Syn.
+  asimpl. eauto.
 Qed.
 
 Lemma good_morphing_up ρ k Γ Δ A
-  (h : good_morphing ρ Γ Δ) :
-  Δ ⊢ (subst_tm ρ A) ∈ (tUniv k) ->
-  good_morphing (up_tm_tm ρ) (A :: Γ) (subst_tm ρ A :: Δ).
+  (h : lookup_good_morphing ρ Γ Δ) :
+  Δ ⊢ A[ρ] ∈ tUniv k ->
+  lookup_good_morphing (up_tm_tm ρ) (A :: Γ) (A [ρ] :: Δ).
 Proof.
-  rewrite /good_morphing => h1.
-  case => [_ | i /Arith_prebase.lt_S_n ?].
-  - apply T_Var' => /=.
-    + by asimpl.
+  rewrite /lookup_good_morphing => h1.
+  inversion 1=>*; subst.
+  - apply T_Var => /=.
     + eauto with wff.
-    + asimpl. lia.
-  - simpl.
-    apply : weakening_Syn'; cycle 2.
-    rewrite /good_morphing in h.
-    + sfirstorder unfold:good_morphing.
+    + asimpl. apply : here'. by asimpl.
+  - apply : weakening_Syn'; cycle 2.
+    rewrite /lookup_good_morphing in h.
+    + sfirstorder unfold:lookup_good_morphing.
     + by asimpl.
     + sfirstorder.
 Qed.
 
 Lemma morphing_Syn Γ a A (h : Γ ⊢ a ∈ A) : forall Δ ρ,
-    good_morphing ρ Γ Δ ->
+    lookup_good_morphing ρ Γ Δ ->
     ⊢ Δ ->
-    Δ ⊢ (subst_tm ρ a) ∈ (subst_tm ρ A).
+    Δ ⊢ a[ρ] ∈ A[ρ].
 Proof.
-  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:good_morphing.
+  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt unfold:lookup_good_morphing.
   - move => *.
     apply T_Pi; eauto.
     hauto q:on use:good_morphing_up db:wff.
@@ -274,7 +270,7 @@ Proof.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - hauto q:on ctrs:Wt use:Coherent_subst_star.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ρ hρ hΔ /=.
-    have ? : Wff (tBool :: Δ) by apply wff_cons with (i := 0); eauto using T_Bool.
+    have ? : Wff (tBool :: Δ) by apply Wff_cons with (i := 0); eauto using T_Bool.
     apply T_If' with (A := subst_tm (up_tm_tm ρ) A) (i := i); first by asimpl.
     + hauto lq:on ctrs:Wt use:good_morphing_up.
     + hauto l:on.
@@ -289,7 +285,7 @@ Proof.
   - move => Γ t a b p A i j C ha iha hb ihb hA ihA  hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     have ? : Wt Δ (subst_tm ξ a) (subst_tm ξ A) by hauto l:on.
-    have hwff : Wff (subst_tm ξ A :: Δ) by eauto using wff_cons.
+    have hwff : Wff (subst_tm ξ A :: Δ) by eauto using Wff_cons.
     eapply T_J' with (i := i) (C := (subst_tm (up_tm_tm (up_tm_tm ξ)) C)); eauto; first by asimpl.
     + move => [:hwteq].
       apply ihC.
@@ -299,9 +295,9 @@ Proof.
         move /(_ 0 (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A))).
         asimpl. apply. abstract:hwteq. apply T_Eq with (j := j).
         ** hauto lq:on use:good_morphing_suc.
-        ** apply T_Var' => //; hauto l:on simp+:asimpl.
+        ** apply T_Var => //. apply here'. by asimpl.
         ** hauto lq:on use:good_morphing_suc.
-      * qauto l:on use:wff_cons simp+:asimpl.
+      * qauto l:on use:Wff_cons simp+:asimpl.
     + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
 Qed.
 
@@ -311,9 +307,24 @@ Lemma subst_Syn Γ A a b B
   Γ ⊢ (subst_tm (a..) b) ∈ (subst_tm (a..) B).
 Proof.
   apply : morphing_Syn; eauto with wff.
-  case => [_ | i /Arith_prebase.lt_S_n ?] /=.
+  inversion 1; subst.
   - by asimpl.
   - asimpl; eauto using T_Var with wff.
+Qed.
+
+Lemma Wff_lookup : forall Γ i A,
+    ⊢ Γ -> lookup i Γ A -> exists j, Γ ⊢ A ∈ tUniv j.
+Proof.
+  move => Γ + + h.
+  elim : Γ / h.
+  - inversion 1.
+  - move => Γ A i h ih h0.
+    move => i0 A0.
+    elim /lookup_inv.
+    + hauto l:on inv:lookup use:weakening_Syn.
+    + move => h1 n A1 Γ0 B + ? []*. subst.
+      move /ih => [j ?].
+      exists j. apply : weakening_Syn'; eauto. done.
 Qed.
 
 Lemma Wt_regularity Γ a A
@@ -321,8 +332,7 @@ Lemma Wt_regularity Γ a A
   exists i, Γ ⊢ A ∈ (tUniv i).
 Proof.
   elim: Γ a A/h; try qauto ctrs:Wt depth:2.
-  - inversion 1.
-    hauto l:on use:dep_ith_shift,good_renaming_truncate, renaming_Syn.
+  - apply Wff_lookup.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc.
     exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
@@ -331,13 +341,13 @@ Proof.
   - move => Γ t a b p A i j C ha iha hb ihb hA ihA hp ihp hC ihC ht iht.
     exists i. change (tUniv i) with (subst_tm (p .: b..) (tUniv i)).
     apply : morphing_Syn; eauto with wff.
-    rewrite /good_morphing.
-    case => [_ /= | /= k /Arith_prebase.lt_S_n].
-    + by asimpl.
-    + case : k => [ | /= k /Arith_prebase.lt_S_n ?].
+    move => k A0.
+    elim /lookup_inv.
+    + move => ? > ? [] *. subst. by asimpl.
+    + move => _ n A1 Γ0 B + ? [] *. subst. simpl.
+      inversion 1; subst.
       * by asimpl.
-      * asimpl.
-        eauto using T_Var with wff.
+      * asimpl. eauto using T_Var with wff.
 Qed.
 
 Lemma Wt_App_inv Γ b a T (h : Γ ⊢ (tApp b a) ∈ T) :
@@ -355,18 +365,18 @@ Proof.
     + move /Wt_regularity : h0.
       move => [i /Wt_Pi_Univ_inv] [hA hB].
       exists i.
-      change (tUniv i) with (subst_tm (b..) (tUniv i)).
+      change (tUniv i) with (tUniv i)[b..].
       apply : subst_Syn; eauto.
   - hauto lq:on rew:off use:Coherent_transitive.
 Qed.
 
 Lemma Wt_If_inv Γ a b c T (h : Γ ⊢ (tIf a b c) ∈ T) :
   exists A, Γ ⊢ a ∈ tBool /\
-         Γ ⊢ b ∈ (subst_tm (tTrue..) A) /\
-         Γ ⊢ c ∈ (subst_tm (tFalse..) A) /\
-         Coherent (subst_tm (a..) A) T /\
-         (exists j, (tBool :: Γ) ⊢ A ∈ (tUniv j)) /\
-         exists i, Γ ⊢ T ∈ (tUniv i).
+         Γ ⊢ b ∈ A [tTrue..] /\
+         Γ ⊢ c ∈ A [tFalse..] /\
+         Coherent A[a..] T /\
+         (exists j, tBool :: Γ ⊢ A ∈ tUniv j) /\
+         exists i, Γ ⊢ T ∈ tUniv i.
 Proof.
   move E : (tIf a b c) h => a0 h.
   move : a b c E.
@@ -451,15 +461,15 @@ Proof.
   replace A with (subst_tm ids A); last by asimpl.
   apply morphing_Syn with (Γ := A0 :: Γ).
   - done.
-  - case => [_ | k /Arith_prebase.lt_S_n ?].
-    + simpl; asimpl.
+  - move => k h. elim/lookup_inv.
+    + move => ? A2 Γ0 ? [] *. subst. asimpl.
       apply T_Conv with (A := ren_tm shift A1) (i := i).
       * apply T_Var; hauto l:on db:wff.
       * change (tUniv i) with (ren_tm shift (tUniv i)).
         apply weakening_Syn with (i := j) => //.
       * hauto lq:on use:Coherent_symmetric, Coherent_renaming.
-    + asimpl.
-      change (var_tm (S k)) with (ren_tm shift (var_tm k)).
+    + move => _ n A2 Γ0 B ? ? [] *. subst. asimpl.
+      change (var_tm (S n)) with (ren_tm shift (var_tm n)).
       apply weakening_Syn with (i := j) => //.
       apply T_Var; hauto lq:on db:wff.
   - eauto with wff.
@@ -559,20 +569,19 @@ Proof.
     apply T_J_simpl with (A := A) (i := i).
     + hauto lq:on use:T_Eq_simpl, T_Conv.
     + eapply preservation_helper with (i := 0) (j := 0); eauto.
-      * hauto drew:off ctrs:Wt use:T_Eq_simpl, weakening_Syn' db:wff.
-      * hauto drew:off ctrs:Wt use:T_Eq_simpl, weakening_Syn' db:wff.
+      * hauto drew:off ctrs:Wt,lookup use:T_Eq_simpl, weakening_Syn' db:wff.
+      * hauto drew:off ctrs:Wt,lookup use:T_Eq_simpl, weakening_Syn' db:wff.
       * sfirstorder use:Par_Coherent, P_Eq, Par_renaming, Par_refl.
     + apply T_Conv with (A := subst_tm (tRefl .: a0..) C) (i := i);auto.
       * move : morphing_Syn hC0. move/[apply].
         move /(_ Γ (tRefl .: a1..)).
         move => [:hwff].
         asimpl. apply; last by (abstract : hwff; eauto using Wt_Wff).
-        (* Use proof by reflection to generalize subst_Syn *)
-        case => [_ |/= q /Arith_prebase.lt_S_n].
-        ** simpl; asimpl.
+        move => l h. elim/lookup_inv.
+        ** move => _ A0 Γ0 ? [] *. subst=>/=. asimpl.
            apply T_Refl'; eauto.
-        ** case : q => [_ | /= q /Arith_prebase.lt_S_n ?] /=;
-                        asimpl; hauto q:on ctrs:Wt.
+        ** move => _. inversion 1; subst;
+             asimpl; hauto q:on ctrs:Wt.
       * apply Par_Coherent.
         apply Par_morphing; hauto lq:on unfold:Par_m use:Par_refl inv:nat.
     + apply : Coherent_transitive; eauto.
