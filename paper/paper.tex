@@ -344,8 +344,69 @@ to our typeset proof, such as avoiding the clunky syntax for well-founded
 recursion in Coq, we keep the overall structure of our typeset proofs
 consistent with our mechanization.
 
+\yl{new overview starts here}
+Here is an overview of our contribution.
+\begin{itemize}
+\item In Section~\ref{sec:spec},
+we present the type system of \lang{},
+a dependently typed system with an untyped conversion rule in the
+style of Pure Type Systems~\citep{barendregt1991introduction}. The
+\lang{} language supports many common features of a dependent
+type theory: a countable universe hierarchy, a boolean base
+type, an intensional identity type, and support for large elimination.
+\item In Section~\ref{sec:logreldep}, we formulate logical consistency for \lang{}, the property of
+interest, to motivate a logical relation, and proceed to define it as
+an inductive relation which we later prove to be a partial
+function. Based on the definition of the logical relation, we define
+a notion of semantic typing and prove the fundamental theorem, from
+which logical consistency follows as a corollary
+(Section~\ref{sec:logrelproof}). Thanks to the good coverage of
+features in our object language, our proof showcases the
+special treatment required to model those features, thus making
+our proof applicable to a broad range of type systems.
+\item We strengthen our logical relation to prove the existence of
+  $\beta$-normal forms (Section~\ref{sec:extension}) and
+  $\beta\eta$-normal forms (Section~\ref{sec:betaeta}) for well-typed
+  open \emph{and} closed terms. The modifications made to the logical
+  relation are small and closely mirror an analogous extension for a
+  simply typed language. We use these extensions to demonstrate the idea
+  that once we have established the base techniques, we can port ideas
+  that have been studied in the context of a simpler system to the
+  dependently typed setting.
+\item We mechanize all our proofs using the Coq proof assistant, with
+  963 lines of code for the consistency proof and a moderate increase
+  to 1357 lines of code for the normalization proof.
+  We discuss the specifics
+  related to our choice of Coq as our metatheory, including our use of
+  off-the-shelf semantic engineering infrastructure and automation
+  tools, in Section~\ref{sec:logrelmech}.
+  Our proof scripts, with comments, are available to reviewers as
+  supplementary materials. We use Coq's custom notations to ease the
+  effort of matching the pen and paper representation to our formalism.
+ \yl{I want to say something
+  about the benefits of using existing libraries such as Autosubst 2
+  and CoqHammer rather than rolling your own undocumented libraries that nobody
+  want to (or can) reuse.}
+Our development relies on off-the-shelf tools...
+\item We discuss in Section~\ref{sec:relatedwork} how our proof
+relates to existing proofs by logical relations and other proof
+techniques for proving consistency and normalization. In
+Section~\ref{sec:discuss}, we give an in-depth explanation on how
+various design decisions (e.g. the choice of untyped equality) affect
+the size of our proof and its extensibility to features such as
+type-directed conversion.
+\end{itemize}
+We hope our success at creating a short and mechanized proof for a
+relatively feature-complete language will encourage future researchers
+to leverage the tool of logical relations in mechanized
+proofs for dependent types.
+
+\yl{new overview ends here}
+
 The key contributions of each section of our paper are as follows.
 \scw{I'm still not happy with this overview / contributions list. }
+
+
 
 In Section~\ref{sec:spec}, we introduce \lang{}, the dependent type theory of
 interest, reminiscent of Martin-Löf style predicative type systems. A key
