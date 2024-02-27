@@ -2290,6 +2290,11 @@ syntactic means.
 
 \section{Existence of $\beta\eta$-normal forms}
 \label{sec:betaeta}
+\scw{Need an introduction to this section. Why do we care about this new 
+rule? What does this section demonstrate?}
+\scw{The way we describe this
+section should more clearly indicate that we have a mechanized version of this 
+proof. And include pointers on where readers might refer to it.}
 We can easily incorporate the function $\eta$ law to the equational
 theory of \lang{} by adding the following parallel reduction rule.
 \begin{center}
@@ -2298,21 +2303,20 @@ theory of \lang{} by adding the following parallel reduction rule.
 % \Rref{P-AbsEta} effectively adds the $\eta$ law for functions to our
 % equational theory since convertibility ($[[a <=> b]]$), the untyped relation
 % used for type conversion, is built on top of parallel reduction.
-We can recover the same confluence result about parallel reduction
-using the standard techniques from
-\citet{barendregt:lambda-calculi-with-types,
-takahashi-parallel-reduction}, though anti-renaming
-(Lemma~\ref{lemma:parantirenaming}) needs to be proven before the
-diamond property (Lemma~\ref{lemma:pardiamond}). Another complication
-is that confluence and anti-renaming now requires induction on a size
-metric of lambda terms so the $\eta$ case has a useful induction hypothesis.
+We can recover the same confluence result about parallel reduction using the
+standard techniques from \citet{barendregt:lambda-calculi-with-types,
+  takahashi-parallel-reduction}, though anti-renaming
+(Lemma~\ref{lemma:parantirenaming}) must be proven before the diamond property
+(Lemma~\ref{lemma:pardiamond}). Another complication is that
+confluence\scw{diamond property?} and anti-renaming are now proven through
+induction on a size metric of lambda terms; \rref{P-AbsEta} reduces a term
+that is not a strict subterm.
 
-Note that the specification of our logical relation does not require
-any changes. We can continue using $\ottkw{ne}$ and $\ottkw{nf}$ to
-represent $\beta$-neutral and normal forms. By reproving the
-fundamental lemma, we learn that every well-typed term as a
-$\beta$-normal form. Lemma~\ref{lemma:parnenf} still holds with our
-extended parallel reduction. In the presence of the $\eta$ reduction
+Note that, after this extension, the specification of our logical relation does not require
+any updates. As before, $\ottkw{ne}$ and $\ottkw{nf}$ 
+represent $\beta$-neutral and $\beta-$normal forms, and the 
+fundamental lemma shows us that every well-typed term has a
+$\beta$-normal form. However, in the presence of the $\eta$ reduction
 rule, Lemma~\ref{lemma:parnenf} tells us that $\eta$ reduction
 preserves $\beta$-normal forms (i.e. does not produce new
 $\beta$-redexes). Furthermore, since the $\eta$ reduction rule for
@@ -2323,11 +2327,14 @@ $\beta\eta$ normal form trivially follows.
 If $[[G |- a : A]]$, then $[[a]]$ has $\beta\eta$-normal form.
 \end{corollary}
 
-In \citet{nbeincoq,decagda,martin-lof-a-la-coq}, a relational model is
-needed to justify the $\eta$-law for functions. Instead, we prove
-confluence for our parallel reduction extended with $\eta$-law for functions
-and continue using a logical predicate (i.e. a unary logical relation) to justify
-$\eta$-law as part of our equational theory.
+%% SCW: This is out of place, and redundant with the next paragraph.
+% In contrast to our approach, related work \cite{nbeincoq,decagda,martin-lof-a-la-coq}
+% employs a relational model to
+% justify the $\eta$-law for functions. 
+% Instead, we prove
+% confluence for our parallel reduction extended with $\eta$-law for functions
+% and continue using a logical predicate (i.e. a unary logical relation) to justify
+% $\eta$-law as part of our equational theory.
 A well-known issue with our approach is the failure of syntactic
 confluence when the lambda term contains type annotations. A simple
 counterexample is $[[\- B ((\- A a) {up 1} var 0)]]$; depending on
@@ -2340,12 +2347,11 @@ equivalence relation that quotients out parts of the terms that are
 computationally irrelevant; the annotations of lambda terms are
 ignored since the behavior of a lambda term is not affected by its
 type annotation. We believe the same approach is applicable to our
-proof if we add type annotations to our lambda terms.
+proof.
 
 The bigger issue is extensions such as $\eta$-laws for unit and
-products. Surjective pairing, for example, is an equational law that
-is known to cause trouble since it is not confluent for untyped lambda
-terms~\citet{KLOP198997}. The relational, type-annotated, and Kripke-style models from
+products. Surjective pairing, for example, is not confluent for untyped lambda
+terms~\cite{KLOP198997}. The relational, type-annotated, and Kripke-style models from
 \citet{nbeincoq,decagda,martin-lof-a-la-coq} can be more easily
 extended to support these rules.
 We note, however, that the issue with $\eta$ rules is not exclusive to dependently
@@ -2353,16 +2359,20 @@ typed languages and has been studied in more limited languages that
 are either simply
 typed~\citep{pierce2004advanced,pfenning1997computation} or
 dependently typed but without large
-elimination~\citep{harper2005equivalence,
+eliminations~\citep{harper2005equivalence,
 abel2005untypedconvsurjective}. Common workarounds include
 type-directed conversion and shifting the focus to obtaining
-$\eta$-long forms~\citet{Abel12}.
-We believe our simple proof will help readers
-see how techniques from these simpler settings generalize to fully
-dependently typed languages and better understand the more complex
-mechanized developments.
+$\eta$-long forms~\cite{Abel12}.
 
-Finally, due to some technical
+While not without limitations, our simple proof demonstrates the core
+building blocks of more complex arguments, thus paving the way for experimentation 
+and eventual extension to more expressive systems.\scw{I tried to reword your 
+sentence, but I am still not happy with it.} 
+
+\scw{Is this specific to $\eta$? Or is this also true for $\beta$? Can we move this 
+sentence elsewhere? I'd like to use the previous sentence as a conclusion for 
+this section.}
+Finally, due to technical
 details, our mechanized proof about the existence of $\beta\eta$ form does not
 immediately induce a decision procedure for type conversion in
 \lang{}. We discuss this issue and its workaround in
