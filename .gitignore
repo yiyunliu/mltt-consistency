@@ -59,3 +59,5 @@ _CoqProject
 paper/paper-output.tex
 paper/rules.tex
 paper/paper-output.pdf
+proofs
+proofs.zip
