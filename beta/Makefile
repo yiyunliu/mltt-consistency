@@ -1,6 +1,6 @@
 LIBNAME=WR
 
-coq: CoqSrc.mk $(VFILES)
+coq: CoqSrc.mk syntax.v
 	$(MAKE) -f CoqSrc.mk
 
 %.vo: %.v CoqSrc.mk
@@ -25,4 +25,4 @@ CoqSrc.mk: _CoqProject
 .PHONY: clean
 clean:
 	rm -f syntax.v
-	$(MAKE) -f CoqSrc.mk clean
+	test ! -f CoqSrc.mk || ( $(MAKE) -f CoqSrc.mk clean && rm CoqSrc.mk )
