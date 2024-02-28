@@ -2326,7 +2326,7 @@ Their development is around 8,000 lines of Coq nonblank, noncomment code.
 
 \citet{decagda} mechanize in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
-universe level and typed judgmental equality with function
+universe level and a typed judgmental equality that includes the function
 $\eta$ law. They
 use a Kripke-style logical relation parameterized over a
 type-directed equivalence relation satisfying certain
@@ -2367,13 +2367,6 @@ to encode a finite universe hierarchy without the use of
 either impredicativity or induction-recursion. Their encoding of a countable
 universe hierarchy relies on impredicativity, similar to our
 development.
-% \scw{How did the Nuprl
-% proof include a full hierarchy? Did they use impredicativity?}
-% \yl{commented out because I think this paragraph is too subjective}
-% However, instead of explaining the inductive
-% logical relation as a convoluted workaround to the lack of
-% induction-recursion in Coq, we give a self-contained explanation of
-% our logical relation.
 
 \subsection{Other mechanized metatheory of dependent types}
 
@@ -2383,21 +2376,21 @@ previous efforts, which primarily focus on predicative
 type theory and more direct reducibility models,
 \citet{barras2010sets, Wang2013SemanticsOI} tackle extensions of
 $CC^\omega$, a system that incorporates a predicative universe on top
-of the impredicative sort in Calculus of Constructions. We choose to
+of the impredicative sort in the Calculus of Constructions. We choose to
 focus on a syntactic term model so we do not have to take the extra step
 of mechanizing mathematical objects such as sets and domains.
 
 There are other mechanized developments for dependently typed systems that
 only involve properties that are derivable through syntactic means. For
-example, \citet{coqcoqcorrect2019} proves the correctness of a type checker
-for the Polymorphic, Cumulative Calculus of Inductive Constructions (PCUIC),
+example, \citet{coqcoqcorrect2019} prove the correctness of a type checker
+for the Predicative, Cumulative Calculus of Inductive Constructions (PCUIC),
 Coq's core calculus, assuming the strong normalization property of the object
 language. \citet{weirich:systemd} define System D, a core calculus of
 dependent Haskell, and prove the syntactic type soundness of the type
-system. Compared to properties such as consistency, normalization, and
-parametricity, the most difficult part for syntactic type soundness is the
-consistency of definitional (not propositional) equality. In their setting,
-the result follows from the confluence of parallel reduction.
+system. Because System D includes nontermination, they proved
+the consistency of definitional equality from the confluence of 
+parallel reduction.  
+
 
 \section{Discussion}
 \label{sec:discuss}
@@ -2451,7 +2444,7 @@ cumulativity. We don't include Prop. We don't include universe polymorphism.
 The short consistency proof we present achieves the goal of
 demonstrating the technique of proof by logical relation for dependently typed
 languages. However, what remains unanswered is what makes our development
-significantly shorter compared to others. Are we proving simpler results, for
+significantly shorter compared to others. Are we proving simpler results for
 smaller languages, are we making more use of automation, or is our proof
 technique genuinely more efficient?
 % focus on the following question: why is our proof,
@@ -2487,13 +2480,13 @@ First, the metatheoretic properties that we prove are indeed
 simpler. Compared to Core Nuprl~\citep{anand2014towards}, our system
 lacks extensionality, which would require a relational model to
 justify consistency. Compared to the systems from
-\citet{decagda,nbeincoq, martin-lof-a-la-coq}, the conversion rule for
+\citet{decagda, nbeincoq, martin-lof-a-la-coq}, the conversion rule for
 \lang{} is untyped and therefore we do not
 need a Kripke-style relational model to prove $\Pi$-injectivity
 among other properties. Furthermore, we prove the existence of normal
 forms, which induces a simple \emph{normalize-and-compare}
 procedure for type
-conversion~\citet{pierce2004advanced}. \citet{nbeincoq, decagda}, on
+conversion~\cite{pierce2004advanced}. \citet{nbeincoq, decagda}, on
 the other hand, need
 to show how their algorithmic conversion procedure is sound and complete
 with respect to their respective declarative equational theory.
@@ -2528,21 +2521,21 @@ can have $[[A => B0]]$ and $[[A => B1]]$, where $[[B0]]$ and $[[B1]]$
 each have their separate interpretations that we have to prove to be
 equal. Fortunately, this complexity is reconciled by the
 diamond property, which is easy to derive syntactically.
-\citet{decagda,nbeincoq} employ a deterministic weak
-head reduction relation. The use of a deterministic reduction relation
-makes the functionality of a logical relation trivial to prove, but
-the downside is that weak head reduction (denoted by $\leadsto^{wh}$)
-or leftmost-outermost reduction (denoted by $\leadsto^{lo}$) does
-not satisfy even the weaker substitution property
-(Lemma~\ref{lemma:parsubst}).
-With this alternative formulation, we would have to prove how the
-deterministic reduction relates to a full non-deterministic reduction
-relation to prove the fundamental theorem. This would amount
-to proving the factorization theorem of the deterministic reduction
-relation with respect to full non-deterministic reduction. Instead,
-using parallel reduction in \rref{I-Red} allows us to delay the
-factorization property until we need to justify the use leftmost-outermost
-reduction as a deterministic reduction strategy for normalization.
+
+In contrast, \citet{decagda} and \citet{nbeincoq} employ a deterministic weak
+head reduction relation. The use of a deterministic reduction relation makes
+the functionality of a logical relation trivial to prove, but the downside is
+that weak head reduction (denoted by $\leadsto^{wh}$) or leftmost-outermost
+reduction (denoted by $\leadsto^{lo}$) does not satisfy even the weaker
+substitution property (Lemma~\ref{lemma:parsubst}).  With this alternative
+formulation, we would have to prove how the deterministic reduction relates to
+a full non-deterministic reduction relation to prove the fundamental
+theorem. This would amount to proving the factorization theorem of the
+deterministic reduction relation with respect to full non-deterministic
+reduction. Instead, using parallel reduction in \rref{I-Red} allows us to
+delay the factorization property until we need to justify the use
+leftmost-outermost reduction as a deterministic reduction strategy for
+normalization.
 
 
 
@@ -2578,7 +2571,7 @@ it was only needed for subject reduction}\yl{it's
 transitive. Confluence depends on subject reduction, which in turn
 depends on pi injectivity. Maybe it's worth spelling out the details}
 Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
-problem that allow us to recover confluence property independently
+problem that allow us to recover the confluence property independently
 from the logical relation. \citet{siles2012pure} generalize the
 notion of Type Parallel One Step Reduction from \citet{adams2006pure}
 to syntactically prove $\Pi$-injectivity for arbitrary Pure Type
@@ -2624,21 +2617,20 @@ Do we even need nondeterministic parallel reduction?}
 
 \section{Conclusion}
 \label{sec:conclusion}
-In this work, we show a short and mechanized proof of consistency
-through proof by logical relation for a fully dependently typed
-language with a full universe hierarchy, an intensional identity type,
-and large elimination. We show the extensibility of our approach by
-proving the existence of $\beta\eta$-normal forms with only small
-and mechanical changes to our proof development. Our Coq mechanization
-leverages existing Coq libraries for reasoning about metatheory and
-general-purpose automation, allowing us to significantly reduce the
-verbosity typically associated with mechanized proofs and recover a
-declarative proof style that is usually only available in pen and
-paper. Our development shows that proof by logical relation for
-dependent types should be more accessible since it does not always
+In this work, we present a short and mechanized proof of consistency through
+proof by logical relations for a dependently typed language with a full
+universe hierarchy, large eliminations, an intensional identity type, and
+dependent eliminators. We show the extensibility of our approach by proving
+the existence of $\beta\eta$-normal forms with only small and mechanical
+changes to our proof development. Our Coq mechanization leverages existing Coq
+libraries for reasoning about metatheory and for general purpose automation,
+allowing us to significantly reduce the verbosity typically associated with
+mechanized proofs. The result is a declarative proof style that is usually
+only available on pen and paper. Our development shows that proofs by logical
+relations for dependent types are accessible and do not
 require months of effort to implement. We hope our proof can inspire
-researchers to more actively mechanize results such as consistency,
-normalization for dependent type theory.
+researchers to more frequently mechanize results, such as consistency and
+normalization, for their dependent type theories.
 
 
 
