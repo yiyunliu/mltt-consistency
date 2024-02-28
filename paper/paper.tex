@@ -4,7 +4,7 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentsfalse         %% toggle comments here
+\commentstrue         %% toggle comments here
 \extendedfalse
 \anonymoustrue
 
@@ -624,13 +624,13 @@ consistent with our mechanization.
 
 
 In this section, we present the dependent type theory, \lang{}, whose logical
-consistency will be proven in Section~\ref{sec:logrelproof}. 
+consistency will be proven in Section~\ref{sec:logrelproof}.
 
 \scw{Need to acknowledge the lack of type annotation on abstractions.}
 
 The syntax of \lang can be found in Figure~\ref{fig:syntax}.  As a dependent
 type theory, terms and types are collapsed into the same syntactic
-category. The type $[[Set i]]$ represent universe types, annotated by 
+category. The type $[[Set i]]$ represent universe types, annotated by
 the universe level, a natural number $i$.%  and $[[x]]$
 % represent de Bruijn variables~\cite{debruijn}.  While $[[i]],[[j]],$ and
 % $[[n]]$ are all metavariables representing natural numbers, we always use
@@ -719,7 +719,7 @@ input is $[[true]]$ or $[[false]]$.
 
 % We adapt from \citet{autosubst2} notation for simultaneous renaming,
 % substitution, and other auxiliary definitions used in our paper, summarized in
-% Figure~\ref{fig:auxdef}. 
+% Figure~\ref{fig:auxdef}.
 Our reduction a typing relations are defined in terms of \emph{simultaneous
   substitutions}, $[[rho]]$, which are mappings from variables to terms.  We
 use $[[idtm]]$ as the identity substitution.  The extension operation,
@@ -841,7 +841,7 @@ from MLTT~\citep{Martin-Lof-1973}, where the judgmental
 equality takes the form $\Gamma \vdash a \equiv b : A$.
 % from which one can
 % usually derive $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving subject
-% reduction. 
+% reduction.
 By working with an untyped judgement, we can establish its
 properties independently from the type system and the logical relation, using
 well-established syntactic approaches.
@@ -926,7 +926,7 @@ introduced by \rref{T-Refl}. In \rref{T-J}, the elimination form, the subterm
 $p$ is a proof of an equality between $[[a]]$ and $[[b]]$. The subterm $[[c]]$
 is the body of the elimination form. In this rule, $[[B]]$ is the motive and has two free variables.  The substitution for these
 variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
-witnessing the information gained through dependent pattern matching. 
+witnessing the information gained through dependent pattern matching.
 % In the
 % typing rule, the terms $[[a]]$ and $[[A]]$ need to be shifted in the context
 % for a similar reason; an extra type $[[A]]$ appears after the $[[G]]$ and
@@ -1242,11 +1242,13 @@ simplified admissible \rref{I-PiAlt} that follows directly from \rref{I-Pi}.
   \Rref{I-PiAlt} is admissible.
 \end{lemma}
 \begin{proof}
-Immediate from \rref{I-Pi} with $[[R]]$ instantiated to the relation $[[{ (a
-, S0 ) | a in S , Interp I i B { a /x } S0 }]]$.
+The precondition $[[forall a, (# a in S
+implies (# exists S0 , Interp I i B { a / x } S0 #) #)]]$ from
+\rref{I-PiAlt} immediately induces a function $[[F in S -> PowerSet
+STm]]$ such that $[[forall a, (# a in S implies Interp I i B { a / x }
+F a #)]]$, which is exactly what we need to apply \rref{I-Pi}.
 \end{proof}
-Compared to the \rref{I-Pi}, which contains the mysterious relation
-$[[R]]$, \rref{I-PiAlt} directly captures the meaning of
+\Rref{I-PiAlt} directly captures the meaning of
 a well-behaved dependent function type. The precondition of
 \rref{I-PiAlt} says that
 the function type $[[Pi x : A . B]]$ has an interpretation if its input
@@ -1267,7 +1269,8 @@ involving \rref{I-Pi} can be systematically replaced by
 that the logical relation is a partial function, a result we will show
 in Lemma~\ref{lemma:logreldeter}. The preconditions of \rref{I-Pi},
 when combined with the functionality of the logical relation, uniquely
-determine the relation $[[R in S * PowerSet STm]]$ to be the relation
+determine the function $[[F in S -> PowerSet STm]]$ to be the
+functional relation
 $[[{ (a , S0 ) | a in S , Interp I  i B { a /x } S0 }]]$. This result is
 formally shown through the improved inversion lemma for function types
 (Lemma~\ref{lemma:piinvalt}).
@@ -1276,21 +1279,22 @@ Unfortunately, we cannot define the function case of our logical
 relation directly using \rref{I-PiAlt} since the occurrence of
 $[[Interp I i B {a/x} S0]]$ in its conclusion not only violates the
 syntactic strict positivity constraint required in proof assistants,
-but is genuinely non-monotone when we rewrite the inductive definition
-as an endofunction over the domain of relations.
+but is genuinely non-monotone when we treat the inductive definition
+as the fixed point of an endofunction over the domain of relations.
 Intuitively, the failure of monotonicity stems from the fact
 that the witness picked in the precondition is not necessarily the
 same witness being referred to in the post condition as the relation
 grows, whereas the
-relation $[[R]]$ in \rref{I-Pi} ``fixes'' the witnesses $[[S0]]$ and
-prevents the set of witnesses from growing. While it might
+function $[[F]]$ in \rref{I-Pi} ``fixes'' the witnesses $[[S0]]$ as
+$[[F a]]$ for each $[[a in S]]$,
+thus preventing the set of witnesses from growing. While it might
 be possible to restrict the domain with additional constraints such as
 functionality and inversion properties to justify the well-definedness of our
 inductive relation with \rref{I-PiAlt}, we opt for our current
 formulation of \rref{I-Pi} so we immediately obtain a
 well-defined inductive relation and a usable induction principle. The
 slight disadvantage of \rref{I-Pi} is that we need to construct the
-function $[[R]]$ each time we apply it, though this is mitigated by
+function $[[F]]$ each time we apply it, though this is mitigated by
 the immediate admissibility of \rref{I-PiAlt} and the alternative $\Pi$ inversion
 principle (Lemma~\ref{lemma:piinvalt}), which we derive after proving functionality.
 
@@ -1315,14 +1319,12 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Bool\_inv}} If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}} If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl , a <=> b  }]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}} If $[[Interp
-    I i Pi x : A . B S1]]$, then there exists $[[S]],[[R]]$ such that:
+    I i Pi x : A . B S1]]$, then there exists $[[S]],[[F]]$ such that:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
-    \item $[[R in S * PowerSet STm]]$
-    \item $[[forall a, (# a in S implies (# exists S0 , (a , S0) in R #) #)]]$
-    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I
-      i B { a /x } S0 #)]]$
-    \item $[[S1 = { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$
+    \item $[[S1 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Univ\_inv}} If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
   \end{enumerate}
@@ -1338,23 +1340,20 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
     We know that there exists some $[[A0]]$ and
     $[[B0]]$ such that $[[Pi x : A . B => Pi x : A0 . B0]]$ and $[[Interp I i Pi
     x : A0 . B0 S1]]$. From the
-    induction hypothesis, there exists $[[S]]$ and $[[R]]$ such that :
+    induction hypothesis, there exists $[[S]]$ and $[[F]]$ such that :
     \begin{itemize}
     \item $[[Interp I i A0 S ]]$
-    \item $[[R in S * PowerSet STm]]$
-    \item $[[forall a, (# a in S implies (# exists S0 , (a , S0) in R #) #)]]$
-    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I
-      i B0 { a / x } S0 #)]]$
-    \item $[[S1 = { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }]]$
+    \item $[[F in S -> PowerSet STm]]$
+    \item $[[forall a, (# a in S implies Interp I i B0 { a / x } F a #)]]$
+    \item $[[S1 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
     By inverting the derivation of $[[Pi x : A . B => Pi x : A0 . B0]]$, we derive $[[A => A0]]$ and
     $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a /x} => B0 {a/x} ]]$ for all
     $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
-    $[[R]]$ additionally satisfies the following properties:
+    $[[F]]$ additionally satisfies the following properties:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
-    \item $[[forall a, forall S0, (# ( a , S0 ) in R implies Interp I
-      i B { a /x } S0 #)]]$
+    \item $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$
     \end{itemize}
     These properties are exactly what we need to finish the proof.
   \end{description}
@@ -1421,7 +1420,7 @@ logical relation is indeed functional.
 
 Lemma~\ref{lemma:logreldeter} enables us to show the following
 improved inversion lemma for function types whose statement is free of
-the relation $[[R]]$, analogous to the admissible rule \rref{I-PiAlt}.
+the relation $[[F]]$, analogous to the admissible rule \rref{I-PiAlt}.
 \begin{lemma}[Pi Inversion Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
   \label{lemma:piinvalt}
   Suppose $[[Interp I i Pi x : A . B S]]$, then there exists some $[[S0]]$
@@ -1863,7 +1862,12 @@ of \lang{}.
 
 The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
 neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite
-\footnote{\dotv{normalform.v}{nf\_refl}} }. Instead of the
+\footnote{\dotv{normalform.v}{nf\_refl}} }.\yl{I always think of
+normal form as the specific definition that says the relation can't
+step. We can refer to nfrefl but that requires some explanation about
+the definition of normal form and the complication that it doesn't
+hold in $\eta$ (maybe it's fine if we just don't mention it in the
+$\eta$ case)} Instead of the
 metavariables $e$ and $f$, we also
 use the judgment forms $[[ne a]]$ and $[[nf a]]$ to indicate that there exists
 $[[e]]$ or $[[f]]$ such that $[[a = e]]$ or $[[a = f]]$.
@@ -1925,7 +1929,10 @@ variables that appears in terms. If a renamed term has been reduced, we can
 always recover the result of the reduction without the renaming.
 %
 \scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
-used more generally. Maybe we should replace it with that?}
+used more generally. Maybe we should replace it with
+that?}\yl{Anti-renaming is mentioned once in Section 6 when we talk abou how confluence with $\eta$
+depends on anti-renaming for Par. I don't think that discussion in
+Section 6 is very important so I'm fine with replacing it  }
 \begin{lemma}[Par anti-renaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
   \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
 exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
@@ -1996,8 +2003,6 @@ Furthermore, to prove this adequacy property, we need to strengthen it to also
 give us more information about neutral terms as we proceed by induction. In
 particular, we need to know that all terms that reduce to neutral forms are
 contained within the interpretation.
-\scw{Also, cite where this form of proof originally
-appeared? This part is standard.}
 Therefore, we formally define when a set is a \emph{reducibility candidate}
 (shortened as $CR$) as follows. Our definition of $CR$ is inspired by
 \citet{girard1989proofs}, but not identical since we only care about
@@ -2194,14 +2199,14 @@ building blocks of more complex arguments, thus paving the way for experimentati
 and eventual extension to more expressive systems.\scw{I tried to reword your
 sentence, but I am still not happy with it.}
 
-\scw{Is this specific to $\eta$? Or is this also true for $\beta$? Can we move this
-sentence elsewhere? I'd like to use the previous sentence as a conclusion for
-this section.}
-Finally, due to technical
-details, our mechanized proof about the existence of $\beta\eta$ form does not
-immediately induce a decision procedure for type conversion in
-\lang{}. We discuss this issue and its workaround in
-Section~\ref{sec:conversionalgo}.
+% \scw{Is this specific to $\eta$? Or is this also true for $\beta$? Can we move this
+% sentence elsewhere? I'd like to use the previous sentence as a conclusion for
+% this section.}
+% Finally, due to technical
+% details, our mechanized proof about the existence of $\beta\eta$ form does not
+% immediately induce a decision procedure for type conversion in
+% \lang{}. We discuss this issue and its workaround in
+% Section~\ref{sec:conversionalgo}.
 \section{Mechanization}
 \label{sec:logrelmech}
 \begin{figure}[h]
@@ -2280,6 +2285,7 @@ Lemma~\ref{lemma:piintroalt}).
 % the impredicativity of Coq's \texttt{Prop} sort since\scw{or ``so that''?} in \rref{I-Pi},
 % the function $[[F]]$ can be later instantiated into the logical
 % relation itself (e.g. in the proof of Lemma~\ref{lemma:piintroalt}).
+In Coq, we
 
 In the Coq mechanized proof, the definition of $[[Interp I i A S]]$ has type
 \texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S} has type \texttt {tm -> Prop}. 
@@ -2460,7 +2466,6 @@ an induction metric to define an executable algorithm\footnote{Coq's
   singleton elimination principle allows \mintinline{coq}{Acc}, a
   \texttt{Prop} data type with a single constructor, to be eliminated
   to construct runtime relevant data.}.
-
 \section{Related Work}
 \label{sec:relatedwork}
 
@@ -2832,8 +2837,8 @@ relation to prove the fundamental theorem. This would amount
 to proving the factorization theorem of the deterministic reduction
 relation with respect to full non-deterministic reduction. Instead,
 using parallel reduction in \rref{I-Red} allows us to delay the
-factorization property until we need to extract a normalization
-algorithm from our fundamental theorem (Section~\ref{sec:conversionalgo}).
+factorization property until we need to justify the use leftmost-outermost
+reduction as a deterministic reduction strategy for normalization.
 
 
 
