@@ -62,7 +62,6 @@ Proof.
   elim : a; solve [auto; hauto b:on].
 Qed.
 
-(* TODO: Would this lemma make more sense than nf/ne_preservation ? *)
 Lemma nf_refl a b (h: a ⇒ b) : (nf a -> b = a) /\ (ne a -> b = a).
 Proof.
 elim : a b / h => // ; hauto b:on.

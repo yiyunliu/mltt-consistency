@@ -183,7 +183,6 @@ Definition Coherent_m σ0 σ1 :=
   exists σ, (σ0 ⇒ς* σ) /\ (σ1 ⇒ς* σ).
 
 (* Morphing lemmas *)
-(* TODO: make the names of these lemmas a little more meaningful? *)
 
 Lemma Par_morphing a b (σ0 σ1 : fin -> tm)
   (h : σ0 ⇒ς σ1) :
@@ -299,8 +298,6 @@ Proof. hauto lq:on use:Coherent_morphing, Par_refl unfold:Par_m. Qed.
 
 
 (* The relations are also closed under single substitution  *)
-
-(* TODO: is _cong the right name for these lemmas? *)
 
 Lemma Par_cong a0 a1 b0 b1 (h : a0 ⇒ a1) (h1 : b0 ⇒ b1) :
   (a0 [b0..] ⇒ a1 [b1..]).
