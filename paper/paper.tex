@@ -1668,7 +1668,7 @@ the function has a neutral form and the argument has a normal form.
   If $[[wne a]]$ and $[[wn b]]$, then $[[wne (a b)]]$.
 \end{lemma}
 \begin{proof}
-  Immediate by lexicographical induction over the length of the reduction sequences in
+  Immediate by induction over the length of the reduction sequences in
   $[[wne a]]$ and $[[wn b]]$.
 \end{proof}
 
@@ -1773,7 +1773,7 @@ fundamental theorem.
   $[[rho]]$, we have $[[A {rho}]] = [[A {idtm}]] = [[A]]$ and $[[a {rho}]] = [[a{idtm}]] = [[a]]$. Then we
   know that $[[InterpR i A S]]$ and $[[a in S]]$ for some $[[i]]$ and
   $[[S]]$. By Lemma~\ref{lemma:adequacy}, we
-  conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
+  conclude that $[[wn a]]$ and $[[wn A]]$.
 \end{proof}
 
 % Due to the non-deterministic nature of parallel reduction, we need to take a
@@ -2033,10 +2033,8 @@ rules follows from the fact that the logical relation is a
 partial function (Lemma~\ref{lemma:logreldeter}). In set-theoretic
 notation, \rref{I-Pi} is more readable. However, if we want to encode
 the same rule in Coq, we must encode $[[F]]$ as a relation (with type
-\texttt{tm -> (tm -> Prop) -> Prop}) that satisfies the following functionality constraint.
-\begin{minted}{coq}
-              forall a S0 S1, F a S0 -> F a S1 -> S0 = S1.
-\end{minted}
+\texttt{tm -> (tm -> Prop) -> Prop}) that satisfies the functionality constraint:
+\mintinline{coq}{forall a S0 S1, F a S0 -> F a S1 -> S0 = S1}.
 In comparison, \rref{I-PiCoq} does not require this side condition and
 results in a simpler definition.
 
@@ -2552,19 +2550,24 @@ equal. Fortunately, this complexity is reconciled by the
 diamond property, which is easy to derive syntactically.
 
 In contrast, \citet{decagda} and \citet{nbeincoq} employ a deterministic weak
-head reduction relation. The use of a deterministic reduction relation makes
-the functionality of a logical relation trivial to prove, but the downside is
-that weak head reduction (denoted by $\leadsto^{wh}$) or leftmost-outermost
-reduction (denoted by $\leadsto^{lo}$) does not satisfy even the weaker
-substitution property (Lemma~\ref{lemma:parsubst}).  With this alternative
-formulation, we would have to prove how the deterministic reduction relates to
-a full non-deterministic reduction relation to prove the fundamental
-theorem. This would amount to proving the factorization theorem of the
-deterministic reduction relation with respect to full non-deterministic
-reduction. Instead, using parallel reduction in \rref{I-Red} allows us to
-delay the factorization property until we need to justify the use
-leftmost-outermost reduction as a deterministic reduction strategy for
-normalization.
+head reduction relation. % The use of a
+A deterministic reduction relation makes
+the functionality of a logical relation trivial to prove, but fails to
+satisfy the substitution property (Lemma~\ref{lemma:parsubst}), an
+issue that has been observed by
+\citet{casinghino:combining-proofs-programs}. If we had chosen to work
+with a deterministic reduction relation, we would likely need
+results such as the factorization theorem~\citep{takahashi-parallel-reduction,factorization-essentially} in our development before we
+can prove the fundamental theorem, leading to a more complicated proof.
+% With
+% this alternative formulation, we would have to prove how the deterministic reduction relates to
+% a full non-deterministic reduction relation to prove the fundamental
+% theorem. This would amount to proving the factorization theorem of the
+% deterministic reduction relation with respect to full non-deterministic
+% reduction. Instead, using parallel reduction in \rref{I-Red} allows us to
+% delay the factorization property until we need to justify the use
+% leftmost-outermost reduction as a deterministic reduction strategy for
+% normalization.
 
 
 
