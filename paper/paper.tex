@@ -4,7 +4,7 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentstrue         %% toggle comments here
+\commentsfalse         %% toggle comments here
 \extendedfalse
 \anonymoustrue
 
@@ -189,7 +189,7 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-Proof by logical relation is a powerful technique that has been used
+Proof by logical relations is a powerful technique that has been used
 to derive metatheoretic properties of type systems, such as
 consistency and parametricity. While there exists a
 plethora of introductory materials about logical relation in the
@@ -250,14 +250,14 @@ type theory, so a novice researcher might be excused for thinking that proofs
 that use logical relations are not applicable for such languages.
 
 But this is not the case. \scw{Add a sentence about pen-and-paper LR proofs
-  for dependent type theories} Recent authors have developed tour-de-force
+  for dependent type theories?} Recent authors have developed tour-de-force
 mechanizations for the metatheory of modern proof
 assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
 have relied on logical relations defined as part of their
 developments. However, because these proofs show diverse results about real
 systems and algorithms, these developments range in size from 20,000 to
 400,000 lines of code. As a result, their use of logical relations are
-difficult to isolate from their surrounding contexts, and thus, not accessible
+difficult to isolate from their surrounding contexts and inaccessible
 to casual readers.
 
 Thus, our paper provides a gentle and accessible introduction to a powerful
@@ -354,9 +354,10 @@ description, presented here using set-theoretic notation and terminology so
 that the material is accessible to readers with a general mathematical
 background.  That said, our explanations do not stray too far away from our
 proof scripts.  We link each lemma directly to its counterpart in the proof
-script, anticipating that readers may wish to reference and validate our
-formalism.  The typeset proofs purposefully follow the mechanized proofs
-closely while avoiding, as much as possible, artifacts specific to Coq.
+script, anticipating that readers may wish to see how these results may be
+expressed and verified in a proof assistant.  The typeset proofs purposefully
+follow the mechanized proofs closely while avoiding, as much as possible,
+artifacts specific to Coq.
 
 Not only does this connection aid readers that wish to, like us, adopt proof
 assistants for their day-to-day use, we also find that this precision is
