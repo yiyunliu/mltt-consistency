@@ -13,7 +13,7 @@ Definition SemWff Γ := forall i A, lookup i Γ A -> exists j, Γ ⊨ A ∈ tUni
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 
-Lemma ρ_ok_nil ρ : 
+Lemma ρ_ok_nil ρ :
   ρ_ok nil ρ.
 Proof.  rewrite /ρ_ok. inversion 1; subst. Qed.
 
@@ -206,28 +206,16 @@ Qed.
 (* Void is an empty type *)
 Lemma consistency a : ~ (nil ⊢ a ∈ tVoid).
 Proof.
-  move => h.
-  apply soundness in h.
-  rewrite /SemWt in h.
-  move : (h var_tm).
-  case.
-  rewrite /ρ_ok; sauto lq:on.
-  asimpl.
-  move => i [PA [hPA ha]].
-  simp InterpUniv in hPA.
-  apply InterpExt_Void_inv in hPA; subst.
-  apply ha.
+  move /(proj1 soundness) /(_ var_tm ltac:(eauto using ρ_ok_nil)).
+  asimpl. move => [m][PA][].
+  simp InterpUniv. move/InterpExt_Void_inv=>->. done.
 Qed.
 
-Lemma canonicity a : 
+(* A Bool evaluates either true or false *)
+Lemma canonicity a :
   nil ⊢ a ∈ tBool -> (a ⇒* tTrue) \/ (a ⇒* tFalse).
 Proof.
-  move => h. 
-  apply soundness in h. 
-  move: (h _  (ρ_ok_nil (fun x => var_tm x))) => [m [PA [h3 h4]]].
-  apply InterpUnivN_Bool_inv in h3.
-  rewrite idSubst_tm in h4. eauto.
-  rewrite h3 in h4.
-  move: h4 => [v [h5 h6]].  destruct v; try done.
-  left; auto. right; auto.
+  move /(proj1 soundness) /(_ var_tm ltac:(eauto using ρ_ok_nil)).
+  move => [m][PA][/InterpUnivN_Bool_inv] -> []+[].
+  case => //; asimpl; tauto.
 Qed.
