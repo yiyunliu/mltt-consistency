@@ -1944,7 +1944,7 @@ neutral forms.
 Lemma~\ref{lemma:parnenf} could have been strengthened to say that if
 $[[ne a]]$ or $[[nf a]]$ and $[[a => b]]$, then $[[a = b]]$. Since
 $\ottkw{ne}$ and $\ottkw{nf}$ captures terms free of $\beta$ redexes, parallel
-reduction can not take any real reduction steps and can only step into a term
+reduction cannot take any real reduction steps and can only step into a term
 itself. However, for the purpose of our proof, Lemma~\ref{lemma:parnenf} is
 sufficient.  In fact, all the properties we have shown in
 Section~\ref{sec:logreldep} and \ref{sec:logrelproof} before the fundamental
@@ -2057,7 +2057,7 @@ cases are handled by Lemma~\ref{lemma:adequacy}, the adequacy property.
 
 The normalization property then follows as a corollary of the
 fundamental theorem.
-\begin{corollary}[Existence of $\beta$-normal form\footnote{\dotv{soundnessopen.v}{mltt\_normalizing}}]
+\begin{corollary}[Existence of $\beta$-normal forms\footnote{\dotv{soundnessopen.v}{mltt\_normalizing}}]
   \label{corollary:exbetanf}
   If $[[G |- a : A]]$, then $[[wn a]]$ and $[[wn A]]$.
 \end{corollary}
@@ -2206,54 +2206,74 @@ Section~\ref{sec:conversionalgo}.
 \label{sec:logrelmech}
 \begin{figure}[h]
   \begin{minipage}{0.9\textwidth}
-  \begin{tabular}{ l |  c  | c | c }
+  \begin{tabular}{ |l |  c  | c | c| }
+    \hline
     & Consistency & Normalization & Syntactic metatheory \\
     \hline
-    % Library (Autosubst 2)  & 491 & - \\
-    Syntactic typing (specification) &  68 & = & = \\
-    Renaming & 46 & =  & = \\
-    Untyped reduction & 349 & = & = \\
-    Neutral and normal forms & N/A & 269 & N/A \\
-    Logical relation & 331 & 426 & N/A \\
-    Semantic typing and soundness & 169 & 199 & N/A \\
-    Syntactic soundness & N/A & N/A  & 660 \\
+    Syntactic typing         &  83 & =   & = \\
+    Untyped reduction        & 344 & =   & = \\
+    Neutral and normal forms & -   & 273 & - \\
+    Logical relation         & 338 & 430 & - \\
+    Semantic soundness       & 190 & 214 & - \\
+    Syntactic soundness      & -   & -   & 629 \\
     \hline
-    Total & 963 & 1357 & 1123 \\
+    Total                    & 955 & 1344 & 1056 \\
+    \hline
   \end{tabular}
   \end{minipage}
-  \caption{Statistics of the Coq Development}
+  \caption{Nonblank, noncomment lines of code of the Coq Development. The marker = indicates that the line count is the same as the column to the
+left. The marker - indicates the file does not
+contribute to the total.}
   \label{fig:linecount}
 \end{figure}
 
+To demonstrate the scale of our proof scripts, 
 Figure~\ref{fig:linecount} shows the number of non-blank, non-comment lines of
-code\footnote{calculated by the \texttt{cloc} tool, available from \url{https://github.com/AlDanial/cloc}.} for each file of our
-development, including the base consistency proof from
-Section~\ref{sec:logreldep} and \ref{sec:logrelproof} and the extension to
-normalization for open and closed terms from Section~\ref{sec:extension}.
+code\footnote{calculated by the \texttt{cloc} tool, available from
+  \url{https://github.com/AlDanial/cloc}.} for each file of our development,
+including the base consistency proof from Section~\ref{sec:logreldep} and
+\ref{sec:logrelproof} and the extension to $\beta$-normalization for open and
+closed terms from Section~\ref{sec:extension}.  For comparison, we have also
+proven syntactic type soundness through subject
+reduction\footnote{\dotv{syntactic\_soundness.v}{subject\_reduction}} and
+progress\footnote{\dotv{syntactic\_soundness.v}{wt\_progress}}.
 
-Because the normalization and the consistency development share the same
-syntactic and typing specification, they differ in only the categories
-that are relevant to the logical relation. We use = as a marker that
-the line count is the same.
+The Autosubst 2 tool takes our 13 line syntax specification, written in
+higher-order abstract syntax, and generates the Coq syntax specification,
+renaming and substitution functions, and lemmas and tactics that allow
+reasoning about those functions. The auto-generated syntax file (291 LOC)
+and other Autosubst library files are are not included in the figure.
 
-Autosubst 2 takes our syntax specification in higher-order abstract
-syntax and generates Coq syntax specification, renaming and
-substitution functions, and lemmas and tactics that allow reasoning
-about those functions. The auto-generated syntax file by Autosubst 2
-and library header files are omitted from the figure.
+\subsection{Axioms}
+Our Coq development assumes two axioms: functional extensionality 
+and propositional extensionality. The former is also required by 
+the Autosubst 2 libraries. Both axioms are known to be consistent 
+with Coq's metatheory. 
 
-Orthogonal to the development of our consistency and normalization
-proof, we have also proven the syntactic soundness of our system through subject
-reduction and progress. The syntactic soundness proof shares the
-definition of renaming with our semantic soundness proof, which is
-factored out as a separate file under the Renaming (common) category.
-\scw{Should add this line count as another column, for comparison. I've done so,
-but may need to update the numbers. }
+Furthermore, these axioms also bridge the gap between our mechanization 
+and our informal proofs.
 
-\subsection{Artifacts Specific to Coq}
-In this section, we discuss the Coq encoding of the definitions and proofs presented
-in Section~\ref{sec:logrelproof} and the artifacts of this encoding that are
-specific to Coq.
+For example, in set theory, to show that two sets $[[S0]]$ and $[[S1]]$ are
+equal, it suffices to show the extensional property that
+$\forall x, x \in [[S0]] \iff x \in [[S1]]$. We leverage this fact
+occasionally in our presented proofs.
+
+In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm
+  -> Prop}, a predicate over \lang{} terms.  In axiom-free Coq, predicates do
+not come with the extensionality property. Given two predicates $P$ and $Q$,
+we cannot conclude that $P = Q$ when given a proof of
+$\forall x, P(x) \iff Q(x)$. But this is exactly the statement of the 
+axiom of functional extensionality.
+
+\subsection{Encoding the logical relation in Coq}
+We next discuss specific details of the Coq encoding of the logical relation
+presented in Section~\ref{sec:logreldep}.
+
+First, this definition requires the use of Coq's impredicatve \texttt{Prop}
+sort. In particular, the relation $[[R]]$ in \rref{I-Pi} requires the use of
+impredicativity because $[[R]]$ must later be instantiated into something
+defined in terms of the logical relation itself (e.g. in
+Lemma~\ref{lemma:piintroalt}).
 
 % The inductive
 % definition of the logical relation in Figure~\ref{fig:logrel} requires
@@ -2261,32 +2281,23 @@ specific to Coq.
 % the function $[[F]]$ can be later instantiated into the logical
 % relation itself (e.g. in the proof of Lemma~\ref{lemma:piintroalt}).
 
-In our proof presented in Section~\ref{sec:logreldep}, the relation
-$[[R]]$ in \rref{I-Pi} requires Coq's impredicative \texttt{Prop} sort
-since $[[R]]$ can later be instantiated into something defined in
-terms of the logical relation itself (e.g. in
-Lemma~\ref{lemma:piintroalt}). \scw{I'm having trouble connecting the rule in
-the figure with rule \texttt{InterpExtFun} in the coq development. Would it make
-sense to include the definition of ProdSpace? What is the Coq type of R?}
-\yl{I think I might just inline the definition of ProdSpace and then
-  rename the variables from the Coq code to match the ones from the paper}
-
 In the Coq mechanized proof, the definition of $[[Interp I i A S]]$ has type
-\texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S}
-has type \texttt {tm -> Prop}.  However, if desired, we could consistently
-replace the use of \texttt{Prop} with Coq's predicative sort
-\texttt{Type}. This variation of the definition could be used to define the
-interpretation for any \emph{finite} number of universes. The use of
+\texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S} has type \texttt {tm -> Prop}. 
+
+However, if desired, we could consistently replace the use of \texttt{Prop}
+with Coq's predicative sort \texttt{Type} in the definition of
+$[[Interp I i A S]]$. This alternative definition could be part of
+the interpretation for any \emph{finite} number of universes. The use of
 \texttt{Type} becomes troublesome only when we attempt to define
 $[[InterpR i A S]]$, the top-level logical relation defined in
 Figure~\ref{fig:logrelrec} that recursively calls itself at smaller universe
-levels. Therefore, the one feature of \lang{} that truly requires impredicativity
-is its countable universe hierarchy. \scw{I'm not sure the last part of this sentence
-adds much: ``Although, lemmas such as the
-admissibility of \rref{I-PiAlt} (Lemma~\ref{lemma:piintroalt}) not only simply
-our mechanization, but also give better intuition on what our logical relation
-means.'' Yes, we need impredicativity to define these lemmas, but without impredicativity
-our logical relation means something else.}
+levels. Therefore, the one feature of \lang{} that truly requires
+impredicativity is its countable universe hierarchy. \scw{I'm not sure the
+  last part of this sentence adds much: ``Although, lemmas such as the
+  admissibility of \rref{I-PiAlt} (Lemma~\ref{lemma:piintroalt}) not only
+  simply our mechanization, but also give better intuition on what our logical
+  relation means.'' Yes, we need impredicativity to define these lemmas, but
+  without impredicativity our logical relation means something else.}
 
 The definition of $[[Interp I i A S]]$ has an almost one-to-one
 correspondence to the Coq definition. The main difference is the
@@ -2309,22 +2320,6 @@ Since $[[I]]$ is only applied to numbers strictly less than $[[i]]$ in
 \rref{I-Set}, we can retroactively show that the set we return in the $j
 \geq i$ case is junk data that does not affect the result of the logical
 relation. This property allows us to recover the simple equation for $[[InterpR i A S]]$ shown in Figure~\ref{fig:logrelrec}.
-
-Finally, in set theory, to show that two sets $[[S0]]$ and $[[S1]]$
-are equal, it suffices to show the extensional property that $\forall
-x, x \in [[S0]] \iff x \in [[S1]]$. We leverage this fact
-occasionally in our presented proofs.
-In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm ->
-Prop}, a predicate over \lang{} terms.
-In axiom-free Coq, predicates do not come with the extensionality
-property. Given two predicates $P$ and $Q$, we cannot conclude that
-$P = Q$ when given a proof of $\forall
-x, P(x) \iff Q(x)$. While
-predicate extensionality is not necessary in our development, we
-assume it as an axiom since it is known to be consistent with Coq's
-metatheory and helps bridge the gap between our mechanization and the
-proofs we present.
-
 
 % In Coq, there is a distinction between computable functions and
 % relations that can later be proven to be functional. The former can be
@@ -2369,18 +2364,17 @@ proofs we present.
 
 \subsection{Automation}
 \label{sec:automation}
-Our Coq mechanization heavily uses automation, though instead of
-defining custom tactics, we rely mostly on off-the-shelf tools such as
+Our Coq mechanization heavily uses automation, supported by the tools
 Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
 
-We use the Autosubst 2 framework to specify our syntax in HOAS and
-produce Coq syntax files in de Bruijn representation. Additionally,
-Autosubst 2 provides a powerful tactic \texttt{asimpl} that
-can be used to prove the equivalence of two terms constructed using
-the primitive operators provided by the framework. This greatly
-simplifies the reasoning about substitution in our development as
-almost all substitution related properties about the syntax are
-immediately discharged by \texttt{asimpl}.
+We use the Autosubst 2 framework to produce Coq syntax files based on a de
+Bruijn representation of variable binding and capture-avoiding substitution.
+In addition to these generated definitions, Autosubst 2 provides a powerful
+tactic \texttt{asimpl} that can be used to prove the equivalence of two terms
+constructed using the primitive operators provided by the framework. This
+tactic simplifies the reasoning about substitution as many
+substitution-related properties about syntax are immediately discharged by
+\texttt{asimpl}.
 
 For other automation tasks that are not specific to binding, we use
 the powerful \texttt{sauto} tactic provided by CoqHammer to write
@@ -2415,10 +2409,10 @@ configurations and provides us with a replacement with the tuned performance
 flags that save time for future re-execution of the proof script.
 
 The automation provided by CoqHammer not only gives us a proof that is shorter
-and more resilient to changes, but also gives useful documentation for readers
-who wish to understand the mechanized proof. Although automation performs
-extensive search, it does not use lemmas or invert derivations that are not
-specified in the \texttt{use} or \texttt{inv} flag.
+and more resilient to changes, but also provides useful documentation for
+readers who wish to understand the mechanized proof. Although automation
+performs extensive search, it does not use lemmas or invert derivations that
+are not specified in the \texttt{use} or \texttt{inv} flags.
 
 \subsection{Extraction of a conversion algorithm}
 \label{sec:conversionalgo}
@@ -2434,7 +2428,7 @@ algorithm is referred to as normalize-and-compare by
 \citet{pierce2004advanced}.
 
 The soundness of the algorithm is immediate. The completeness of the
-algorithm is justified the confluence property of the untyped
+algorithm is justified by the confluence property of the untyped
 reduction relation. Suppose $[[a <=> b]]$, $[[a =>+ f0]]$, $[[b =>+
 f1]]$ but $[[f0]]$ is syntactically distinct from $[[f1]]$. By the transitivity of convertibility, we have $[[f0 <=> f1]]$.
 Because $[[f0]]$ and $[[f1]]$ are both in
@@ -2450,7 +2444,7 @@ the algorithm would be unpredictable because its definition depends on
 the specific choices made by the proof search algorithm.
 
 However, % with a little more effort,
-it is possible to recover a
+it should be possible to recover a
 precise algorithm. The first step is to define a deterministic
 small-step reduction relation that is normalizing; that is, the
 relation can always find a normal form if there exists one. A good
