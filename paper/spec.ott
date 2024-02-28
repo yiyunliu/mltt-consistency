@@ -210,6 +210,16 @@ formula :: 'formula_' ::=
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+embed
+{{ tex-preamble
+\usepackage{fontspec}
+\newfontfamily\boxedsymbols{DejaVu Sans}
+\usepackage{tcolorbox}
+\definecolor{lightgray}{gray}{0.85}
+}}
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%Dependent Types
@@ -433,7 +443,7 @@ JI :: '' ::=
 
 defn
 Interp I i A S ::  :: Interp :: 'I_' {{ com Interpretation relation }}
-{{ tex [\![ [[A]] ]\!]_[[I]]^[[i]] \searrow [[S]] }}
+{{ tex \text{\boxedsymbols ⟦} [[A]] \text{\boxedsymbols ⟧}_[[I]]^[[i]] \searrow [[S]] }}
 by
 
 ne A
@@ -494,7 +504,7 @@ JII :: '' ::=
 
 defn
 InterpR i A S ::  :: InterpR :: 'IR_' {{ com Interpretation relation }}
-{{ tex [\![ [[A]] ]\!]^[[i]] \searrow [[S]] }}
+{{ tex \text{\boxedsymbols ⟦} [[A]] \text{\boxedsymbols ⟧}^[[i]] \searrow [[S]] }}
 by
 
 --------------------------- :: Void

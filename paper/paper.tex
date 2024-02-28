@@ -79,14 +79,10 @@
 \documentclass[acmsmall,screen=true,
 \ifpublic review=false\else,review=true\fi
   ,anonymous=\ifanonymous true\else false\fi]{acmart}
-\usepackage{fontspec}
-\newfontfamily\boxedsymbols{DejaVu Sans}
 \usepackage{ottalt}
 \usepackage{minted}
 \usepackage{xspace}
-\usepackage{tcolorbox}
 \usepackage[para]{footmisc}
-\definecolor{lightgray}{gray}{0.85}
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
 \newcommand{\lang}{$\lambda^{U\mathbb{B}\ottkw{Id}}$\xspace}
 \inputott{rules}
@@ -2265,9 +2261,9 @@ semantic typing because it is sufficient for our purposes
     % \hline
     $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗} & 1 & Consistency \\
     Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} & 2 & Consistency \\
-    NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} & ?? & Correctness of NBE \\
+    NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} & 2 & Correctness of NBE \\
     $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & {\boxedsymbols ✓} & 2 & Decidability of conversion \\
-    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & {\boxedsymbols ✓} & ?? & Decidibility of type checking \\
+    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & {\boxedsymbols ✓} & 2 & Decidibility of type checking \\
     \hline
   \end{tabular}
 
