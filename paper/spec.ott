@@ -181,7 +181,7 @@ formula :: 'formula_' ::=
   | a in S                    ::   :: tmembership
   | S1 in S2                    ::   :: fmembership
   | formula1 \/ formula2      ::   :: or
-  | formula1 , formula2       ::   :: and
+  | formula1 /\ formula2      ::   :: and
   | formula1 implies formula2 ::   :: implies
     {{ tex \text{if } [[formula1]]\text{, then } [[formula2]] }}
   | forall a , formula        ::   :: forallTm
@@ -453,13 +453,13 @@ Interp I i Bool { a | a =>+ true \/ a =>+ false }
 Interp I i Bool { a | a =>+ true \/ a =>+ false \/ wne a  }
 
 --------------------------------------- :: Eq
-Interp I i a ~ b : A { p | p =>+ refl , a <=> b }
+Interp I i a ~ b : A { p | p =>+ refl /\ a <=> b }
 
 nf a
 nf b
 nf A
 --------------------------------------- :: EqNew
-Interp I i a ~ b : A { p | ( p =>+ refl , a <=> b )  \/ wne p  }
+Interp I i a ~ b : A { p | ( p =>+ refl /\ a <=> b )  \/ wne p  }
 
 Interp I i A S
 F in S -> PowerSet STm
@@ -477,7 +477,7 @@ Interp I i Pi x : A . B { b | forall a, forall S0, (# ( a , S0 ) in R implies b 
 Interp I i A S
 forall a, (# a in S implies (# exists S0 , Interp I i B { a / x } S0 #) #)
 ------------------------------------------- :: PiAlt
-Interp I i Pi x : A . B { b | forall a, (# a in S , forall S0, (# Interp I i B { a / x } S0,  b a in S0 #) #) }
+Interp I i Pi x : A . B { b | forall a, (# a in S implies forall S0, (# Interp I i B { a / x } S0 /\  b a in S0 #) #) }
 
 j < i
 --------------------------------- :: Set
