@@ -828,7 +828,7 @@ language definition; a detailed argument of the equivalence between
 $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
 \citet{barendregt:lambda-calculi-with-types} and
 \citet{takahashi-parallel-reduction}. However, this choice simplifies later
-proofs, as we discuss in Section~\ref{sec:discuss}. 
+proofs, as we discuss in Section~\ref{sec:discuss}.
 
 Our definition of equality is untyped: the judgement does not require the two
 terms to type check and have the same type. The use of an untyped relation for
@@ -2212,7 +2212,7 @@ contribute to the total.}
   \label{fig:linecount}
 \end{figure}
 
-To demonstrate the scale of our proof scripts, 
+To demonstrate the scale of our proof scripts,
 Figure~\ref{fig:linecount} shows the number of non-blank, non-comment lines of
 code\footnote{calculated by the \texttt{cloc} tool, available from
   \url{https://github.com/AlDanial/cloc}.} for each file of our development,
@@ -2230,12 +2230,12 @@ reasoning about those functions. The auto-generated syntax file (291 LOC)
 and other Autosubst library files are are not included in the figure.
 
 \subsection{Axioms}
-Our Coq development assumes two axioms: functional extensionality 
-and propositional extensionality. The former is also required by 
-the Autosubst 2 libraries. Both axioms are known to be consistent 
-with Coq's metatheory. 
+Our Coq development assumes two axioms: functional extensionality
+and propositional extensionality. The former is also required by
+the Autosubst 2 libraries. Both axioms are known to be consistent
+with Coq's metatheory.
 
-Furthermore, these axioms also bridge the gap between our mechanization 
+Furthermore, these axioms also bridge the gap between our mechanization
 and our informal proofs.
 
 For example, in set theory, to show that two sets $[[S0]]$ and $[[S1]]$ are
@@ -2247,28 +2247,26 @@ In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm
   -> Prop}, a predicate over \lang{} terms.  In axiom-free Coq, predicates do
 not come with the extensionality property. Given two predicates $P$ and $Q$,
 we cannot conclude that $P = Q$ when given a proof of
-$\forall x, P(x) \iff Q(x)$. But this is exactly the statement of the 
+$\forall x, P(x) \iff Q(x)$. But this is exactly the statement of the
 axiom of functional extensionality.
 
 \subsection{Encoding the logical relation in Coq}
 We next discuss specific details of the Coq encoding of the logical relation
 presented in Section~\ref{sec:logreldep}.
 
-First, this definition requires the use of Coq's impredicatve \texttt{Prop}
-sort. In particular, the relation $[[R]]$ in \rref{I-Pi} requires the use of
-impredicativity because $[[R]]$ must later be instantiated into something
-defined in terms of the logical relation itself (e.g. in
-Lemma~\ref{lemma:piintroalt}).
+% First, this definition requires the use of Coq's impredicatve \texttt{Prop}
+% sort. In particular, the function $[[F]]$ in \rref{I-Pi} requires the use of
+% impredicativity because $[[F]]$ must later be instantiated into something
+% defined in terms of the logical relation itself (e.g. in
+% Lemma~\ref{lemma:piintroalt}).
+In the Coq mechanized proof, we encode $[[PowerSet STm]]$ as the type \texttt{tm -> Prop}, a predicate over lambda terms. The definition of $[[Interp I i A S]]$ has type
+\texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S} has type \texttt {tm -> Prop}.
 
 % The inductive
 % definition of the logical relation in Figure~\ref{fig:logrel} requires
 % the impredicativity of Coq's \texttt{Prop} sort since\scw{or ``so that''?} in \rref{I-Pi},
 % the function $[[F]]$ can be later instantiated into the logical
 % relation itself (e.g. in the proof of Lemma~\ref{lemma:piintroalt}).
-In Coq, we
-
-In the Coq mechanized proof, the definition of $[[Interp I i A S]]$ has type
-\texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S} has type \texttt {tm -> Prop}. 
 
 However, if desired, we could consistently replace the use of \texttt{Prop}
 with Coq's predicative sort \texttt{Type} in the definition of
@@ -2278,12 +2276,7 @@ the interpretation for any \emph{finite} number of universes. The use of
 $[[InterpR i A S]]$, the top-level logical relation defined in
 Figure~\ref{fig:logrelrec} that recursively calls itself at smaller universe
 levels. Therefore, the one feature of \lang{} that truly requires
-impredicativity is its countable universe hierarchy. \scw{I'm not sure the
-  last part of this sentence adds much: ``Although, lemmas such as the
-  admissibility of \rref{I-PiAlt} (Lemma~\ref{lemma:piintroalt}) not only
-  simply our mechanization, but also give better intuition on what our logical
-  relation means.'' Yes, we need impredicativity to define these lemmas, but
-  without impredicativity our logical relation means something else.}
+impredicativity is its countable universe hierarchy.
 
 The definition of $[[Interp I i A S]]$ has an almost one-to-one
 correspondence to the Coq definition. The main difference is the
@@ -2307,6 +2300,33 @@ Since $[[I]]$ is only applied to numbers strictly less than $[[i]]$ in
 \geq i$ case is junk data that does not affect the result of the logical
 relation. This property allows us to recover the simple equation for $[[InterpR i A S]]$ shown in Figure~\ref{fig:logrelrec}.
 
+\Rref{I-PiCoq} shows how \rref{I-Pi} is actually encoded in our
+mechanized proof.
+\begin{center}
+  \drule[]{I-PiCoq}
+\end{center}
+Compared to \rref{I-Pi}, \rref{I-PiCoq} replaces the function
+$[[F]]$ with a total relation $[[R]]$. The equivalence of these two
+rules follows from the fact that the logical relation is a
+partial function (Lemma~\ref{lemma:logreldeter}). In set-theoretic
+notation, \rref{I-Pi} is more readable. However, if we want to encode
+the same rule in Coq, we must encode $[[F]]$ as a relation (with type
+\texttt{tm -> (tm -> Prop) -> Prop}) that satisfies the following functionality constraint.
+\begin{minted}{coq}
+              forall a S0 S1, F a S0 -> F a S1 -> S0 = S1.
+\end{minted}
+In comparison, \rref{I-PiCoq} does not require this side condition and
+results in a simpler definition.
+
+Finally, we note that we cannot ascribe $[[F]]$ the type \texttt{tm -> (tm ->
+  Prop)} since Coq requires functions of such type to be
+computable. While defining $[[F]]$ as a computable Coq function rather than a
+functional relation does result in a concise encoding of \rref{I-Pi},
+we will have trouble instantiating $[[F]]$ with the logical relation,
+which is defined as a relation that we prove to be functional, rather
+than a computable function.
+
+
 % In Coq, there is a distinction between computable functions and
 % relations that can later be proven to be functional. The former can be
 % viewed as a strict subset of the latter in axiom-free Coq. To be more
@@ -2326,9 +2346,6 @@ relation. This property allows us to recover the simple equation for $[[InterpR 
 
 % However, we choose instead an axiom-free workaround and define
 % \rref{I-Pi} as follows in our Coq mechanization.
-% \begin{center}
-%   \drule[]{I-PiCoq}
-% \end{center}
 % It should be easy to verify that the preconditions of
 % \rref{I-Pi}, \rref{I-PiAlt}, and \rref{I-PiCoq} are all
 % equivalent. After establishing Lemma~\ref{lemma:logreldeter}, it is
