@@ -1495,6 +1495,16 @@ property using the fundamental lemma.
   the assumption that $[[a in S]]$.
 \end{proof}
 
+Our soundness theorem also tells us something about closed terms of type 
+$[[Bool]]$; they either reduce to $[[true]]$ or $[[false]]$.
+
+\begin{corollary}[Canonicity\footnote{\dotv{soundness.v}{canonicity}}]
+If $[[empty |- b : Bool]]$, then either $[[b =>+ true]]$ or $[[b =>+ false]]$.
+\end{corollary}
+\begin{proof}
+  The proof is similar to above, except that we use the $[[Bool]]$ case of the
+  inversion property.
+\end{proof}
 
 \section{Existence of $\beta$-normal forms}
 \label{sec:extension}
@@ -1659,7 +1669,7 @@ the function has a neutral form and the argument has a normal form.
 \end{proof}
 
 Furthermore, if we know that an application of a term to a variable
-has a normal form, then we know the term must have a normal form.
+has a normal form, then we know that the term must have a normal form.
 \begin{lemma}[Wn extensionality\footnote{\dotv{normalform.v}{ext\_wn}}]
   \label{lemma:extwn}
   If $[[wn (a x)]]$, then $[[wn a]]$.
@@ -1761,11 +1771,6 @@ fundamental theorem.
   $[[S]]$. By Lemma~\ref{lemma:adequacy}, we
   conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
 \end{proof}
-
-\begin{corollary}[Canonicity]
-If $[[G |- a : bool]]$ then $[[a =>+ true]]$ or $[[a =>+ false]]$. 
-\end{corollary}
-
 
 % Due to the non-deterministic nature of parallel reduction, we need to take a
 % few more steps to convert the existence of $\beta$-normal form into a decision
