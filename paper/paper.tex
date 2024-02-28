@@ -2621,22 +2621,30 @@ Do we even need nondeterministic parallel reduction?}
   lemma). }
 \fi
 
-\section{Conclusion}
+\section{Future work and Conclusions}
 \label{sec:conclusion}
 In this work, we present a short and mechanized proof of consistency through
 proof by logical relations for a dependently typed language with a full
 universe hierarchy, large eliminations, an intensional identity type, and
-dependent eliminators. We show the extensibility of our approach by proving
+dependent eliminators.  We show the extensibility of our approach by proving
 the existence of $\beta\eta$-normal forms with only small and mechanical
-changes to our proof development. Our Coq mechanization leverages existing Coq
-libraries for reasoning about metatheory and for general purpose automation,
-allowing us to significantly reduce the verbosity typically associated with
-mechanized proofs. The result is a declarative proof style that is usually
-only available on pen and paper. Our development shows that proofs by logical
-relations for dependent types are accessible and do not
-require months of effort to implement. We hope our proof can inspire
-researchers to more frequently mechanize results, such as consistency and
-normalization, for their dependent type theories.
+changes to our proof development. Related work gives us confidence that we
+could extend our logical relation to include features such as full inductive
+datatypes, irrelevant arguments, and type-directed conversion; though it is
+not clear how much of the brevity of the development we will be able to
+maintain.  Furthermore, we hope that mechanized logical relations proofs will
+eventually grow to include other features found in dependent type theories,
+such as impredicative universes, universe polymorphism, and cumulativity.
+
+Our Coq mechanization leverages existing Coq libraries for reasoning about
+metatheory and for general purpose automation, allowing us to significantly
+reduce the verbosity typically associated with mechanized proofs. The result
+is a declarative proof style that is usually only available on pen and
+paper. Our development shows that proofs by logical relations for dependent
+types are accessible and do not require months of effort to implement.
+We hope our proof can inspire researchers to more frequently mechanize
+results, such as consistency and normalization, for their dependent type
+theories. By design, the goals of our work are modest. 
 
 
 
