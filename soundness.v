@@ -1,4 +1,4 @@
-From WR Require Import syntax join semtyping normalform typing common imports.
+From WR Require Import syntax join semtyping normalform typing imports.
 
 (* Semantic substitution well-formedness *)
 Definition ρ_ok Γ ρ := forall i A, lookup i Γ A -> forall m PA, ⟦ A [ρ] ⟧ m ↘ PA -> PA (ρ i).
@@ -10,6 +10,9 @@ Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
 (* Semantic context wellformedness *)
 Definition SemWff Γ := forall i A, lookup i Γ A -> exists j, Γ ⊨ A ∈ tUniv j.
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
+
+Lemma ρ_ok_nil ρ : ρ_ok nil ρ.
+Proof.  rewrite /ρ_ok. inversion 1; subst. Qed.
 
 Lemma ρ_ok_cons i Γ ρ a PA A :
  ⟦ A [ρ] ⟧ i ↘ PA -> PA a ->
@@ -148,7 +151,7 @@ Proof.
     case /(_ ρ hρ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
     case /(_ ρ hρ) : hb => j [PA [hPA hb']].
     case /(_ ρ hρ) : hc => k [PB [hPB hc']].
-    move : ha' => [v [hred [hv | hv]]].
+    move : ha' => [v [hred [hv|hv]]].
     + case : v hred hv => // ha0 _.
       * exists j, PA.
         split.
@@ -196,10 +199,10 @@ Proof.
         split.
         ** apply Pars_morphing_star; last by apply rtc_refl.
            apply good_Pars_morphing_ext2;
-             hauto lq:on ctrs:rtc, good_Pars_morphing.
+             hauto lq:on ctrs:rtc.
         ** apply Pars_morphing_star; last by apply rtc_refl.
            apply good_Pars_morphing_ext2. apply rtc_refl.
-           tauto. apply good_Pars_morphing_one.
+           tauto. apply rtc_refl.
       * asimpl.
         eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
         sfirstorder use: P_JRefl_star.
