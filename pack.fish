@@ -5,5 +5,5 @@ mkdir proofs/beta
 mkdir proofs/eta
 cp beta/{*.v, *.sig, Makefile} proofs/beta
 cp eta/{*.v, *.sig, Makefile} proofs/eta
-cp README.md proofs
+cp README.md opam.switch proofs
 zip -r proofs.zip proofs
