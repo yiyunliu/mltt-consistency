@@ -1589,24 +1589,26 @@ relation $[[|-G]]$.
 Define $[[|= G]]$ as follows.
 \[ \forall [[x : A in G]],\text{ there exists some } i \text{ such that } [[G |= A : Set i]] \]
 \end{definition}
+Recall that $[[|- G]]$ is defined inductively in terms of the
+syntactic typing judgment. We take a different approach here with its
+semantic counterpart $[[|= G]]$. The definition of
+$[[|= G]]$ is not telescopic: with $[[|- G]]$, a variable appearing
+earlier in the context is well-scoped under a truncated context,
+whereas with $[[|= G]]$, the types are only required to be
+semantically well-formed with respect to the full context, regardless
+of their position in $[[G]]$. Our definition of $[[|= G]]$ could be
+strengthened, though the simpler definition is sufficient for showing the
+fundamental lemma.
 
-% In this definition, we use the notation $drop n G$ to denote
-% the typing context obtained by dropping the last $n$ elements of
-% $G$. When $G$ has fewer than $i$ elements, $drop n G$ returns
-% the empty list. Intuitively, $|= G$ says that all
-% types in the context must correspond to some set according to the logical
-% relation. The truncation to the context $G$ is due to the telescopic
-% scoping of the types in the context. An alternative approach would be to define $|= G$
-% inductively, similar to $|- G$, but we find it easier to use this definition and
-% recover the structural rules as lemmas.
-% \begin{lemma}[Semantic context well-formedness empty]
-%   \label{lemma:semwffempty}
-%   $|= G$ holds when $G$ is empty.
-% \end{lemma}
-% \begin{lemma}[Semantic context well-formedness cons]
-%   \label{lemma:semwffcons}
-%   If $|= G$ and $G |= A : Set i$, then $|= G ++ A$.
-% \end{lemma}
+We can recover the structural rules for $[[|= G]]$ as lemmas.
+\begin{lemma}[Semantic context well-formedness empty]
+  \label{lemma:semwffempty}
+  $[[|= G]]$ holds when $[[G]]$ is empty.
+\end{lemma}
+\begin{lemma}[Semantic context well-formedness cons]
+  \label{lemma:semwffcons}
+  If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ x : A]]$.
+\end{lemma}
 
 The following lemma makes the statement $[[G |= A : Set i]]$ easier to
 work with.
@@ -1706,8 +1708,7 @@ syntactic typing rule for variables (\rref{T-Var}).
 \begin{proof}
   Applying Lemma~\ref{lemma:setinv} to the
   conclusion, it now suffices to show that given $[[rho |= G]]$, there
-  exists some $[[S]]$ such that $[[InterpR i Pi x : A{rho} . B{rho .:
-    x -> x} S]]$.
+  exists some $[[S]]$ such that $[[InterpR i (Pi x : A . B){rho} S]]$.
   From Lemma~\ref{lemma:setinv} and $[[G |= A : Set i]]$, we know that
   there exists some set $[[S0]]$ such that $[[InterpR i A {rho} S0]]$.
 From $[[G ++ x : A |= B : Set i]]$, we know that there must
@@ -1723,14 +1724,13 @@ in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
 \begin{proof}
   By unfolding the definition of $[[G |= \ x . b : Pi x : A . B]]$, we need to
   show that given some $[[rho |= G]]$, there exists some $[[i]]$ and
-  $[[S]]$ such that $[[InterpR i Pi x :  A {rho} . B {rho .: x -> x}
-  S]]$ and $[[\ x .
-   b{rho .: x -> x} in S]]$.
+  $[[S]]$ such that $[[InterpR i (Pi x : A . B){rho}
+  S]]$ and $[[(\ x . b) {rho} in S]]$.
 
   By Lemma~\ref{lemma:setinv} and the premise $[[G |= Pi x : A . B : Set
   i]]$, there exists some set $[[S]]$ such that
-  $[[InterpR i Pi x : A {rho} . B {rho .: x -> x} S]]$. It now suffices to show that
-  $[[\ x . b{rho .: x -> x} in S
+  $[[InterpR i (Pi x : A . B){rho} S]]$. It now suffices to show that
+  $[[(\ x . b){rho} in S
   ]]$. By Lemma~\ref{lemma:piinvalt}, the alternative inversion
   principle for \rref{I-Pi}, there exists some $[[S0]]$ such
   that all following conditions hold:
@@ -1742,13 +1742,12 @@ in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
   \item $[[S = { b | forall a, (# a in S0 , forall
       S1, (# InterpR i B {rho .: x -> a} S1,  b a in S1 #) #) }]]$
   \end{itemize}
-  To show that $[[\ x . b{rho .: x -> x} in S]]$, we need to prove
+  To show that $[[(\ x . b){rho} in S]]$, we need to prove
   that given $[[a in S0]]$,
-  $[[Interp I i B {rho .: x -> a} S1]]$, we have  $[[( \ x . b{rho .: x
-    -> x} )
+  $[[Interp I i B {rho .: x -> a} S1]]$, we have  $[[(\x . b ){rho}
   a in S1]]$.
   By Lemma~\ref{lemma:logrelbackclos}, the set $[[S1]]$ is closed
-  under expansion. Since $[[( \ x . b{rho .: x -> x} )
+  under expansion. Since $[[( \ x . b ){rho}
   a => b {rho .: x -> a}]]$, it suffices to show that
   $[[b {rho .: x -> a} in S1]]$, which is immediate from $[[G ++ x : A |= b :
   B]]$ and the fact that the logical relation is deterministic and
@@ -1773,8 +1772,8 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
   \item $[[forall a0, (# a0 in S0 implies (# exists S1 , InterpR i B
     {rho .: x ->  a0}
     S1 #) #)]]$
-  \item $[[forall a0, (# a0 in S0 , forall
-      S1, (# InterpR i B {rho .: x -> a0} S1,  b {rho} a0 in S1 #) #)]]$
+  \item $[[forall a0, (# a0 in S0 implies (# forall
+      S1, (# InterpR i B {rho .: x -> a0} S1,  b {rho} a0 in S1 #) #) #)]]$
   \end{itemize}
   Instantiating the variable $[[a0]]$ from the last two bullets with
   the term $[[a {rho}]]$, the conclusion immediately follows.
@@ -1913,7 +1912,7 @@ The rule for equality type $[[a ~ b : A]]$ is augmented with the precondition th
 $[[a]]$, $[[b]]$, and $[[A]]$ are all normal forms because
 otherwise our model would include equality types that are themselves
 not normalizing.
-\scw{I don't see this precondition in the figure!}
+% \scw{I don't see this precondition in the figure!}\yl{resolved}
 Furthermore, the side condition $[[a <=> b]]$ is only
 required/available when the equality proof reduces to $[[refl]]$. If the proof
 term reduces to a neutral term, then there is nothing we need to show/can learn
