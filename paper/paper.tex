@@ -1927,41 +1927,37 @@ contribute to the total.}
   \label{fig:linecount}
 \end{figure}
 
-To demonstrate the scale of our proof scripts,
-Figure~\ref{fig:linecount} shows the number of non-blank, non-comment lines of
-code\footnote{calculated by the \texttt{cloc} tool, available from
+To demonstrate the scale of our proof scripts, Figure~\ref{fig:linecount}
+shows the number of non-blank, non-comment lines of code\footnote{calculated
+  by the \texttt{cloc} tool, available from
   \url{https://github.com/AlDanial/cloc}.} for each file of our development,
 including the base consistency proof from Section~\ref{sec:logreldep} and
-\ref{sec:logrelproof} and the extension to $\beta$-normalization for open and
-closed terms from Section~\ref{sec:extension}.
-
-The development with the $\beta\eta$-normalization proof from Section~\ref{sec:betaeta} comprises 1573
-lines of non-blank, non-comment lines of code. We choose not to
-include it in the chart, since the slight difference in lemma
-dependencies makes the comparison in each category less
-informative. However, we note that compared to the
-$\beta$-normalization extension, the $\beta\eta$ extension has the
-same line count in the definition of the logical relation and the
-semantic soundness proof. The difference only appears in files related
-to untyped reduction and normal forms.
-
-For comparison, we have also
-proven syntactic type soundness through subject
-reduction\footnote{\dotv{syntactic\_soundness.v}{subject\_reduction}} and
+\ref{sec:logrelproof} and the extension to $\beta$-normalization from
+Section~\ref{sec:extension}.  For comparison, we have also proven syntactic
+type soundness through preservation
+\footnote{\dotv{syntactic\_soundness.v}{subject\_reduction}} and
 progress\footnote{\dotv{syntactic\_soundness.v}{wt\_progress}}.
+
+The $\beta\eta$-normalization proof from Section~\ref{sec:betaeta} comprises
+1573 lines of non-blank, non-comment lines of code. We choose not to include
+it in the chart, because of slight differences in lemma dependencies for
+untyped reduction and normal forms that make the comparison less
+informative. However, when compared to the $\beta$-normalization extension,
+the $\beta\eta$ extension has the same line count in the definition of the
+logical relation and the semantic soundness proof.
 
 The Autosubst 2 tool takes our 13 line syntax specification, written in
 higher-order abstract syntax, and generates the Coq syntax specification,
 renaming and substitution functions, and lemmas and tactics that allow
 reasoning about those functions. The auto-generated syntax file (291 LOC)
-and other Autosubst library files are are not included in the figure.
+and other Autosubst library files are also not included in the figure.
 
-\subsection{Axioms}
+\paragraph{Axioms}
 Our Coq development assumes two axioms: functional extensionality
 and propositional extensionality. The former is also required by
 the Autosubst 2 libraries. Both axioms are known to be consistent
 with Coq's metatheory.
-
+%
 These axioms bridge the gap between our mechanization and our informal
 proofs. For example, in set theory, to show that two sets $[[S0]]$ and
 $[[S1]]$ are equal, it suffices to show the extensional property that
@@ -1976,7 +1972,7 @@ we cannot conclude that $P = Q$ when given a proof of
 $\forall x, P(x) \iff Q(x)$. But this is exactly the statement of 
 functional extensionality.
 
-\subsection{Encoding the logical relation in Coq}
+\paragraph{Encoding the logical relation in Coq}
 We next discuss specific details of the Coq encoding of the logical relation
 presented in Section~\ref{sec:logreldep}.
 
@@ -2011,7 +2007,7 @@ specification of $[[I]]$. In
 Section~\ref{sec:logreldep}, we define $[[I]]$ as a function over
 numbers less than $[[i]]$, the universe level. In Coq, we only require
 $[[I]]$ to be a function with the set of natural numbers as its domain.
-In the Coq encoding of $[[InterpR i A S]]$ (Definition~\ref{fig:logrelrec}), we define $[[I]] \in [[SNat -> PowerSet STm]]$ as follows.
+In the Coq encoding of $[[InterpR i A S]]$, we define $[[I]] \in [[SNat -> PowerSet STm]]$ as follows.
 \begin{equation*}
   \begin{split}
     [[I j]] &=
@@ -2091,7 +2087,7 @@ than a computable function.
 % theory, where there is no distinction between computable functions and
 % functions in general. \scw{not sure I follow this last bit}
 
-\subsection{Automation}
+\paragraph{Automation}
 \label{sec:automation}
 Our Coq mechanization heavily uses automation, supported by the tools
 Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
@@ -2118,8 +2114,8 @@ $[[a]]$, excluding the new redexes that appear as a result of
 reduction.
 \begin{minted}{coq}
 Lemma par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
-Proof.
-  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,par_cong ctrs:Par.
+Proof. 
+  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,par_cong ctrs:Par. 
 Qed.
 \end{minted}
 In prose, the triangle property can be proven by induction over the graph of
@@ -2205,16 +2201,16 @@ part of our future work.
 
 \subsection{Logical relations for dependent types}
 In the most general sense, a logical relation can be viewed as a
-practical technique that uses a type-indexed relation to assign
-meanings to types and strengthen the induction hypothesis for the
+practical technique that uses a type-indexed relation to 
+strengthen the induction hypothesis for the
 property of interest. The original idea of this technique can be
 traced back to
 \citet{tait1967:reducibility}. This proof maps
 types to sets of terms satisfying certain properties related to reduction.
 The same idea is explained in \citet{girard1989proofs} and extended to
-prove the strong normalization property of System F.
-
-Tait's method has been successfully applied to dependently typed
+prove strong normalization of System F.
+%
+Tait's method has also been successfully applied to dependently typed
 languages to prove strong normalization \cite{Martin-Lof-1973,luo1990extended,geuvers1994short, barendregt:lambda-calculi-with-types}.
 
 However, the pen-and-paper representation of logical relations proofs
@@ -2272,12 +2268,12 @@ semantic typing because it is sufficient for our purposes
 \begin{figure}[h]
 
 % \begin{minipage}{0.8\textwidth}
-  \begin{tabular}{| l |  c  | l | c | c | c | l | }
+  \begin{tabular}{| l |  c  | l | c | c | c | l | l | }
     \hline
 %      & \header{Universes} & \header{Inductives} & \header{Conversion}
 %      & \header{Large Elim} & Main results \\
       & \header{U} & \header{Ind} & \header{C} 
-      & \header{L E} & \header{A} & Main results \\
+      & \header{L E} & \header{A} &  Main results \\
 
     \hline
     \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} & 1 
@@ -2347,7 +2343,7 @@ interacts with the logical fragment.
 The lack of polymorphism and type-level computation means their
 logical relation can be defined recursively for well-formed types using
 a size metric, which has been used in~\citet{liu2023dependently}.
-Their development is around 8,000 lines of Coq nonblank, noncomment code.
+Their development is around 8,000 lines of nonblank, noncomment code.
 
 \citet{decagda} mechanize in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
@@ -2363,9 +2359,8 @@ around 10,000 lines of Agda code.
 from \citet{decagda} in the predicative fragment of Coq and further
 extends the decidability of type conversion result
 from~\citet{decagda} to the decidability type checking of a
-bidirectional type system. Their development is larger and has around
+bidirectional type system. Their development has around
 30,000 lines of Coq code.
-% \scw{How big are these proofs?}
 
 \citet{anand2014towards} mechanize the metatheory of
 Nuprl~\citep{constable1986implementing} in Coq. This metatheory is an
@@ -2374,7 +2369,7 @@ inductive types, partial types, and a full universe hierarchy. They construct a 
 model in Coq to show the logical consistency of their language. Their
 development has been further extended with features such as
 intersection types, union types, and quotient types. The extensive
-coverage of features result in a Coq development with around
+coverage of features results in a Coq development with around
 330,000 lines of code.
 \citet{nbeincoq}
 mechanize the normalization-by-evaluation algorithm in Coq for a
@@ -2416,18 +2411,16 @@ system. Because System D includes nontermination, they proved
 the consistency of definitional equality from the confluence of 
 parallel reduction.  
 
-Compared to the systems we describe in this section, the most notable
-features we are missing include cumulativity and impredicativity. Our
-semantic model already satisfies the cumulativity property
-(Lemma~\ref{lemma:logrelcumulativity}), though we need to extend our
-convertibility relation into a subtyping relation in the specification
-of our syntactic typing rules. Impredicativity, on the other hand, is
-known to be difficult to model when the impredicative sort is at the
-bottom of a predicative universe hierarchy; in this scenario, the
-erasure technique from \citet{geuvers1994short} is no longer
-applicable\citep{abel2013normalization}. Whether we can find a
-similarly short and simple treatment for impredicativity remains an
-open question, which we hope to explore in the future.
+Compared to the systems described here, the most notable features we are
+missing are cumulativity and impredicativity. Our semantic model already
+satisfies the cumulativity property (Lemma~\ref{lemma:logrelcumulativity}),
+but we need to extend our convertibility relation into a subtyping relation in
+our syntactic typing rules. Impredicativity, on the other hand, is known to be
+difficult to model when the impredicative sort is at the bottom of a
+predicative universe hierarchy; in this scenario, the erasure technique from
+\citet{geuvers1994short} is not
+applicable\citep{abel2013normalization}. Whether there is a similarly short
+and simple treatment for impredicativity remains an open question.
 
 \section{Discussion}
 \label{sec:discuss}
@@ -2478,11 +2471,11 @@ cumulativity. We don't include Prop. We don't include universe polymorphism.
   because they are trying to mechanize a full practical language}
 \scw{The Coq-Coq-Correct paper (extended version) includes a (predicative) universe hierarchy, universe polymorphism, inductive/coinductive types. But they don't show consistency. Their development is 300k LOC.}
 
-The short consistency proof we present achieves the goal of
+Our short consistency proof achieves the goal of
 demonstrating the technique of proof by logical relation for dependently typed
 languages. However, what remains unanswered is what makes our development
-significantly shorter compared to others. Are we proving simpler results for
-smaller languages, are we making more use of automation, or is our proof
+significantly shorter. Are we proving simpler results for
+smaller languages, or making more use of automation, or is our proof
 technique genuinely more efficient?
 % focus on the following question: why is our proof,
 % even with its extension to the existence $\beta\eta$-normal form, so much
