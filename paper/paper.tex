@@ -84,7 +84,7 @@
 \usepackage{xspace}
 \usepackage[para]{footmisc}
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
-\newcommand{\lang}{$\lambda^{U\mathbb{B}\ottkw{Id}}$\xspace}
+\newcommand{\lang}{$\lambda^{\Pi}$\xspace}
 \inputott{rules}
 %%
 %% \BibTeX command to typeset BibTeX logo in the docs
@@ -2143,6 +2143,7 @@ readers who wish to understand the mechanized proof. Although automation
 performs extensive search, we can configure it to not use lemmas or invert derivations that
 are not specified in the \texttt{use} or \texttt{inv} flags.
 
+\ifextended
 \subsection{Extraction of a conversion algorithm}
 \label{sec:conversionalgo}
 A constructive proof of the existence of $\beta\eta$-normal form
@@ -2191,6 +2192,7 @@ an induction metric to define an executable algorithm\footnote{Coq's
   to construct runtime relevant data.}. We leave the proof of the
 factorization property and the extraction of a conversion algorithm as
 part of our future work.
+\fi
 \section{Related Work}
 \label{sec:relatedwork}
 
@@ -2604,7 +2606,7 @@ independently from confluence. By adopting these techniques that allow
 us to derive confluence early even for systems with type-directed
 reduction, we believe our proof technique can significantly shorten
 the existing logical relation proofs for systems with typed
-judgmental. We leave that as part of our future work.
+judgmental equality. We leave that as part of our future work.
 % Therefore, we believe that even in a
 % system where type-directed reduction is required (e.g. a system with
 % the unit $\eta$-law) in the logical relation, the proof can still be carried
