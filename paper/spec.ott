@@ -462,17 +462,10 @@ nf A
 Interp I i a ~ b : A { p | ( p =>+ refl , a <=> b )  \/ wne p  }
 
 Interp I i A S
-R in S * PowerSet STm
-forall a, (# exists S0  , ( a , S0 ) in R #)
-forall a, forall S0, (# ( a , S0 ) in R implies Interp I i B { a / x } S0 #)
+F in S -> PowerSet STm
+forall a, (# a in S implies Interp I i B { a / x } F a #)
 -------------------------------- :: Pi
-Interp I i Pi x :  A . B { b | forall a, forall S0, (# ( a , S0 ) in R implies b a in S0 #) }
-
-% Interp I i A S
-% F in S -> PowerSet STm
-% forall a, (# a in S implies Interp I i B { a } F a #)
-% -------------------------------- :: Pi
-% Interp I i Pi A B { b | forall a, (# a in S implies b a in F a #) }
+Interp I i Pi x : A . B { b | forall a, (# a in S implies b a in F a #) }
 
 Interp I i A S
 R in S * PowerSet STm
