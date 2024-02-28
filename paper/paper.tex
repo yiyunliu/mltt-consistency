@@ -2143,6 +2143,7 @@ readers who wish to understand the mechanized proof. Although automation
 performs extensive search, we can configure it to not use lemmas or invert derivations that
 are not specified in the \texttt{use} or \texttt{inv} flags.
 
+\ifextended
 \subsection{Extraction of a conversion algorithm}
 \label{sec:conversionalgo}
 A constructive proof of the existence of $\beta\eta$-normal form
@@ -2191,6 +2192,7 @@ an induction metric to define an executable algorithm\footnote{Coq's
   to construct runtime relevant data.}. We leave the proof of the
 factorization property and the extraction of a conversion algorithm as
 part of our future work.
+\fi
 \section{Related Work}
 \label{sec:relatedwork}
 
