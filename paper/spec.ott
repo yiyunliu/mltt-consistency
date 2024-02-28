@@ -73,6 +73,7 @@ tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
     {{ com function application }}
   | Set i :: :: Set
     {{ com universe }}
+    {{ tex [[Set]]_{[[i]]} }}
   | a { A / x } :: S :: Subst {{ tex [[a]] \{ [[A]] / [[x]]  \} }}
   | a < rho > :: S :: RenRho {{ tex [[a]] \{ [[rho]]  \} }}
   | a { rho } :: S :: SubstRho {{ tex [[a]] \{ [[rho]]  \} }}
@@ -204,6 +205,8 @@ formula :: 'formula_' ::=
    {{ tex [[x]] \notin \ottkw{fv}([[a]]) }}
   | x : A in G  :: :: gmember
    {{ tex [[x]]:[[A]] \in [[G]] }}
+  | x notin dom G            ::  :: fresh
+   {{ tex [[x]] \notin \mathit{dom}([[G]]) }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -341,6 +344,7 @@ by
 
 |- G
 G |- A : Set i
+x notin dom G
 ------------------------- :: Cons
 |- G ++ x : A
 

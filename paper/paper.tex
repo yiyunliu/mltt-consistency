@@ -623,13 +623,13 @@ consistent with our mechanization.
 \end{figure}
 
 
-In this section, we present the dependent type theory whose logical
-consistency will be proven in Section~\ref{sec:logrelproof}. For conciseness,
-we refer to this system as \lang.
+In this section, we present the dependent type theory, \lang{}, whose logical
+consistency will be proven in Section~\ref{sec:logrelproof}. 
 
 The syntax of \lang can be found in Figure~\ref{fig:syntax}.  As a dependent
 type theory, terms and types are collapsed into the same syntactic
-category. The type $[[Set i]]$ represent universe types.%  and $[[x]]$
+category. The type $[[Set i]]$ represent universe types, annotated by 
+the universe level, a natural number $i$.%  and $[[x]]$
 % represent de Bruijn variables~\cite{debruijn}.  While $[[i]],[[j]],$ and
 % $[[n]]$ are all metavariables representing natural numbers, we always use
 % $[[i]],[[j]]$ to represent universe levels and $[[n]]$ to represent term
@@ -638,20 +638,20 @@ category. The type $[[Set i]]$ represent universe types.%  and $[[x]]$
 % representation in the paper because it is more amenable to automation
 % (Section~\ref{sec:automation}) and leaves no ambiguity about variable freeness
 % conditions.
-\yl{need to fix the text}
-As a result, variables do not appear in binding forms, such as in
-abstractions $[[ \ x . a ]]$ and dependent function types $[[Pi x : A . B]]$.  This latter
-form binds a new variable of type $[[A]]$ that can appear in the codomain of
-the type $[[B]]$.  We use the notation $[[A -> B]]$ when the output type
-$[[B]]$ is not dependent on the input variable.
-We include in \lang{} the intensional identity type
-$[[a ~ b : A]]$ whose proofs can be eliminated by the J-eliminator
-$[[J c a b p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
-$[[b]]$, and $[[c]]$ is the term whose type is to be casted.
-Finally, \lang{} includes booleans, with standard syntax.
-\scw{Example of
- what you can use identity types for? Or an example of a program that uses
-J?}
+Abstractions $[[ \ x . a ]]$ and dependent function types $[[Pi x : A . B]]$
+are binding forms for the variable $x$ in the body of the function and
+codomain of the function type.  \footnote{In the exposition in this paper, we
+  adopt the Barendregt Variable Convention and assume that binding forms are
+  equal up to $\alpha$-conversion.  In some places we will be deliberately
+  informal about the treatment of variables; our mechanized proofs use de
+  Bruijn representation.}  We use the notation $[[A -> B]]$ when the output
+type $[[B]]$ is not dependent on the input variable.  We include in \lang{}
+the intensional identity type $[[a ~ b : A]]$ whose proofs can be eliminated
+by the J-eliminator $[[J c a b p]]$, where $[[p]]$ is an equality proof
+between $[[a]]$ and $[[b]]$, and $[[c]]$ is the term whose type is to be
+casted.  Finally, \lang{} includes booleans, with standard syntax.
+\scw{Example of what you can use identity types for? Or an example of a
+  program that uses J?}
 
 % We find de Bruijn
 % representation advantageous for specification since it leaves very
@@ -668,34 +668,33 @@ J?}
 % We omit most of the
 % definitions of renaming and substitution and only show the definition
 % of a few representative cases of substitution.
-\begin{figure}[ht]
-  \begin{equation*}
-    \begin{split}
-      \begin{array}{lll}
-        \multicolumn{3}{l}{\mbox{\emph{Identity substitution: }} [[idtm]]} \\
-        [[idtm x]] & := & [[x]] \\ \\
-        \multicolumn{3}{l}{\mbox{\emph{Extension operation: }} ([[rho
-        .: x -> a]]) } \\
-        ([[rho .: x -> a]])([[x]]) & := & [[a]] \\
-        ([[rho .: x -> a]])([[y]]) & := & [[rho y]] \text { if  } y
-                                          \neq x\\ \\
-      \end{array}
-    \end{split}
-    \qquad \qquad
-    \begin{split}
-      \begin{array}{lll}
-        \multicolumn{3}{l}{\mbox{\emph{Substitution operation: }} ([[ a { rho } ]])} \\
-        [[x { rho }  ]] & := &  [[rho x]] \\
-        [[(Pi x : A . B) { rho }]] & := & [[Pi x : A { rho } . B { rho .: x -> x }]] \\
-        [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
-        [[(\ x . a) { rho }]] & := & [[\ x . (a { rho .: x -> x })]] \\
-        \ldots
-      \end{array}
-    \end{split}
-  \end{equation*}
-  \caption{Auxiliary Functions over Syntax}
-  \label{fig:auxdef}
-\end{figure}
+%\begin{figure}[ht]
+%  \begin{equation*}
+%    \begin{split}
+%      \begin{array}{lll}
+%        \multicolumn{3}{l}{\mbox{\emph{Identity substitution: }} [[idtm]]} \\
+%        [[idtm x]] & := & [[x]] \\ \\
+%        \multicolumn{3}{l}{\mbox{\emph{Extension operation: }} ([[rho .: x -> a]]) } \\
+%        ([[rho .: x -> a]])([[x]]) & := & [[a]] \\
+%        ([[rho .: x -> a]])([[y]]) & := & [[rho y]] \text { if  } y
+%                                          \neq x\\ \\
+%      \end{array}
+%    \end{split}
+%    \qquad \qquad
+%    \begin{split}
+%      \begin{array}{lll}
+%        \multicolumn{3}{l}{\mbox{\emph{Substitution operation: }} ([[ a { rho } ]])} \\
+%        [[x { rho }  ]] & := &  [[rho x]] \\
+%        [[(Pi x : A . B) { rho }]] & := & [[Pi x : A { rho } . B { rho .: x -> x }]] \\
+%        [[(a b) { rho }]] & := & [[a { rho } (# b { rho } #)]] \\
+%        [[(\ x . a) { rho }]] & := & [[\ x . (a { rho .: x -> x })]] \\
+%        \ldots
+%      \end{array}
+%    \end{split}
+%  \end{equation*}
+%  \caption{Auxiliary Functions over Syntax}
+%  \label{fig:auxdef}
+% \end{figure}
 
 
 % Without providing
@@ -716,45 +715,38 @@ example, the function $[[\ x . if x Bool Void]]$ returns
 either $[[Bool]]$ or $[[Void]]$ depending on whether its
 input is $[[true]]$ or $[[false]]$.
 
-\yl{Need to fix the de bruijn text}
-We adapt from \citet{autosubst2} notation for simultaneous renaming,
-substitution, and other auxiliary definitions used in our paper, summarized in
-Figure~\ref{fig:auxdef}. We need these definitions to specify the reduction
-and typing relations for \lang{}. The metavariable $[[rho]]$ represents
-substitutions, which are mappings from de Bruijn indices to terms.  One
-example of a substitution is the function $\ottkw{id}_{tm}$,\scw{Can we just 
-call this $\ottkw{id}$ now?} the identity
-substitution that maps each index to the corresponding term variable.  % The
-% $...$ substitution is more general and adds $[[n]]$ to the index
-% before injecting it as a term.
-The extension operation, $[[(rho .: x -> a)]]$,
-allows us to update the substitution $[[rho]]$ to map the variable
+% We adapt from \citet{autosubst2} notation for simultaneous renaming,
+% substitution, and other auxiliary definitions used in our paper, summarized in
+% Figure~\ref{fig:auxdef}. 
+Our reduction a typing relations are defined in terms of \emph{simultaneous
+  substitutions}, $[[rho]]$, which are mappings from variables to terms.  We
+use $[[idtm]]$ as the identity substitution.  The extension operation,
+$[[(rho .: x -> a)]]$, updates the substitution $[[rho]]$ to map the variable
 $[[x]]$ to $[[a]]$ rather than $[[rho x]]$.
 
-The substitution operator, which takes the form $[[a {rho}]]$,
-traverses the syntax of $[[a]]$ and replaces each variable $[[x]]$
-with the term $[[rho x]]$. When traversing under binders (e.g. in the
-$[[(\ x . a) { rho }]]$ case), we extend $[[rho]]$ to map the bound
-variable $[[x]]$ to itself, protecting it from being replaced.
-\scw{This substitution operation is pretty strange when it comes to the 
-BVC. What variables are we allowed to use when we get to a bound variable $x$ in this function? I'd prefer if we instead had a side condition that it must be 
-the case that $\rho(x) = x$ already, then we use BVC to pick such an $x$. But then we need to know that such an $x$ exists, and that isn't necessarily true.}
-\scw{Maybe we should handwave here, and note that we aren't covering all of the 
-details of the treatment of variable binding in the text. If readers want to understand that part, they should look at the Coq code, which uses de Bruijn indices anyways. Our goal is to convey the understanding of the Coq proof. }
+The substitution operator, which takes the form $[[a {rho}]]$, traverses the
+syntax of $[[a]]$ and replaces each variable $[[x]]$ with the term
+$[[rho x]]$. When traversing under binders (e.g. in the
+$[[(\ x . a) { rho }]]$ case), it must be the case that $[[rho]]$ maps the
+bound variable to itself and that the bound variable does not appear freely in
+the application of the substitution to any other variable.
+%
+\scw{Maybe we should handwave more here, and note that we aren't covering all
+  of the details of the treatment of variable binding in the text. If readers
+  want to understand that part, they should look at the Coq code, which uses
+  de Bruijn indices anyways. Our goal is to convey the understanding of the
+  Coq proof. }
 
 The substitution operator is referred to as simultaneous substitution as it
 substitutes for all variables at once. It is possible to recover single
 substitution by composing the extension operator and the identity
 substitution: $[[a { b / x }]] := [[a { idtm .: x -> b }]]$.
 
-\yl{Explain why iterated substitution is not good enough}
-\scw{resolved below, right?}
-
-In our proofs, we find it
-more convenient to formulate simultaneous substitution directly rather than
-recovering it from single substitution.  In particular, this shows up in the
-definition of semantic typing in Section~\ref{sec:logrelproof}, which relies
-on simultaneous substitution.
+When reasoning about logical relations, we find it more convenient to
+formulate simultaneous substitution directly rather than recovering it from
+single substitution.  In particular, this shows up in the definition of
+semantic typing in Section~\ref{sec:logrelproof}, which relies on simultaneous
+substitution.
 
 \subsection{Definitional equality via parallel reduction}
 
@@ -841,17 +833,19 @@ proofs, as we discuss in Section~\ref{sec:discuss}. % \scw{Forward reference to 
 
 Our definition of equality is untyped: the judgement does not require the two
 terms to type check and have the same type. The use of an untyped relation for
-type conversion is reminiscent of Barendregt's Pure Type
-Systems~\citet{barendregt1991introduction} and makes our formulation different
-from languages such as MLTT~\citep{Martin-Lof-1973}, where the judgmental
-equality takes the form $\Gamma \vdash a \equiv b : A$, from which one can
-usually derive $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving subject
-reduction. By working with an untyped judgement, we can establish its
+conversion is similar to Barendregt's Pure Type
+Systems~\cite{barendregt1991introduction} and differs
+from MLTT~\citep{Martin-Lof-1973}, where the judgmental
+equality takes the form $\Gamma \vdash a \equiv b : A$.
+% from which one can
+% usually derive $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving subject
+% reduction. 
+By working with an untyped judgement, we can establish its
 properties independently from the type system and the logical relation, using
 well-established syntactic approaches.
-
-\citet{siles2012pure} shows the equivalence of Barendregt's Pure Type
-System~\citep{barendregt1991introduction}, which employs untyped equality, and
+%
+\citet{siles2012pure} show the equivalence of Barendregt's Pure Type
+System, which employs untyped equality, and
 its variant that uses typed judgmental equality. This assures us that we do
 not lose generality working with a system with untyped
 conversion.
@@ -859,7 +853,7 @@ conversion.
   wrong message that we extended Siles' work with eta:
  Furthermore, discuss how this definition can be extended with
  $\eta$-equivalence of functions in Section~\ref{XXX} }
-Finally, we compare this
+We compare this
 definition with type-directed approaches to equality in
 Section~\ref{sec:discuss}.
 
@@ -868,7 +862,8 @@ Section~\ref{sec:discuss}.
 
 \begin{figure}[h]
 \begin{minipage}{0.9\textwidth}
-\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{Empty, Cons}
+\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{}
+\[ \drule{Ctx-Empty} \qquad \drule[width=3in]{Ctx-Cons} \]
 \drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv,
  Void, Bool, True, False}
 \[ \drule[width=5in]{T-If}\]
@@ -884,7 +879,17 @@ wrapped in \colorbox{lightgray}{gray} boxes can be shown to be admissible
 syntactically, though some of them are required to strengthen the inductive
 hypothesis of the fundamental theorem.
 
-\yl{Var, T-Pi, T-Abs are self-explanatory now?}
+\yl{Var, T-Pi, T-Abs are self-explanatory now?}  \scw{Need to actually mention
+  these rules} The typing rules of \lang{} are standard rules for dependent
+type theories.  The variable rule, \rref{T-Var}, uses the auxiliary relation
+$[[x : A in G]]$, that holds when a variable declaration is found in the
+typing context.  The typing of universes ensures that each one belongs to the
+next higher level.  \Rref{T-Pi} ensures predicative quantification by
+requiring that all parts of the type be typeable at the same universe
+level. \Rref{T-Abs} ensures that all functions have well-formed dependent
+types. In an application (\rref{T-App}) the argument is substituted for the
+variable in the result type.
+
 % In \rref{T-Var}, $G n$ is the partial function defined by the equations
 % $ (G ++ A) 0 := A$ and $ (G ++ A) Suc n  := G n$.  The
 % precondition $n < | G | $, where $ | G | $ represents the length of
@@ -905,7 +910,7 @@ hypothesis of the fundamental theorem.
 as our equality judgment for type conversion.
 
 The elimination form for booleans, \rref{T-If}, demonstrates dependent pattern
-matching.  The result type of this expression $[[A {a / x}]]$ is composed of some
+matching.  The result type of this expression, $[[A {a / x}]]$, is composed of some
 \emph{motive} $[[A]]$, a type where its single free variable has been replaced
 with the condition of the if expression. When typing the true branch, this
 substitution replaces the variable by $[[true]]$, and similarly for the false
@@ -919,11 +924,12 @@ introduced by \rref{T-Refl}. In \rref{T-J}, the elimination form, the subterm
 $p$ is a proof of an equality between $[[a]]$ and $[[b]]$. The subterm $[[c]]$
 is the body of the elimination form. In this rule, $[[B]]$ is the motive and has two free variables.  The substitution for these
 variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
-witnessing the information gained through dependent pattern matching.  In the
-typing rule, the terms $[[a]]$ and $[[A]]$ need to be shifted in the context
-for a similar reason; an extra type $[[A]]$ appears after the $[[G]]$ and
-therefore the terms $[[a]]$ and $[[A]]$ in the identity type both need to be
-shifted to refer to the same binders.
+witnessing the information gained through dependent pattern matching. 
+% In the
+% typing rule, the terms $[[a]]$ and $[[A]]$ need to be shifted in the context
+% for a similar reason; an extra type $[[A]]$ appears after the $[[G]]$ and
+% therefore the terms $[[a]]$ and $[[A]]$ in the identity type both need to be
+% shifted to refer to the same binders.
 
 
 % As a result, there is no loss of generality from
