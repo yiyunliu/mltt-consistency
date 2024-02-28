@@ -773,7 +773,8 @@ function; the functionality of the relation can later be recovered in Lemma~\ref
 
 \subsection{Definition of the Logical Relation}
 \begin{figure}[h]
-\drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Void, Bool, Eq, Pi, Set, Red}
+\drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Set, Void, Bool, Eq, Red}
+\[ \drule[width=5in]{I-Pi} \]
 \caption{Logical relation for \lang}
 \label{fig:logrel}
 \end{figure}
@@ -798,12 +799,10 @@ Figure~\ref{fig:syntax}.
 % \yl{resolved}
 The metavariables $[[I]]$ and $[[S]]$ are
 sets with the following signatures.
-\begin{equation*}
-  \begin{split}
-    [[I]] &\in [[ { j | j < i  } ->  PowerSet STm ]] \\
-    [[S]] &\in [[PowerSet STm]]
-  \end{split}
-\end{equation*}
+\[
+    [[I]] \in [[ { j | j < i  } ->  PowerSet STm ]] \qquad\qquad\qquad
+    [[S]] \in [[PowerSet STm]]
+\]
 The notation $[[PowerSet STm]]$ denotes the powerset of the set of
 \lang{} terms.
 The function $[[I]]$ is a family of sets of terms indexed by
@@ -815,7 +814,7 @@ restriction $[[j < i]]$ in \rref{I-Set} is crucial for our system to
 be predicative and we will explain the reason shortly.
 
 To tie the knot and obtain an interpretation of all universe levels,
-we define in Figure~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
+we define in Definition~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
 using the well-foundedness of $<$ relation on natural
 numbers (recall that
 the parameter $[[I]]$ of $[[Interp I i A S]]$ takes only natural
@@ -824,15 +823,14 @@ The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
 level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
 $[[S]]$.
 
-\begin{figure}[h]
+\begin{definition}[Logical relation for all universe levels]
+\label{fig:logrelrec}
 \begin{equation*}
     [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I j]]
     := [[{A | exists S , InterpR j A S}]] \text{ for } [[j < i]]
 \end{equation*}
-\caption{Logical relation for all universe levels}
-\label{fig:logrelrec}
-\end{figure}
-The definition in Figure~\ref{fig:logrelrec} explains how the $[[j
+\end{definition}
+Definition~\ref{fig:logrelrec} explains how the $[[j
 < i]]$ constraint in \rref{I-Set} makes our system predicative; the
 interpretation of the $[[i]]_{th}$ universe is only dependent on
 universes strictly lower than $[[i]]$, which have been defined earlier.
@@ -843,7 +841,7 @@ restriction removed since the definition of $[[InterpR i A S]]$ would
 not be well-founded when $[[Interp I i A S]]$ calls $[[I]]$ on
 universe levels greater than or equal to $[[i]]$, which are yet to be defined.
 
-By unfolding the definition in Figure~\ref{fig:logrelrec}, we
+By unfolding Definition~\ref{fig:logrelrec}, we
 show that the same introduction rules for $[[Interp I i A S]]$ are
 admissible for $[[InterpR i A S]]$, by
 instantiating $[[I]]$ with $[[I i]] := [[{A | exists S , InterpR i A
@@ -1170,8 +1168,8 @@ hold in the \rref{I-Set} case.
   If $[[InterpR i A S]]$, then the set $[[S]]$ is closed under expansion.
 \end{lemma}
 \begin{proof}
-  By the definition of $[[InterpR i A S]]$ from
-  Figure~\ref{fig:logrelrec}, we unfold $[[InterpR i A S]]$ by one
+  By the definition of $[[InterpR i A S]]$ 
+  (Definition~\ref{fig:logrelrec}), we unfold $[[InterpR i A S]]$ by one
   step into $[[ Interp I i A S  ]]$ where $[[I j]] := [[{A | exists S
     , InterpR j A S}]]$.
   We then proceed by induction over the derivation of $[[Interp I i A S]]$.
@@ -1720,7 +1718,7 @@ We now state and prove the adequacy lemma.
   implies $[[S]] \in CR$. Our goal is to show $[[InterpR i A S]]$
   implies $[[S]] \in CR$.
 
-  By its definition in Figure~\ref{fig:logrelrec}, we have the
+  By Definition~\ref{fig:logrelrec}, we have the
   equality $[[InterpR i A S]] = [[Interp I i A S]]$  where $[[I i]] :=
   [[{A | exists S , InterpR i A S}]]$.
   We then proceed by structural induction over the derivation of $[[Interp I i A
@@ -1960,20 +1958,19 @@ and propositional extensionality. The former is also required by
 the Autosubst 2 libraries. Both axioms are known to be consistent
 with Coq's metatheory.
 
-Furthermore, these axioms also bridge the gap between our mechanization
-and our informal proofs.
-
-For example, in set theory, to show that two sets $[[S0]]$ and $[[S1]]$ are
-equal, it suffices to show the extensional property that
+These axioms bridge the gap between our mechanization and our informal
+proofs. For example, in set theory, to show that two sets $[[S0]]$ and
+$[[S1]]$ are equal, it suffices to show the extensional property that
 $\forall x, x \in [[S0]] \iff x \in [[S1]]$. We leverage this fact
 occasionally in our presented proofs.
-
-In Coq, sets of terms ($[[PowerSet STm]]$) is encoded as the type \texttt{tm
+%
+However, in Coq, sets of terms ($[[PowerSet STm]]$) are encoded as the 
+type \texttt{tm
   -> Prop}, a predicate over \lang{} terms.  In axiom-free Coq, predicates do
 not come with the extensionality property. Given two predicates $P$ and $Q$,
 we cannot conclude that $P = Q$ when given a proof of
-$\forall x, P(x) \iff Q(x)$. But this is exactly the statement of the
-axiom of functional extensionality.
+$\forall x, P(x) \iff Q(x)$. But this is exactly the statement of 
+functional extensionality.
 
 \subsection{Encoding the logical relation in Coq}
 We next discuss specific details of the Coq encoding of the logical relation
@@ -1999,8 +1996,8 @@ with Coq's predicative sort \texttt{Type} in the definition of
 $[[Interp I i A S]]$. This alternative definition could be part of
 the interpretation for any \emph{finite} number of universes. The use of
 \texttt{Type} becomes troublesome only when we attempt to define
-$[[InterpR i A S]]$, the top-level logical relation defined in
-Figure~\ref{fig:logrelrec} that recursively calls itself at smaller universe
+$[[InterpR i A S]]$, the top-level logical relation 
+(Definition~\ref{fig:logrelrec}) that recursively calls itself at smaller universe
 levels. Therefore, the one feature of \lang{} that truly requires
 impredicativity is its countable universe hierarchy.
 
@@ -2010,10 +2007,9 @@ specification of $[[I]]$. In
 Section~\ref{sec:logreldep}, we define $[[I]]$ as a function over
 numbers less than $[[i]]$, the universe level. In Coq, we only require
 $[[I]]$ to be a function with the set of natural numbers as its domain.
-In the Coq encoding of $[[InterpR i A S]]$ (Figure~\ref{fig:logrelrec}), we define $[[I]]$ as follows.
+In the Coq encoding of $[[InterpR i A S]]$ (Definition~\ref{fig:logrelrec}), we define $[[I]] \in [[SNat -> PowerSet STm]]$ as follows.
 \begin{equation*}
   \begin{split}
-    [[I]]   &\in [[SNat -> PowerSet STm]] \\
     [[I j]] &=
      \begin{cases}
       \ [[{A | exists S , InterpR j A S}]] & \text{when } j < i \\
@@ -2024,12 +2020,12 @@ In the Coq encoding of $[[InterpR i A S]]$ (Figure~\ref{fig:logrelrec}), we defi
 Since $[[I]]$ is only applied to numbers strictly less than $[[i]]$ in
 \rref{I-Set}, we can retroactively show that the set we return in the $j
 \geq i$ case is junk data that does not affect the result of the logical
-relation. This property allows us to recover the simple equation for $[[InterpR i A S]]$ shown in Figure~\ref{fig:logrelrec}.
+relation. This property allows us to recover the simple equation for $[[InterpR i A S]]$ shown in Definition~\ref{fig:logrelrec}.
 
 \Rref{I-PiCoq} shows how \rref{I-Pi} is actually encoded in our
 mechanized proof.
 \begin{center}
-  \drule[]{I-PiCoq}
+  \drule[width=5in]{I-PiCoq}
 \end{center}
 Compared to \rref{I-Pi}, \rref{I-PiCoq} replaces the function
 $[[F]]$ with a total relation $[[R]]$. The equivalence of these two
@@ -2502,13 +2498,12 @@ technique genuinely more efficient?
 % predicate.
 
 First, the metatheoretic properties that we prove are indeed
-simpler. Compared to Core Nuprl~\citep{anand2014towards}, our system
+simpler. Compared to Core Nuprl, our system
 lacks extensionality, which would require a relational model to
-justify consistency. Compared to the systems from
-\citet{decagda, nbeincoq, martin-lof-a-la-coq}, the conversion rule for
-\lang{} is untyped and therefore we do not
+justify consistency. Because the conversion rule for
+\lang{} is untyped, we do not
 need a Kripke-style relational model to prove $\Pi$-injectivity
-among other properties. Furthermore, we prove the existence of normal
+among other properties, unlike systems with typed conversion. Furthermore, we prove the existence of normal
 forms, which induces a simple \emph{normalize-and-compare}
 procedure for type
 conversion~\cite{pierce2004advanced}. \citet{nbeincoq, decagda}, on
@@ -2640,18 +2635,17 @@ Do we even need nondeterministic parallel reduction?}
   lemma). }
 \fi
 
-\section{Future work and Conclusions}
+\section{Conclusion}
 \label{sec:conclusion}
-In this work, we present a short and mechanized proof of consistency through
-proof by logical relations for a dependently typed language with a full
-universe hierarchy, large eliminations, an intensional identity type, and
-dependent eliminators.  We show the extensibility of our approach by proving
-the existence of $\beta\eta$-normal forms with only small and mechanical
-changes to our proof development.  Our Coq mechanization leverages existing
-Coq libraries for reasoning about metatheory and for general purpose
-automation, allowing us to significantly reduce the verbosity typically
-associated with mechanized proofs. The result is a declarative proof style
-that is usually only available on pen and paper.
+In this work, we present a short and mechanized proof by logical relations for
+a dependently typed language with a full universe hierarchy, large
+eliminations, an intensional identity type, and dependent eliminators.  We
+show the extensibility of our approach by proving the existence of
+$\beta\eta$-normal forms with only small and mechanical changes to our proof
+development.  Our Coq mechanization leverages existing Coq libraries for
+reasoning about metatheory and for general purpose automation, allowing us to
+significantly reduce the verbosity typically associated with mechanized
+proofs. The result is a declarative proof style that rivals pen and paper.
 
 Related work gives us confidence that we could extend our logical relation to
 include features such as full inductive datatypes, irrelevant arguments, and
