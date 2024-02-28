@@ -199,7 +199,7 @@ the logical relation can be easily extended to prove the existence of
 $\beta\eta$-normal forms.
 We have
 fully mechanized the consistency proof using the Coq proof assistant
-in under 1000 lines of code, with 400 lines of additional code for the
+in under 1000 lines of code, with 500 lines of additional code for the
 $\beta\eta$-normal form extension.
 \end{abstract}
 
@@ -455,7 +455,7 @@ either $[[Bool]]$ or $[[Void]]$ depending on whether its
 input is $[[true]]$ or $[[false]]$.
 \scw{This sentence seems out of place.}
 
-Our reduction a typing relations are defined in terms of \emph{simultaneous
+Our reduction and typing relations are defined in terms of \emph{simultaneous
   substitutions}, $[[rho]]$, which are mappings from variables to terms.  We
 use $[[idtm]]$ as the identity substitution.  The extension operation,
 $[[(rho .: x -> a)]]$, updates the substitution $[[rho]]$ to map the variable
@@ -561,7 +561,7 @@ proving transitivity is showing the diamond property for parallel reduction.
 
 The convertibility relation that we use for conversion in \lang{} is unusual
 in that it is directly defined via parallel reduction, instead of using the
-related notion of $\beta$-equivalence~\cite{barendregt:pts,cic}. This choice
+related notion of $\beta$-equivalence~\citep{barendregt1991introduction,coquand1990:cic}. This choice
 does not change the language definition; a detailed argument of the
 equivalence between $[[a <=> b]]$ and untyped $\beta$-equivalence can be found
 in \citet{barendregt:lambda-calculi-with-types} and
@@ -571,7 +571,7 @@ proofs, as we discuss in Section~\ref{sec:discuss}.
 Our definition of equality is untyped: the judgement does not require the two
 terms to type check and have the same type. The use of an untyped relation for
 conversion is similar to Barendregt's Pure Type
-Systems~\cite{barendregt1991introduction,barendregt:pts} and differs
+Systems~\cite{barendregt1991introduction} and differs
 from MLTT~\citep{Martin-Lof-1973}, where the judgmental
 equality takes the form $\Gamma \vdash a \equiv b : A$.
 % from which one can
@@ -887,8 +887,8 @@ of the $[[Void]]$ and $[[Bool]]$ types under an empty context. For
 example, the $[[Void]]$ type should not have any inhabitants under the
 empty context, where as the $[[Bool]]$ type corresponds to terms that
 evaluate to $[[true]]$ or $[[false]]$. However, the characterization
-of $[[Bool]]$ in our logical relation does not always correspond to
-well-typed or even closed terms. For example, we have $[[if false (#
+of $[[Void]]$ and $[[Bool]]$ in our logical relation does not always correspond to
+well-typed or even closed terms. For example, the term $[[if false (#
 Void true #)
 true]]$ is ill-typed under the empty context but still belongs to the set $[[{ a | a =>+
   true \/ a =>+ false }]]$ since it evaluates to $[[true]]$.
@@ -1147,7 +1147,7 @@ numbers less than $[[i1]]$.
   If $[[Interp I i0 A S0]]$ and $[[Interp I i1 A S1]]$, then $[[S0 = S1]]$.
 \end{corollary}
 \begin{proof}
-  Immediate from Lemma~\ref{lemma:logreldeter} and
+  Immediate from Lemmas~\ref{lemma:logreldeter} and
   \ref{lemma:logrelcumulativity}.
 \end{proof}
 
@@ -1172,15 +1172,15 @@ hold in the \rref{I-Set} case.
 \begin{proof}
   By the definition of $[[InterpR i A S]]$ from
   Figure~\ref{fig:logrelrec}, we unfold $[[InterpR i A S]]$ by one
-  step into $[[ Interp I i A S  ]]$ where $[[I i]] := [[{A | exists S
-    , InterpR i A S}]]$.
+  step into $[[ Interp I i A S  ]]$ where $[[I j]] := [[{A | exists S
+    , InterpR j A S}]]$.
   We then proceed by induction over the derivation of $[[Interp I i A S]]$.
 
   All cases are trivial except for the \rref{I-Set} case, where we
   want to show that the set $[[I j]]$ is closed under expansion for
   all $[[j < i]]$. However, by the definition of $[[I]]$, we know that
   $[[A in I j]]$ if and only if there exists some $[[S]]$ such that
-  $[[Interp I i A S]]$. By \rref{I-Red}, we must also have $[[B in I
+  $[[Interp I j A S]]$. By \rref{I-Red}, we must also have $[[B in I
   j]]$ for all $[[B => A]]$.
 \end{proof}
 
@@ -1207,7 +1207,7 @@ The necessity of semantic typing as an extra layer of
 definition on top of the logic relation can be understood in simply typed
 languages~\citep{skorstengaard2019introduction, harpertait,
   pierce2002types}. In our setting, attempting to show that
-$[[empty |- a : A]]$ implies $[[InterpR i A S]]$ and $[[a in S]]$ will fail in
+$[[empty |- a : A]]$ implies $[[InterpR i A S]]$ and $[[a in S]]$ through induction over the derivation of $[[empty |- a : A]]$ will fail in
 \rref{T-Abs}, where the induction hypothesis is not helpful since the body of
 the lambda term is typed under a non-empty context. Through the definition of
 semantic typing, we can state a strengthened property that is actually
@@ -1418,7 +1418,7 @@ in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
     {rho .: x -> a}
     S1 #) #)]]$
   \item $[[S = { b | forall a, (# a in S0 implies forall
-      S1, (# InterpR i B {rho .: x -> a} S1 /\  b a in S1 #) #) }]]$
+      S1, (# InterpR i B {rho .: x -> a} S1 implies  b a in S1 #) #) }]]$
   \end{itemize}
   To show that $[[(\ x . b){rho} in S]]$, we need to prove
   that given $[[a in S0]]$,
@@ -1451,7 +1451,7 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
     {rho .: x ->  a0}
     S1 #) #)]]$
   \item $[[forall a0, (# a0 in S0 implies (# forall
-      S1, (# InterpR i B {rho .: x -> a0} S1 /\  b {rho} a0 in S1 #) #) #)]]$
+      S1, (# InterpR i B {rho .: x -> a0} S1 implies  b {rho} a0 in S1 #) #) #)]]$
   \end{itemize}
   Instantiating the variable $[[a0]]$ from the last two bullets with
   the term $[[a {rho}]]$, the conclusion immediately follows.
