@@ -2247,32 +2247,33 @@ semantic typing because it is sufficient for our purposes
 \begin{figure}[h]
 
 % \begin{minipage}{0.8\textwidth}
-  \begin{tabular}{| l |  c  | l | c | c | l | }
+  \begin{tabular}{| l |  c  | l | c | c | c | l | }
     \hline
 %      & \header{Universes} & \header{Inductives} & \header{Conversion}
 %      & \header{Large Elim} & Main results \\
-      & \header{Univ} & \header{Ind} & \header{Conv}
-      & \header{L E} & Main results \\
+      & \header{U} & \header{Ind} & \header{C} 
+      & \header{L E} & \header{A} & Main results \\
 
     \hline
-    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓}
+    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} & 1 
     & Consistency and normalization \\
     % \hline
-    $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗} & Consistency \\
-    Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} & Consistency \\
-    NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} & Correctness of NBE \\
-    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & {\boxedsymbols ✓} & Decidability of conversion \\
-    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & {\boxedsymbols ✓} & Decidibility of type checking \\
+    $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗} & 1 & Consistency \\
+    Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} & 2 & Consistency \\
+    NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} & ?? & Correctness of NBE \\
+    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & {\boxedsymbols ✓} & 2 & Decidability of conversion \\
+    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & {\boxedsymbols ✓} & ?? & Decidibility of type checking \\
     \hline
   \end{tabular}
 
 
   \begin{tabular}{ll}
     \\
-  \underline{Univ}erses: & Countable ($\mathbb{N}$), Zero (0), One (1) \\
+  \underline{U}niverses: & Countable ($\mathbb{N}$), Zero (0), One (1) \\
   \underline{Ind}uctives: & Identity types (Id), Natural numbers (Nat), $\Sigma$-types ($\Sigma$), W-types \\
-  \underline{Conv}ersion:& Untyped (U), Typed (T),  Extensional (E) \\
+  \underline{C}onversion:& Untyped (U), Typed (T),  Extensional (E) \\
   \underline{L}arge \underline{E}liminations:& Included ({\boxedsymbols ✓}), not included ({\boxedsymbols ✗}) \\
+  \underline{A}rity of interpretation: & Sets of terms (1), Relations between terms (2) \\
   \\
   $\lambda^\theta$  & \citet{casinghino:combining-proofs-programs} (logical fragment only) \\
   Core Nuprl &\citet{anand2014towards} \\
@@ -2285,12 +2286,14 @@ semantic typing because it is sufficient for our purposes
     mechanized logical relations}
   \label{fig:featurematrix}
 \end{figure}
+\scw{Extra columns in Fig 10:  Predicate vs. Relational interpretation (we can explain this) / Typed vs. Untyped interpretation}
 
 \scw{Should we add a column for whether their logical relation is
   unary or binary?}\yl{Technically a Kripke-style model has the
   context as an argument to the logrel, too. By binary, we are really
   talking about whether the interpreted set is binary or not. I think
   it is tricky to explain what we actually mean. }
+\scw{I don't think it is that trick}
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
 that feature logical-relations arguments for dependently-typed languages.
 Each of these proofs is significantly larger than than our development; but they
@@ -2362,7 +2365,7 @@ of dependent function types and thus are closely related to our
 mechanization. \citet{anand2014towards} further show it is possible
 to encode a finite universe hierarchy without the use of
 either impredicativity or induction-recursion. Their encoding of a countable
-universe hierarchy still relies on impredicativity, similar to our
+universe hierarchy relies on impredicativity, similar to our
 development.
 % \scw{How did the Nuprl
 % proof include a full hierarchy? Did they use impredicativity?}
