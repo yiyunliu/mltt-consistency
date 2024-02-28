@@ -573,26 +573,26 @@ consistent with our mechanization.
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
 
-\scw{This section needs to say:
-  \begin{itemize}
-\item definitional equality is untyped so that we can prove
-  properties about it independent of the type system
-\item definitional equality is based on parallel reduction so that we can take
-  advantage of the algorithmic structure later. This definition is easier to
-  invert because there are fewer derivation. That is important when reasoning
-  about our logical relation.
-\item can prove that parallel reduction is equivalent to other definitions of
-  equality using standard means (cite Barendregt's book).  (we go halfway
-  there by showing it is an equivalence relation). Can also prove equivalent
-  to typed relation. (cite Siles, also CoreSpec?)
-\item All of the proofs in this section are standard, well known, and use
-  techniques that are well-suited for proof assistants. In fact, de Bruijn's
-  paper that introduces de Bruijn indices was part of a mechanized confluence
-  proof for the untyped lambda calculus.
-\item extensions: forward reference to eta equivalence for functions in later
-  section. type-directed equivalence is future work
-  \end{itemize}
-}
+% \scw{This section needs to say:
+%  \begin{itemize}
+% \item definitional equality is untyped so that we can prove
+%  properties about it independent of the type system
+% \item definitional equality is based on parallel reduction so that we can take
+%  advantage of the algorithmic structure later. This definition is easier to
+%  invert because there are fewer derivation. That is important when reasoning
+%  about our logical relation.
+% \item can prove that parallel reduction is equivalent to other definitions of
+%  equality using standard means (cite Barendregt's book).  (we go halfway
+%  there by showing it is an equivalence relation). Can also prove equivalent
+%  to typed relation. (cite Siles, also CoreSpec?)
+% \item All of the proofs in this section are standard, well known, and use
+%  techniques that are well-suited for proof assistants. In fact, de Bruijn's
+%  paper that introduces de Bruijn indices was part of a mechanized confluence
+%  proof for the untyped lambda calculus.
+% \item extensions: forward reference to eta equivalence for functions in later
+%  section. type-directed equivalence is future work
+%  \end{itemize}
+%}
 
 \begin{figure}[h]
 \[
@@ -762,8 +762,6 @@ substitution.
 \label{fig:par}
 \end{figure}
 
-% \scw{motivate parallel reduction. Why are you telling us this now. Is this
-%   an explanation of definitional equality and its properties?}
 Before we specify the typing rules, we first specify the equational theory
 used in its conversion rule (\rref{T-Conv} in Figure~\ref{fig:typing}). This
 relation is often called \textit{definitional equality} in dependent type theories
@@ -830,8 +828,7 @@ language definition; a detailed argument of the equivalence between
 $[[a <=> b]]$ and untyped $\beta$-equivalence can be found in
 \citet{barendregt:lambda-calculi-with-types} and
 \citet{takahashi-parallel-reduction}. However, this choice simplifies later
-proofs, as we discuss in Section~\ref{sec:discuss}. % \scw{Forward reference to further
-  % discussion, comparing with whnf reduction?} \yl{resolved?}
+proofs, as we discuss in Section~\ref{sec:discuss}. 
 
 Our definition of equality is untyped: the judgement does not require the two
 terms to type check and have the same type. The use of an untyped relation for
@@ -881,8 +878,7 @@ wrapped in \colorbox{lightgray}{gray} boxes can be shown to be admissible
 syntactically, though some of them are required to strengthen the inductive
 hypothesis of the fundamental theorem.
 
-\yl{Var, T-Pi, T-Abs are self-explanatory now?}  \scw{Need to actually mention
-  these rules} The typing rules of \lang{} are standard rules for dependent
+The typing rules of \lang{} are standard for dependent
 type theories.  The variable rule, \rref{T-Var}, uses the auxiliary relation
 $[[x : A in G]]$, that holds when a variable declaration is found in the
 typing context.  The typing of universes ensures that each one belongs to the
@@ -1015,22 +1011,14 @@ witnessing the information gained through dependent pattern matching.
   define for dependent type theory and explain why this setting is more
   difficult than with simple types (STLC) or with polymorphic types (System F).
   \begin{itemize}
-  \item Dependent function types (result type mentions argument value, so can't define
-    relation by recursion over type structure)
+  \item Large eliminations
   \item Definitional equality (not all types look like types)
-  \item Identity types(?)
   \end{itemize}
   Should we be more explicit in our comparison with Girard's trick for polymorphic type?
   There, the definition stays recursive because it doesn't substitute for the variables
   in the function types. But that approach is not available in this setting, because not
   all quantified things are types. And we might need that information to interpret, say,
   identity types in the right way.
-}
-\yl{I don't think identity types and dependent function types should
-  be listed as reasons why the logrel can't be a recursive
-  function. System DE has both dependent function types and identity
-  types but the logical fragment doesn't have type-level computation
-  so it can be defined structurally by specifying some kind of size metric
 }
 \scw{ We also need to explicitly point out that our logical relation is untyped.
   This has two benefits: it allows semantic typing to be meaningful independent from
@@ -1393,9 +1381,8 @@ and refer to this property as irrelevance.
   \label{lemma:logrelcoherence}
   If $[[Interp I i A S]]$ and $[[A <=> B]]$, then $[[Interp I i B S]]$.
 \end{corollary}
-% \scw{Need a transition here}
 
-Since the definition of our logical relation is an inductive relation,
+Because the definition of our logical relation is an inductive relation,
 it is not immediately obvious why each type $[[A]]$ can only uniquely
 corresponds to one set $[[S]]$. The following lemma shows that our
 logical relation is indeed functional.
@@ -1633,13 +1620,6 @@ work with.
   Pick $[[Suc i]]$ for $[[j]]$ and $[[ { A | exists S , InterpR i A S }
   ]]$ for $[[S0]]$ and it is trivial to verify the conditions hold.
 \end{proof}
-
-
-
-% The semantic context well-formedness judgment ($[[|= G]]$), unlike its syntactic
-% counterpart $[[|- G]]$, is defined through a $\forall$ quantified statement rather
-% than inductively over the context. \scw{why is that the case?} It is easy to recover the same
-% structural rules:
 
 
 Next, we show some non-trivial cases of the fundamental theorem as
