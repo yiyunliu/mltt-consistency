@@ -225,16 +225,10 @@ Qed.
 
 Lemma mltt_normalizing Γ a A : (Γ ⊢ a ∈ A) -> wn a /\ wn A.
 Proof.
-  move => h.
-  apply soundness in h.
-  move : h.
-  rewrite /SemWt.
-  move /(_ var_tm).
+  move /(proj1 soundness) /(_ var_tm).
   elim.
   - asimpl.
     hauto l:on use:adequacy, InterpUniv_wn_ty unfold:CR.
-  - rewrite /ρ_ok.
-    move=> i ? m PA. asimpl.
+  - rewrite /ρ_ok=>i ? m PA. asimpl.
     hauto q:on ctrs:rtc use:adequacy.
 Qed.
-
