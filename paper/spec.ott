@@ -215,6 +215,8 @@ embed
 {{ tex-preamble
 \usepackage{fontspec}
 \newfontfamily\boxedsymbols{DejaVu Sans}
+\usepackage{tcolorbox}
+\definecolor{lightgray}{gray}{0.85}
 }}
 
 
