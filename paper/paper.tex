@@ -1914,10 +1914,10 @@ sentence, but I am still not happy with it.}
     Untyped reduction        & 344 & =   & = \\
     Neutral and normal forms & -   & 273 & - \\
     Logical relation         & 338 & 430 & - \\
-    Semantic soundness       & 190 & 214 & - \\
+    Semantic soundness       & 192 & 211 & - \\
     Syntactic soundness      & -   & -   & 629 \\
     \hline
-    Total                    & 955 & 1344 & 1056 \\
+    Total                    & 957 & 1341 & 1056 \\
     \hline
   \end{tabular}
   \end{minipage}
@@ -1929,8 +1929,8 @@ contribute to the total.}
 
 To demonstrate the scale of our proof scripts, Figure~\ref{fig:linecount}
 shows the number of non-blank, non-comment lines of code\footnote{calculated
-  by the \texttt{cloc} tool, available from
-  \url{https://github.com/AlDanial/cloc}.} for each file of our development,
+  by the \texttt{tokei} tool, available from
+  \url{https://github.com/XAMPPRocky/tokei}.} for each file of our development,
 including the base consistency proof from Section~\ref{sec:logreldep} and
 \ref{sec:logrelproof} and the extension to $\beta$-normalization from
 Section~\ref{sec:extension}.  For comparison, we have also proven syntactic
@@ -1939,7 +1939,7 @@ type soundness through preservation
 progress\footnote{\dotv{syntactic\_soundness.v}{wt\_progress}}.
 
 The $\beta\eta$-normalization proof from Section~\ref{sec:betaeta} comprises
-1573 lines of non-blank, non-comment lines of code. We choose not to include
+1568 lines of non-blank, non-comment lines of code. We choose not to include
 it in the chart, because of slight differences in lemma dependencies for
 untyped reduction and normal forms that make the comparison less
 informative. However, when compared to the $\beta$-normalization extension,
