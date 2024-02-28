@@ -4,7 +4,7 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentsfalse         %% toggle comments here
+\commentstrue         %% toggle comments here
 \extendedfalse
 \anonymoustrue
 
@@ -624,11 +624,11 @@ consistent with our mechanization.
 
 
 In this section, we present the dependent type theory, \lang{}, whose logical
-consistency will be proven in Section~\ref{sec:logrelproof}. 
+consistency will be proven in Section~\ref{sec:logrelproof}.
 
 The syntax of \lang can be found in Figure~\ref{fig:syntax}.  As a dependent
 type theory, terms and types are collapsed into the same syntactic
-category. The type $[[Set i]]$ represent universe types, annotated by 
+category. The type $[[Set i]]$ represent universe types, annotated by
 the universe level, a natural number $i$.%  and $[[x]]$
 % represent de Bruijn variables~\cite{debruijn}.  While $[[i]],[[j]],$ and
 % $[[n]]$ are all metavariables representing natural numbers, we always use
@@ -717,7 +717,7 @@ input is $[[true]]$ or $[[false]]$.
 
 % We adapt from \citet{autosubst2} notation for simultaneous renaming,
 % substitution, and other auxiliary definitions used in our paper, summarized in
-% Figure~\ref{fig:auxdef}. 
+% Figure~\ref{fig:auxdef}.
 Our reduction a typing relations are defined in terms of \emph{simultaneous
   substitutions}, $[[rho]]$, which are mappings from variables to terms.  We
 use $[[idtm]]$ as the identity substitution.  The extension operation,
@@ -839,7 +839,7 @@ from MLTT~\citep{Martin-Lof-1973}, where the judgmental
 equality takes the form $\Gamma \vdash a \equiv b : A$.
 % from which one can
 % usually derive $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving subject
-% reduction. 
+% reduction.
 By working with an untyped judgement, we can establish its
 properties independently from the type system and the logical relation, using
 well-established syntactic approaches.
@@ -924,7 +924,7 @@ introduced by \rref{T-Refl}. In \rref{T-J}, the elimination form, the subterm
 $p$ is a proof of an equality between $[[a]]$ and $[[b]]$. The subterm $[[c]]$
 is the body of the elimination form. In this rule, $[[B]]$ is the motive and has two free variables.  The substitution for these
 variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
-witnessing the information gained through dependent pattern matching. 
+witnessing the information gained through dependent pattern matching.
 % In the
 % typing rule, the terms $[[a]]$ and $[[A]]$ need to be shifted in the context
 % for a similar reason; an extra type $[[A]]$ appears after the $[[G]]$ and
@@ -1861,7 +1861,12 @@ of \lang{}.
 
 The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
 neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite
-\footnote{\dotv{normalform.v}{nf\_refl}} }. Instead of the
+\footnote{\dotv{normalform.v}{nf\_refl}} }.\yl{I always think of
+normal form as the specific definition that says the relation can't
+step. We can refer to nfrefl but that requires some explanation about
+the definition of normal form and the complication that it doesn't
+hold in $\eta$ (maybe it's fine if we just don't mention it in the
+$\eta$ case)} Instead of the
 metavariables $e$ and $f$, we also
 use the judgment forms $[[ne a]]$ and $[[nf a]]$ to indicate that there exists
 $[[e]]$ or $[[f]]$ such that $[[a = e]]$ or $[[a = f]]$.
@@ -1923,7 +1928,10 @@ variables that appears in terms. If a renamed term has been reduced, we can
 always recover the result of the reduction without the renaming.
 %
 \scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
-used more generally. Maybe we should replace it with that?}
+used more generally. Maybe we should replace it with
+that?}\yl{Anti-renaming is mentioned once in Section 6 when we talk abou how confluence with $\eta$
+depends on anti-renaming for Par. I don't think that discussion in
+Section 6 is very important so I'm fine with replacing it  }
 \begin{lemma}[Par anti-renaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
   \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
 exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
@@ -1994,8 +2002,6 @@ Furthermore, to prove this adequacy property, we need to strengthen it to also
 give us more information about neutral terms as we proceed by induction. In
 particular, we need to know that all terms that reduce to neutral forms are
 contained within the interpretation.
-\scw{Also, cite where this form of proof originally
-appeared? This part is standard.}
 Therefore, we formally define when a set is a \emph{reducibility candidate}
 (shortened as $CR$) as follows. Our definition of $CR$ is inspired by
 \citet{girard1989proofs}, but not identical since we only care about
@@ -2192,14 +2198,14 @@ building blocks of more complex arguments, thus paving the way for experimentati
 and eventual extension to more expressive systems.\scw{I tried to reword your
 sentence, but I am still not happy with it.}
 
-\scw{Is this specific to $\eta$? Or is this also true for $\beta$? Can we move this
-sentence elsewhere? I'd like to use the previous sentence as a conclusion for
-this section.}
-Finally, due to technical
-details, our mechanized proof about the existence of $\beta\eta$ form does not
-immediately induce a decision procedure for type conversion in
-\lang{}. We discuss this issue and its workaround in
-Section~\ref{sec:conversionalgo}.
+% \scw{Is this specific to $\eta$? Or is this also true for $\beta$? Can we move this
+% sentence elsewhere? I'd like to use the previous sentence as a conclusion for
+% this section.}
+% Finally, due to technical
+% details, our mechanized proof about the existence of $\beta\eta$ form does not
+% immediately induce a decision procedure for type conversion in
+% \lang{}. We discuss this issue and its workaround in
+% Section~\ref{sec:conversionalgo}.
 \section{Mechanization}
 \label{sec:logrelmech}
 \begin{figure}[h]
@@ -2464,7 +2470,6 @@ an induction metric to define an executable algorithm\footnote{Coq's
   singleton elimination principle allows \mintinline{coq}{Acc}, a
   \texttt{Prop} data type with a single constructor, to be eliminated
   to construct runtime relevant data.}.
-
 \section{Related Work}
 \label{sec:relatedwork}
 
@@ -2836,8 +2841,8 @@ relation to prove the fundamental theorem. This would amount
 to proving the factorization theorem of the deterministic reduction
 relation with respect to full non-deterministic reduction. Instead,
 using parallel reduction in \rref{I-Red} allows us to delay the
-factorization property until we need to extract a normalization
-algorithm from our fundamental theorem (Section~\ref{sec:conversionalgo}).
+factorization property until we need to justify the use leftmost-outermost
+reduction as a deterministic reduction strategy for normalization.
 
 
 
