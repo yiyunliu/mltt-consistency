@@ -74,7 +74,7 @@ reliance on axioms related to proof irrelevance.
   soundnessopen.v  - soundness of open terms, normalizing
 
 * Section 6
-  TODO
+  eta/*            - same development as *open.v but with eta extension
 
 * Other
   syntactic_soundness.v - preservation & progress
