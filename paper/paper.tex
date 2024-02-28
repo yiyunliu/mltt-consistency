@@ -203,7 +203,7 @@ the logical relation can be easily extended to prove the existence of
 $\beta\eta$-normal forms.
 We have
 fully mechanized the consistency proof using the Coq proof assistant
-in under 1000 lines of code, with 500 lines of additional code for the
+in under 1000 lines of code, with 400 lines of additional code for the
 $\beta\eta$-normal form extension.
 \end{abstract}
 
@@ -2051,7 +2051,7 @@ fundamental theorem.
   for all $[[rho |= G]]$, there exists some $[[i]]$ and $[[S]]$ such
   that $[[InterpR i A {rho} S]]$ and $[[a {rho} in S]]$.
   We pick the valuation $[[rho]] = [[idtm]]$ (defined in Figure~\ref{fig:auxdef}), which injects
-  natural numbers as term variables. The side condition $[[idtm |=
+  variables as terms. The side condition $[[idtm |=
   G]]$ is satisfied since Lemma~\ref{lemma:adequacy} says neutral terms,
   including variables, semantically inhabit any $[[S0]]$ where
   $[[S0]]$ is the interpretation of some type. With our choice of
@@ -2061,9 +2061,6 @@ fundamental theorem.
   conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
 \end{proof}
 
-\yl{commented out the following paragraph because I accidentally wrote
-the same thing twice. Will do a comparison and if this is better
-written I'll replace the part from the $\beta\eta$ section with it}
 % Due to the non-deterministic nature of parallel reduction, we need to take a
 % few more steps to convert the existence of $\beta$-normal form into a decision
 % procedure for type conversion. More specifically, we can show that a
@@ -2104,25 +2101,37 @@ rule? What does this section demonstrate?}
 \scw{The way we describe this
 section should more clearly indicate that we have a mechanized version of this
 proof. And include pointers on where readers might refer to it.}
-We can easily incorporate the function $\eta$ law to the equational
+\yl{Added the related work at the beginning but I wonder if we should
+  just say that we want to match our expressiveness with existing systems}
+
+\citet{nbeincoq,decagda,martin-lof-a-la-coq} all
+include the $\eta$ law for functions in their equational theory and
+use relational models to justify its validity.
+In our system, we can easily incorporate the function $\eta$ law to the equational
 theory of \lang{} by adding the following parallel reduction rule.
 \begin{center}
   \drule[width=2.5in]{P-AbsEta}
 \end{center}
-% \Rref{P-AbsEta} effectively adds the $\eta$ law for functions to our
-% equational theory since convertibility ($[[a <=> b]]$), the untyped relation
-% used for type conversion, is built on top of parallel reduction.
-We can recover the same confluence result about parallel reduction using the
+In this section, we show how we easily extend the existence of $\beta$-normal
+forms from Section~\ref{sec:extension} to the existence of
+$\beta\eta$-normal forms after we add the function $\eta$ law to our
+equational theory.
+
+First, we recover the same confluence result about parallel reduction using the
 standard techniques from \citet{barendregt:lambda-calculi-with-types,
   takahashi-parallel-reduction}, though anti-renaming
 (Lemma~\ref{lemma:parantirenaming}) must be proven before the diamond property
 (Lemma~\ref{lemma:pardiamond}). Another complication is that
-confluence\scw{diamond property?} and anti-renaming are now proven through
+the anti-renaming property and the diamond property for parallel reduction are now proven through
 induction on a size metric of lambda terms; \rref{P-AbsEta} reduces a term
 that is not a strict subterm.
 
-Note that, after this extension, the specification of our logical relation does not require
-any updates. As before, $\ottkw{ne}$ and $\ottkw{nf}$
+Note that, after this extension, the specification of our logical
+relation does not require
+any updates. The proof of the fundamental theorem also remains
+identical since the complications introduced by $\eta$ are hidden
+behind the proofs of the diamond property and the anti-renaming property.
+As before, $\ottkw{ne}$ and $\ottkw{nf}$
 represent $\beta$-neutral and $\beta-$normal forms, and the
 fundamental lemma shows us that every well-typed term has a
 $\beta$-normal form. However, in the presence of the $\eta$ reduction
@@ -2658,10 +2667,13 @@ supported despite the one predicative universe.
 Both \citet{anand2014towards} and \citet{nbeincoq} leverage the
 impredicative \texttt{Prop} sort of Coq to define the interpretation
 of dependent function types and thus are closely related to our
-mechanization. \citet{anand2014towards} further shows it is possible
+mechanization. \citet{anand2014towards} further show it is possible
 to encode a finite universe hierarchy without the use of
-either impredicativity or induction-recursion.\scw{How did the Nuprl
-proof include a full hierarchy? Did they use impredicativity?}
+either impredicativity or induction-recursion. Their encoding of a countable
+universe hierarchy still relies on impredicativity, similar to our
+development.
+% \scw{How did the Nuprl
+% proof include a full hierarchy? Did they use impredicativity?}
 % \yl{commented out because I think this paragraph is too subjective}
 % However, instead of explaining the inductive
 % logical relation as a convoluted workaround to the lack of
