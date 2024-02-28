@@ -11,6 +11,9 @@ Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
 Definition SemWff Γ := forall i A, lookup i Γ A -> exists j, Γ ⊨ A ∈ tUniv j.
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
+Lemma ρ_ok_nil ρ : ρ_ok nil ρ.
+Proof.  rewrite /ρ_ok. inversion 1; subst. Qed.
+
 Lemma ρ_ok_cons i Γ ρ a PA A :
  ⟦ A [ρ] ⟧ i ↘ PA -> PA a ->
   ρ_ok Γ ρ ->
@@ -234,3 +237,4 @@ Proof.
     move=> i ? m PA. asimpl.
     hauto q:on ctrs:rtc use:adequacy.
 Qed.
+

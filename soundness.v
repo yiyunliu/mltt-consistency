@@ -13,6 +13,10 @@ Definition SemWff Γ := forall i A, lookup i Γ A -> exists j, Γ ⊨ A ∈ tUni
 Notation "⊨ Γ" := (SemWff Γ) (at level 70).
 
 
+Lemma ρ_ok_nil ρ : 
+  ρ_ok nil ρ.
+Proof.  rewrite /ρ_ok. inversion 1; subst. Qed.
+
 (* Extending a well-formed substitution *)
 Lemma ρ_ok_cons {i Γ ρ a PA A} :
   ⟦ A [ρ] ⟧ i ↘ PA -> PA a ->
@@ -213,4 +217,17 @@ Proof.
   simp InterpUniv in hPA.
   apply InterpExt_Void_inv in hPA; subst.
   apply ha.
+Qed.
+
+Lemma canonicity a : 
+  nil ⊢ a ∈ tBool -> (a ⇒* tTrue) \/ (a ⇒* tFalse).
+Proof.
+  move => h. 
+  apply soundness in h. 
+  move: (h _  (ρ_ok_nil (fun x => var_tm x))) => [m [PA [h3 h4]]].
+  apply InterpUnivN_Bool_inv in h3.
+  rewrite idSubst_tm in h4. eauto.
+  rewrite h3 in h4.
+  move: h4 => [v [h5 h6]].  destruct v; try done.
+  left; auto. right; auto.
 Qed.
