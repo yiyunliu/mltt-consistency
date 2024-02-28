@@ -1,4 +1,4 @@
-From WR Require Import syntax join semtyping typing common imports.
+From WR Require Import syntax join semtyping typing imports.
 
 
 (* Semantic substitution well-formedness *)

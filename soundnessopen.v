@@ -1,4 +1,4 @@
-From WR Require Import syntax join semtypingopen normalform typing common imports.
+From WR Require Import syntax join semtypingopen normalform typing imports.
 
 (* Semantic substitution well-formedness *)
 Definition ρ_ok Γ ρ := forall i A, lookup i Γ A -> forall m PA, ⟦ A [ρ] ⟧ m ↘ PA -> PA (ρ i).

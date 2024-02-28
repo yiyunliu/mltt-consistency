@@ -6,7 +6,7 @@
    forms are values).
  *)
 
-From WR Require Import syntax imports join typing common.
+From WR Require Import syntax imports join typing.
 
 
 (* -------------------------------------------------- *)
