@@ -2111,9 +2111,9 @@ which roughly corresponds to simultaneous reduction of the redexes in
 $[[a]]$, excluding the new redexes that appear as a result of
 reduction.
 \begin{minted}{coq}
-Lemma par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
-Proof. 
-  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,par_cong ctrs:Par. 
+Lemma Par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
+Proof.
+  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,Par_cong ctrs:Par.
 Qed.
 \end{minted}
 In prose, the triangle property can be proven by induction over the graph of
