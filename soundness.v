@@ -1,157 +1,190 @@
-From WR Require Import syntax join semtyping typing common imports.
+From WR Require Import syntax join semtyping normalform typing common imports.
 
-Definition γ_ok Γ γ := forall i, i < length Γ -> forall m PA, InterpUnivN m (subst_tm γ (dep_ith Γ i)) PA -> PA (γ i).
-Definition SemWt Γ a A := forall γ, γ_ok Γ γ -> exists m PA, InterpUnivN m (subst_tm γ A) PA /\ PA (subst_tm γ a).
-Definition SemWff Γ := forall i, i < length Γ -> exists F, SemWt (skipn (S i) Γ) (ith Γ i) (tUniv (F i)).
+(* Semantic substitution well-formedness *)
+Definition ρ_ok Γ ρ := forall i A, lookup i Γ A -> forall m PA, ⟦ A [ρ] ⟧ m ↘ PA -> PA (ρ i).
 
-Lemma γ_ok_cons i Γ γ a PA A :
-  InterpUnivN i (subst_tm γ A) PA ->
-  PA a ->
-  γ_ok Γ γ ->
-  γ_ok (A :: Γ) (a .: γ).
+(* Semantic typing, written Γ ⊨ a : A in the paper *)
+Definition SemWt Γ a A := forall ρ, ρ_ok Γ ρ -> exists m PA, ( ⟦ A [ρ] ⟧ m ↘ PA)  /\ PA (a [ρ]).
+Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
+
+(* Semantic context wellformedness *)
+Definition SemWff Γ := forall i A, lookup i Γ A -> exists j, Γ ⊨ A ∈ tUniv j.
+Notation "⊨ Γ" := (SemWff Γ) (at level 70).
+
+Lemma ρ_ok_cons i Γ ρ a PA A :
+ ⟦ A [ρ] ⟧ i ↘ PA -> PA a ->
+  ρ_ok Γ ρ ->
+  ρ_ok (A :: Γ) (a .: ρ).
 Proof.
   move => h0 h1 h2.
-  case => /= [_ | m ? PA0].
+  rewrite /ρ_ok. inversion 1; subst.
   - move => j PA0 hPA0.
     asimpl in hPA0.
     suff : PA = PA0 by congruence.
     hauto l:on use:InterpUnivN_deterministic'.
-  - asimpl. hauto lq:on unfold:γ_ok solve+:lia.
+  - asimpl. hauto lq:on unfold:ρ_ok solve+:lia.
 Qed.
 
-Lemma γ_ok_renaming Γ γ :
+(* Well-formed substitutions are stable under renaming *)
+Lemma ρ_ok_renaming Γ ρ :
   forall Δ ξ,
-    good_renaming ξ Γ Δ ->
-    γ_ok Δ γ ->
-    γ_ok Γ (ξ >> γ).
+    lookup_good_renaming ξ Γ Δ ->
+    ρ_ok Δ ρ ->
+    ρ_ok Γ (ξ >> ρ).
 Proof.
   move => Δ ξ hscope h1.
-  rewrite /γ_ok => i hi j PA.
-  replace (subst_tm (ξ >> γ) (dep_ith Γ i)) with
-    (subst_tm γ (ren_tm ξ (dep_ith Γ i))); last by asimpl.
-  rewrite /good_renaming in hscope.
-  case /(_ i hi) : hscope => ? h0.
-  rewrite -h0 => //.
-  by apply h1.
-Qed.
-
-Lemma renaming_SemWt Γ a A :
-  SemWt Γ a A ->
-  forall Δ ξ,
-    good_renaming ξ Γ Δ ->
-    SemWt Δ (ren_tm ξ a) (ren_tm ξ A).
-Proof.
-  rewrite /SemWt => h Δ ξ hξ γ hγ.
-  have hγ' : (γ_ok Γ (ξ >> γ)) by eauto using γ_ok_renaming.
-  case /(_ _ hγ') : h => PA hPA.
-  exists PA.
+  rewrite /ρ_ok => i A hi j PA.
+  move: (hscope _ _ hi) => ld.
+  move: (h1 _ _ ld j PA).
   by asimpl.
 Qed.
 
+(* Typing is stable under renaming *)
+Lemma renaming_SemWt Γ a A :
+  (Γ ⊨ a ∈ A) ->
+  forall Δ ξ,
+    lookup_good_renaming ξ Γ Δ ->
+    Δ ⊨ a⟨ξ⟩ ∈ A⟨ξ⟩ .
+Proof.
+  rewrite /SemWt => h Δ ξ hξ ρ hρ.
+  have hρ' : (ρ_ok Γ (ξ >> ρ)) by eauto using ρ_ok_renaming.
+  case /(_ _ hρ') : h => PA hPA.
+  exists PA. by asimpl.
+Qed.
+
+Lemma weakening_Sem Γ a A B i
+  (h0 : Γ ⊨ B ∈ tUniv i)
+  (h1 : Γ ⊨ a ∈ A) :
+   B :: Γ ⊨ a ⟨↑⟩ ∈ A ⟨↑⟩.
+Proof.
+  apply : renaming_SemWt; eauto.
+  hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
+Qed.
+
+(* Well-formed types have interpretations *)
 Lemma SemWt_Univ Γ A i :
-  SemWt Γ A (tUniv i) <->
-  forall γ, γ_ok Γ γ -> exists PA , InterpUnivN i (subst_tm γ A) PA.
+  (Γ ⊨ A ∈ tUniv i) <->
+  forall ρ, ρ_ok Γ ρ -> exists S , ⟦ A[ρ] ⟧ i ↘ S.
 Proof.
   rewrite /SemWt.
   split.
   - hauto lq:on rew:off use:InterpUnivN_Univ_inv'.
-  - move => /[swap] γ /[apply].
+  - move => /[swap] ρ /[apply].
     case => PA hPA.
     exists (S i). eexists.
     split.
     + simp InterpUniv. apply InterpExt_Univ. lia.
-    + rewrite /SUniv. simpl. eauto.
+    + hauto lq:on.
 Qed.
 
-Theorem soundness Γ :
-  (forall a A, Wt Γ a A -> SemWt Γ a A) /\
-  (Wff Γ -> SemWff Γ).
+(* Structural laws for Semantic context wellformedness *)
+Lemma SemWff_nil : SemWff nil. inversion 1. Qed.
+
+Lemma SemWff_cons Γ A i :
+    ⊨ Γ ->
+    Γ ⊨ A ∈ tUniv i ->
+    (* -------------- *)
+    ⊨ A :: Γ.
 Proof.
-  move : Γ.
+  move => h h0.
+  move => k h1. elim/lookup_inv.
+  - hauto q:on use:weakening_Sem.
+  - move => _ n A0 Γ0 B + ? []*. subst. move /h => [j ?].
+    exists j. change (tUniv j) with (tUniv j) ⟨↑⟩.
+    eauto using weakening_Sem.
+Qed.
+
+(* Fundamental theorem: Syntactic typing implies semantic typing *)
+Theorem soundness :
+  (forall Γ a A, Γ ⊢ a ∈ A -> Γ ⊨ a ∈ A) /\
+  (forall Γ, ⊢ Γ -> ⊨ Γ).
+Proof.
   apply wt_mutual.
-  - move => Γ i h ih ? γ hγ.
-    move /(_ i ltac:(done)) in ih.
-    case : ih => F ih.
-    suff ih' : SemWt Γ (dep_ith Γ i) (tUniv (F i)).
-    + case /(_ _ hγ) : ih' => j [PA [hPA hi]].
-      simpl in hPA.
-      simp InterpUniv in hPA.
-      move /InterpExt_Univ_inv : hPA => [? h0]; subst.
-      move : hi; intros (PA & hi).
-      exists (F i), PA; sfirstorder.
-    + hauto l:on use:dep_ith_shift, good_renaming_truncate, renaming_SemWt.
+  - move => Γ i A h ih l ρ hρ.
+    move /(_ i ltac:(done) ltac:(auto)) in ih.
+    case : ih => j ih.
+    rewrite SemWt_Univ in ih.
+    move: (ih _ hρ) => [PA h1].
+    exists j. exists PA. split. auto.
+    move: (hρ _ _ l _ _ h1).
+    by asimpl.
   - hauto l:on use:SemWt_Univ.
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.
-    move => γ hγ.
-    move /(_ γ hγ) : h0; intros (PA & hPA).
+    move => ρ hρ.
+    move /(_ ρ hρ) : h0; intros (PA & hPA).
     eexists => /=.
-    apply InterpUnivN_Fun; eauto.
-    move => *; asimpl. eauto using γ_ok_cons.
-  - move => Γ A b B i _ /SemWt_Univ hB _ hb γ hγ.
-    case /(_ γ hγ) : hB => /= PPi hPPi.
+    apply InterpUnivN_Fun_nopf; eauto.
+    move => *; asimpl. eauto using ρ_ok_cons.
+  - move => Γ A b B i _ /SemWt_Univ hB _ hb ρ hρ.
+    case /(_ ρ hρ) : hB => /= PPi hPPi.
     exists i, PPi. split => //.
     move /InterpUnivN_Fun_inv_nopf : hPPi.
     intros (PA & hPA & hTot & ?). subst.
     rewrite /ProdSpace.
     move => a PB ha. asimpl => hPB.
-    have : γ_ok (A :: Γ) (a .: γ) by eauto using γ_ok_cons.
+    have : ρ_ok (A :: Γ) (a .: ρ) by eauto using ρ_ok_cons.
     move /hb.
     intros (m & PB0 & hPB0 & hPB0').
     replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
     qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
-  - move => Γ f A B b _ ihf _ ihb γ hγ.
+  - move => Γ f A B b _ ihf _ ihb ρ hρ.
     rewrite /SemWt in ihf ihb.
-    move /(_ γ hγ) : ihf; intros (i & PPi & hPi & hf).
-    move /(_ γ hγ) : ihb; intros (j & PA & hPA & hb).
+    move /(_ ρ hρ) : ihf; intros (i & PPi & hPi & hf).
+    move /(_ ρ hρ) : ihb; intros (j & PA & hPA & hb).
     simpl in hPi.
     move /InterpUnivN_Fun_inv_nopf : hPi. intros (PA0 & hPA0 & hTot & ?). subst.
     have ? : PA0 = PA by eauto using InterpUnivN_deterministic'. subst.
     move  : hf (hb) => /[apply].
     move : hTot hb. move/[apply].
     asimpl. hauto lq:on.
-  - move => Γ a A B i _ hA _ /SemWt_Univ hB ? γ hγ.
-    have ? : Coherent (subst_tm γ A) (subst_tm γ B)
+  - move => Γ a A B i _ hA _ /SemWt_Univ hB ? ρ hρ.
+    have ? : Coherent (subst_tm ρ A) (subst_tm ρ B)
       by eauto using Coherent_subst_star.
     qauto l:on use:InterpUnivN_Coherent unfold:SemWt.
   - hauto l:on.
   - hauto l:on.
-  - rewrite /SemWt => Γ a b c A _ ha _ hb _ hc γ hγ.
-    case /(_ γ hγ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
-    case /(_ γ hγ) : hb => j [PA [hPA hb']].
-    case /(_ γ hγ) : hc => k [PB [hPB hc']].
-    have ? : PA = PB by hauto lq:on rew:off use:InterpUnivN_deterministic'.
-    subst.
-    exists j, PB; split; auto.
-    simpl.
-    case : ha' => v [hred [hv|hv]].
+  - move => Γ a b c A l _ /SemWt_Univ hA _ ha _ hb _ hc ρ hρ.
+    case /(_ ρ hρ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
+    case /(_ ρ hρ) : hb => j [PA [hPA hb']].
+    case /(_ ρ hρ) : hc => k [PB [hPB hc']].
+    move : ha' => [v [hred [hv | hv]]].
     + case : v hred hv => // ha0 _.
-      * apply (InterpUnivN_back_clos_star j) with (A := (subst_tm γ A)) (b := (subst_tm γ b)) => //.
+      * exists j, PA.
+        split.
+        move /InterpUnivN_back_preservation_star  : hPA.
+        apply. asimpl. qauto l:on ctrs:rtc use:Pars_morphing, good_Pars_morphing_ext, Par_refl.
+        apply : InterpUnivN_back_clos_star; eauto.
         eauto using P_IfTrue_star.
-      * apply (InterpUnivN_back_clos_star k) with (A := (subst_tm γ A)) (b := (subst_tm γ c)) => //.
+      * exists k, PB.
+        split.
+        move /InterpUnivN_back_preservation_star  : hPB.
+        apply. asimpl. qauto l:on ctrs:rtc use:Pars_morphing, good_Pars_morphing_ext, Par_refl.
+        apply : InterpUnivN_back_clos_star; eauto.
         eauto using P_IfFalse_star.
     (* New case for when the scrutinee is neutral *)
-    + apply : InterpUniv_wne; eauto.
-      hauto q:on use:InterpUniv_adequacy, wne_if.
+    + have ? : wne (subst_tm ρ a) by hauto lq:on use:wne_if, adequacy.
+      have : ρ_ok (tBool :: Γ) (subst_tm ρ a .: ρ). apply : (ρ_ok_cons i); hauto l:on ctrs:InterpExt.
+      move /hA => [PN hPN]. exists l, PN. split; first by asimpl.
+      qauto l:on use:adequacy, wne_if unfold:CR .
   - hauto l:on use:SemWt_Univ.
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
-  - rewrite /SemWt => Γ a A _ _ _ ha γ.
+  - move => Γ a A _ _ _ ha ρ.
     move : ha. move/[apply]. move => [m [PA [h0 h1]]].
-    exists 0, (SEq (subst_tm γ a) (subst_tm γ a)).
+    exists 0. eexists.
     split => /=.
-    + hauto l:on use:InterpUniv_adequacy, InterpUniv_wn_ty, InterpUnivN_Eq unfold:CR.
-    + qauto l:on ctrs:rtc use:Coherent_reflexive inv:Par unfold:SEq.
+    + apply InterpUnivN_Eq;
+      hauto l:on use:adequacy, InterpUniv_wn_ty, InterpUnivN_Eq unfold:CR.
+    + qauto l:on ctrs:rtc use:Coherent_reflexive inv:Par .
   - move => Γ a b A i j _ ha _ hb _ /SemWt_Univ hA.
-    apply SemWt_Univ => γ hγ.
-    have : wn (subst_tm γ a) by sfirstorder use:InterpUniv_wn.
-    have : wn (subst_tm γ b) by sfirstorder use:InterpUniv_wn.
-    have : wn (subst_tm γ A) by sfirstorder use:InterpUniv_wn_ty.
-    eauto using InterpUnivN_Eq.
-  - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht γ hγ.
-    move : hp (hγ); move/[apply] => /=. intros (m & PA & hPA & hp).
+    apply SemWt_Univ => ρ hρ.
+    eexists => /=. apply InterpUnivN_Eq;
+      hauto l:on use:adequacy, InterpUniv_wn_ty unfold:SemWt, CR.
+  - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht ρ hρ.
+    move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
     move  /InterpUnivN_Eq_inv : hPA. intros (-> & ? & ? & ?).
-    move : ht (hγ); move/[apply]. intros (k & PA & hPA & ht).
-    move : hp. rewrite /SEq.
+    move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
+    move : hp.
     move =>[[hp hco] | ?].
     + exists k, PA.
       split.
@@ -159,36 +192,35 @@ Proof.
         apply : InterpUnivN_Coherent; eauto.
         rewrite /Coherent.
         case : hco => ab ?.
-        exists (subst_tm (tRefl .: (ab .: γ)) C).
+        exists (subst_tm (tRefl .: (ab .: ρ)) C).
         split.
-        ** apply pars_morphing_star; last by apply rtc_refl.
-           apply good_pars_morphing_ext2;
-             hauto lq:on ctrs:good_pars_morphing.
-        ** apply pars_morphing_star; last by apply rtc_refl.
-           apply good_pars_morphing_ext2. apply rtc_refl.
-           tauto. apply good_pars_morphing_one.
+        ** apply Pars_morphing_star; last by apply rtc_refl.
+           apply good_Pars_morphing_ext2;
+             hauto lq:on ctrs:rtc, good_Pars_morphing.
+        ** apply Pars_morphing_star; last by apply rtc_refl.
+           apply good_Pars_morphing_ext2. apply rtc_refl.
+           tauto. apply good_Pars_morphing_one.
       * asimpl.
-        eapply InterpUnivN_back_clos_star with (b := subst_tm γ t); eauto.
+        eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
         sfirstorder use: P_JRefl_star.
     + asimpl.
-      move /(_ (subst_tm γ p .: (subst_tm γ b .: γ))) : hC.
+      move /(_ (subst_tm ρ p .: (subst_tm ρ b .: ρ))) : hC.
       case.
-      * eapply γ_ok_cons with (i := 0).
+      * eapply ρ_ok_cons with (i := 0).
         asimpl.
         apply InterpUnivN_Eq; eauto.
         right. auto.
-        move : hb (hγ). move/[apply].
+        move : hb (hρ). move/[apply].
         move => [i0 [PA0 hb0]].
-        hauto l:on use:γ_ok_cons.
+        hauto l:on use:ρ_ok_cons.
       * move => PC hPC.
         exists i, PC. split; first tauto.
-        apply : InterpUniv_wne; eauto.
-        apply wne_j => //.
-        eauto using InterpUniv_wn.
-  - hauto l:on.
+        qauto l:on use:adequacy,wne_j unfold:CR.
+  - apply SemWff_nil.
+  - eauto using SemWff_cons.
 Qed.
 
-Lemma mltt_normalizing Γ a A : Wt Γ a A -> wn a /\ wn A.
+Lemma mltt_normalizing Γ a A : (Γ ⊢ a ∈ A) -> wn a /\ wn A.
 Proof.
   move => h.
   apply soundness in h.
@@ -197,9 +229,8 @@ Proof.
   move /(_ var_tm).
   elim.
   - asimpl.
-    move => i [PA [? ?]].
-    firstorder using InterpUniv_adequacy, InterpUniv_wn_ty.
-  - rewrite /γ_ok.
+    hauto l:on use:adequacy, InterpUniv_wn_ty unfold:CR.
+  - rewrite /ρ_ok.
     move=> i ? m PA. asimpl.
-    hauto q:on ctrs:rtc use:InterpUniv_adequacy.
+    hauto q:on ctrs:rtc use:adequacy.
 Qed.
