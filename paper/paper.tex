@@ -193,7 +193,7 @@ context of simply typed or polymorphic lambda calculus, a streamlined
 presentation of proof by logical relation for a dependently typed language
 is lacking. In this paper, we present a short
 consistency proof for a dependently typed language that contains a
-rich set of features, including a full universe
+rich set of features, including a countable universe
 hierarchy, booleans, and an intensional identity type. We show that
 the logical relation can be easily extended to prove the existence of
 $\beta\eta$-normal forms.
@@ -441,19 +441,17 @@ $x$ in the body of the function and codomain of the function type.
   treatment of variables and substitution; our mechanized proofs make these
   notions precise by using de Bruijn indices~\cite{debruijn1994automath}. }
 We use the notation $[[A -> B]]$ when the output type $[[B]]$ is not dependent
-on the input variable.  We include in \lang{} the intensional identity type
+on the input variable. For simplicity, we omit the type annotations in the abstraction
+forms. We discuss how the inclusion of type annotations can affect our
+our development in Section~\ref{sec:betaeta}, where we extend our
+consistency result to the existence of $\beta\eta$-normal forms.
+We include in \lang{} the intensional identity type
 $[[a ~ b : A]]$ whose proofs can be eliminated by the J-eliminator
 $[[J c a b p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
 $[[b]]$, and $[[c]]$ is the term whose type is to be casted.  Finally, \lang{}
 includes booleans, with standard syntax.  \scw{Example of what you can use
   identity types for? Or an example of a program that uses J?}
 
-The \lang language is expressive enough to support large
-eliminations, the ability to compute a type using a term as input. For
-example, the function $[[\ x . if x Bool Void]]$ returns
-either $[[Bool]]$ or $[[Void]]$ depending on whether its
-input is $[[true]]$ or $[[false]]$.
-\scw{This sentence seems out of place.}
 
 Our reduction and typing relations are defined in terms of \emph{simultaneous
   substitutions}, $[[rho]]$, which are mappings from variables to terms.  We
@@ -647,6 +645,12 @@ has two free variables.  When checking $[[c]]$, the substitution for these
 variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
 witnessing the information gained through dependent pattern matching.
 
+The universe hierarchy and the boolean base type gives \lang{} the
+ability to compute a type using a term as input, a feature commonly referred to
+as large elimination. For
+example, we can type check the function $[[\ x . if x Bool Void]]$,
+which returns either $[[Bool]]$ or $[[Void]]$ depending on whether its
+input is $[[true]]$ or $[[false]]$.
 % Working with a system with untyped equality has the huge benefit that
 % the confluence result for untyped parallel reduction
 % (Lemma~\ref{lemma:pardiamond}) is easily derivable without having to
@@ -2412,6 +2416,18 @@ system. Because System D includes nontermination, they proved
 the consistency of definitional equality from the confluence of 
 parallel reduction.  
 
+Compared to the systems we describe in this section, the most notable
+features we are missing include cumulativity and impredicativity. Our
+semantic model already satisfies the cumulativity property
+(Lemma~\ref{lemma:logrelcumulativity}), though we need to extend our
+convertibility relation into a subtyping relation in the specification
+of our syntactic typing rules. Impredicativity, on the other hand, is
+known to be difficult to model when the impredicative sort is at the
+bottom of a predicative universe hierarchy; in this scenario, the
+erasure technique from \citet{geuvers1994short} is no longer
+applicable\citep{abel2013normalization}. Whether we can find a
+similarly short and simple treatment for impredicativity remains an
+open question, which we hope to explore in the future.
 
 \section{Discussion}
 \label{sec:discuss}
