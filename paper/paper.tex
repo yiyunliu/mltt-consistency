@@ -1615,8 +1615,8 @@ about the relationship between $[[a]]$ and $[[b]]$.
 
 Because we are working with open terms, we need a few additional syntactic
 lemmas about reduction. First, a renaming $\xi$ is a generalization of
-weakening when working with de Bruijn indices. It consistently renumbers the
-variables that appears in terms. If a renamed term has been reduced, we can
+weakening when working with simultaneous substitutions. It consistently maps the
+variables that appears in terms to other variables. If a renamed term has been reduced, we can
 always recover the result of the reduction without the renaming.
 %
 \scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
@@ -1644,7 +1644,9 @@ $[[ne a]]$ or $[[nf a]]$ and $[[a => b]]$, then $[[a = b]]$. Since
 $\ottkw{ne}$ and $\ottkw{nf}$ captures terms free of $\beta$ redexes, parallel
 reduction cannot take any real reduction steps and can only step into a term
 itself. However, for the purpose of our proof, Lemma~\ref{lemma:parnenf} is
-sufficient.  In fact, all the properties we have shown in
+sufficient.
+
+All the properties we have shown in
 Section~\ref{sec:logreldep} and \ref{sec:logrelproof} before the fundamental
 lemma can be proven in the same order, where the new cases due to \rref{I-Ne}
 and the augmentation of neutral terms to \rref{I-Void, I-Eq, I-Bool} can be
@@ -1761,7 +1763,7 @@ fundamental theorem.
   By the fundamental lemma, we know that $[[G |= a : A]]$. That is,
   for all $[[rho |= G]]$, there exists some $[[i]]$ and $[[S]]$ such
   that $[[InterpR i A {rho} S]]$ and $[[a {rho} in S]]$.
-  We pick the valuation $[[rho]] = [[idtm]]$ (defined in Figure~\ref{fig:auxdef}), which injects
+  We pick the $[[rho]]$ to be the identity substitution $[[idtm]]$, which injects
   variables as terms. The side condition $[[idtm |=
   G]]$ is satisfied since Lemma~\ref{lemma:adequacy} says neutral terms,
   including variables, semantically inhabit any $[[S0]]$ where
@@ -1929,7 +1931,19 @@ code\footnote{calculated by the \texttt{cloc} tool, available from
   \url{https://github.com/AlDanial/cloc}.} for each file of our development,
 including the base consistency proof from Section~\ref{sec:logreldep} and
 \ref{sec:logrelproof} and the extension to $\beta$-normalization for open and
-closed terms from Section~\ref{sec:extension}.  For comparison, we have also
+closed terms from Section~\ref{sec:extension}.
+
+The development with the $\beta\eta$-normalization proof from Section~\ref{sec:betaeta} comprises 1573
+lines of non-blank, non-comment lines of code. We choose not to
+include it in the chart, since the slight difference in lemma
+dependencies makes the comparison in each category less
+informative. However, we note that compared to the
+$\beta$-normalization extension, the $\beta\eta$ extension has the
+same line count in the definition of the logical relation and the
+semantic soundness proof. The difference only appears in files related
+to untyped reduction and normal forms.
+
+For comparison, we have also
 proven syntactic type soundness through subject
 reduction\footnote{\dotv{syntactic\_soundness.v}{subject\_reduction}} and
 progress\footnote{\dotv{syntactic\_soundness.v}{wt\_progress}}.
@@ -1970,7 +1984,8 @@ presented in Section~\ref{sec:logreldep}.
 % impredicativity because $[[F]]$ must later be instantiated into something
 % defined in terms of the logical relation itself (e.g. in
 % Lemma~\ref{lemma:piintroalt}).
-In the Coq mechanized proof, we encode $[[PowerSet STm]]$ as the type \texttt{tm -> Prop}, a predicate over lambda terms. The definition of $[[Interp I i A S]]$ has type
+In the Coq mechanized proof, % we encode $[[PowerSet STm]]$ as the type \texttt{tm -> Prop}, a predicate over lambda terms. 
+the definition of $[[Interp I i A S]]$ has type
 \texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S} has type \texttt {tm -> Prop}.
 
 % The inductive
@@ -2125,7 +2140,7 @@ flags that save time for future re-execution of the proof script.
 The automation provided by CoqHammer not only gives us a proof that is shorter
 and more resilient to changes, but also provides useful documentation for
 readers who wish to understand the mechanized proof. Although automation
-performs extensive search, it does not use lemmas or invert derivations that
+performs extensive search, we can configure it to not use lemmas or invert derivations that
 are not specified in the \texttt{use} or \texttt{inv} flags.
 
 \subsection{Extraction of a conversion algorithm}
@@ -2173,7 +2188,9 @@ accessibility of the deterministic reduction relation
 an induction metric to define an executable algorithm\footnote{Coq's
   singleton elimination principle allows \mintinline{coq}{Acc}, a
   \texttt{Prop} data type with a single constructor, to be eliminated
-  to construct runtime relevant data.}.
+  to construct runtime relevant data.}. We leave the proof of the
+factorization property and the extraction of a conversion algorithm as
+part of our future work.
 \section{Related Work}
 \label{sec:relatedwork}
 
