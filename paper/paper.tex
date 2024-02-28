@@ -4,7 +4,7 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentstrue         %% toggle comments here
+\commentsfalse        %% toggle comments here
 \extendedfalse
 \anonymoustrue
 
@@ -440,17 +440,17 @@ dependent function types $[[Pi x : A . B]]$ are binding forms for the variable
 $x$ in the body of the function and codomain of the function type.
 \footnote{In the exposition in this paper, binding forms are equal up to
   $\alpha$-conversion and we adopt the Barendregt Variable
-  Convention~\cite{barendregt:book}, which lets us assume that bound variables are
-  distinct.  In some places, we are informal about the treatment of variables
-  and substitution; our mechanized proofs make these notions precise by using
-  de Bruijn indices~\cite{debruijn:autosubst}. }  We use the notation
-$[[A -> B]]$ when the output type $[[B]]$ is not dependent on the input
-variable.  We include in \lang{} the intensional identity type $[[a ~ b : A]]$
-whose proofs can be eliminated by the J-eliminator $[[J c a b p]]$, where
-$[[p]]$ is an equality proof between $[[a]]$ and $[[b]]$, and $[[c]]$ is the
-term whose type is to be casted.  Finally, \lang{} includes booleans, with
-standard syntax.  \scw{Example of what you can use identity types for? Or an
-  example of a program that uses J?}
+  Convention~\cite{barendregt:lambda-calculus}, which lets us assume that
+  bound variables are distinct.  In some places, we are informal about the
+  treatment of variables and substitution; our mechanized proofs make these
+  notions precise by using de Bruijn indices~\cite{debruijn1994automath}. }
+We use the notation $[[A -> B]]$ when the output type $[[B]]$ is not dependent
+on the input variable.  We include in \lang{} the intensional identity type
+$[[a ~ b : A]]$ whose proofs can be eliminated by the J-eliminator
+$[[J c a b p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
+$[[b]]$, and $[[c]]$ is the term whose type is to be casted.  Finally, \lang{}
+includes booleans, with standard syntax.  \scw{Example of what you can use
+  identity types for? Or an example of a program that uses J?}
 
 The \lang language is expressive enough to support large
 eliminations, the ability to compute a type using a term as input. For
@@ -911,8 +911,8 @@ of the rust papers?}
 % evaluate to the boolean values $[[true]]$ or $[[false]]$.
 \Rref{I-Eq}
 says that an equality type $[[a ~ b : A]]$ corresponds to the
-set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ holds and
-otherwise corresponds to the empty set. Side conditions like $[[a <=>
+set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ also holds and
+otherwise corresponds to the empty set. Conditions like $[[a <=>
 b]]$ are typically required for indexed types, of which equality types
 are an instance. \Rref{I-Red} enables us to reduce our types in order
 to assign meanings. Recall the type expression $[[(\ x . x )
@@ -1526,7 +1526,7 @@ demonstrates the robustness of our initial framework.
 
 We begin this part with a description of the $\beta$-normal forms
 of \lang{}.
-
+%
 \begin{figure}[h]
   \[
     \begin{array}{llcl}
@@ -1542,7 +1542,7 @@ of \lang{}.
   \caption{$\beta$-neutral and normal forms}
   \label{fig:nenf}
 \end{figure}
-
+%
 The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
 neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite
 \footnote{\dotv{normalform.v}{nf\_refl}} }.\yl{I always think of
@@ -1602,9 +1602,9 @@ The rule for equality type $[[a ~ b : A]]$ is augmented with the precondition th
 $[[a]]$, $[[b]]$, and $[[A]]$ are all normal forms because
 otherwise our model would include equality types that are themselves
 not normalizing.
-Furthermore, the side condition $[[a <=> b]]$ is only
-required/available when the equality proof reduces to $[[refl]]$. If the proof
-term reduces to a neutral term, then there is nothing we need to show/can learn
+Furthermore, the condition $[[a <=> b]]$ is only
+required when the equality proof reduces to $[[refl]]$. If the proof
+term reduces to a neutral term, then there is nothing we need to show
 about the relationship between $[[a]]$ and $[[b]]$.
 
 Because we are working with open terms, we need a few additional syntactic
@@ -1693,7 +1693,7 @@ Therefore, we formally define when a set is a \emph{reducibility candidate}
 \citet{girard1989proofs}, but not identical since we only care about
 weak normalization.
 \begin{definition}[Reducibility Candidates (CR)\footnote{\dotv{semtypingopen.v}{CR}}]
-  Let $[[S]]$ be a set of lambda terms. We say that $[[S]] \in CR$
+  Let $[[S]]$ be a set of terms. We say that $[[S]] \in CR$
   if and only if conditions $CR_1$ and $CR_2$ hold.
   \begin{itemize}
   \item $[[S]] \in CR_1 \iff\ [[forall a, (#  wne a implies a in S #)]]$
@@ -1718,9 +1718,9 @@ We now state and prove the adequacy lemma.
   We then proceed by structural induction over the derivation of $[[Interp I i A
   S]]$. The only interesting cases are \rref{I-Pi} and \rref{I-Set}.
   The function case requires Lemmas~\ref{lemma:extwn} and
-  \ref{lemma:wnewn} we have shown earlier.
+  \ref{lemma:wnewn}, which we have shown earlier.
 
-  The \rref{I-Set} case is the most involved. We need to show that
+  The \rref{I-Set} case is the most interesting. We must show that
   for all $[[j < i]]$, the set $[[{ A | exists S, InterpR j A S  }]]
   \in CR$. We immediately know that $[[{A | exists S, InterpR j A S
   }]] \in CR_1$ by \rref{I-Ne}. It remains to show that $[[{A | exists S, InterpR j A S
@@ -1765,6 +1765,11 @@ fundamental theorem.
   $[[S]]$. By Lemma~\ref{lemma:adequacy}, we
   conclude that $[[wn a]]$ and $[[wn A]]$ respectively.
 \end{proof}
+
+\begin{corollary}[Canonicity]
+If $[[G |- a : bool]]$ then $[[a =>+ true]]$ or $[[a =>+ false]]$. 
+\end{corollary}
+
 
 % Due to the non-deterministic nature of parallel reduction, we need to take a
 % few more steps to convert the existence of $\beta$-normal form into a decision
