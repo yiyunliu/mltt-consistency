@@ -250,7 +250,10 @@ type theory, so a novice researcher might be excused for thinking that proofs
 that use logical relations are not applicable for such languages.
 
 But this is not the case. \scw{Add a sentence about pen-and-paper LR proofs
-  for dependent type theories?} Recent authors have developed tour-de-force
+  for dependent type theories?}\yl{There is a long paragraph in Sec 8 about how
+  pnp proofs like Geuvers' can't be easily mechanized, but I'm not sure if we
+  can also argue that they are hard to read, too (I personally think that's the
+  case, but I don't know if the reviewers will agree)} Recent authors have developed tour-de-force
 mechanizations for the metatheory of modern proof
 assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
 have relied on logical relations defined as part of their
@@ -335,10 +338,10 @@ More concretely, our paper makes the following contributions.
   available to reviewers as supplementary materials.
 %  We use Coq's custom notations to ease the
 %  effort of matching the pen and paper representation to our formalism.
-  \yl{I want to say something about the benefits of using existing libraries
-    such as Autosubst 2 and CoqHammer rather than rolling your own
-    undocumented libraries that nobody want to (or can) reuse.}\scw{Save that
-    for the mechanization section}
+  % \yl{I want to say something about the benefits of using existing libraries
+  %   such as Autosubst 2 and CoqHammer rather than rolling your own
+  %   undocumented libraries that nobody want to (or can) reuse.}\scw{Save that
+  %   for the mechanization section}
 % Our development relies on off-the-shelf tools...
 \item We compare our work to existing proofs by logical relations and other
   proof techniques for proving consistency and normalization.  We provide an
@@ -738,6 +741,8 @@ the application of the substitution to any other variable.
   want to understand that part, they should look at the Coq code, which uses
   de Bruijn indices anyways. Our goal is to convey the understanding of the
   Coq proof. }
+\yl{I agree. Should mention upfront that the presentation is not
+  watertight and rigorous, though we have one in our mechanization}
 
 The substitution operator is referred to as simultaneous substitution as it
 substitutes for all variables at once. It is possible to recover single
@@ -2607,12 +2612,16 @@ semantic typing because it is sufficient for our purposes
   \label{fig:featurematrix}
 \end{figure}
 
-\scw{Should we add a column for whether their logical relation is unary or binary?}
+\scw{Should we add a column for whether their logical relation is
+  unary or binary?}\yl{Technically a Kripke-style model has the
+  context as an argument to the logrel, too. By binary, we are really
+  talking about whether the interpreted set is binary or not. I think
+  it is tricky to explain what we actually mean. }
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
 that feature logical-relations arguments for dependently-typed languages.
 Each of these proofs is significantly larger than than our development; but they
-also prove more results about different object languages.\scw{Can we mention the
-line counts in the text, when they are known?}
+also prove more results about different object languages.% \scw{Can we mention the
+% line counts in the text, when they are known?}
 The table provides a comparison between the various features of their
 object languages, but is not exhaustive. For example,
 \citet{casinghino:combining-proofs-programs} and
@@ -2654,7 +2663,7 @@ extends the decidability of type conversion result
 from~\citet{decagda} to the decidability type checking of a
 bidirectional type system. Their development is larger and has around
 30,000 lines of Coq code.
-\scw{How big are these proofs?}
+% \scw{How big are these proofs?}
 
 \citet{anand2014towards} mechanize the metatheory of
 Nuprl~\citep{constable1986implementing} in Coq. This metatheory is an
@@ -2879,7 +2888,9 @@ With untyped conversion,
 we sidestep the relational, Kripke-style logical relation found in
 other mechanized proofs. \scw{Need to define Kripke-style. Also the other
 proofs need Kripke style because they are defining typed relations, not untyped
-relations. }
+relations. } \yl{I wonder if
+we can just assume some more technical knowledge from the readers in
+this section.}
 However, our early dependence on confluence
 before the fundamental theorem is established can be alarming.
 In a system with type-directed reduction,
