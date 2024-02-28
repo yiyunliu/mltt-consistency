@@ -193,7 +193,7 @@ context of simply typed or polymorphic lambda calculus, a streamlined
 presentation of proof by logical relation for a dependently typed language
 is lacking. In this paper, we present a short
 consistency proof for a dependently typed language that contains a
-rich set of features, including a full universe
+rich set of features, including a countable universe
 hierarchy, booleans, and an intensional identity type. We show that
 the logical relation can be easily extended to prove the existence of
 $\beta\eta$-normal forms.
@@ -644,8 +644,6 @@ is the body of the elimination form. In this rule, $[[B]]$ is the motive and
 has two free variables.  When checking $[[c]]$, the substitution for these
 variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
 witnessing the information gained through dependent pattern matching.
-
-\yl{Insert discussion about cumulativity here?}
 
 The universe hierarchy and the boolean base type gives \lang{} the
 ability to compute a type using a term as input, a feature commonly referred to
@@ -2422,6 +2420,18 @@ system. Because System D includes nontermination, they proved
 the consistency of definitional equality from the confluence of 
 parallel reduction.  
 
+Compared to the systems we describe in this section, the most notable
+features we are missing include cumulativity and impredicativity. Our
+semantic model already satisfies the cumulativity property
+(Lemma~\ref{lemma:logrelcumulativity}), though we need to extend our
+convertibility relation into a subtyping relation in the specification
+of our syntactic typing rules. Impredicativity, on the other hand, is
+known to be difficult to model when the impredicative sort is at the
+bottom of a predicative universe hierarchy; in this scenario, the
+erasure technique from \citet{geuvers1994short} is no longer
+applicable\citep{abel2013normalization}. Whether we can find a
+similarly short and simple treatment for impredicativity remains an
+open question, which we hope to explore in the future.
 
 \section{Discussion}
 \label{sec:discuss}
