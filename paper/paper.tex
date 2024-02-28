@@ -836,7 +836,7 @@ $[[S]]$.
 \caption{Logical relation for all universe levels}
 \label{fig:logrelrec}
 \end{figure}
-The definition of in Figure~\ref{fig:logrelrec} explains how the $[[j
+The definition in Figure~\ref{fig:logrelrec} explains how the $[[j
 < i]]$ constraint in \rref{I-Set} makes our system predicative; the
 interpretation of the $[[i]]_{th}$ universe is only dependent on
 universes strictly lower than $[[i]]$, which have been defined earlier.
@@ -950,13 +950,13 @@ interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
 type $[[B {a / x}]]$, obtained by substituting $[[a]]$ into the output type
 $[[B]]$, has some semantic interpretation. In its conclusion, we say
 that a term $[[b]]$ belongs to an interpretation of $[[Pi x : A . B]]$ if
-for all $[[a in S]]$, where $[[S]]$ is an interpretation $[[A]]$, the
+for all $[[a in S]]$, where $[[S]]$ is an interpretation of $[[A]]$, the
 application form $[[b a]]$ belongs to all possible interpretations of
 $[[B {a  / x}]]$ (the pre-condition ensures at least one interpretation
 exists for each $[[B {a / x}]]$ where $[[a in S]]$).
 
 In fact, while \rref{I-PiAlt} is an instantiation of \rref{I-Pi},
-these two rules are equivalent in the sense that every derivation of
+these two rules are equivalent in the sense that every derivation
 involving \rref{I-Pi} can be systematically replaced by
 \rref{I-PiAlt}. This equivalence follows directly from the fact
 that the logical relation is a partial function, a result we will show
@@ -993,7 +993,7 @@ principle (Lemma~\ref{lemma:piinvalt}), which we derive after proving functional
 
 
 \subsection{Properties about the Logical Relation}
-In this section, we prove four important facts about
+In the rest of this section, we prove four important facts about
 our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
 functionality (Lemma~\ref{lemma:logreldeter}), cumulativity
 (Lemma~\ref{lemma:logrelcumulativity}), and the backward closure
@@ -1089,7 +1089,7 @@ and refer to this property as irrelevance.
 
 Because the definition of our logical relation is an inductive relation,
 it is not immediately obvious why each type $[[A]]$ can only uniquely
-corresponds to one set $[[S]]$. The following lemma shows that our
+correspond to one set $[[S]]$. The following lemma shows that our
 logical relation is indeed functional.
 \begin{lemma}[Logical relation is functional\footnote{\dotv{semtyping.v}{InterpExt\_deterministic}}]
   \label{lemma:logreldeter}
@@ -1112,7 +1112,7 @@ logical relation is indeed functional.
 
 Lemma~\ref{lemma:logreldeter} enables us to show the following
 improved inversion lemma for function types whose statement is free of
-the relation $[[F]]$, analogous to the admissible rule \rref{I-PiAlt}.
+the relation $[[F]]$, analogous to the admissible \rref{I-PiAlt}.
 \begin{lemma}[Pi Inversion Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
   \label{lemma:piinvalt}
   Suppose $[[Interp I i Pi x : A . B S]]$, then there exists some $[[S0]]$
@@ -1168,6 +1168,7 @@ hold in the \rref{I-Set} case.
 
 \yl{Can lift this lemma somewhere earlier in the section since it doesn't really
   depend on anything}
+\scw{Jon didn't understand this proof}
 \begin{lemma}[Interpreted sets are closed under expansion\footnote{\dotv{semtyping.v}{InterpUnivN\_back\_clos}}]
   \label{lemma:logrelbackclos}
   If $[[InterpR i A S]]$, then the set $[[S]]$ is closed under expansion.
@@ -1182,7 +1183,7 @@ hold in the \rref{I-Set} case.
   All cases are trivial except for the \rref{I-Set} case, where we
   want to show that the set $[[I j]]$ is closed under expansion for
   all $[[j < i]]$. However, by the definition of $[[I]]$, we know that
-  $[[A in I j]]$ if only if there exists some $[[S]]$ such that
+  $[[A in I j]]$ if and only if there exists some $[[S]]$ such that
   $[[Interp I i A S]]$. By \rref{I-Red}, we must also have $[[B in I
   j]]$ for all $[[B => A]]$.
 \end{proof}
@@ -1243,10 +1244,7 @@ the position of a hypothesis, the $\forall$ statement is easy to
 instantiate and makes our proofs slightly easier. The few cases where we need to prove $[[rho |= G]]$ are
 handled by the following two structural properties, the second of
 which depends on Lemma~\ref{lemma:logreldeter}.
-% Finally, despite the for all quantification over the interpreted set
-% $[[S]]$ and the universe level $[[i]]$ in the definition of $[[rho |= G]]$, we only need show that there exists some $[[i]]$ and $[[S]]$
-% such that $[[InterpR i A { rho } S]]$ and $[[rho x in S]]$ since the logical relation is a partial function (Lemma~\ref{lemma:logreldeter}). This idea is encapsulated in the second of the two structural
-% law about $[[rho |= G]]$.
+%
 \begin{lemma}[Well-formed $[[rho]]$ empty\footnote{\dotv{soundness.v}{$\rho$\_ok\_nil}}]
   \label{lemma:rhowfempty}
   $[[rho |= G]]$ whenever $[[G]]$ is the empty context.
@@ -1396,7 +1394,7 @@ syntactic typing rule for variables (\rref{T-Var}).
   From Lemma~\ref{lemma:setinv} and $[[G |= A : Set i]]$, we know that
   there exists some set $[[S0]]$ such that $[[InterpR i A {rho} S0]]$.
 From $[[G ++ x : A |= B : Set i]]$, we know that there must
-exists $[[S]]$ such that $[[InterpR i B {rho .: x -> a} S]]$ for every $[[a
+exist $[[S]]$ such that $[[InterpR i B {rho .: x -> a} S]]$ for every $[[a
 in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
 \end{proof}
 
@@ -1472,7 +1470,7 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
 \end{theorem}
 \begin{proof}
   Proof by mutual induction over the derivation of $[[G |- a :
-  A]]$ and $[[|- G]]$.   The cases related to context well-formedness immediately follows
+  A]]$ and $[[|- G]]$.   The cases related to context well-formedness immediately follow
   from Lemmas~\ref{lemma:semwffempty} and \ref{lemma:semwffcons}. The semantic typing rules
 (Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp})
   can be used to discharge their syntactic counterparts
@@ -1497,7 +1495,7 @@ property using the fundamental lemma.
   $[[empty |- a : Void]]$ ensures there is no free variable in
   $[[a]]$. We have $[[a {idtm}]] = [[a in S]]$. By the $[[Void]]$
   case of the inversion property (Lemma~\ref{lemma:interpinv}), we
-  know that $[[S]]$ must be the empty set and therefore contradicts
+  know that $[[S]]$ must be the empty set, contradicting
   the assumption that $[[a in S]]$.
 \end{proof}
 
@@ -1552,7 +1550,9 @@ normal form as the specific definition that says the relation can't
 step. We can refer to nfrefl but that requires some explanation about
 the definition of normal form and the complication that it doesn't
 hold in $\eta$ (maybe it's fine if we just don't mention it in the
-$\eta$ case)} Instead of the
+$\eta$ case)}\scw{A terminal form is a syntactic characterization of terms that don't step 
+according to a particular relation. A normal form is a terminal form of a normalizing relation.}
+ Instead of the
 metavariables $e$ and $f$, we also
 use the judgment forms $[[ne a]]$ and $[[nf a]]$ to indicate that there exists
 $[[e]]$ or $[[f]]$ such that $[[a = e]]$ or $[[a = f]]$.
@@ -1597,11 +1597,11 @@ uninhabited under an empty context, it may be inhabited when there is a
 variable in the context that has type $[[Void]]$ or that can be eliminated to
 type $[[Void]]$.
 
+\scw{Cassia didn't understand this part}
 The rule for equality type $[[a ~ b : A]]$ is augmented with the precondition that
 $[[a]]$, $[[b]]$, and $[[A]]$ are all normal forms because
 otherwise our model would include equality types that are themselves
 not normalizing.
-% \scw{I don't see this precondition in the figure!}\yl{resolved}
 Furthermore, the side condition $[[a <=> b]]$ is only
 required/available when the equality proof reduces to $[[refl]]$. If the proof
 term reduces to a neutral term, then there is nothing we need to show/can learn
@@ -1715,7 +1715,7 @@ We now state and prove the adequacy lemma.
   By its definition in Figure~\ref{fig:logrelrec}, we have the
   equality $[[InterpR i A S]] = [[Interp I i A S]]$  where $[[I i]] :=
   [[{A | exists S , InterpR i A S}]]$.
-  We then proceed by structural over the derivation of $[[Interp I i A
+  We then proceed by structural induction over the derivation of $[[Interp I i A
   S]]$. The only interesting cases are \rref{I-Pi} and \rref{I-Set}.
   The function case requires Lemmas~\ref{lemma:extwn} and
   \ref{lemma:wnewn} we have shown earlier.
@@ -1795,21 +1795,13 @@ our adequacy property (Lemma~\ref{lemma:adequacy}).
 
 Overall, despite the dependently typed setting, it is in fact reassuring that
 once we have laid the foundational technique for handling dependent types in
-our logical relation, the extension to open terms mostly boil down to
+our logical relation, the extension to open terms mostly boils down to
 properties that can be independently derived from the logical relation through
 syntactic means.
 
 \section{Existence of $\beta\eta$-normal forms}
 \label{sec:betaeta}
-\scw{Need an introduction to this section. Why do we care about this new
-rule? What does this section demonstrate?}
-\scw{The way we describe this
-section should more clearly indicate that we have a mechanized version of this
-proof. And include pointers on where readers might refer to it.}
-\yl{Added the related work at the beginning but I wonder if we should
-  just say that we want to match our expressiveness with existing systems}
-
-\citet{nbeincoq,decagda,martin-lof-a-la-coq} all
+\citet{nbeincoq,decagda,martin-lof-a-la-coq}
 include the $\eta$ law for functions in their equational theory and
 use relational models to justify its validity.
 In our system, we can easily incorporate the function $\eta$ law to the equational
@@ -1819,8 +1811,7 @@ theory of \lang{} by adding the following parallel reduction rule.
 \end{center}
 In this section, we show how we easily extend the existence of $\beta$-normal
 forms from Section~\ref{sec:extension} to the existence of
-$\beta\eta$-normal forms after we add the function $\eta$ law to our
-equational theory.
+$\beta\eta$-normal forms after this addition. 
 
 First, we recover the same confluence result about parallel reduction using the
 standard techniques from \citet{barendregt:lambda-calculi-with-types,
@@ -1997,7 +1988,7 @@ correspondence to the Coq definition. The main difference is the
 specification of $[[I]]$. In
 Section~\ref{sec:logreldep}, we define $[[I]]$ as a function over
 numbers less than $[[i]]$, the universe level. In Coq, we only require
-$[[I]]$ to be function with the set of natural numbers as its domain.
+$[[I]]$ to be a function with the set of natural numbers as its domain.
 In the Coq encoding of $[[InterpR i A S]]$ (Figure~\ref{fig:logrelrec}), we define $[[I]]$ as follows.
 \begin{equation*}
   \begin{split}
@@ -2270,33 +2261,16 @@ semantic typing because it is sufficient for our purposes
     $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗} & Consistency \\
     Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} & Consistency \\
     NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} & Correctness of NBE \\
-    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat & T & {\boxedsymbols ✓} & Decidability of conversion \\
-    % \hline
-    % \hline
-    MLTT-\'a-la-Coq & 1 & Id, Nat & T & {\boxedsymbols ✓} & Decidibility of type checking \\
-    % \hline
+    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & {\boxedsymbols ✓} & Decidability of conversion \\
+    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & {\boxedsymbols ✓} & Decidibility of type checking \\
     \hline
-    % CIC & $\mathbb{I}$,$\mathbb{N}$ & General & U & {\boxedsymbols ✓}\\
-    % CoreSpec & \\
-    % PCUIC & \\
-    %   & \lang{} & \citet{anand2014towards} &
-    %                                          \citet{barras2012semantical}
-    % & \citet{martin-lof-a-la-coq}  \\
-    % \hline
-    % Universe & Countable & Countable & Impredicative + Countable & One\\
-    % % \hline
-    % % Large Elimination & {\boxedsymbols ✓} & {\boxedsymbols ✓} & {\boxedsymbols ✓} \\
-    % \hline
-    % Inductive Types & Id, Bool & W types & General inductive types & Nat \\
-    % \hline
-    % Convertibility & Untyped & Untyped,Extensional & Untyped & Typed \\
   \end{tabular}
 
 
   \begin{tabular}{ll}
     \\
   \underline{Univ}erses: & Countable ($\mathbb{N}$), Zero (0), One (1) \\
-  \underline{Ind}uctives: & Identity types (Id), Natural numbers (Nat), W-types \\
+  \underline{Ind}uctives: & Identity types (Id), Natural numbers (Nat), $\Sigma$-types ($\Sigma$), W-types \\
   \underline{Conv}ersion:& Untyped (U), Typed (T),  Extensional (E) \\
   \underline{L}arge \underline{E}liminations:& Included ({\boxedsymbols ✓}), not included ({\boxedsymbols ✗}) \\
   \\
@@ -2308,7 +2282,7 @@ semantic typing because it is sufficient for our purposes
   \end{tabular}
 
   \caption{Feature matrix for dependently typed languages with
-    mechanized proofs by logical relation}
+    mechanized logical relations}
   \label{fig:featurematrix}
 \end{figure}
 
