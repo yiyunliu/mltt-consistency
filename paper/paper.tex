@@ -302,7 +302,7 @@ type-level computation to demonstrate the logical strength of the approach.
 % giving us a metatheoretic result almost as strong as the one from
 % \citet{decagda} at the moderate cost of around 500 lines of extra code.
 
-More concretely, our paper makes the following contributions. 
+More concretely, our paper makes the following contributions.
 \begin{itemize}
 \item In Section~\ref{sec:spec}, we introduce \lang{}, the dependent type
   theory of interest. A key design choice that impacts our proofs is the use
@@ -722,7 +722,7 @@ substitution, and other auxiliary definitions used in our paper, summarized in
 Figure~\ref{fig:auxdef}. We need these definitions to specify the reduction
 and typing relations for \lang{}. The metavariable $[[rho]]$ represents
 substitutions, which are mappings from de Bruijn indices to terms.  One
-example of a substitution is the function $\ottkw{id}_{tm}$,\scw{Can we just 
+example of a substitution is the function $\ottkw{id}_{tm}$,\scw{Can we just
 call this $\ottkw{id}$ now?} the identity
 substitution that maps each index to the corresponding term variable.  % The
 % $...$ substitution is more general and adds $[[n]]$ to the index
@@ -736,10 +736,10 @@ traverses the syntax of $[[a]]$ and replaces each variable $[[x]]$
 with the term $[[rho x]]$. When traversing under binders (e.g. in the
 $[[(\ x . a) { rho }]]$ case), we extend $[[rho]]$ to map the bound
 variable $[[x]]$ to itself, protecting it from being replaced.
-\scw{This substitution operation is pretty strange when it comes to the 
-BVC. What variables are we allowed to use when we get to a bound variable $x$ in this function? I'd prefer if we instead had a side condition that it must be 
+\scw{This substitution operation is pretty strange when it comes to the
+BVC. What variables are we allowed to use when we get to a bound variable $x$ in this function? I'd prefer if we instead had a side condition that it must be
 the case that $\rho(x) = x$ already, then we use BVC to pick such an $x$. But then we need to know that such an $x$ exists, and that isn't necessarily true.}
-\scw{Maybe we should handwave here, and note that we aren't covering all of the 
+\scw{Maybe we should handwave here, and note that we aren't covering all of the
 details of the treatment of variable binding in the text. If readers want to understand that part, they should look at the Coq code, which uses de Bruijn indices anyways. Our goal is to convey the understanding of the Coq proof. }
 
 The substitution operator is referred to as simultaneous substitution as it
@@ -1537,14 +1537,17 @@ The $[[rho |= G]]$ notation denotes the semantic well-formedness of a
 substitution $[[rho]]$ with respect to a context $[[G]]$. For every
 variable $[[x]]$ with its associated type $[[A]]$ in the context,
 $[[rho x]]$ is a term that inhabits all possible interpretations of the type
-$[[A {rho}]]$.
-
-Finally, despite the for all quantification over the interpreted set
-$[[S]]$ and the universe level $[[i]]$ in the definition of $[[rho |=
-G]]$, we only need show that there exists some $[[i]]$ and $[[S]]$
-such that $[[InterpR i A { rho } S]]$ and $[[rho x
-in S]]$ since the logical relation is a partial function (Lemma~\ref{lemma:logreldeter}). This idea is encapsulated in the second of the two structural
-law about $[[rho |= G]]$.
+$[[A {rho}]]$. The $\forall$ quantifier in its definition might look excessive since we
+know from Lemma~\ref{lemma:logreldeter} that each type can have at most
+one interpretation. However, since $[[rho |= G]]$ mostly appears in
+the position of a hypothesis, the $\forall$ statement is easy to
+instantiate and makes our proofs slightly easier. The few cases where we need to prove $[[rho |= G]]$ are
+handled by the following two structural properties, the second of
+which depends on Lemma~\ref{lemma:logreldeter}.
+% Finally, despite the for all quantification over the interpreted set
+% $[[S]]$ and the universe level $[[i]]$ in the definition of $[[rho |= G]]$, we only need show that there exists some $[[i]]$ and $[[S]]$
+% such that $[[InterpR i A { rho } S]]$ and $[[rho x in S]]$ since the logical relation is a partial function (Lemma~\ref{lemma:logreldeter}). This idea is encapsulated in the second of the two structural
+% law about $[[rho |= G]]$.
 \begin{lemma}[Well-formed $[[rho]]$ empty\footnote{\dotv{soundness.v}{$\rho$\_ok\_nil}}]
   \label{lemma:rhowfempty}
   $[[rho |= G]]$ whenever $[[G]]$ is the empty context.
@@ -1575,10 +1578,8 @@ Finally, we define semantic well-formedness for contexts, analogous to the
 relation $[[|-G]]$.
 
 \begin{definition}[Semantic context well-formedness\footnote{\dotv{soundness.v}{SemWff}}]
-Define $[[|= G]]$ inductively as follows.
-\drules[SCtx]{$[[|= G]]$}{Semantic context well-formedness}{Empty, Cons}
-% \[
-%    \forall x : A in G,\text{ there exists some } i \text{ such that } drop Suc n G |= G n : Set i \]
+Define $[[|= G]]$ as follows.
+\[ \forall [[x : A in G]],\text{ there exists some } i \text{ such that } [[G |= A : Set i]] \]
 \end{definition}
 
 % In this definition, we use the notation $drop n G$ to denote
@@ -1646,30 +1647,13 @@ syntactic typing rule for variables (\rref{T-Var}).
   \item $[[InterpR i A { rho } S]]$
   \item $[[rho x in S]]$
   \end{itemize}
-  \yl{todo}
-%   From the definition of $|= G$, we know that there exists some
-%   $i$ such that $drop Suc n G |= G n : Set i$. This is not
-%   immediately useful since $rho |= G$, not the truncated
-%   context. We claim, without giving the proof, that from $drop Suc n
-%   G |= G n  : Set i$, we can derive $G |= G n {up Suc n} : Set
-%   i$. A rigorous justification would require us to formally state
-%   and show renaming/weakening lemma for semantic typing. We instead
-%   provide an informal justification since the proof of renaming
-%   is uninteresting and only requires unfolding definitions, but its
-%   statement introduces unnecessary line noise related to shifting.
-
-%   Intuitively, a substitution $rho$
-%   that closes over a context should always induce a truncated
-%   substitution for each truncated context. As a result, if
-%   some term $b$ is semantically well-typed under some truncated
-%   context $G$, then it must also be semantically well-typed under
-%   the context $G$ up to shifting.
-% %
-%   Knowing that $G |= G n {up Suc n} : Set i$ holds, we can then
-%   apply Lemma~\ref{lemma:setinv} to show that
-%   $InterpR i G n < up Suc n > { rho } S$. It now
-%   suffices to show $rho n in S$, but that is immediate from the
-%   definition of $rho |= G$.
+  By the definition of semantic context well-formedness, we deduce
+  from $[[|= G]]$ and $[[x : A in G]]$ that there exists some universe
+  level $[[i]]$ such that $[[G |= A : Set i]]$. By
+  the equivalence from Lemma~\ref{lemma:setinv}, there exists $[[S]]$
+  such that $[[InterpR i A {rho} S]]$. However, by the definition of
+  $[[rho |= G]]$, we know that $[[rho x in S]]$, which is exactly what
+  we need for the conclusion.
 \end{proof}
 
 % Next, we show some non-trivial cases of the fundamental theorem as
@@ -2611,11 +2595,11 @@ semantic typing because it is sufficient for our purposes
   \label{fig:featurematrix}
 \end{figure}
 
-\scw{Should we add a column for whether their logical relation is unary or binary?} 
+\scw{Should we add a column for whether their logical relation is unary or binary?}
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
 that feature logical-relations arguments for dependently-typed languages.
 Each of these proofs is significantly larger than than our development; but they
-also prove more results about different object languages.\scw{Can we mention the 
+also prove more results about different object languages.\scw{Can we mention the
 line counts in the text, when they are known?}
 The table provides a comparison between the various features of their
 object languages, but is not exhaustive. For example,
@@ -2640,7 +2624,7 @@ interacts with the logical fragment.
 The lack of polymorphism and type-level computation means their
 logical relation can be defined recursively for well-formed types using
 a size metric, which has been used in~\citet{liu2023dependently}.
-Their development is around 8,000 lines of Coq nonblank, noncomment code. 
+Their development is around 8,000 lines of Coq nonblank, noncomment code.
 
 \citet{decagda} mechanize in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
