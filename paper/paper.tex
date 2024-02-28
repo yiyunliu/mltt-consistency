@@ -255,8 +255,8 @@ mechanizations for the metatheory of modern proof
 assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
 have relied on logical relations defined as part of their
 developments. However, because these proofs show diverse results about real
-systems and algorithms, these developments range in size from 20,000 to
-400,000 lines of code. As a result, their use of logical relations are
+systems and algorithms, these developments range in size from 10,000 to
+300,000 lines of code. As a result, their use of logical relations are
 difficult to isolate from their surrounding contexts and inaccessible
 to casual readers.
 
@@ -2646,24 +2646,33 @@ use a Kripke-style logical relation parameterized over a
 type-directed equivalence relation satisfying certain
 properties to facilitate the reuse of their definition. The
 logical relation is defined using the induction-recursion scheme,
-which is available in Agda but not in Coq.
+which is available in Agda but not in Coq. Their development involves
+around 10,000 lines of Agda code.
 \citet{martin-lof-a-la-coq} transports the logical relation
 from \citet{decagda} in the predicative fragment of Coq and further
 extends the decidability of type conversion result
 from~\citet{decagda} to the decidability type checking of a
-bidirectional type system. \scw{How big are these proofs?}
+bidirectional type system. Their development is larger and has around
+30,000 lines of Coq code.
+\scw{How big are these proofs?}
 
 \citet{anand2014towards} mechanize the metatheory of
-Nuprl~\citep{constable1986implementing} in Coq. The metatheory is an
+Nuprl~\citep{constable1986implementing} in Coq. This metatheory is an
 extensional type theory with features such as dependent functions,
-inductive types, and a full universe hierarchy. \scw{What do they prove?}
+inductive types, partial types, and a full universe hierarchy. They construct a PER
+model in Coq to show the logical consistency of their language. Their
+development has been further extended with features such as
+intersection types, union types, and quotient types. The extensive
+coverage of features result in a Coq development with around
+330,000 lines of code.
 \citet{nbeincoq}
 mechanize the normalization-by-evaluation algorithm in Coq for a
 dependently typed language with one predicative universe, similar to
 \citet{decagda} and \citet{martin-lof-a-la-coq}. However, since their
 type system has no elimination form for natural numbers, the
 only base type from the object language, large elimination is not
-supported despite the one predicative universe.
+supported despite the one predicative universe. Their development has
+around 20,000 lines of Coq code.
 Both \citet{anand2014towards} and \citet{nbeincoq} leverage the
 impredicative \texttt{Prop} sort of Coq to define the interpretation
 of dependent function types and thus are closely related to our
