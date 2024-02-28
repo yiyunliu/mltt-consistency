@@ -1288,11 +1288,11 @@ strengthened, though the simpler definition is sufficient for showing the
 fundamental lemma.
 
 We can recover the structural rules for $[[|= G]]$ as lemmas.
-\begin{lemma}[Semantic context well-formedness empty]
+\begin{lemma}[Semantic context well-formedness empty\footnote{\dotv{soundness.v}{SemWff\_nil}}]
   \label{lemma:semwffempty}
   $[[|= G]]$ holds when $[[G]]$ is empty.
 \end{lemma}
-\begin{lemma}[Semantic context well-formedness cons]
+\begin{lemma}[Semantic context well-formedness cons\footnote{\dotv{soundness.v}{SemWff\_cons}}]
   \label{lemma:semwffcons}
   If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ x : A]]$.
 \end{lemma}
