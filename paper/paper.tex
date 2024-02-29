@@ -888,7 +888,8 @@ The independence of syntactic typing in our logical relation allows
 our semantic typing definition in Section~\ref{sec:logrelproof} to be
 meaningful on its own. Furthermore, not having to embed scoping
 information into the logical relation avoids extra bookkeeping and the
-need for a Kripke-style logical relation.
+need for a Kripke-style logical relation when we extend our logical
+relation to prove the existence of $\beta$-normal forms (Section~\ref{sec:extension}).
 \yl{Not sure what to cite from Derek Dreyer. I know his blog post
   about semantic type soundness but is there a good paper to cite? one
 of the rust papers?}
@@ -952,7 +953,7 @@ in Lemma~\ref{lemma:logreldeter}. The preconditions of \rref{I-Pi},
 when combined with the functionality of the logical relation, uniquely
 determine the function $[[F in S -> PowerSet STm]]$ to be the
 functional relation
-$[[{ (a , S0 ) | a in S /\ Interp I  i B { a /x } S0 }]]$. This result is
+$[[{ (a , S0 ) | a in S implies Interp I  i B { a /x } S0 }]]$. This result is
 formally shown through the improved inversion lemma for function types
 (Lemma~\ref{lemma:piinvalt}).
 
@@ -1039,7 +1040,7 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
     By inverting the derivation of $[[Pi x : A . B => Pi x : A0 . B0]]$, we derive $[[A => A0]]$ and
     $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a /x} => B0 {a/x} ]]$ for all
     $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
-    $[[F]]$ additionally satisfies the following properties:
+    $[[F]]$ additionally satisfy the following properties.
     \begin{itemize}
     \item $[[Interp I i A S ]]$
     \item $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$
@@ -1060,7 +1061,7 @@ preservation holds in the usual forward direction too.
   We carry out the proof by induction over the derivation of $[[Interp
   I i A S]]$.
 
-  The only interesting case is \Rref{I-Red}. Given that
+  The only interesting case is \rref{I-Red}. Given that
   $[[A => B0]]$ and $[[Interp I i B0 S]]$, we need to show
   for all  $[[B1]]$ such that $[[A => B1]]$, we have $[[Interp I i B1
   S]]$. By the diamond property of parallel reduction
@@ -1094,8 +1095,8 @@ logical relation is indeed functional.
 \begin{proof}
   The proof proceeds by induction over the derivation of the first
   premise $[[Interp I i A S0]]$.
-  All cases that are not \rref{I-Red} follow immediately from the
-  Lemma~\ref{lemma:interpinv}.
+  All cases that are not \rref{I-Red} follow immediately from
+  Lemma~\ref{lemma:interpinv}, the inversion properties.
 
   For \rref{I-Red}, we are given that there exists some $[[B]]$ such
   that $[[A => B]]$ and $[[Interp I i B S0]]$. Our goal is to show
@@ -1108,7 +1109,7 @@ logical relation is indeed functional.
 
 Lemma~\ref{lemma:logreldeter} enables us to show the following
 improved inversion lemma for function types whose statement is free of
-the relation $[[F]]$, analogous to the admissible \rref{I-PiAlt}.
+the relation $[[F]]$, analogous to the derivable \rref{I-PiAlt}.
 \begin{lemma}[Pi Inversion Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
   \label{lemma:piinvalt}
   Suppose $[[Interp I i Pi x : A . B S]]$, then there exists some $[[S0]]$
@@ -1119,7 +1120,7 @@ the relation $[[F]]$, analogous to the admissible \rref{I-PiAlt}.
     / x}
     S1 #) #)]]$
   \item $[[S = { b | forall a, (# a in S0 implies forall
-    S1, (# Interp I i B {a / x} S1 /\  b a in S1 #) #) }]]$
+    S1, (# Interp I i B {a / x} S1 implies  b a in S1 #) #) }]]$
   \end{itemize}
 \end{lemma}
 \begin{proof}
@@ -1513,8 +1514,8 @@ normal forms for (open and closed) well-typed terms.  In other words, we prove
 that it is possible to repeatedly use the parallel reduction relation to
 reduce any term to its unique normal form, where no further (non-identity)
 reductions can be applied. This result can be used to show that our type
-conversion relation is decidable, as computation of the normal form will
-always terminate.
+conversion relation is decidable.% , as computation of the normal form will
+% always terminate.\yl{dependent on reduction strategy}
 
 The goal of this section is also to demonstrate that our logical relations
 proof technique can be extended to reason about the reduction properties of
@@ -1536,7 +1537,7 @@ of \lang{}.
   \[
     \begin{array}{llcl}
        \beta\text{-}\mathit{neutral\ terms} &
-      [[e]] & ::= & [[i]]\ |\ [[e f]]\ |\ [[J e f f f]]\ |\ [[if e f
+      [[e]] & ::= & [[x]]\ |\ [[e f]]\ |\ [[J e f f f]]\ |\ [[if e f
                     f]] \\ \\
       \beta\text{-}\mathit{normal\ terms} &
       [[f]] & ::= & [[e]]\ |\ [[Set i]]\ |\ [[Void]]\ |\ [[Pi x : f . f]]\
@@ -1745,8 +1746,8 @@ We now state and prove the adequacy lemma.
 \end{proof}
 
 
-The formulation of the valuation and semantic well-typedness from
-Section~\ref{sec:logrelproof} and the fundamental lemma remains
+The formulation of semantic well-typedness and the fundamental lemma from
+Section~\ref{sec:logrelproof} remains
 unchanged.
 The proof of the fundamental lemma\footnote{\dotv{soundnessopen.v}{soundness}} is still carried out by induction
 over the typing derivation, where the additional neutral term related
@@ -1788,10 +1789,11 @@ The extension of our logical relation to prove normalization of open
 \emph{and} closed terms closely mirrors the progression from
 normalization of closed terms~\citep{harpertait} to normalization of
 open terms~\citep{harperkripke} in the simply typed lambda calculus.
-Indeed, a mechanization of the latter proof appears in ~\citet{abel2019poplmark}.
-In this setting, as above, adequacy must be proven before the
-fundamental theorem so we can handle elimination rules such as
-\rref{T-If} and \rref{T-App} where the scrutinee is a neutral term. % In
+Indeed, a mechanization of normalization generalized to open terms
+appears in ~\citet{abel2019poplmark}.  In this setting, as above,
+adequacy must be proven before the
+fundamental theorem so they can handle elimination rules such as
+\rref{T-App} where the scrutinee is a neutral term. % In
 % \citet{abel2019poplmark}, a variant of Lemma~\ref{lemma:extwn} is used
 % in the exact same way to show the normalization of lambda forms
 %
@@ -1835,7 +1837,7 @@ any updates. The proof of the fundamental theorem also remains
 identical since the complications introduced by $\eta$ are hidden
 behind the proofs of the diamond property and the anti-renaming property.
 As before, $\ottkw{ne}$ and $\ottkw{nf}$
-represent $\beta$-neutral and $\beta-$normal forms, and the
+represent $\beta$-neutral and $\beta$-normal forms, and the
 fundamental lemma shows us that every well-typed term has a
 $\beta$-normal form. However, in the presence of the $\eta$ reduction
 rule, Lemma~\ref{lemma:parnenf} tells us that $\eta$ reduction
@@ -1967,7 +1969,8 @@ type \texttt{tm
 not come with the extensionality property. Given two predicates $P$ and $Q$,
 we cannot conclude that $P = Q$ when given a proof of
 $\forall x, P(x) \iff Q(x)$. But this is exactly the statement of 
-functional extensionality.
+predicate extensionality, an immediate corollary from functional
+extensionality and propositional extensionality.
 
 \paragraph{Encoding the logical relation in Coq}
 We next discuss specific details of the Coq encoding of the logical relation
@@ -2035,7 +2038,7 @@ the same rule in Coq, we must encode $[[F]]$ as a relation (with type
 In comparison, \rref{I-PiCoq} does not require this side condition and
 results in a simpler definition.
 
-Finally, we note that we cannot ascribe $[[F]]$ the type \texttt{tm -> (tm ->
+We note that we cannot ascribe $[[F]]$ the type \texttt{tm -> (tm ->
   Prop)} since Coq requires functions of such type to be
 computable. While defining $[[F]]$ as a computable Coq function rather than a
 functional relation does result in a concise encoding of \rref{I-Pi},
@@ -2117,7 +2120,7 @@ In prose, the triangle property can be proven by induction over the graph of
 \mintinline{coq}{tstar a}, the Takahashi translation. Options \texttt{inv:Par}
 and \texttt{ctrs:Par} say that the proof involves inverting and constructing
 of the derivations of parallel reduction. The option
-\texttt{use:Par\_refl,par\_cong} allows the automation tactic to use the
+\texttt{use:Par\_refl,Par\_cong} allows the automation tactic to use the
 reflexivity and congruence properties of parallel reduction as lemmas.
 
 The flag \texttt{lq:on} tunes CoqHammer's search algorithm.  While this flag
@@ -2414,7 +2417,7 @@ our syntactic typing rules. Impredicativity, on the other hand, is known to be
 difficult to model when the impredicative sort is at the bottom of a
 predicative universe hierarchy; in this scenario, the erasure technique from
 \citet{geuvers1994short} is not
-applicable\citep{abel2013normalization}. Whether there is a similarly short
+applicable~\citep{abel2013normalization}. Whether there is a similarly short
 and simple treatment for impredicativity remains an open question.
 
 \section{Discussion}
