@@ -443,7 +443,7 @@ JI :: '' ::=
 
 defn
 Interp I i A S ::  :: Interp :: 'I_' {{ com Interpretation relation }}
-{{ tex \text{\boxedsymbols ⟦} [[A]] \text{\boxedsymbols ⟧}_[[I]]^[[i]] \searrow [[S]] }}
+{{ tex \textnormal{\boxedsymbols ⟦} [[A]] \textnormal{\boxedsymbols ⟧}_[[I]]^[[i]] \searrow [[S]] }}
 by
 
 ne A
@@ -504,7 +504,7 @@ JII :: '' ::=
 
 defn
 InterpR i A S ::  :: InterpR :: 'IR_' {{ com Interpretation relation }}
-{{ tex \text{\boxedsymbols ⟦} [[A]] \text{\boxedsymbols ⟧}^[[i]] \searrow [[S]] }}
+{{ tex \textnormal{\boxedsymbols ⟦} [[A]] \textnormal{\boxedsymbols ⟧}^[[i]] \searrow [[S]] }}
 by
 
 --------------------------- :: Void
