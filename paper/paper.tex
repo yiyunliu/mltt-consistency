@@ -327,8 +327,8 @@ More concretely, our paper makes the following contributions.
   mirror the necessary extensions for a simply-typed language. We use this
   part to show that once we have established the base techniques, we can port
   ideas from proofs about simpler languages to the dependently typed setting.
-\item We mechanize all our proofs using the Coq proof assistant, with 963
-  lines of code for the consistency proof and a moderate increase to 1357
+\item We mechanize all our proofs using the Coq proof assistant, with 957
+  lines of code for the consistency proof and a moderate increase to 1568
   lines of code for the normalization proof.  We discuss the specifics related
   to our choice of Coq as our metatheory, including our use of off-the-shelf
   semantic engineering infrastructure and automation tools, in
@@ -442,7 +442,7 @@ $x$ in the body of the function and codomain of the function type.
   notions precise by using de Bruijn indices~\cite{debruijn1994automath}. }
 We use the notation $[[A -> B]]$ when the output type $[[B]]$ is not dependent
 on the input variable. For simplicity, we omit the type annotations in the abstraction
-forms. We discuss how the inclusion of type annotations can affect our
+forms. We discuss how the inclusion of type annotations can affect
 our development in Section~\ref{sec:betaeta}, where we extend our
 consistency result to the existence of $\beta\eta$-normal forms.
 We include in \lang{} the intensional identity type
