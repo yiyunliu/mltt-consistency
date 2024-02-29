@@ -103,6 +103,7 @@ Theorem soundness :
   (forall Γ, ⊢ Γ -> ⊨ Γ).
 Proof.
   apply wt_mutual.
+  (* Var *)
   - move => Γ i A h ih l ρ hρ.
     move /(_ i ltac:(done) ltac:(auto)) in ih.
     case : ih => j ih.
@@ -111,7 +112,9 @@ Proof.
     exists j. exists PA. split. auto.
     move: (hρ _ _ l _ _ h1).
     by asimpl.
+  (* Void *)
   - hauto l:on use:SemWt_Univ.
+  (* Pi *)
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.
     move => ρ hρ.
@@ -119,6 +122,7 @@ Proof.
     eexists => /=.
     apply InterpUnivN_Fun_nopf; eauto.
     move => *; asimpl. eauto using ρ_ok_cons.
+  (* Abs *)
   - move => Γ A b B i _ /SemWt_Univ hB _ hb ρ hρ.
     case /(_ ρ hρ) : hB => /= PPi hPPi.
     exists i, PPi. split => //.
@@ -131,6 +135,7 @@ Proof.
     intros (m & PB0 & hPB0 & hPB0').
     replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
     qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
+  (* App *)
   - move => Γ f A B b _ ihf _ ihb ρ hρ.
     rewrite /SemWt in ihf ihb.
     move /(_ ρ hρ) : ihf; intros (i & PPi & hPi & hf).
@@ -141,12 +146,16 @@ Proof.
     move  : hf (hb) => /[apply].
     move : hTot hb. move/[apply].
     asimpl. hauto lq:on.
+  (* Conv *)
   - move => Γ a A B i _ hA _ /SemWt_Univ hB ? ρ hρ.
     have ? : Coherent (subst_tm ρ A) (subst_tm ρ B)
       by eauto using Coherent_subst_star.
     qauto l:on use:InterpUnivN_Coherent unfold:SemWt.
+  (* True *)
   - hauto l:on.
+  (* False *)
   - hauto l:on.
+  (* If *)
   - move => Γ a b c A l _ /SemWt_Univ hA _ ha _ hb _ hc ρ hρ.
     case /(_ ρ hρ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
     case /(_ ρ hρ) : hb => j [PA [hPA hb']].
@@ -170,8 +179,11 @@ Proof.
       have : ρ_ok (tBool :: Γ) (subst_tm ρ a .: ρ). apply : (ρ_ok_cons i); hauto l:on ctrs:InterpExt.
       move /hA => [PN hPN]. exists l, PN. split; first by asimpl.
       qauto l:on use:adequacy, wne_if unfold:CR .
+  (* Bool *)
   - hauto l:on use:SemWt_Univ.
+  (* Univ *)
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
+  (* Refl *)
   - move => Γ a A _ _ _ ha ρ.
     move : ha. move/[apply]. move => [m [PA [h0 h1]]].
     exists 0. eexists.
@@ -179,10 +191,12 @@ Proof.
     + apply InterpUnivN_Eq;
       hauto l:on use:adequacy, InterpUniv_wn_ty, InterpUnivN_Eq unfold:CR.
     + qauto l:on ctrs:rtc use:Coherent_reflexive inv:Par .
+  (* Eq *)
   - move => Γ a b A i j _ ha _ hb _ /SemWt_Univ hA.
     apply SemWt_Univ => ρ hρ.
     eexists => /=. apply InterpUnivN_Eq;
       hauto l:on use:adequacy, InterpUniv_wn_ty unfold:SemWt, CR.
+  (* J *)
   - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht ρ hρ.
     move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
     move  /InterpUnivN_Eq_inv : hPA. intros (-> & ? & ? & ?).
@@ -219,7 +233,9 @@ Proof.
       * move => PC hPC.
         exists i, PC. split; first tauto.
         qauto l:on use:adequacy,wne_j unfold:CR.
+  (* Nil *)
   - apply SemWff_nil.
+  (* Cons *)
   - eauto using SemWff_cons.
 Qed.
 

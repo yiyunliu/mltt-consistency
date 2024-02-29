@@ -109,6 +109,7 @@ Theorem soundness :
   (forall Γ, ⊢ Γ -> ⊨ Γ).
 Proof.
   apply wt_mutual.
+  (* Var *)
   - move => Γ i A h ih l ρ hρ.
     move /(_ i ltac:(done) ltac:(auto)) in ih.
     case : ih => j ih.
@@ -117,7 +118,9 @@ Proof.
     exists j. exists PA. split. auto.
     move: (hρ _ _ l _ _ h1).
     by asimpl.
+  (* Void *)
   - hauto l:on use:SemWt_Univ.
+  (* Pi *)
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.
     move => ρ hρ.
@@ -125,6 +128,7 @@ Proof.
     eexists => /=.
     apply InterpUnivN_Fun_nopf; eauto.
     move => *; asimpl. eauto using ρ_ok_cons.
+  (* Abs *)
   - move => Γ A b B i _ /SemWt_Univ hB _ hb ρ hρ.
     case /(_ ρ hρ) : hB => /= PPi hPPi.
     exists i, PPi. split => //.
@@ -137,6 +141,7 @@ Proof.
     intros (m & PB0 & hPB0 & hPB0').
     replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
     qauto l:on use:P_AppAbs_cbn,InterpUnivN_back_clos  solve+:(by asimpl).
+  (* App *)
   - move => Γ f A B b _ ihf _ ihb ρ hρ.
     rewrite /SemWt in ihf ihb.
     move /(_ ρ hρ) : ihf; intros (i & PPi & hPi & hf).
@@ -147,12 +152,16 @@ Proof.
     move  : hf (hb). move/[apply].
     move : hTot hb. move/[apply].
     asimpl. hauto lq:on.
+  (* Conv *)
   - move => Γ a A B i _ hA _ /SemWt_Univ hB ? ρ hρ.
     have ? : Coherent (subst_tm ρ A) (subst_tm ρ B)
       by eauto using Coherent_subst_star.
     qauto l:on use:InterpUnivN_Coherent unfold:SemWt.
+  (* True *)
   - hauto l:on.
+  (* False *)
   - hauto l:on.
+  (* If *)
   - rewrite /SemWt => Γ a b c A i _ /SemWt_Univ hA _ ha _ hb _ hc ρ hρ.
     case /(_ ρ hρ) : ha => ? [PBool [hPBool ha']]; subst.
     have hρ' : ρ_ok (tBool :: Γ) (subst_tm ρ a .: ρ) by eauto using ρ_ok_cons.
@@ -181,10 +190,15 @@ Proof.
       by apply P_IfFalse_star.
       suff : PB = PA0 by congruence.
       hauto lq:on use:InterpUnivN_deterministic'.
+  (* Bool *)
   - hauto l:on use:SemWt_Univ.
+  (* Univ *)
   - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
+  (* Refl *)
   - hauto l:on.
+  (* Eq *)
   - hauto l:on use:SemWt_Univ.
+  (* J *)
   - move => Γ t a b p A i j C _ _ _ _ _ _ _ hp _ hC _ ht ρ hρ.
     move : hp (hρ); move/[apply] => hp.
     move : ht (hρ); move/[apply]. intros (m & PA & hPA & ht).
@@ -199,7 +213,9 @@ Proof.
     + asimpl.
       eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
       sfirstorder use: P_JRefl_star.
+  (* Nil *)
   - apply SemWff_nil.
+  (* Cons *)
   - eauto using SemWff_cons.
 Qed.
 
