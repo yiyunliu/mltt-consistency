@@ -932,9 +932,6 @@ application form $[[b a]]$ belongs to all possible interpretations of
 $[[B {a  / x}]]$ (the pre-condition ensures at least one interpretation
 exists for each $[[B {a / x}]]$ where $[[a in S]]$).
 
-\scw{Some researchers distinguish between derivable rules (those that 
-are simple corollaries), and admissible rules (those that must be proven 
-via induction.)}
 \begin{lemma}[I-PiAlt derivability]
   \label{lemma:piintroalt}
   \Rref{I-PiAlt} is derivable from \rref{I-Pi}.
@@ -984,18 +981,18 @@ principle (Lemma~\ref{lemma:piinvalt}).
 
 
 \subsection{Properties about the Logical Relation}
-In the rest of this section, we prove four important facts about
-our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
-functionality (Lemma~\ref{lemma:logreldeter}), cumulativity
-(Lemma~\ref{lemma:logrelcumulativity}), and the backward closure
-property (Lemma~\ref{lemma:logrelbackclos}).
-For the majority of the properties that we prove in this section, we
-do not need any information about the parameterized function $[[I]]$.
-Each property about $[[InterpR i A S]]$ follows as a corollary of
-a property about $[[Interp I i A S]]$ with no or few assumptions imposed on
-$[[I]]$. As a result, we usually state our lemmas in terms of
-$[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
-A S]]$.
+In the rest of this section, we develop the theory of our logical relation
+with the goal of showing four key facts: irrelevance
+(Lemma~\ref{lemma:logrelcoherence}), functionality
+(Lemma~\ref{lemma:logreldeter}), cumulativity
+(Lemma~\ref{lemma:logrelcumulativity}), and the backward closure property
+(Lemma~\ref{lemma:logrelbackclos}).  For the majority of the properties that
+we prove in this section, we do not need any information about the
+parameterized function $[[I]]$.  Each property about $[[InterpR i A S]]$
+follows as a corollary of a property about $[[Interp I i A S]]$ with no or few
+assumptions imposed on $[[I]]$. As a result, we usually state our lemmas in
+terms of $[[Interp I i A S]]$ without duplicating them in terms of
+$[[InterpR i A S]]$.
 
 
 First, we prove a family of simple properties, which we refer to as
@@ -1055,7 +1052,7 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
 property. That is, given $[[Interp I i A S]]$, if $[[B =>+ A]]$, then
 $[[Interp I i B S]]$ also holds. The following property shows that
 preservation holds in the usual forward direction too.
-\begin{lemma}[Preservation of the logical relation\footnote{\dotv{semtyping.v}{InterpExt\_preservation}}]
+\begin{lemma}[Forward preservation\footnote{\dotv{semtyping.v}{InterpExt\_preservation}}]
   \label{lemma:interppreservation}
   If $[[Interp I i A S]]$ and $[[A => B]]$, then $[[Interp I i B S]]$.
 \end{lemma}
@@ -1173,8 +1170,7 @@ hold in the \rref{I-Set} case.
   If $[[InterpR i A S]]$, then the set $[[S]]$ is closed under expansion.
 \end{lemma}
 \begin{proof}
-  By the definition of $[[InterpR i A S]]$ 
-  (Definition~\ref{fig:logrelrec}), we unfold $[[InterpR i A S]]$ by one
+  By the definition of $[[InterpR i A S]]$, we unfold $[[InterpR i A S]]$ by one
   step into $[[ Interp I i A S  ]]$ where $[[I j]] := [[{A | exists S
     , InterpR j A S}]]$.
   We then proceed by induction over the derivation of $[[Interp I i A S]]$.
