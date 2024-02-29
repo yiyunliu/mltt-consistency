@@ -811,24 +811,19 @@ The notation $[[PowerSet STm]]$ denotes the powerset of the set of
 \lang{} terms.
 The function $[[I]]$ is a family of sets of terms indexed by
 natural numbers strictly less than the parameter $[[i]]$, which
-represents the current universe level.  In \rref{I-Set}, function
+represents the current universe level.  In \rref{I-Set}, the function
 $[[I]]$ is used to define the meaning of
 universes that are strictly smaller than the current level $[[i]]$. The
-restriction $[[j < i]]$ in \rref{I-Set} is crucial for our system to
-be predicative and we will explain the reason shortly.
+restriction $[[j < i]]$ in \rref{I-Set} ensures the predicativity of the system.
 
-To tie the knot and obtain an interpretation of all universe levels,
-we define in Definition~\ref{fig:logrelrec} the final version of our interpretation judgment recursively
-using the well-foundedness of $<$ relation on natural
-numbers (recall that
-the parameter $[[I]]$ of $[[Interp I i A S]]$ takes only natural
-numbers strictly less than $[[i]]$ as its input).
-The judgment $[[InterpR i A S]]$ now reads that the type $[[A]]$ is a
+We tie the knot and obtain an interpretation for all universe levels
+below. The judgment $[[InterpR i A S]]$ reads that the type $[[A]]$ is a
 level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
-$[[S]]$.
-
+$[[S]]$. 
 \begin{definition}[Logical relation for all universe levels]
 \label{fig:logrelrec}
+Define $[[InterpR i A S]]$ recursively through the well-foundedness of the $<$
+relation on natural numbers.
 \begin{equation*}
     [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I j]]
     := [[{A | exists S , InterpR j A S}]] \text{ for } [[j < i]]
@@ -837,20 +832,21 @@ $[[S]]$.
 Definition~\ref{fig:logrelrec} explains how the $[[j
 < i]]$ constraint in \rref{I-Set} makes our system predicative; the
 interpretation of the $[[i]]_{th}$ universe is only dependent on
-universes strictly lower than $[[i]]$, which have been defined earlier.
-Removing the ordering constraint would result in a
-system where one can encode Girard's
-paradox~\citep{girard-thesis}. Our proof would no longer work with the
-restriction removed since the definition of $[[InterpR i A S]]$ would
-not be well-founded when $[[Interp I i A S]]$ calls $[[I]]$ on
+universes strictly lower than $[[i]]$, which have already been defined.
+This restriction ensures that that the relation is well-defined: without 
+it the definition of $[[InterpR i A S]]$ would
+not be well-founded; $[[Interp I i A S]]$ would call $[[I]]$ on
 universe levels greater than or equal to $[[i]]$, which are yet to be defined.
+%% SCW: removing the constraing wouldn't result in any system at all
+% Removing the ordering constraint would result in a
+% system where one can encode Girard's
+% paradox~\citep{girard-thesis}. 
 
-By unfolding Definition~\ref{fig:logrelrec}, we
+
+By unfolding Definition~\ref{fig:logrelrec}, we can
 show that the same introduction rules for $[[Interp I i A S]]$ are
-admissible for $[[InterpR i A S]]$, by
-instantiating $[[I]]$ with $[[I i]] := [[{A | exists S , InterpR i A
-  S}]]$, the same function $[[I]]$ used in the definition of $[[InterpR i A
-S]]$. We give as example the following rules.
+admissible for $[[InterpR i A S]]$. For example, 
+we can prove the following derived rules:
 \begin{center}
 \drule[]{IR-Void} \qquad \drule[]{IR-Set}
 \end{center}
@@ -861,8 +857,10 @@ i A S]]$ are given directly, with the implicit understanding that the
 relation is an inductive definition nested inside a recursive
 function over the universe level $[[i]]$. We choose
 the more explicit definition not only because it is directly definable
-in existing proof assistants where inductive definitions must appear
-at the top level, but also because it makes clear the induction
+in proof assistants that lack induction-recursion,
+% where inductive definitions must appear
+%at the top level,
+but also because it makes clear the induction
 principle we are allowed to use when reasoning about $[[InterpR i A
 S]]$.
 
@@ -874,22 +872,14 @@ S]]$.
 % followed by structural induction over $[[Interp I i A S]]$. As
 % examples, ... (\rref{I-Set} and \rref{I-Red}).
 
-For the majority of the properties we are about to prove in this section, we
-do not need any information about the parameterized function $[[I]]$.
-Each property about $[[InterpR i A S]]$ follows as a corollary of
-a property about $[[Interp I i A S]]$ with no or few assumptions imposed on
-$[[I]]$. As a result, we usually state our lemmas in terms of
-$[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
-A S]]$.
-
-% To derive consistency, it suffices to restrict $[[S]]$ to the set of
-% terms that reduce to closed terms.
+We next take a closer look at the inductive relation $[[Interp I i A S]]$, defined 
+in Figure~\ref{fig:logrel}.
 \Rref{I-Void, I-Bool} capture terms that \emph{behave like} the inhabitants
 of the $[[Void]]$ and $[[Bool]]$ types under an empty context. For
 example, the $[[Void]]$ type should not have any inhabitants under the
-empty context, where as the $[[Bool]]$ type corresponds to terms that
-evaluate to $[[true]]$ or $[[false]]$. However, the characterization
-of $[[Void]]$ and $[[Bool]]$ in our logical relation does not always correspond to
+empty context, where as the $[[Bool]]$ type only contains terms that
+reduce to $[[true]]$ or $[[false]]$. Note that the characterization
+of $[[Bool]]$ (and other inhabited types) in our logical relation does not always correspond to
 well-typed or even closed terms. For example, the term $[[if false (#
 Void true #)
 true]]$ is ill-typed under the empty context but still belongs to the set $[[{ a | a =>+
@@ -909,12 +899,12 @@ of the rust papers?}
 % evaluate to the boolean values $[[true]]$ or $[[false]]$.
 \Rref{I-Eq}
 says that an equality type $[[a ~ b : A]]$ corresponds to the
-set of terms that evaluate to $[[refl]]$ when $[[a <=> b]]$ also holds and
+set of terms that reduce to $[[refl]]$ when $[[a <=> b]]$ also holds and
 otherwise corresponds to the empty set. Conditions like $[[a <=>
 b]]$ are typically required for indexed types, of which equality types
-are an instance. \Rref{I-Red} enables us to reduce our types in order
+are an instance. \Rref{I-Red} enables us to reduce types in order
 to assign meanings. Recall the type expression $[[(\ x . x )
-Bool]]$. \Rref{I-Red} says to know that
+Bool]]$. \Rref{I-Red} says that to know that
 $[[Interp I i  (\ x . x) Bool S ]]$ for some $[[S]]$, it suffices to
 show that $[[Interp I i Bool S]]$ since $[[(\ x . x) Bool =>
 Bool]]$. The derivation that $[[Interp I i (\ x . x) Bool { a | a =>+
@@ -922,15 +912,32 @@ Bool]]$. The derivation that $[[Interp I i (\ x . x) Bool { a | a =>+
 and \rref{I-Bool}.
 
 
-\Rref{I-Pi} is the most complicated rule in our logical
-relation. Instead of explaining it directly, we consider the following
-simplified admissible \rref{I-PiAlt} that follows directly from \rref{I-Pi}.
+\Rref{I-Pi} is the most complex rule in our logical
+relation. Instead of explaining it directly, we first consider the following
+simplified version, \rref{I-PiAlt}, that follows directly from \rref{I-Pi}.
 \begin{center}
   \drule[]{I-PiAlt}
 \end{center}
-\begin{lemma}[I-PiAlt admissibility]
+\Rref{I-PiAlt} directly captures the meaning of
+a well-behaved dependent function type. The precondition of
+the rule says that
+the function type $[[Pi x : A . B]]$ has an interpretation if its input
+type $[[A]]$ can be
+interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
+type $[[B {a / x}]]$, obtained by substituting $[[a]]$ into the output type
+$[[B]]$, has some semantic interpretation $[[S0]]$. In its conclusion, the 
+interpretation of $[[Pi x : A . B]]$ is the set of terms $[[b]]$, such that
+for all $[[a in S]]$, where $[[S]]$ is an interpretation of $[[A]]$, the
+application form $[[b a]]$ belongs to all possible interpretations of
+$[[B {a  / x}]]$ (the pre-condition ensures at least one interpretation
+exists for each $[[B {a / x}]]$ where $[[a in S]]$).
+
+\scw{Some researchers distinguish between derivable rules (those that 
+are simple corollaries), and admissible rules (those that must be proven 
+via induction.)}
+\begin{lemma}[I-PiAlt derivability]
   \label{lemma:piintroalt}
-  \Rref{I-PiAlt} is admissible.
+  \Rref{I-PiAlt} is derivable from \rref{I-Pi}.
 \end{lemma}
 \begin{proof}
 The precondition $[[forall a, (# a in S
@@ -938,21 +945,7 @@ implies (# exists S0 , Interp I i B { a / x } S0 #) #)]]$ from
 \rref{I-PiAlt} immediately induces a function $[[F in S -> PowerSet
 STm]]$ such that $[[forall a, (# a in S implies Interp I i B { a / x }
 F a #)]]$, which is exactly what we need to apply \rref{I-Pi}.
-\end{proof}
-\Rref{I-PiAlt} directly captures the meaning of
-a well-behaved dependent function type. The precondition of
-\rref{I-PiAlt} says that
-the function type $[[Pi x : A . B]]$ has an interpretation if its input
-type $[[A]]$ can be
-interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
-type $[[B {a / x}]]$, obtained by substituting $[[a]]$ into the output type
-$[[B]]$, has some semantic interpretation. In its conclusion, we say
-that a term $[[b]]$ belongs to an interpretation of $[[Pi x : A . B]]$ if
-for all $[[a in S]]$, where $[[S]]$ is an interpretation of $[[A]]$, the
-application form $[[b a]]$ belongs to all possible interpretations of
-$[[B {a  / x}]]$ (the pre-condition ensures at least one interpretation
-exists for each $[[B {a / x}]]$ where $[[a in S]]$).
-
+\end{proof} 
 In fact, while \rref{I-PiAlt} is an instantiation of \rref{I-Pi},
 these two rules are equivalent in the sense that every derivation
 involving \rref{I-Pi} can be systematically replaced by
@@ -982,12 +975,12 @@ thus preventing the set of witnesses from growing. While it might
 be possible to restrict the domain with additional constraints such as
 functionality and inversion properties to justify the well-definedness of our
 inductive relation with \rref{I-PiAlt}, we opt for our current
-formulation of \rref{I-Pi} so we immediately obtain a
-well-defined inductive relation and a usable induction principle. The
+\rref{I-Pi} that immediately produces a
+well-defined inductive relation and usable induction principle. The
 slight disadvantage of \rref{I-Pi} is that we need to construct the
 function $[[F]]$ each time we apply it, though this is mitigated by
-the immediate admissibility of \rref{I-PiAlt} and the alternative $\Pi$ inversion
-principle (Lemma~\ref{lemma:piinvalt}), which we derive after proving functionality.
+the derivability of \rref{I-PiAlt} and the alternative $\Pi$ inversion
+principle (Lemma~\ref{lemma:piinvalt}).
 
 
 \subsection{Properties about the Logical Relation}
@@ -996,6 +989,14 @@ our logical relation: irrelevance (Lemma~\ref{lemma:logrelcoherence}),
 functionality (Lemma~\ref{lemma:logreldeter}), cumulativity
 (Lemma~\ref{lemma:logrelcumulativity}), and the backward closure
 property (Lemma~\ref{lemma:logrelbackclos}).
+For the majority of the properties that we prove in this section, we
+do not need any information about the parameterized function $[[I]]$.
+Each property about $[[InterpR i A S]]$ follows as a corollary of
+a property about $[[Interp I i A S]]$ with no or few assumptions imposed on
+$[[I]]$. As a result, we usually state our lemmas in terms of
+$[[Interp I i A S]]$ without duplicating them in terms of $[[InterpR i
+A S]]$.
+
 
 First, we prove a family of simple properties, which we refer to as
 inversion principles for our logical relation. Given $[[Interp I i A
