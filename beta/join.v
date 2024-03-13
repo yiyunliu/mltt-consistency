@@ -505,6 +505,14 @@ Inductive Sub1 : tm -> tm -> Prop :=
 Definition Sub A B := exists A0 B0, Coherent A A0 /\ Coherent B B0 /\ Sub1 A0 B0.
 Notation "A <: B" := (Sub A B)  (at level 70, no associativity).
 
+Lemma Sub1_transitive A B : Sub1 A B -> forall C, (Sub1 C A -> Sub1 C B) /\ (Sub1 B C -> Sub1 A C).
+Proof.
+  move => h. elim : A B / h; sauto l:on ctrs:Sub1.
+Qed.
+
+Lemma Sub_reflexive A : Sub A A.
+Proof. hauto lq:on use:Coherent_reflexive ctrs:Sub1 unfold:Sub. Qed.
+
 Lemma Sub1_morphing A B (h : Sub1 A B) : forall ρ, Sub1 A[ρ] B[ρ].
 Proof. elim : A B /h; hauto lq:on ctrs:Sub1. Qed.
 
@@ -516,4 +524,31 @@ Derive Inversion sub1_inv with (forall A B, Sub1 A B).
 Lemma Sub1_simulation A0 A1 (h : A0 ⇒ A1) : forall B0, (Sub1 A0 B0 -> exists B1, Sub1 A1 B1 /\ B0 ⇒ B1) /\ (Sub1 B0 A0 -> exists B1, Sub1 B1 A1 /\ B0 ⇒ B1).
 Proof.
   elim : A0 A1 /h; hauto lq:on rew:off inv:Sub1,Par ctrs:Sub1, Par.
+Qed.
+
+Lemma Sub1_simulation_reds A0 A1 (h : A0 ⇒* A1) : forall B0, (Sub1 A0 B0 -> exists B1, Sub1 A1 B1 /\ B0 ⇒* B1) /\ (Sub1 B0 A0 -> exists B1, Sub1 B1 A1 /\ B0 ⇒* B1).
+Proof.
+  elim : A0 A1 /h.
+  - sfirstorder.
+  - move => A0 A1 A2 hr0 hr1 ih B0.
+    split => hB0.
+    + move : Sub1_simulation hr0 hB0. repeat move/[apply].
+      move /(_ B0) => [+ _]. move/[apply]. hauto lq:on rew:off ctrs:rtc.
+    + move : Sub1_simulation hr0 hB0. repeat move/[apply].
+      move /(_ B0) => [_]. move/[apply]. hauto lq:on rew:off ctrs:rtc.
+Qed.
+
+Lemma Sub_transitive A B C : Sub A B -> Sub B C -> Sub A C.
+Proof.
+  rewrite /Sub.
+  move => [A0][B0][h0][h1]h2[B1][C0][h3][h4]h5.
+  have : B0 ⇔ B1 by transitivity B=>//; symmetry.
+  move => [B'][hB'0]hB'1.
+  have hs1 :=  h2. have hs2 := h5.
+  move /Sub1_simulation_reds in hB'0.  eapply hB'0 in h2.
+  move /Sub1_simulation_reds in hB'1. eapply hB'1 in h5.
+  move : h2 h5 => [A0' [h6 h7]][C0' [h8 h9]].
+  exists A0', C0'. repeat split.
+  1,2 : hauto lq:on rew:off ctrs:rtc use:Coherent_transitive, Coherent_symmetric.
+  hauto l:on use:Sub1_transitive.
 Qed.
