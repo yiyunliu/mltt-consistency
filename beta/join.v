@@ -10,13 +10,13 @@ Definition is_bool_val a :=
 
 (* ------------------------------------------------------------ *)
 
-(* Parallel reduction: "a ⇒ b" the building block 
+(* Parallel reduction: "a ⇒ b" the building block
    of our untyped, definitional equality.
 
    This relation nondeterminstically does one-step
-   of beta-reduction in parallel throughout the term. 
+   of beta-reduction in parallel throughout the term.
 
-   Importantly, this relation is confluent (i.e. satisfies 
+   Importantly, this relation is confluent (i.e. satisfies
    the diamond property), which leads to an easy proof of
    confluence for its reflexive-transitive closure "⇒*".
 
@@ -169,7 +169,7 @@ Proof. case => [|i]; first by constructor. asimpl. by apply Par_renaming. Qed.
 
 (* ------------------------------------------------------------ *)
 
-(* Now we want to show all of the ways that these relations are closed 
+(* Now we want to show all of the ways that these relations are closed
    under substitution. *)
 
 (* First, we extend the Par, Pars and Coherent relations to substitutions *)
@@ -186,7 +186,7 @@ Definition Coherent_m σ0 σ1 :=
 
 Lemma Par_morphing a b (σ0 σ1 : fin -> tm)
   (h : σ0 ⇒ς σ1) :
-  (a ⇒ b) -> 
+  (a ⇒ b) ->
   (a[σ0] ⇒ b[σ1]).
 Proof.
   move => h0.
@@ -217,7 +217,7 @@ Lemma Coherent_morphing a0 a1 (h : Coherent a0 a1) (σ0 σ1 : fin -> tm) :
   (σ0 ⇒ς σ1) ->
   Coherent (a0[σ0]) (a1[σ1]).
 Proof.
-  hauto l:on use:Par_morphing_star, Par_refl, 
+  hauto l:on use:Par_morphing_star, Par_refl,
     Par_Coherent unfold:Coherent, Par_m.
 Qed.
 
@@ -260,7 +260,7 @@ Qed.
 
 Lemma good_Pars_morphing_ext a b σ0 σ1
   (h : a ⇒* b) :
-  (σ0 ⇒ς* σ1) -> 
+  (σ0 ⇒ς* σ1) ->
   ((a .: σ0) ⇒ς* (b .: σ1)).
 Proof.
   elim : a b /h.
@@ -277,7 +277,7 @@ Qed.
 
 Lemma good_Pars_morphing_ext2 a0 b0 a1 b1 σ0 σ1
   (h : a0 ⇒* b0) (h1 : a1 ⇒*  b1) :
-  (σ0 ⇒ς* σ1) -> 
+  (σ0 ⇒ς* σ1) ->
   ((a0 .: (a1 .: σ0)) ⇒ς* (b0 .: (b1 .: σ1))).
 Proof. sfirstorder use:good_Pars_morphing_ext. Qed.
 
@@ -315,7 +315,7 @@ Proof.
     sfirstorder.
     move => a b c ? ?.
     apply rtc_transitive with (y := b..).
-    sauto lq:on unfold:Par_m inv:nat use:Par_refl use:good_Pars_morphing_ext. 
+    sauto lq:on unfold:Par_m inv:nat use:Par_refl use:good_Pars_morphing_ext.
 Qed.
 
 Lemma Coherent_cong a0 a1 b0 b1
@@ -419,14 +419,14 @@ Qed.
 
 (* ------------------------------------------------------------ *)
 
-(* Derived inversion principle for "Par" that doesn't 
+(* Derived inversion principle for "Par" that doesn't
    generate free names with use. *)
 Derive Inversion Par_inv with (forall a b, a ⇒ b).
 
 (* ------------------------------------------------------------ *)
 
 (* We want to show that Coherent is an equivalence relation. But,
-   to show that it is transitive, we need to show that parallel 
+   to show that it is transitive, we need to show that parallel
    reduction is confluent. *)
 
 (* Takahashi translation *)
@@ -491,8 +491,28 @@ Add Relation tm Coherent
     as Coherent_rel.
 
 Inductive Sub1 : tm -> tm -> Prop :=
-| Sub_Refl A :
-  Sub1 A A
+| Sub_Var n :
+  Sub1 (var_tm n) (var_tm n)
+| Sub_Abs b :
+  Sub1 (tAbs b) (tAbs b)
+| Sub_App b a :
+  Sub1 (tApp b a) (tApp b a)
+| Sub_Void :
+  Sub1 tVoid tVoid
+| Sub_True :
+  Sub1 tTrue tTrue
+| Sub_False :
+  Sub1 tFalse tFalse
+| Sub_If a b c :
+  Sub1 (tIf a b c) (tIf a b c)
+| Sub_Bool :
+  Sub1 tBool tBool
+| Sub_Eq a b A :
+  Sub1 (tEq a b A) (tEq a b A)
+| Sub_J t a b p :
+  Sub1 (tJ t a b p) (tJ t a b p)
+| Sub_Refl :
+  Sub1 tRefl tRefl
 | Sub_Univ i j :
   i <= j ->
   Sub1 (tUniv i) (tUniv j)
@@ -501,29 +521,37 @@ Inductive Sub1 : tm -> tm -> Prop :=
   Sub1 B0 B1 ->
   Sub1 (tPi A0 B0) (tPi A1 B1).
 
-
-Definition Sub A B := exists A0 B0, Coherent A A0 /\ Coherent B B0 /\ Sub1 A0 B0.
-Notation "A <: B" := (Sub A B)  (at level 70, no associativity).
+Lemma Sub1_refl A : Sub1 A A.
+Proof. elim : A; hauto ctrs:Sub1 solve+:lia. Qed.
 
 Lemma Sub1_transitive A B : Sub1 A B -> forall C, (Sub1 C A -> Sub1 C B) /\ (Sub1 B C -> Sub1 A C).
 Proof.
-  move => h. elim : A B / h; sauto l:on ctrs:Sub1.
+  move => h. elim : A B / h; hauto lq:on inv:Sub1 ctrs:Sub1 solve+:lia.
 Qed.
 
+Definition Sub A B :=
+  exists A0 B0, A ⇒* A0 /\ B ⇒* B0 /\ Sub1 A0 B0.
+
+Notation "A <: B" := (Sub A B)  (at level 70, no associativity).
+
 Lemma Sub_reflexive A : Sub A A.
-Proof. hauto lq:on use:Coherent_reflexive ctrs:Sub1 unfold:Sub. Qed.
+Proof. hauto lq:on ctrs:rtc use: Sub1_refl unfold:Sub. Qed.
 
 Lemma Sub1_morphing A B (h : Sub1 A B) : forall ρ, Sub1 A[ρ] B[ρ].
-Proof. elim : A B /h; hauto lq:on ctrs:Sub1. Qed.
+Proof. elim : A B /h; hauto lq:on ctrs:Sub1 use:Sub1_refl solve+:lia. Qed.
 
 Lemma Sub_morphing A B (h : Sub A B) : forall ρ, Sub A[ρ] B[ρ].
-Proof. hauto lq:on use:Coherent_subst_star, Sub1_morphing. Qed.
+Proof. hauto lq:on use:Par_subst_star, Sub1_morphing unfold:Sub. Qed.
 
 Derive Inversion sub1_inv with (forall A B, Sub1 A B).
 
 Lemma Sub1_simulation A0 A1 (h : A0 ⇒ A1) : forall B0, (Sub1 A0 B0 -> exists B1, Sub1 A1 B1 /\ B0 ⇒ B1) /\ (Sub1 B0 A0 -> exists B1, Sub1 B1 A1 /\ B0 ⇒ B1).
 Proof.
-  elim : A0 A1 /h; hauto lq:on rew:off inv:Sub1,Par ctrs:Sub1, Par.
+  elim : A0 A1 /h;
+    match goal with
+    | [|-context[tPi]] =>hauto lq:on rew:off ctrs:Sub1,Par inv:Sub1
+    | _ => hauto lq:on ctrs:Sub1, Par use:Sub1_refl inv:Sub1
+    end.
 Qed.
 
 Lemma Sub1_simulation_reds A0 A1 (h : A0 ⇒* A1) : forall B0, (Sub1 A0 B0 -> exists B1, Sub1 A1 B1 /\ B0 ⇒* B1) /\ (Sub1 B0 A0 -> exists B1, Sub1 B1 A1 /\ B0 ⇒* B1).
@@ -542,13 +570,14 @@ Lemma Sub_transitive A B C : Sub A B -> Sub B C -> Sub A C.
 Proof.
   rewrite /Sub.
   move => [A0][B0][h0][h1]h2[B1][C0][h3][h4]h5.
-  have : B0 ⇔ B1 by transitivity B=>//; symmetry.
-  move => [B'][hB'0]hB'1.
-  have hs1 :=  h2. have hs2 := h5.
-  move /Sub1_simulation_reds in hB'0.  eapply hB'0 in h2.
-  move /Sub1_simulation_reds in hB'1. eapply hB'1 in h5.
-  move : h2 h5 => [A0' [h6 h7]][C0' [h8 h9]].
-  exists A0', C0'. repeat split.
-  1,2 : hauto lq:on rew:off ctrs:rtc use:Coherent_transitive, Coherent_symmetric.
-  hauto l:on use:Sub1_transitive.
+  have [B'[? ?]] : exists B', B0 ⇒* B' /\ B1 ⇒* B' by sfirstorder use:Pars_confluent.
+  have [A' [??]] : exists A',Sub1 A' B' /\ A0 ⇒* A' by hauto l:on use:Sub1_simulation_reds.
+  have [C' [??]] : exists C',Sub1 B' C' /\ C0 ⇒* C' by hauto l:on use:Sub1_simulation_reds.
+  exists A', C'. repeat split=>//; last by hauto lq:on use:Sub1_transitive.
+  all : eauto using rtc_transitive.
 Qed.
+
+(* Lemma Sub_univ_inj i j (h : Sub (tUniv i) (tUniv j)) : i = j. *)
+(* Proof. *)
+(*   rewrite /Sub in h. *)
+(*   move : h => [A0][B0][h0][h1]h2. *)

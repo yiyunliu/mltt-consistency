@@ -133,14 +133,14 @@ Qed.
 Lemma Wt_Pi_inv Γ A B U (h : Γ ⊢ (tPi A B) ∈ U) :
   exists i, Γ ⊢ A ∈ (tUniv i) /\
          (A :: Γ) ⊢ B ∈(tUniv i) /\
-         Coherent (tUniv i) U /\
+         tUniv i <: U /\
          exists i, Γ ⊢ U ∈ (tUniv i).
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
   elim :  Γ T U / h => //.
-  - hauto l:on use:Wt_Univ.
-  - qauto l:on use:Coherent_transitive.
+  - hauto lq:on ctrs:Wt, Sub1, rtc use:Wt_Univ.
+  - qauto l:on use:Sub_transitive.
 Qed.
 
 Lemma Wt_Pi_Univ_inv Γ A B i (h : Γ ⊢ (tPi A B) ∈ (tUniv i)) :
