@@ -114,13 +114,6 @@ Infix "⇔" := Coherent (at level 70, no associativity).
 Lemma Par_refl (a : tm) : a ⇒ a.
 Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 
-(* Parallel reduction is contained in Coherent *)
-
-Lemma Par_Coherent a b :
-  (a ⇒ b) -> Coherent a b.
-Proof. hauto lq:on use:@rtc_once, @rtc_refl. Qed.
-
-
 (* ------------------------------------------------------------ *)
 
 (* A top-level beta-reduction is a parallel reduction *)
@@ -156,11 +149,6 @@ Qed.
 Lemma Pars_renaming a b (ξ : fin -> fin) :
   (a ⇒* b) -> (a⟨ξ⟩ ⇒* b⟨ξ⟩).
 Proof. induction 1; hauto lq:on ctrs:rtc use:Par_renaming. Qed.
-
-Lemma Coherent_renaming a b (ξ : fin -> fin) :
-  Coherent a b ->
-  Coherent a⟨ξ⟩ b⟨ξ⟩.
-Proof. hauto lq:on rew:off use:Pars_renaming. Qed.
 
 Local Lemma Par_morphing_lift (ξ0 ξ1 : fin -> tm)
   (h : forall i, (ξ0 i ⇒ ξ1 i)) :
@@ -212,6 +200,12 @@ Proof.
     apply @rtc_once.
     sfirstorder use:Par_morphing, Par_refl.
 Qed.
+
+(* Parallel reduction is contained in Coherent *)
+
+Lemma Par_Coherent a b :
+  (a ⇒ b) -> Coherent a b.
+Proof. hauto lq:on use:@rtc_once, @rtc_refl. Qed.
 
 Lemma Coherent_morphing a0 a1 (h : Coherent a0 a1) (σ0 σ1 : fin -> tm) :
   (σ0 ⇒ς σ1) ->
@@ -349,13 +343,6 @@ Proof.
   move : a b A E.
   elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
 Qed.
-
-Lemma Coherent_pi_inj A B A0 B0 (h : Coherent (tPi A B) (tPi A0 B0)) :
-  Coherent A A0 /\ Coherent B B0.
-Proof. hauto q:on use:Pars_pi_inv. Qed.
-
-Lemma Coherent_eq_inj a b A a0 b0 A0 (h : Coherent (tEq a b A) (tEq a0 b0 A0)) : Coherent a a0 /\ Coherent b b0 /\ Coherent A A0.
-Proof. hauto q:on use:Pars_eq_inv. Qed.
 
 Lemma Pars_univ_inv i A (h : (tUniv i) ⇒* A) :
   A = tUniv i.
@@ -577,7 +564,44 @@ Proof.
   all : eauto using rtc_transitive.
 Qed.
 
-(* Lemma Sub_univ_inj i j (h : Sub (tUniv i) (tUniv j)) : i = j. *)
-(* Proof. *)
-(*   rewrite /Sub in h. *)
-(*   move : h => [A0][B0][h0][h1]h2. *)
+Lemma Sub_univ_inj i j : tUniv i <: tUniv j -> i <= j.
+Proof.
+  rewrite /Sub.
+  move => [A0][B0][+[]].
+  move /Pars_univ_inv => ? /Pars_univ_inv ?. subst.
+  by inversion 1.
+Qed.
+
+Lemma Sub_pi_inj A B A0 B0 : tPi A B <: tPi A0 B0 ->
+  A0 <: A /\ B <: B0.
+Proof.
+  rewrite /Sub.
+  move => [?][?][/Pars_pi_inv].
+  move => [A'][B'][?][? ?]. subst.
+  move =>[/Pars_pi_inv].
+  move => [A''][B''][?][? ?]. subst.
+  hauto lq:on ctrs:Sub1 inv:Sub1.
+Qed.
+
+Lemma Sub_eq_inj a b A a0 b0 A0 (h : Sub (tEq a b A) (tEq a0 b0 A0)) : Coherent a a0 /\ Coherent b b0 /\ Coherent A A0.
+Proof.
+  move : h. rewrite /Sub.
+  move => [A1][A2][/Pars_eq_inv h0][/Pars_eq_inv h1]h2.
+  rewrite /Coherent.
+  hauto lq:on rew:off inv:Sub1.
+Qed.
+
+Lemma Sub_renaming A B : forall ξ, A <: B -> A⟨ξ⟩ <: B⟨ξ⟩.
+Proof. move => ξ + /ltac:(substify). move /Sub_morphing. by apply. Qed.
+
+Lemma Sub1_Sub A B : Sub1 A B -> Sub A B.
+Proof. sfirstorder ctrs:rtc unfold:Sub. Qed.
+
+Lemma Par_Sub a b :
+  a ⇒ b -> a <: b /\ b <: a.
+Proof.
+  hauto lq:on use:Sub1_refl ctrs:rtc unfold:Sub.
+Qed.
+
+Lemma Coherent_Sub a b : a ⇔ b -> a <: b.
+Proof. sfirstorder use:Sub1_refl unfold:Coherent, Sub. Qed.
