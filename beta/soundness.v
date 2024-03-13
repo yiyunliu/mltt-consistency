@@ -154,9 +154,14 @@ Proof.
     asimpl. hauto lq:on.
   (* Conv *)
   - move => Γ a A B i _ hA _ /SemWt_Univ hB ? ρ hρ.
-    have ? : Coherent (subst_tm ρ A) (subst_tm ρ B)
-      by eauto using Coherent_subst_star.
-    qauto l:on use:InterpUnivN_Coherent unfold:SemWt.
+    have hs : subst_tm ρ A <: subst_tm ρ B
+      by hauto l:on use:Sub_morphing.
+    move /hB : (hρ) {hB}.
+    move => [PB]hPB.
+    move /hA : hρ {hA}.
+    move => [j][PA][hPA]ha.
+    have : PB a[ρ] by hauto q:on use:InterpUnivN_Sub.
+    hauto lq:on.
   (* True *)
   - hauto l:on.
   (* False *)

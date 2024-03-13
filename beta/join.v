@@ -489,3 +489,31 @@ Add Relation tm Coherent
     symmetry proved by Coherent_symmetric
     transitivity proved by Coherent_transitive
     as Coherent_rel.
+
+Inductive Sub1 : tm -> tm -> Prop :=
+| Sub_Refl A :
+  Sub1 A A
+| Sub_Univ i j :
+  i <= j ->
+  Sub1 (tUniv i) (tUniv j)
+| Sub_Prod A0 B0 A1 B1 :
+  Sub1 A1 A0 ->
+  Sub1 B0 B1 ->
+  Sub1 (tPi A0 B0) (tPi A1 B1).
+
+
+Definition Sub A B := exists A0 B0, Coherent A A0 /\ Coherent B B0 /\ Sub1 A0 B0.
+Notation "A <: B" := (Sub A B)  (at level 70, no associativity).
+
+Lemma Sub1_morphing A B (h : Sub1 A B) : forall ρ, Sub1 A[ρ] B[ρ].
+Proof. elim : A B /h; hauto lq:on ctrs:Sub1. Qed.
+
+Lemma Sub_morphing A B (h : Sub A B) : forall ρ, Sub A[ρ] B[ρ].
+Proof. hauto lq:on use:Coherent_subst_star, Sub1_morphing. Qed.
+
+Derive Inversion sub1_inv with (forall A B, Sub1 A B).
+
+Lemma Sub1_simulation A0 A1 (h : A0 ⇒ A1) : forall B0, (Sub1 A0 B0 -> exists B1, Sub1 A1 B1 /\ B0 ⇒ B1) /\ (Sub1 B0 A0 -> exists B1, Sub1 B1 A1 /\ B0 ⇒ B1).
+Proof.
+  elim : A0 A1 /h; hauto lq:on rew:off inv:Sub1,Par ctrs:Sub1, Par.
+Qed.
