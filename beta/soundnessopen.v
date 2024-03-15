@@ -244,7 +244,7 @@ Proof.
   - eauto using SemWff_cons.
 Qed.
 
-Lemma mltt_normalizing Γ a A : (Γ ⊢ a ∈ A) -> wn a /\ wn A.
+Lemma mltt_normalizing Γ a A : Γ ⊢ a ∈ A -> wn a /\ wn A.
 Proof.
   move /(proj1 soundness) /(_ var_tm).
   elim.
@@ -252,4 +252,154 @@ Proof.
     hauto l:on use:adequacy, InterpUniv_wn_ty unfold:CR.
   - rewrite /ρ_ok=>i ? m PA. asimpl.
     hauto q:on ctrs:rtc use:adequacy.
+Qed.
+
+(* Need to prove something about scoping before we can recover consistency *)
+Inductive stm (n : nat) : tm -> Prop :=
+| SC_Var i :
+  i < n ->
+  (* ----- *)
+  stm n (var_tm i)
+
+| SC_Abs b :
+  stm (S n) b ->
+  (* ------------ *)
+  stm n (tAbs b)
+
+| SC_App a b :
+  stm n a ->
+  stm n b ->
+  (* ---------- *)
+  stm n (tApp a b)
+
+| SC_Pi A B :
+  stm n A ->
+  stm (S n) B ->
+  (* ------------ *)
+  stm n (tPi A B)
+
+| SC_Void :
+  (* ------------ *)
+  stm n tVoid
+
+| SC_Univ i :
+  (* ----------- *)
+  stm n (tUniv i)
+
+| SC_True :
+  (* --------- *)
+  stm n tTrue
+
+| SC_False :
+  (* -------------- *)
+  stm n tFalse
+
+| SC_Bool :
+  (* -------------- *)
+  stm n tBool
+
+| SC_Eq a b A :
+  stm n a ->
+  stm n b ->
+  stm n A ->
+  (* ---------------- *)
+  stm n (tEq a b A)
+
+| SC_J t a b p :
+  stm n t ->
+  stm n a ->
+  stm n b ->
+  stm n p ->
+  (* ------------- *)
+  stm n (tJ t a b p)
+
+| SC_If a b c :
+  stm n a ->
+  stm n b ->
+  stm n c ->
+  stm n (tIf a b c)
+
+| SC_Refl :
+  (* --------- *)
+  stm n tRefl.
+
+#[export]Hint Constructors stm : stm.
+
+Lemma scope_lt n a : stm n a -> forall m, n <= m -> stm m a.
+Proof. move => h. elim : a / h; hauto lq:on ctrs:stm solve+:lia. Qed.
+
+Lemma ne_scope a : ne a -> forall n, stm n a -> n > 0.
+Proof. elim : a; hauto q:on inv:stm b:on solve+:lia. Qed.
+
+Lemma lookup_lt i A Γ : lookup i Γ A -> i < length Γ.
+Proof. move => h. elim : i Γ A / h; sfirstorder. Qed.
+
+Lemma wt_scope Γ a A : Γ ⊢ a ∈ A -> stm (length Γ) a.
+Proof. move => h. elim : Γ a A / h; hauto use:lookup_lt q:on ctrs:stm. Qed.
+
+Lemma scope_ren_up n m ξ :
+  (forall i, i < n -> ξ i < m) ->  forall i, i < S n -> upRen_tm_tm ξ i < S m.
+Proof.
+  move => h.
+  case => [|p].
+  - asimpl. lia.
+  - move : (h p). asimpl. lia.
+Qed.
+
+Lemma scope_renaming n a (h : stm n a) :
+  forall m ξ, (forall i, i < n -> ξ i < m) -> stm m (ren_tm ξ a).
+Proof.
+  elim : a / h=>//=; eauto 10 using scope_ren_up with stm.
+Qed.
+
+Lemma scope_weaken m a : stm m a -> stm (S m) (ren_tm shift a).
+Proof. move /scope_renaming. apply. lia. Qed.
+
+Lemma scope_morphing_up n m ρ :
+  (forall i, i < n -> stm m (ρ i)) ->
+  forall i, i < S n -> stm (S m) (up_tm_tm ρ i).
+Proof.
+  move => h.
+  case. asimpl.
+  hauto l:on ctrs:stm use:scope_weaken.
+  move => p ?. asimpl.
+  apply scope_weaken.
+  apply h. lia.
+Qed.
+
+Lemma scope_morphing n a (h : stm n a) :
+  forall m ρ, (forall i, i < n -> stm m (ρ i)) -> stm m (subst_tm ρ a).
+Proof.
+  elim : n a / h=>//=; eauto 10 using scope_morphing_up with stm.
+Qed.
+
+Lemma scope_subst n a b (h : stm (S n) a) (h0 : stm n b) :
+  stm n (subst_tm (b..) a).
+Proof.
+  apply scope_morphing with (n := S n)=>//.
+  case.
+  by asimpl. move => p. asimpl.
+  hauto lq:on ctrs:stm solve+:lia.
+Qed.
+
+Lemma Par_scope a b (h : a ⇒ b) : forall n, stm n a -> stm n b.
+Proof. elim : a b / h; hauto lq:on inv:stm ctrs:stm use:scope_subst. Qed.
+
+Lemma Pars_scope a b (h : a ⇒* b) : forall n, stm n a -> stm n b.
+Proof. elim : a b / h; sfirstorder use:Par_scope. Qed.
+
+Lemma consistency a : ~ nil ⊢ a ∈ tVoid.
+Proof.
+  move => /[dup] /wt_scope /= h.
+  move /(proj1 soundness).
+  rewrite /SemWt.
+  have : ρ_ok nil var_tm by
+    hauto lq:on inv:lookup unfold:ρ_ok.
+  move/[swap]/[apply].
+  move => [m][PA][]. simp InterpUniv. asimpl.
+  move/InterpExt_Void_inv => ->.
+  rewrite /wne.
+  move => [b][]. move : h.
+  move /Pars_scope. move/[apply].
+  hauto lq:on use:ne_scope solve+:lia.
 Qed.
