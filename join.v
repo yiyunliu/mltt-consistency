@@ -166,6 +166,12 @@ Fixpoint tfold n a :=
   then tAbs (tApp (ren_tm shift (tfold m a)) (var_tm var_zero))
   else a.
 
+Lemma tfold_eq n a :
+  tfold (S n) a = tfold n (tAbs (tApp (ren_tm shift a) (var_tm var_zero))).
+Proof.
+  elim : n a=>//=. hauto lq:on.
+Qed.
+
 Lemma tfold_var_inv a i :
   a ⇒η var_tm i <-> exists k, a = tfold k (var_tm i).
 Proof.
@@ -197,6 +203,22 @@ Proof.
       exists (S k). simpl. sfirstorder.
   - move => [k]. move : b a0 a1.
     elim : k=>//=; hauto lq:on ctrs:Parη.
+Qed.
+
+Lemma tfold_abs_inv a b :
+  a ⇒η tAbs b <->
+  exists k a0, a = tfold k (tAbs a0) /\ a0 ⇒η b.
+Proof.
+  split.
+  - move E : (tAbs b)  => b0 h.
+    move : b E.
+    elim : a b0 / h=>//=.
+    + move => a0 a1 h ih ? [*]. subst.
+      by (exists 0 , a0).
+    + move => b0 b1 h ih b ?. subst. specialize ih with (1 := eq_refl).
+      move : ih => [k][a0][?]ih. subst.
+      by exists (S k), a0.
+  - move => [k]. move : a b. elim : k; hauto lq:on ctrs:Parη.
 Qed.
 
 (* The reflexive, transitive closure of parallel reduction. *)
@@ -246,6 +268,104 @@ Proof.
   - move => *.
     apply : P_AppAbs'; eauto. by asimpl.
 Qed.
+
+Lemma tfold_abs_abs : forall k a, exists a0, tfold k (tAbs a) = tAbs a0.
+Proof. elim=>//=; hauto lq:on. Qed.
+
+Lemma tfold_abs_red a b (h : a ⇒ b) : forall k, tfold k (tAbs a) ⇒ tAbs b.
+Proof.
+  elim => //=.
+  by apply P_Abs.
+  move => n.
+  have [a0 ->] := tfold_abs_abs n a.
+  move => ih.
+  apply P_Abs => /=.
+  apply P_AppAbs' with (a0 := b ⟨upRen_tm_tm ↑⟩) (b1 := var_tm var_zero). by asimpl.
+  inversion ih; sfirstorder use:Par_renaming.
+  apply P_Var.
+Qed.
+
+Lemma tfold_S_red : forall k a b, a ⇒ b -> tfold (S k) a ⇒ tfold 1 b.
+Proof.
+  move => k a b h.
+  rewrite tfold_eq.
+  have : tApp a ⟨↑⟩ (var_tm var_zero) ⇒  tApp b ⟨↑⟩ (var_tm var_zero) by hauto lq:on ctrs:Par use:Par_renaming.
+  sfirstorder use:tfold_abs_red.
+Qed.
+
+Lemma tfold_app_red k : forall b0 b1 a0 a1, b0 ⇒ b1 -> a0 ⇒ a1 -> tfold k (tApp b0 a0) ⇒ tApp b1 a1.
+  Admitted.
+(* Proof. *)
+(*   elim : k=>//=. *)
+(*   move => a b h. *)
+(*   - apply P_Abs. apply P_App. move/Par_renaming : h. apply. apply P_Var. *)
+(*   - move => n ih a b h. *)
+(*     apply P_Abs. *)
+(*     have {}ih : forall a b : tm, a ⇒ b -> tApp (tfold n a) ⟨↑⟩ (var_tm var_zero) ⇒ tApp b ⟨↑⟩ (var_tm var_zero) *)
+(*         by hauto lq:on inv:Par. *)
+(*     eapply P_AppAbs' with (a0 := tApp b ⟨↑⟩ ⟨↑⟩ (var_tm 0)); last by apply P_Var. substify. by asimpl. *)
+(*     apply P_Abs. asimpl. *)
+(*     move /Par_renaming : h. *)
+(*     move /ih{ih}. *)
+(*     asimpl. *)
+
+
+Lemma tfold_abs_app_red' : forall n b0 b1 a0 a1,
+    b0 ⇒ b1 -> a0 ⇒ a1 ->
+    forall ξ, tApp (ren_tm ξ (tfold n (tAbs b0))) a0 ⇒ (ren_tm (upRen_tm_tm ξ) b1)[a1..].
+Proof.
+  elim => [|n] //=.
+  - move => b0 b1 a0 a1 hb ha ξ.
+    apply P_AppAbs=>//.
+    by apply Par_renaming.
+  -  move => ih b0 b1 a0 a1 hb ha ξ.
+     apply P_AppAbs=>//.
+     move /ih in hb.
+     have : Par (var_tm 0) (var_tm 0) by apply P_Var.
+     move /hb.
+     move /(_ (ξ >> shift)).
+     substify.
+     by asimpl.
+Qed.
+
+Lemma tfold_abs_app_red : forall n b0 b1 a0 a1,
+    b0 ⇒ b1 -> a0 ⇒ a1 ->
+    tApp (tfold n (tAbs b0)) a0 ⇒ b1[a1..].
+Proof.
+  move => n b0 b1 a0 a1.
+  move : tfold_abs_app_red'. repeat move/[apply].
+  move /(_ n id). by asimpl.
+Qed.
+
+Lemma βη_commute M P N : M ⇒η P -> P ⇒ N -> exists P', M ⇒ P' /\ P' ⇒η N.
+Proof.
+  move => + h. move : M. elim : P N / h; eauto using Par_refl.
+  - admit.
+  - move => M0 M1 hM0 ihM0 M /tfold_abs_inv.
+    hauto lq:on use:tfold_abs_red ctrs:Parη.
+  - move => a0 a1 b0 b1 ha iha hb ihb c /tfold_app_inv.
+    hauto lq:on use:tfold_app_red ctrs:Parη.
+  - move => a a0 b0 b1 ha iha hb ihb c /tfold_app_inv.
+    move => [k][b2][b3][?][+]h1.
+    move /tfold_abs_inv => [k0][a1][?]h2. subst.
+    move /iha : h2 => [a2][h2]h3.
+    move /ihb : h1 => [b][h4]h5.
+    case : k.
+    + exists (a2[b..]).
+      split. sfirstorder use:tfold_abs_app_red.
+      (* By parη cong *)
+      admit.
+    + move => n.
+      eexists. split.
+      apply tfold_S_red.
+      apply tfold_abs_app_red; eauto.
+      simpl.
+      apply Pη_Absη.
+      admit.
+Admitted.
+
+
+
 
 Lemma Pars_renaming a b (ξ : fin -> fin) :
   (a ⇒* b) -> (a⟨ξ⟩ ⇒* b⟨ξ⟩).
