@@ -340,7 +340,11 @@ Proof.
   - move => M0 M1 hM0 ihM0 M /tfold_abs_inv.
     hauto lq:on use:tfold_abs_red ctrs:Parη.
   - move => a0 a1 b0 b1 ha iha hb ihb c /tfold_app_inv.
-    move => [k][a3][b3][?][h1]h2. subst.
+    move => [k][a3][b3][?][/iha +]/ihb. subst.
+    move => [a'][h0]h1[b'][h2]h3.
+    case : k => [|k].
+    + hauto lq:on ctrs:Par,Parη.
+    + hauto lq:on ctrs:Par,Parη use:tfold_S_red.
   - move => a a0 b0 b1 ha iha hb ihb c /tfold_app_inv.
     move => [k][b2][b3][?][+]h1.
     move /tfold_abs_inv => [k0][a1][?]h2. subst.
@@ -358,7 +362,8 @@ Proof.
       simpl.
       apply Pη_Absη.
       admit.
-  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc M.
+  - admit.
+  - best.
 
 Admitted.
 
