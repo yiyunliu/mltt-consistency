@@ -293,23 +293,6 @@ Proof.
   sfirstorder use:tfold_abs_red.
 Qed.
 
-Lemma tfold_app_red k : forall b0 b1 a0 a1, b0 ⇒ b1 -> a0 ⇒ a1 -> tfold k (tApp b0 a0) ⇒ tApp b1 a1.
-  Admitted.
-(* Proof. *)
-(*   elim : k=>//=. *)
-(*   move => a b h. *)
-(*   - apply P_Abs. apply P_App. move/Par_renaming : h. apply. apply P_Var. *)
-(*   - move => n ih a b h. *)
-(*     apply P_Abs. *)
-(*     have {}ih : forall a b : tm, a ⇒ b -> tApp (tfold n a) ⟨↑⟩ (var_tm var_zero) ⇒ tApp b ⟨↑⟩ (var_tm var_zero) *)
-(*         by hauto lq:on inv:Par. *)
-(*     eapply P_AppAbs' with (a0 := tApp b ⟨↑⟩ ⟨↑⟩ (var_tm 0)); last by apply P_Var. substify. by asimpl. *)
-(*     apply P_Abs. asimpl. *)
-(*     move /Par_renaming : h. *)
-(*     move /ih{ih}. *)
-(*     asimpl. *)
-
-
 Lemma tfold_abs_app_red' : forall n b0 b1 a0 a1,
     b0 ⇒ b1 -> a0 ⇒ a1 ->
     forall ξ, tApp (ren_tm ξ (tfold n (tAbs b0))) a0 ⇒ (ren_tm (upRen_tm_tm ξ) b1)[a1..].
@@ -337,6 +320,19 @@ Proof.
   move /(_ n id). by asimpl.
 Qed.
 
+Lemma tfold_app_red k : forall b0 b1 a0 a1, b0 ⇒ b1 -> a0 ⇒ a1 -> tApp (tfold k b0) a0 ⇒ tApp b1 a1.
+Proof.
+  case : k.
+  - hauto lq:on ctrs:Par.
+  - move => n b0 b1 a0 a1 h0 h1.
+    rewrite tfold_eq.
+    set p := (x in tAbs x).
+    have : p ⇒ tApp b1 ⟨↑⟩ (var_tm var_zero) by hauto lq:on use:Par_renaming ctrs:Par.
+    move /tfold_abs_app_red /(_ h1).
+    move /(_ n).
+    by asimpl.
+Qed.
+
 Lemma βη_commute M P N : M ⇒η P -> P ⇒ N -> exists P', M ⇒ P' /\ P' ⇒η N.
 Proof.
   move => + h. move : M. elim : P N / h; eauto using Par_refl.
@@ -344,7 +340,7 @@ Proof.
   - move => M0 M1 hM0 ihM0 M /tfold_abs_inv.
     hauto lq:on use:tfold_abs_red ctrs:Parη.
   - move => a0 a1 b0 b1 ha iha hb ihb c /tfold_app_inv.
-    hauto lq:on use:tfold_app_red ctrs:Parη.
+    move => [k][a3][b3][?][h1]h2. subst.
   - move => a a0 b0 b1 ha iha hb ihb c /tfold_app_inv.
     move => [k][b2][b3][?][+]h1.
     move /tfold_abs_inv => [k0][a1][?]h2. subst.
@@ -362,6 +358,8 @@ Proof.
       simpl.
       apply Pη_Absη.
       admit.
+  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc M.
+
 Admitted.
 
 
