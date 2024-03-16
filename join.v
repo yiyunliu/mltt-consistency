@@ -98,6 +98,107 @@ where "A ⇒ B" := (Par A B).
 
 #[export]Hint Constructors Par : par.
 
+Reserved Infix "⇒η" (at level 60, right associativity).
+Inductive Parη : tm -> tm -> Prop :=
+| Pη_Var i :
+  (* ------- *)
+  (var_tm i) ⇒η (var_tm i)
+| Pη_Univ n :
+  (* -------- *)
+  (tUniv n) ⇒η (tUniv n)
+| Pη_Void :
+  (* -------- *)
+  tVoid ⇒η tVoid
+| Pη_Pi A0 A1 B0 B1 :
+  (A0 ⇒η A1) ->
+  (B0 ⇒η B1) ->
+  (* --------------------- *)
+  (tPi A0 B0) ⇒η (tPi A1 B1)
+| Pη_Abs a0 a1 :
+  (a0 ⇒η a1) ->
+  (* -------------------- *)
+  (tAbs a0) ⇒η (tAbs a1)
+| Pη_App a0 a1 b0 b1 :
+  (a0 ⇒η a1) ->
+  (b0 ⇒η b1) ->
+  (* ------------------------- *)
+  (tApp a0 b0) ⇒η (tApp a1 b1)
+| Pη_Absη b0 b1 :
+  b0 ⇒η b1 ->
+  tAbs (tApp (ren_tm shift b0) (var_tm var_zero)) ⇒η b1
+| Pη_True :
+  (* ------- *)
+  tTrue ⇒η tTrue
+| Pη_False :
+  (* ---------- *)
+  tFalse ⇒η tFalse
+| Pη_If a0 a1 b0 b1 c0 c1:
+  (a0 ⇒η a1) ->
+  (b0 ⇒η b1) ->
+  (c0 ⇒η c1) ->
+  (* ---------- *)
+  (tIf a0 b0 c0) ⇒η (tIf a1 b1 c1)
+| Pη_Bool :
+  (* ---------- *)
+  tBool ⇒η tBool
+| Pη_Refl :
+  (* ---------- *)
+  tRefl ⇒η tRefl
+| Pη_Eq a0 b0 A0 a1 b1 A1 :
+  (a0 ⇒η a1) ->
+  (b0 ⇒η b1) ->
+  (A0 ⇒η A1) ->
+  (* ---------- *)
+  (tEq a0 b0 A0) ⇒η (tEq a1 b1 A1)
+| Pη_J t0 a0 b0 p0 t1 a1 b1 p1 :
+  (t0 ⇒η t1) ->
+  (a0 ⇒η a1) ->
+  (b0 ⇒η b1) ->
+  (p0 ⇒η p1) ->
+  (* ---------- *)
+  (tJ t0 a0 b0 p0) ⇒η (tJ t1 a1 b1 p1)
+where "A ⇒η B" := (Parη A B).
+
+#[export]Hint Constructors Parη : parη.
+
+Fixpoint tfold n a :=
+  if n is S m
+  then tAbs (tApp (ren_tm shift (tfold m a)) (var_tm var_zero))
+  else a.
+
+Lemma tfold_var_inv a i :
+  a ⇒η var_tm i <-> exists k, a = tfold k (var_tm i).
+Proof.
+  split.
+  - move E : (var_tm i) => b h.
+    move : i E. elim : a b /h=>//.
+    + move => i ? [?]. subst. by (exists 0).
+    + move => b0 b1 hb ihb i ?. subst.
+      specialize ihb with (1 := eq_refl).
+      move : ihb => [k ?]. subst. by (exists (S k)).
+  - move => [k ?]. subst.
+    move : i. elim : k=>//=; eauto with parη.
+Qed.
+
+Lemma tfold_app_inv b a0 a1 :
+  b ⇒η tApp a0 a1 <->
+  exists k b0 b1, b = tfold k (tApp b0 b1) /\ b0 ⇒η a0 /\ b1 ⇒η a1.
+Proof.
+  split.
+  - move E : (tApp a0 a1) => a h.
+    move : a0 a1 E.
+    elim : b a / h=>//=.
+    + move => a0 a1 b0 b1 ha _ hb _ a2 a3 [*]. subst.
+      exists 0, a0, b0. simpl.
+      sfirstorder.
+    + move => b0 b2 hb ihb a0 a1 ?. subst.
+      specialize ihb with (1 := eq_refl).
+      move : ihb => [k][b1][b2][?][h1]h2. subst.
+      exists (S k). simpl. sfirstorder.
+  - move => [k]. move : b a0 a1.
+    elim : k=>//=; hauto lq:on ctrs:Parη.
+Qed.
+
 (* The reflexive, transitive closure of parallel reduction. *)
 
 Infix "⇒*" := (rtc Par) (at level 60, right associativity).
