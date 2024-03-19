@@ -1,0 +1,36 @@
+opam-version: "2.0"
+synopsis: "A short weak normalization (for closed and open terms) proof for a Martin-Löf-style type theory in Coq" # One-line description
+description: """
+The mechanized system is most similar to the predicative part of CC
+Omega, which is notable for its untyped conversion rule and
+cumulativity. We add extensions such as an intensional identity type,
+a boolean base type, and a Void type.
+Our subtyping relation is contravariant on the argument, unlike CC Omega
+or Coq. The semantic model is enough to justify this more flexible design.
+""" # Longer description, can span several lines
+
+homepage: "https://github.com/yiyunliu/mltt-consistency"
+dev-repo: "git+https://github.com/yiyunliu/mltt-consistency.git"
+bug-reports: "https://github.com/yiyunliu/mltt-consistency/issues"
+doc: "https://github.com/yiyunliu/mltt-consistency"
+maintainer: "liuyiyun@seas.upenn.edu"
+
+authors: [
+  "Yiyun Liu"
+  "Stephanie Weirich"
+]
+license: "MIT"
+
+depends: [
+  "coq" {>= "8.18" }
+  "coq-equations" {>= "1.3"}
+  "coq-hammer-tactics" {>= "1.3.2"}
+  "coq-stdpp" {>= "1.9.0"}
+]
+
+build: [
+  [make "-j%{jobs}%"]
+]
+install: [
+  [make "install"]
+]
