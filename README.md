@@ -1,6 +1,7 @@
 # Mechanized consistency proof for MLTT
-This repository contains a very short consistency&normalization proof of Martin-Löf
-type theory in Coq (~ 1000 LoC excluding code produced by autosubst2). You need
+This repository contains a very short weak normalization (for closed
+and open terms) proof of Martin-Löf
+type theory in Coq (~ 1500 LoC excluding code produced by Autosubst 2). You need
 [Autosubst2](https://github.com/uds-psl/autosubst2) (only if
 you plan to change [syntax.sig](syntax.sig)),
 [stdpp](https://gitlab.mpi-sws.org/iris/stdpp), [Coq-Equations](https://github.com/mattam82/Coq-Equations),
