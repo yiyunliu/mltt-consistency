@@ -1,4 +1,4 @@
-From WR Require Import imports join.
+Require Import imports join.
 
 Definition context := list tm.
 

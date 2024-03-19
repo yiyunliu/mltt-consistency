@@ -1,4 +1,4 @@
-From WR Require Import imports.
+Require Import imports.
 Require Export Setoid.
 
 Definition is_bool_val a :=

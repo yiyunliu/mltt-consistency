@@ -1,4 +1,4 @@
-From WR Require Import syntax join imports.
+Require Import syntax join imports.
 
 (* Identifying neutral (ne) and normal (nf) terms *)
 Fixpoint ne (a : tm) : bool :=
