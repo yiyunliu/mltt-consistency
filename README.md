@@ -21,7 +21,7 @@ defining a single predicative universe, where impredicativity turns
 out to be unnecessary (see <https://dl.acm.org/doi/10.1145/3636501.3636951>).
 
 ## Language specification
-The syntactic typing rules can be found in [typing.v](theories/PCCOmega/typing.v).
+The syntactic typing rules can be found in [typing.v](theories/typing.v).
 
 In short, the system is most similar to the predicative part of
 $CC^\omega$, which is notable for its untyped conversion rule and
@@ -86,12 +86,12 @@ reliance on axioms related to proof irrelevance.
 higher-order abstract syntax. Used by the `as2-exe` executable to
 produce the Coq syntax file [syntax.v](theories/Autosubst2/syntax.v)
 - [theories/Autosubst2](theories/Autosubst2): Header files/auto-generated syntax file from/by Autosubst 2
-- [join.v](theories/PCCOmega/join.v): Reduction and subtyping
-- [typing.v](theories/PCCOmega/typing.v): Syntactic typing rules
-- [normalform.v](theories/PCCOmega/normalform.v): Properties related
+- [join.v](theories/join.v): Reduction and subtyping
+- [typing.v](theories/typing.v): Syntactic typing rules
+- [normalform.v](theories/normalform.v): Properties related
   to normal and neutral terms
-- [semtyping.v](theories/PCCOmega/semtyping.v): Definition of the
+- [semtyping.v](theories/semtyping.v): Definition of the
   logical relation and its properties
-- [soundness.v](theories/PCCOmega/soundness.v): Semantic typing,
+- [soundness.v](theories/soundness.v): Semantic typing,
   semantic soundness (i.e. the fundamental theorem), normalizaiton,
   and consistency
