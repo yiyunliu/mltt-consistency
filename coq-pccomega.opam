@@ -29,8 +29,8 @@ depends: [
 ]
 
 build: [
-  [make "-j%{jobs}%"]
+  [make "--file=CoqMakefile" "-j%{jobs}%"]
 ]
 install: [
-  [make "install"]
+  [make "--file=CoqMakefile" "install"]
 ]

@@ -1,4 +1,2 @@
--docroot PCCOmega
--R theories/PCCOmega PCCOmega
--R theories/Autosubst2 AS2
+-R theories PCCOmega
 theories

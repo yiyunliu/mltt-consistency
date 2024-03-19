@@ -1,4 +1,4 @@
-Require Import syntax join normalform imports.
+Require Import join normalform imports.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a PB, PA a -> PF a PB -> PB (tApp b a).
