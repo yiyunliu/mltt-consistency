@@ -1,16 +1,16 @@
 SYNTAX_FILE=theories/Autosubst2/syntax.v
 COQMAKEFILE=CoqMakefile
 
-coq: $(COQMAKEFILE) $(SYNTAX_FILE)
-	$(MAKE) -f $(COQMAKEFILE)
+theories: $(COQMAKEFILE)
+	$(MAKE) -f $^
 
-$(COQMAKEFILE) :
+$(COQMAKEFILE) : $(SYNTAX_FILE)
 	$(COQBIN)coq_makefile -f _CoqProject -o $(COQMAKEFILE)
 
-install: $(COQMAKEFILE) $(SYNTAX_FILE)
-	$(MAKE) -f $(COQMAKEFILE) install
+install: $(COQMAKEFILE)
+	$(MAKE) -f $^ install
 
-uninstall: $(COQMAKEFILE) $(SYNTAX_FILE)
+uninstall: $(COQMAKEFILE)
 	$(MAKE) -f $(COQMAKEFILE) uninstall
 
 $(SYNTAX_FILE) : syntax.sig
@@ -19,5 +19,5 @@ $(SYNTAX_FILE) : syntax.sig
 
 .PHONY: clean
 clean:
+	test ! -f $(COQMAKEFILE) || ( $(MAKE) -f $(COQMAKEFILE) clean && rm $(COQMAKEFILE) )
 	rm -f $(SYNTAX_FILE)
-	test ! -f CoqSrc.mk || ( $(MAKE) -f $(COQMAKEFILE) clean && rm $(COQMAKEFILE) )
