@@ -38,10 +38,21 @@ though it's not yet merged to the main branch because we need some
 minor clean-ups.
 
 ## Install dependencies
+First, run `opam update` in the shell to update the package repository
+so your package manager knows where to fetch the dependencies.
+
+### Method 1: Opam install
+Run the following commands:
+```sh
+opam repo add coq-released https://coq.inria.fr/opam/released
+opam update
+opam install . --deps-only
+```
+
+### Method 2: Switch file
 The [opam.switch](opam.switch) file allows you to recreate an opam
 switch that is identical to our environment. To create a switch named `mltt`, run the following command when you have [opam.switch](opam.switch) available in your working directory:
 ```
-opam update
 opam switch import opam.switch --switch mltt --repositories=coq-released=https://coq.inria.fr/opam/released,default=https://opam.ocaml.org
 ```
 
