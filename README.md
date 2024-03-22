@@ -20,6 +20,13 @@ impredicativity to define a countable universe hierarchy, rather than
 defining a single predicative universe, where impredicativity turns
 out to be unnecessary (see <https://dl.acm.org/doi/10.1145/3636501.3636951>).
 
+See <https://github.com/ionathanch/TT-model> for an Agda
+implementation of the proof, which uses induction-recursion rather
+than impredicativity to encode the countable universe hierarchy. The
+logical relation from the linked repository currently can only be used
+to derive canonicity and consistency, but not weak normalization.
+
+
 ## Language specification
 The syntactic typing rules can be found in [typing.v](theories/typing.v).
 
