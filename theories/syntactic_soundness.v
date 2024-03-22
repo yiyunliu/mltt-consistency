@@ -35,19 +35,6 @@ Definition tm_to_head (a : tm) :=
   | tJ _ _ _ _ => None
   end.
 
-Definition head_inhab (a : head) : head :=
-  match a with
-  | hPi => hUniv
-  | hAbs => hPi
-  | hBool => hUniv
-  | hTrue => hBool
-  | hFalse => hBool
-  | hVoid => hUniv
-  | hUniv => hUniv
-  | hEq => hUniv
-  | hRefl => hEq
-  end.
-
 Lemma Par_head a b (h : a ⇒ b) :
   forall hd, tm_to_head a = Some hd ->
         tm_to_head b = Some hd.
@@ -647,7 +634,6 @@ Qed.
 
 
 (* ----------------------------------------------- *)
-
 Definition is_value (a : tm) :=
   match a with
   | tPi A B => true
@@ -665,52 +651,52 @@ Definition is_value (a : tm) :=
   | var_tm _ => false
   end.
 
-Lemma Wt_winv Γ A B (h : Γ ⊢ A ∈ B) : forall hf,
+Definition head_inhab (a : head) : head :=
+  match a with
+  | hPi => hUniv
+  | hAbs => hPi
+  | hBool => hUniv
+  | hTrue => hBool
+  | hFalse => hBool
+  | hVoid => hUniv
+  | hUniv => hUniv
+  | hEq => hUniv
+  | hRefl => hEq
+  end.
+
+Lemma wt_winv Γ A B (h : Γ ⊢ A ∈ B) : forall hf,
   tm_to_head A = Some hf ->
   exists U, Γ ⊢ A ∈ U /\ U <: B /\ Some (head_inhab hf) = tm_to_head U.
 Proof.
-  elim : Γ A B / h;  hauto q:on dep:on ctrs:Wt use:Sub_reflexive, Sub_transitive.
+  elim : Γ A B / h; hauto q:on dep:on ctrs:Wt use:Sub_reflexive, Sub_transitive.
 Qed.
 
-Lemma Wt_wrong_hf_contra Γ A B (h : Γ ⊢ A ∈ B) :
+Lemma wt_wrong_hf_contra Γ A B (h : Γ ⊢ A ∈ B) :
   forall hf hf',
   tm_to_head A = Some hf ->
   tm_to_head B = Some hf' ->
   head_inhab hf = hf'.
-Proof. hauto l:on use:Wt_winv, Sub_consistent. Qed.
+Proof. hauto l:on use:wt_winv, Sub_consistent. Qed.
 
 (* Canonical forms lemmas *)
-
-Lemma wt_pi_canon a A B :
-  nil ⊢ a ∈ (tPi A B) ->
+Definition canon_prop (U : tm) (a : tm) : Prop :=
   is_value a ->
-  exists a0, a = tAbs a0.
-Proof.
-  case : a => //; hauto q:on use:Wt_wrong_hf_contra.
-Qed.
+  match U with
+  | tPi A B => exists a0, a = tAbs a0
+  | tEq _ _ _ => a = tRefl
+  | tBool => is_bool_val a
+  | _ => True
+  end.
 
-Lemma wt_switch_canon a :
-  nil ⊢ a ∈ tBool ->
-  is_value a ->
-  is_bool_val a.
+Lemma wt_canon a U :
+  nil ⊢ a ∈ U -> canon_prop U a.
 Proof.
-  case : a => //; hauto q:on use:Wt_wrong_hf_contra.
-Qed.
-
-Lemma wt_refl_canon p a b A :
-  nil ⊢ p ∈ (tEq a b A) ->
-  is_value p ->
-  p = tRefl.
-Proof.
-  case : p => //; hauto q:on use:Wt_wrong_hf_contra.
+  case : U=> //; case : a => //; hauto drew:off use:wt_wrong_hf_contra.
 Qed.
 
 Lemma wt_progress a A (h :nil ⊢ a ∈ A) : is_value a \/ exists a0, a ⇒ a0.
 Proof.
   move E : nil h => Γ h.
   move : E.
-  elim: Γ a A/h; try hauto q:on depth:2.
-  - hauto lq:on rew:off ctrs:Par use:wt_pi_canon, Par_refl.
-  - hauto lq:on rew:off use:wt_switch_canon, Par_refl.
-  - hauto lq:on rew:off ctrs:Par use:wt_refl_canon, Par_refl.
+  elim: Γ a A/h; hauto l:on use:wt_canon, Par_refl.
 Qed.
