@@ -16,7 +16,7 @@ Require Import imports join typing.
 
 Inductive head
   := hPi | hAbs | hBool | hTrue | hVoid
-| hFalse | hUniv | hVar | hEq | hRefl.
+| hFalse | hUniv | hEq | hRefl.
 
 Definition tm_to_head (a : tm) :=
   match a with
@@ -29,10 +29,23 @@ Definition tm_to_head (a : tm) :=
   | tIf a b c => None
   | tApp a b => None
   | tUniv _ => Some hUniv
-  | var_tm _ => Some hVar
+  | var_tm _ => None
   | tEq _ _ _ => Some hEq
   | tRefl => Some hRefl
   | tJ _ _ _ _ => None
+  end.
+
+Definition head_inhab (a : head) : head :=
+  match a with
+  | hPi => hUniv
+  | hAbs => hPi
+  | hBool => hUniv
+  | hTrue => hBool
+  | hFalse => hBool
+  | hVoid => hUniv
+  | hUniv => hUniv
+  | hEq => hUniv
+  | hRefl => hEq
   end.
 
 Lemma Par_head a b (h : a ⇒ b) :
@@ -629,7 +642,7 @@ Proof.
       with (subst_tm (a..)(subst_tm (tRefl..) C)); last by asimpl.
     replace (subst_tm (tRefl .: b..) C)
       with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl.
-    apply Coherent_cong. reflexivity. auto.
+    apply Coherent_cong. apply Coherent_reflexive. auto.
 Qed.
 
 
@@ -652,35 +665,19 @@ Definition is_value (a : tm) :=
   | var_tm _ => false
   end.
 
-Lemma Wt_Univ_winv Γ i U :
-  Γ ⊢ (tUniv i) ∈ U ->
-  exists j, tUniv j <:  U.
+Lemma Wt_winv Γ A B (h : Γ ⊢ A ∈ B) : forall hf,
+  tm_to_head A = Some hf ->
+  exists U, Γ ⊢ A ∈ U /\ U <: B /\ Some (head_inhab hf) = tm_to_head U.
 Proof.
-  move E : (tUniv i) => U0 h.
-  move : i E.
-  induction h => //; qauto l:on ctrs:Wt use:Sub_transitive, Sub_reflexive.
+  elim : Γ A B / h;  hauto q:on dep:on ctrs:Wt use:Sub_reflexive, Sub_transitive.
 Qed.
 
-Lemma Wt_Void_winv Γ U :
-  Γ ⊢ tVoid∈ U ->
-  exists j, tUniv j <: U.
-Proof.
-  move E : tVoid => U0 h.
-  move : E.
-  induction h => //; qauto l:on ctrs:Wt use:Sub_transitive, Sub_reflexive.
-Qed.
-
-Lemma Wt_True_False_winv Γ a A (h : Γ ⊢ a ∈ A) :
-  is_bool_val a -> tBool <: A.
-Proof. induction h => //; qauto l:on ctrs:Wt use:Sub_transitive, Sub_reflexive. Qed.
-
-Lemma Wt_Bool_winv Γ A :
-  Γ ⊢ tBool ∈ A ->
-  exists i, tUniv i <: A.
-Proof.
-  move E : tBool => a h. move : E.
-  induction h => //; qauto l:on ctrs:Wt use:Sub_transitive, Sub_reflexive.
-Qed.
+Lemma Wt_wrong_hf_contra Γ A B (h : Γ ⊢ A ∈ B) :
+  forall hf hf',
+  tm_to_head A = Some hf ->
+  tm_to_head B = Some hf' ->
+  head_inhab hf = hf'.
+Proof. hauto l:on use:Wt_winv, Sub_consistent. Qed.
 
 (* Canonical forms lemmas *)
 
@@ -689,16 +686,7 @@ Lemma wt_pi_canon a A B :
   is_value a ->
   exists a0, a = tAbs a0.
 Proof.
-  case : a => //.
-  - hauto lq:on.
-  - qauto l:on use:Wt_Pi_inv, Sub_consistent.
-  - qauto l:on use:Wt_Void_winv, Sub_consistent.
-  - qauto l:on use:Wt_Univ_winv, Sub_consistent.
-  - qauto l:on use:Wt_True_False_winv, Sub_consistent.
-  - qauto l:on use:Wt_True_False_winv, Sub_consistent.
-  - qauto l:on use:Wt_Bool_winv, Sub_consistent.
-  - qauto l:on use:Wt_Eq_inv, Sub_consistent.
-  - qauto l:on use:Wt_Refl_inv, Sub_consistent.
+  case : a => //; hauto q:on use:Wt_wrong_hf_contra.
 Qed.
 
 Lemma wt_switch_canon a :
@@ -706,14 +694,7 @@ Lemma wt_switch_canon a :
   is_value a ->
   is_bool_val a.
 Proof.
-  case : a => //.
-  - qauto l:on use:Wt_Abs_inv, Sub_consistent.
-  - qauto l:on use:Wt_Pi_inv, Sub_consistent.
-  - qauto l:on use:Wt_Void_winv, Sub_consistent.
-  - qauto l:on use:Wt_Univ_winv, Sub_consistent.
-  - qauto l:on use:Wt_Bool_winv, Sub_consistent.
-  - qauto l:on use:Wt_Eq_inv, Sub_consistent.
-  - qauto l:on use:Wt_Refl_inv, Sub_consistent.
+  case : a => //; hauto q:on use:Wt_wrong_hf_contra.
 Qed.
 
 Lemma wt_refl_canon p a b A :
@@ -721,15 +702,7 @@ Lemma wt_refl_canon p a b A :
   is_value p ->
   p = tRefl.
 Proof.
-  case : p => //.
-  - qauto l:on use:Wt_Abs_inv, Sub_consistent.
-  - qauto l:on use:Wt_Pi_inv, Sub_consistent.
-  - qauto l:on use:Wt_Void_winv, Sub_consistent.
-  - qauto l:on use:Wt_Univ_winv, Sub_consistent.
-  - qauto l:on use:Wt_True_False_winv, Sub_consistent.
-  - qauto l:on use:Wt_True_False_winv, Sub_consistent.
-  - qauto l:on use:Wt_Bool_winv, Sub_consistent.
-  - qauto l:on use:Wt_Eq_inv, Sub_consistent.
+  case : p => //; hauto q:on use:Wt_wrong_hf_contra.
 Qed.
 
 Lemma wt_progress a A (h :nil ⊢ a ∈ A) : is_value a \/ exists a0, a ⇒ a0.

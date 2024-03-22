@@ -1,5 +1,4 @@
 Require Import imports.
-Require Export Setoid.
 
 Definition is_bool_val a :=
   match a with
@@ -187,7 +186,6 @@ Proof.
     by asimpl. hauto l:on unfold:Par_m use:Par_renaming inv:nat. eauto.
   - hauto lq:on db:par use:Par_morphing_lift.
 Qed.
-
 
 Lemma Par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
   (σ0 ⇒ς σ1) ->
@@ -470,12 +468,6 @@ Proof.
   case : h => z [*].
   exists z. split; sfirstorder use:@rtc_transitive.
 Qed.
-
-Add Relation tm Coherent
-    reflexivity proved by Coherent_reflexive
-    symmetry proved by Coherent_symmetric
-    transitivity proved by Coherent_transitive
-    as Coherent_rel.
 
 Inductive Sub1 : tm -> tm -> Prop :=
 | Sub_Var n :
