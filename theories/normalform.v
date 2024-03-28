@@ -10,10 +10,10 @@ Fixpoint ne (a : tm) : bool :=
   | tVoid => false
   | tJ t a b p => nf t && nf a && nf b && ne p
   | tUniv _ => false
-  | tTrue => false
-  | tFalse => false
-  | tIf a b c => ne a && nf b && nf c
-  | tBool => false
+  | tZero => false
+  | tSuc _ => false
+  | tInd a b c => nf a && nf b && ne c
+  | tNat => false
   | tEq a b A => false
   | tRefl => false
   end
@@ -26,12 +26,19 @@ with nf (a : tm) : bool :=
   | tVoid => true
   | tJ t a b p => nf t && nf a && nf b && ne p
   | tUniv _ => true
-  | tTrue => true
-  | tFalse => true
-  | tIf a b c => ne a && nf b && nf c
-  | tBool => true
+  | tZero => true
+  | tSuc a => nf a
+  | tInd a b c => nf a && nf b && ne c
+  | tNat => true
   | tEq a b A => nf a && nf b && nf A
   | tRefl => true
+  end.
+
+Function is_nat_val (a : tm) : bool :=
+  match a with
+  | tZero => true
+  | tSuc a => is_nat_val a
+  | _ => ne a
   end.
 
 (* Terms that are weakly normalizing to a neutral or normal form. *)
@@ -50,9 +57,9 @@ Proof. sfirstorder use:ne_nf. Qed.
 Lemma nf_wn v : nf v -> wn v.
 Proof. sfirstorder ctrs:rtc. Qed.
 
-(* booleans are normal *)
-Lemma bool_val_nf v : is_bool_val v -> nf v.
-Proof. case : v =>// _; hauto lq:on unfold:nf inv:Par. Qed.
+(* natural number values are normal *)
+Lemma bool_val_nf v : is_nat_val v -> nf v.
+Proof. elim : v =>//=. Qed.
 
 (* Neutral and normal forms are stable under renaming *)
 Lemma ne_nf_renaming (a : tm) :
@@ -114,11 +121,22 @@ Proof.
   - hauto q:on ctrs:Par inv:tm.
   - move => > ++++++ [] //.
     hauto q:on ctrs:Par.
-  - move => b0 b1 c0 h ih []// []// t0 t1 ξ [].
+  - move => a0 a1 b h0 ih0 []// a2 b1 c1 ξ.
+    case => ? ? hz. subst.
+    specialize ih0 with (1 := eq_refl).
+    have {hz}-> : c1 = tZero by hauto q:on inv:tm.
     hauto lq:on ctrs:Par.
-  - move => b0 b1 c0 h ih []// []// t0 t1 ξ [].
-    hauto lq:on ctrs:Par.
-  - hauto inv:tm q:on ctrs:Par.
+  - move => ? a1 ? b1 ? c1 ha iha hb ihb hc ihc []// a0 b0 c0 ξ [? ?]. subst.
+    case : c0 => // c0 [?]. subst.
+    specialize iha with (1 := eq_refl).
+    specialize ihb with (1 := eq_refl).
+    specialize ihc with (1 := eq_refl).
+    move : iha => [a2 [iha ?]].
+    move : ihb => [b2 [ihb ?]].
+    move : ihc => [c2 [ihc ?]]. subst.
+    exists (b2[c2 .: (tInd a2 b2 c2)..]).
+    split; [by auto with par | by asimpl].
+  - hauto q:on ctrs:Par inv:tm.
   - hauto inv:tm q:on ctrs:Par.
   - move => a0 b0 A0 a1 b1 A1 h ih h0 ih0 h1 ih1 []//.
     hauto q:on ctrs:Par.
@@ -171,11 +189,11 @@ Proof.
   - solve_s_rec.
 Qed.
 
-Lemma S_If a0 a1 : forall b0 b1 c0 c1,
+Lemma S_Ind a0 a1 : forall b0 b1 c0 c1,
     a0 ⇒* a1 ->
     b0 ⇒* b1 ->
     c0 ⇒* c1 ->
-    (tIf a0 b0 c0) ⇒* (tIf a1 b1 c1).
+    (tInd a0 b0 c0) ⇒* (tInd a1 b1 c1).
 Proof.
   move => + + + + h.
   elim : a0 a1 /h.
@@ -260,11 +278,11 @@ Proof.
 Qed.
 
 Lemma wne_if (a b c : tm) :
-  wne a -> wn b -> wn c -> wne (tIf a b c).
+  wn a -> wn b -> wne c -> wne (tInd a b c).
 Proof.
   move => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]].
-  exists (tIf a0 b0 c0).
-  qauto l:on use:S_If b:on.
+  exists (tInd a0 b0 c0).
+  qauto l:on use:S_Ind b:on.
 Qed.
 
 Lemma wne_app (a b : tm) :
