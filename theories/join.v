@@ -1,12 +1,5 @@
 Require Import imports.
 
-Definition is_bool_val a :=
-  match a with
-  | tTrue => true
-  | tFalse => true
-  | _ => false
-  end.
-
 (* ------------------------------------------------------------ *)
 
 (* Parallel reduction: "a ⇒ b" the building block
@@ -50,29 +43,32 @@ Inductive Par : tm -> tm -> Prop :=
   (b0 ⇒ b1) ->
   (* ---------------------------- *)
   (tApp (tAbs a) b0) ⇒ (a0 [b1..])
-| P_True :
+| P_Zero :
   (* ------- *)
-  tTrue ⇒ tTrue
-| P_False :
+  tZero ⇒ tZero
+| P_Suc a b :
+  a ⇒ b ->
   (* ---------- *)
-  tFalse ⇒ tFalse
-| P_If a0 a1 b0 b1 c0 c1:
-  (a0 ⇒ a1) ->
-  (b0 ⇒ b1) ->
-  (c0 ⇒ c1) ->
+  tSuc a ⇒ tSuc b
+| P_Ind a0 a1 b0 b1 c0 c1:
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  c0 ⇒ c1 ->
   (* ---------- *)
-  (tIf a0 b0 c0) ⇒ (tIf a1 b1 c1)
-| P_IfTrue b0 b1 c0 :
-  (b0 ⇒ b1) ->
+  tInd a0 b0 c0 ⇒ tInd a1 b1 c1
+| P_IndZero a0 a1 b:
+  a0 ⇒ a1 ->
   (* ---------- *)
-  (tIf tTrue b0 c0) ⇒ b1
-| P_IfFalse b0 c0 c1 :
-  (c0 ⇒ c1) ->
+  tInd a0 b tZero ⇒ a1
+| P_IndSuc a0 a1 b0 b1 c0 c1 :
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  c0 ⇒ c1 ->
+  (* ---------------------  *)
+  tInd a0 b0 (tSuc c0) ⇒ b1 [c1 .: (tInd a1 b1 c1) ..]
+| P_Nat :
   (* ---------- *)
-  (tIf tFalse b0 c0) ⇒ c1
-| P_Bool :
-  (* ---------- *)
-  tBool ⇒ tBool
+  tNat ⇒ tNat
 | P_Refl :
   (* ---------- *)
   tRefl ⇒ tRefl
@@ -130,6 +126,14 @@ Lemma P_AppAbs' a a0 b0 b b1 :
   (tApp (tAbs a) b0) ⇒ b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
+Lemma P_IndSuc' a0 a1 b0 b1 c0 c1 t :
+  t = b1 [c1 .: (tInd a1 b1 c1) ..] ->
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  c0 ⇒ c1 ->
+  (* ---------------------  *)
+  tInd a0 b0 (tSuc c0) ⇒ t.
+Proof. move => > ->. apply P_IndSuc. Qed.
 
 (* ------------------------------------------------------------ *)
 
@@ -143,16 +147,27 @@ Proof.
   elim : a b / h => /=; eauto with par.
   - move => *.
     apply : P_AppAbs'; eauto. by asimpl.
+  - move => *.
+    apply : P_IndSuc'; eauto; by asimpl.
 Qed.
 
 Lemma Pars_renaming a b (ξ : fin -> fin) :
   (a ⇒* b) -> (a⟨ξ⟩ ⇒* b⟨ξ⟩).
 Proof. induction 1; hauto lq:on ctrs:rtc use:Par_renaming. Qed.
 
-Local Lemma Par_morphing_lift (ξ0 ξ1 : fin -> tm)
+Local Fixpoint up_tm_tm_n n ξ :=
+  if n is S n then up_tm_tm_n n (up_tm_tm ξ) else ξ.
+
+Local Lemma Par_morphing_lift_n n (ξ0 ξ1 : fin -> tm)
   (h : forall i, (ξ0 i ⇒ ξ1 i)) :
-  forall i, (up_tm_tm ξ0 i ⇒ up_tm_tm ξ1 i).
-Proof. case => [|i]; first by constructor. asimpl. by apply Par_renaming. Qed.
+  forall i, (up_tm_tm_n n ξ0 i ⇒ up_tm_tm_n n ξ1 i).
+Proof.
+  elim : n ξ0 ξ1 h =>//.
+  move => n ih ξ0 ξ1 h=>//= i.
+  apply : ih. move => [|i0]//=.
+  by apply Par_refl.
+  by apply Par_renaming.
+Qed.
 
 (* ------------------------------------------------------------ *)
 
@@ -179,12 +194,18 @@ Proof.
   move => h0.
   move : σ0 σ1 h.
   elim : a b / h0; try solve [simpl; eauto with par].
-  - qauto db:par use: Par_morphing_lift.
-  - qauto l:on db:par use:Par_morphing_lift.
+  - qauto db:par use: (Par_morphing_lift_n 1).
+  - qauto l:on db:par use:(Par_morphing_lift_n 1).
   - move => a a0 b0 b1 h0 ih0 h1 ih1 σ0 σ h /=.
     apply P_AppAbs' with (a0 := a0 [up_tm_tm σ]) (b1 := b1 [σ]).
     by asimpl. hauto l:on unfold:Par_m use:Par_renaming inv:nat. eauto.
-  - hauto lq:on db:par use:Par_morphing_lift.
+  - qauto db:par use:(Par_morphing_lift_n 2).
+  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc σ0 σ1 hσ /=.
+    apply P_IndSuc' with
+      (b1 := b1[up_tm_tm_n 2 σ1]) (a1 := a1[σ1]) (c1 := c1[σ1]);
+      eauto => /=. by asimpl.
+    sfirstorder use:(Par_morphing_lift_n 2).
+  - hauto lq:on db:par use:(Par_morphing_lift_n 1).
 Qed.
 
 Lemma Par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
@@ -245,8 +266,6 @@ Proof.
   hauto q:on use:Pars_morphing_star unfold:Coherent.
 Qed.
 
-
-
 (* These two lemmas allow us to create substitutions
    that are related by paralell reduction. *)
 
@@ -290,7 +309,6 @@ Proof. hauto lq:on use:Coherent_morphing, Par_refl unfold:Par_m. Qed.
 
 
 (* The relations are also closed under single substitution  *)
-
 Lemma Par_cong a0 a1 b0 b1 (h : a0 ⇒ a1) (h1 : b0 ⇒ b1) :
   (a0 [b0..] ⇒ a1 [b1..]).
 Proof.
@@ -299,6 +317,13 @@ Proof.
   sfirstorder use:Par_refl.
 Qed.
 
+Lemma Par_cong2 a0 a1 b0 b1 c0 c1 (h : a0 ⇒ a1) (h1 : b0 ⇒ b1) (h2 : c0 ⇒ c1) :
+  (a0 [b0 .: c0 ..] ⇒ a1 [b1 .: c1 ..]).
+Proof.
+  apply Par_morphing=>//. case=>//.
+  move => n. asimpl.
+  case : n => // >. asimpl. apply Par_refl.
+Qed.
 
 Local Lemma Coherent_cong_helper : forall a0 c, (a0 ⇒* c) -> (a0.. ⇒ς* c..).
 Proof.
@@ -357,33 +382,18 @@ Proof. hauto lq:on rew:off inv:rtc use:Pars_univ_inv. Qed.
 (* ------------------------------------------------------------ *)
 
 
-Lemma P_IfTrue_star a b c :
-  (a ⇒* tTrue) ->
-  ((tIf a b c) ⇒* b).
-  move E : tTrue => v h.
+Lemma P_IndZero_star a b c :
+  (c ⇒* tZero) ->
+  (tInd a b tZero  ⇒* a).
+  move E : tZero => v h.
   move : E.
-  elim : a v / h.
+  elim : c v / h.
   - move => *. subst.
-    apply rtc_once. apply P_IfTrue. apply Par_refl.
-  - move => a a0 a1 h0 h1 h2 ?; subst.
+    apply rtc_once. apply P_IndZero. apply Par_refl.
+  - move => c c0 c1 h0 h1 h2 ?; subst.
     move /(_ eq_refl) in h2.
     apply : rtc_transitive; eauto.
     hauto lq:on use:@rtc_once,Par_refl ctrs:Par.
-Qed.
-
-Lemma P_IfFalse_star a b c :
-  (a ⇒* tFalse) ->
-  ((tIf a b c) ⇒* c).
-  move E : tFalse => v h.
-  move : E.
-  elim : a v / h.
-  - move => *. subst.
-    apply rtc_once. apply P_IfFalse. apply Par_refl.
-  - move => a a0 a1 h0 h1 h2 ?; subst.
-    move /(_ eq_refl) in h2.
-    apply : rtc_transitive; eauto.
-    apply @rtc_once.
-    hauto lq:on ctrs:Par use:Par_refl.
 Qed.
 
 Lemma P_JRefl_star t a b p :
@@ -424,12 +434,12 @@ Function tstar (a : tm) :=
   | tAbs a => tAbs (tstar a)
   | tApp (tAbs a) b =>  (tstar a) [(tstar b)..]
   | tApp a b => tApp (tstar a) (tstar b)
-  | tTrue => tTrue
-  | tFalse => tFalse
-  | tIf tTrue b c => tstar b
-  | tIf tFalse b c => tstar c
-  | tIf a b c => tIf (tstar a) (tstar b) (tstar c)
-  | tBool => tBool
+  | tZero => tZero
+  | tSuc a => tSuc (tstar a)
+  | tInd a b tZero => tstar a
+  | tInd a b (tSuc c) => (tstar b) [(tstar c) .: (tInd (tstar a) (tstar b) (tstar c)) .. ]
+  | tInd a b c => tInd (tstar a) (tstar b) (tstar c)
+  | tNat => tNat
   | tRefl => tRefl
   | tEq a b A => tEq (tstar a) (tstar b) (tstar A)
   | tJ t a b tRefl => tstar t
@@ -438,7 +448,7 @@ Function tstar (a : tm) :=
 
 Lemma Par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
 Proof.
-  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,Par_cong ctrs:Par.
+  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
 Qed.
 
 Lemma Par_confluent : diamond Par.
@@ -478,14 +488,14 @@ Inductive Sub1 : tm -> tm -> Prop :=
   Sub1 (tApp b a) (tApp b a)
 | Sub_Void :
   Sub1 tVoid tVoid
-| Sub_True :
-  Sub1 tTrue tTrue
-| Sub_False :
-  Sub1 tFalse tFalse
-| Sub_If a b c :
-  Sub1 (tIf a b c) (tIf a b c)
-| Sub_Bool :
-  Sub1 tBool tBool
+| Sub_Zero :
+  Sub1 tZero tZero
+| Sub_Suc a :
+  Sub1 (tSuc a) (tSuc a)
+| Sub_Nat :
+  Sub1 tNat tNat
+| Sub_Ind a b c:
+  Sub1 (tInd a b c) (tInd a b c)
 | Sub_Eq a b A :
   Sub1 (tEq a b A) (tEq a b A)
 | Sub_J t a b p :
