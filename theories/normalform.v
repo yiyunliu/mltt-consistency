@@ -58,7 +58,10 @@ Lemma nf_wn v : nf v -> wn v.
 Proof. sfirstorder ctrs:rtc. Qed.
 
 (* natural number values are normal *)
-Lemma bool_val_nf v : is_nat_val v -> nf v.
+Lemma nat_val_nf v : is_nat_val v -> nf v.
+Proof. elim : v =>//=. Qed.
+
+Lemma ne_nat_val v : ne v -> is_nat_val v.
 Proof. elim : v =>//=. Qed.
 
 (* Neutral and normal forms are stable under renaming *)
@@ -87,7 +90,7 @@ Lemma ne_preservation : forall a b, (a ⇒ b) -> ne a -> ne b.
 Proof. sfirstorder use:nf_ne_preservation b:on. Qed.
 
 Create HintDb nfne.
-#[export]Hint Resolve nf_wn bool_val_nf ne_nf wne_wn ne_preservation nf_preservation : nfne.
+#[export]Hint Resolve ne_nat_val nf_wn nat_val_nf ne_nf wne_wn ne_preservation nf_preservation : nfne.
 
 
 (* ------------------ antirenaming ------------------------- *)

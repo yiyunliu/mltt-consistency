@@ -19,7 +19,7 @@ Reserved Notation "⟦ A ⟧ i , I ↘ S" (at level 70).
 Inductive InterpExt i (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Ne A : ne A -> ⟦ A ⟧ i , I ↘ wne
 | InterpExt_Void : ⟦ tVoid ⟧ i , I ↘ wne
-| InterpExt_Bool : ⟦ tBool ⟧ i , I ↘ (fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v))
+| InterpExt_Bool : ⟦ tNat ⟧ i , I ↘ (fun a => exists v, a ⇒* v /\ is_nat_val v)
 | InterpExt_Fun A B PA PF :
   ⟦ A ⟧ i , I ↘ PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
@@ -38,7 +38,6 @@ Inductive InterpExt i (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
   ⟦ A0 ⟧ i , I ↘ PA ->
   ⟦ A ⟧ i , I ↘ PA
 where "⟦ A ⟧ i , I ↘ S" := (InterpExt i I A S).
-
 
 Lemma InterpExt_Eq' i I PA a b A :
   nf a ->
@@ -265,11 +264,11 @@ Proof.
   hauto l:on inv:- db:nfne.
 Qed.
 
-Lemma InterpExt_Bool_inv i I P :
-  ⟦ tBool ⟧ i , I ↘ P ->
-  P = fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v).
+Lemma InterpExt_Nat_inv i I P :
+  ⟦ tNat ⟧ i , I ↘ P ->
+  P = fun a => exists v, a ⇒* v /\ is_nat_val v.
 Proof.
-  move E : tBool => A h.
+  move E : tNat => A h.
   move : E.
   elim : A P / h; hauto q:on inv:tm,Par.
 Qed.
@@ -292,10 +291,10 @@ Proof.
   elim : A P / h; hauto q:on rew:off inv:Par,tm.
 Qed.
 
-Lemma InterpUnivN_Bool_inv i P :
-  ⟦ tBool ⟧ i ↘ P ->
-  P = fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v).
-Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Bool_inv. Qed.
+Lemma InterpUnivN_Nat_inv i P :
+  ⟦ tNat ⟧ i ↘ P ->
+  P = fun a => exists v, a ⇒* v /\ (is_nat_val v).
+Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Nat_inv. Qed.
 
 
 Lemma InterpExt_Eq_inv i I a b A P :
@@ -338,7 +337,7 @@ Proof.
   elim : A PA / h.
   - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_Ne_inv.
   - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_Void_inv.
-  - hauto lq:on inv:InterpExt use:InterpExt_Bool_inv.
+  - hauto lq:on inv:InterpExt use:InterpExt_Nat_inv.
   - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
     move /InterpExt_Fun_inv : hP.
     intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.
@@ -487,7 +486,7 @@ Proof.
   elim : A PA / h =>//.
   - firstorder with nfne.
   - firstorder with nfne.
-  - hauto q:on db:nfne.
+  - hauto lq:on db:nfne.
   - move => A B PA PF hA ihA hTot hRes ih.
     split.
     + rewrite /ProdSpace => b hb.
@@ -546,7 +545,7 @@ Proof.
   - move => > h *. split. hauto q:on inv:Sub1 ctrs:InterpExt use:InterpExt_Void_inv.
     inversion 1; subst.
     move /InterpExt_Void_inv : h => ->. done.
-  - sauto use:InterpExt_Bool_inv.
+  - hauto lq:on inv:Sub1, InterpExt use:InterpExt_Nat_inv.
   - move => A0 B0 PA0 PF0 hPA0 ihA0 hTot hPF ihPF j ? PB hPB.
     have ? : ⟦ tPi A0 B0 ⟧ i, I ↘ (ProdSpace PA0 PF0) by hauto l:on ctrs:InterpExt.
     split.
