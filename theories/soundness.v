@@ -156,11 +156,11 @@ Proof.
     move => [j][PA][hPA]ha.
     have : PB a[ρ] by hauto q:on use:InterpUnivN_Sub.
     hauto lq:on.
-  (* True *)
+  (* Zero *)
   - hauto l:on.
-  (* False *)
-  - hauto l:on.
-  (* If *)
+  (* Suc *)
+  - admit.
+  (* Ind *)
   - move => Γ a b c A l _ /SemWt_Univ hA _ ha _ hb _ hc ρ hρ.
     case /(_ ρ hρ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
     case /(_ ρ hρ) : hb => j [PA [hPA hb']].

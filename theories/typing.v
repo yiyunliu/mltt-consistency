@@ -52,28 +52,29 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   (* ----------- *)
   Γ ⊢ a ∈ B
 
-| T_True Γ :
+| T_Zero Γ :
   ⊢ Γ ->
   (* --------- *)
-  Γ ⊢ tTrue ∈ tBool
+  Γ ⊢ tZero ∈ tNat
 
-| T_False Γ :
+| T_Suc Γ a :
+  Γ ⊢ a ∈ tNat ->
   ⊢ Γ ->
   (* --------- *)
-  Γ ⊢ tFalse ∈ tBool
+  Γ ⊢ tSuc a ∈ tNat
 
-| T_If Γ a b c A i :
-  (tBool :: Γ) ⊢ A ∈ (tUniv i) ->
-  Γ ⊢ a ∈ tBool ->
-  Γ ⊢ b ∈ (A [tTrue..]) ->
-  Γ ⊢ c ∈ (A [tFalse..]) ->
+| T_Ind Γ a b c A i :
+  tNat :: Γ ⊢ A ∈ tUniv i ->
+  Γ ⊢ a ∈ A [tZero..] ->
+  A :: tNat :: Γ ⊢ b ∈ A[tSuc (var_tm 0) .: ↑ >> var_tm]⟨↑⟩ ->
+  Γ ⊢ c ∈ tNat ->
   (* ------------ *)
-  Γ ⊢ (tIf a b c) ∈ (A [a..])
+  Γ ⊢ tInd a b c ∈ (A [c..])
 
-| T_Bool Γ i :
+| T_Nat Γ i :
   ⊢ Γ ->
   (* ----------- *)
-  Γ ⊢ tBool ∈ (tUniv i)
+  Γ ⊢ tNat ∈ (tUniv i)
 
 | T_Univ Γ i :
   ⊢ Γ ->
