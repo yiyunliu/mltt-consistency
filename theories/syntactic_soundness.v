@@ -14,25 +14,23 @@ Require Import imports join typing.
    to show that Coherent terms have the same head form.
 *)
 
-Inductive head
-  := hPi | hAbs | hBool | hTrue | hVoid
-| hFalse | hUniv | hEq | hRefl.
+Inductive head := hPi | hNat | hVoid | hUniv | hEq | hBot.
 
 Definition tm_to_head (a : tm) :=
   match a with
-  | tPi A B => Some hPi
-  | tAbs a => Some hAbs
-  | tBool => Some hBool
-  | tTrue => Some hTrue
-  | tFalse => Some hFalse
-  | tVoid => Some hVoid
-  | tIf a b c => None
-  | tApp a b => None
-  | tUniv _ => Some hUniv
-  | var_tm _ => None
-  | tEq _ _ _ => Some hEq
-  | tRefl => Some hRefl
-  | tJ _ _ _ _ => None
+  | tPi A B => hPi
+  | tAbs a => hBot
+  | tNat => hNat
+  | tZero => hBot
+  | tSuc _ => hBot
+  | tVoid => hVoid
+  | tInd a b c => hBot
+  | tApp a b => hBot
+  | tUniv _ => hUniv
+  | var_tm _ => hBot
+  | tEq _ _ _ => hEq
+  | tRefl => hBot
+  | tJ _ _ _ _ => hBot
   end.
 
 Lemma Par_head a b (h : a ⇒ b) :
