@@ -167,6 +167,38 @@ Proof.
     hauto lq:on use:S_Suc.
   (* Ind *)
   - move => Γ a b c A l _ /SemWt_Univ hA _ ha _ hb _ hc ρ hρ.
+    move /(_ ρ hρ) : ha => [m][PA][ha0]ha1.
+    move /(_ ρ hρ) : hc => [n][PA0][/InterpUnivN_Nat_inv ->][v[hc1 hc2]]/=.
+    asimpl.
+    set bs := (X in tInd _ X _).
+    move : {c} (c[ρ]) hc1 hc2.
+    apply is_nat_val_ind => {v}.
+    + move => ? ? c hc _. subst.
+      exists m, PA. split.
+      * apply : InterpUnivN_back_preservation_star;eauto.
+        asimpl.
+        qauto l:on use:Pars_morphing_star,good_Pars_morphing_ext ctrs:rtc.
+      * simpl.
+        apply : InterpUnivN_back_clos_star; eauto.
+        by apply P_IndZero_star.
+    + move => ? a0 ? ih c hc ha. subst.
+      move /(_ a0 ltac:(apply rtc_refl) ha) : ih => [m0][PA1][hPA1]hr.
+      have hρ' : ρ_ok (tNat :: Γ) (a0 .: ρ).
+      {
+        apply : ρ_ok_cons. simp InterpUniv. apply InterpExt_Nat.
+        hauto lq:on ctrs:rtc.
+        auto.
+      }
+      have : ρ_ok (A :: tNat :: Γ) ((tInd a[ρ] bs a0) .: (a0 .: ρ))
+        by eauto using ρ_ok_cons.
+      move /hb => {hb} [m1][PA2][hPA2]h.
+      exists m1, PA2.
+      split.
+      * move : hPA2. asimpl.
+        move /InterpUnivN_back_preservation_star. apply.
+        qauto l:on use:Pars_morphing_star,good_Pars_morphing_ext ctrs:rtc.
+      *
+
     case /(_ ρ hρ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
     case /(_ ρ hρ) : hb => j [PA [hPA hb']].
     case /(_ ρ hρ) : hc => k [PB [hPB hc']].

@@ -384,7 +384,7 @@ Proof. hauto lq:on rew:off inv:rtc use:Pars_univ_inv. Qed.
 
 Lemma P_IndZero_star a b c :
   (c ⇒* tZero) ->
-  (tInd a b tZero  ⇒* a).
+  (tInd a b c  ⇒* a).
   move E : tZero => v h.
   move : E.
   elim : c v / h.

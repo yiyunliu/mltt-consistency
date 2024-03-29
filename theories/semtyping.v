@@ -19,7 +19,7 @@ Reserved Notation "⟦ A ⟧ i , I ↘ S" (at level 70).
 Inductive InterpExt i (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Ne A : ne A -> ⟦ A ⟧ i , I ↘ wne
 | InterpExt_Void : ⟦ tVoid ⟧ i , I ↘ wne
-| InterpExt_Bool : ⟦ tNat ⟧ i , I ↘ (fun a => exists v, a ⇒* v /\ is_nat_val v)
+| InterpExt_Nat : ⟦ tNat ⟧ i , I ↘ (fun a => exists v, a ⇒* v /\ is_nat_val v)
 | InterpExt_Fun A B PA PF :
   ⟦ A ⟧ i , I ↘ PA ->
   (forall a, PA a -> exists PB, PF a PB) ->
