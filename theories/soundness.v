@@ -185,9 +185,9 @@ Proof.
       move /(_ a0 ltac:(apply rtc_refl) ha) : ih => [m0][PA1][hPA1]hr.
       have hρ' : ρ_ok (tNat :: Γ) (a0 .: ρ).
       {
-        apply : ρ_ok_cons. simp InterpUniv. apply InterpExt_Nat.
+        apply : ρ_ok_cons; auto.
+        apply InterpUnivN_Nat.
         hauto lq:on ctrs:rtc.
-        auto.
       }
       have : ρ_ok (A :: tNat :: Γ) ((tInd a[ρ] bs a0) .: (a0 .: ρ))
         by eauto using ρ_ok_cons.
@@ -197,30 +197,47 @@ Proof.
       * move : hPA2. asimpl.
         move /InterpUnivN_back_preservation_star. apply.
         qauto l:on use:Pars_morphing_star,good_Pars_morphing_ext ctrs:rtc.
-      *
+      * move : h.
+        move /InterpUnivN_back_clos_star. apply; eauto.
+        subst bs.
+        apply : P_IndSuc_star'; eauto.
+        by asimpl.
+    + move => a0 ? <- _ a1 *.
+      have ? : wne a1 by hauto lq:on.
+      suff  /hA : ρ_ok (tNat :: Γ) (a1 .: ρ).
+      move => [S hS].
+      exists l, S. split=>//.
+      suff ? : wn bs.
+      have ? : wn a[ρ] by sfirstorder use:adequacy.
+      have : wne (tInd a[ρ] bs a1) by auto using wne_ind.
+      eapply adequacy; eauto.
 
-    case /(_ ρ hρ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.
-    case /(_ ρ hρ) : hb => j [PA [hPA hb']].
-    case /(_ ρ hρ) : hc => k [PB [hPB hc']].
-    move : ha' => [v [hred [hv|hv]]].
-    + case : v hred hv => // ha0 _.
-      * exists j, PA.
-        split.
-        move /InterpUnivN_back_preservation_star  : hPA.
-        apply. asimpl. qauto l:on ctrs:rtc use:Pars_morphing, good_Pars_morphing_ext, Par_refl.
-        apply : InterpUnivN_back_clos_star; eauto.
-        eauto using P_IfTrue_star.
-      * exists k, PB.
-        split.
-        move /InterpUnivN_back_preservation_star  : hPB.
-        apply. asimpl. qauto l:on ctrs:rtc use:Pars_morphing, good_Pars_morphing_ext, Par_refl.
-        apply : InterpUnivN_back_clos_star; eauto.
-        eauto using P_IfFalse_star.
-    (* New case for when the scrutinee is neutral *)
-    + have ? : wne (subst_tm ρ a) by hauto lq:on use:wne_if, adequacy.
-      have : ρ_ok (tBool :: Γ) (subst_tm ρ a .: ρ). apply : (ρ_ok_cons i); hauto l:on ctrs:InterpExt.
-      move /hA => [PN hPN]. exists l, PN. split; first by asimpl.
-      qauto l:on use:adequacy, wne_if unfold:CR .
+      subst bs.
+      rewrite /SemWt in hb.
+      have /hA : ρ_ok (tNat :: Γ) (var_tm 0 .: ρ).
+      {
+        apply : ρ_ok_cons; auto.
+        apply InterpUnivN_Nat.
+        hauto lq:on ctrs:rtc.
+      }
+      move => [S1 hS1].
+      have /hb : ρ_ok (A :: tNat :: Γ) (var_tm 0 .: (var_tm 0 .: ρ)).
+      {
+        apply : ρ_ok_cons; cycle 2; eauto.
+        apply : ρ_ok_cons; cycle 2; eauto.
+        apply InterpUnivN_Nat.
+        hauto lq:on ctrs:rtc.
+        hauto q:on ctrs:rtc use:adequacy.
+      }
+      move =>[m0][PA1][h1]h2.
+      have : wn b[var_tm 0 .: (var_tm 0 .: ρ)] by hauto q:on use:adequacy.
+      clear => h.
+      apply wn_antirenaming with (ξ :=  var_zero .: (var_zero .: id)).
+      by asimpl.
+
+      apply : ρ_ok_cons; auto.
+      apply InterpUnivN_Nat.
+      hauto lq:on use:adequacy db:nfne.
   (* Bool *)
   - hauto l:on use:SemWt_Univ.
   (* Univ *)

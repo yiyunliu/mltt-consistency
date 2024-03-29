@@ -626,3 +626,6 @@ Proof.
   have : ⟦ A0 ⟧ i ↘ PA by hauto lq:on use:InterpUnivN_Coherent ctrs:rtc.
   apply InterpUnivN_Sub1'.
 Qed.
+
+Lemma InterpUnivN_Nat : ⟦ tNat ⟧ 0 ↘ (fun a => exists v, a ⇒* v /\ is_nat_val v).
+Proof. simp InterpUniv. apply InterpExt_Nat. Qed.

@@ -65,7 +65,7 @@ Inductive Par : tm -> tm -> Prop :=
   b0 ⇒ b1 ->
   c0 ⇒ c1 ->
   (* ---------------------  *)
-  tInd a0 b0 (tSuc c0) ⇒ b1 [c1 .: (tInd a1 b1 c1) ..]
+  tInd a0 b0 (tSuc c0) ⇒ b1 [(tInd a1 b1 c1) .: c1  ..]
 | P_Nat :
   (* ---------- *)
   tNat ⇒ tNat
@@ -127,7 +127,7 @@ Lemma P_AppAbs' a a0 b0 b b1 :
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
 Lemma P_IndSuc' a0 a1 b0 b1 c0 c1 t :
-  t = b1 [c1 .: (tInd a1 b1 c1) ..] ->
+  t = b1 [(tInd a1 b1 c1) .: c1 ..] ->
   a0 ⇒ a1 ->
   b0 ⇒ b1 ->
   c0 ⇒ c1 ->
@@ -385,6 +385,7 @@ Proof. hauto lq:on rew:off inv:rtc use:Pars_univ_inv. Qed.
 Lemma P_IndZero_star a b c :
   (c ⇒* tZero) ->
   (tInd a b c  ⇒* a).
+Proof.
   move E : tZero => v h.
   move : E.
   elim : c v / h.
@@ -395,6 +396,26 @@ Lemma P_IndZero_star a b c :
     apply : rtc_transitive; eauto.
     hauto lq:on use:@rtc_once,Par_refl ctrs:Par.
 Qed.
+
+Lemma P_IndSuc_star a b c c0 :
+  (c ⇒* tSuc c0) ->
+  (tInd a b c  ⇒* b[(tInd a b c0) .: c0 ..]).
+Proof.
+  move E : (tSuc c0) => v h.
+  move : E.  elim : c v /h.
+  - move=> > <- *.
+    apply rtc_once. apply P_IndSuc; apply Par_refl.
+  - move => c1 c2 c3 h0 h1 ih ?. subst.
+    move /(_ eq_refl) : ih.
+    apply rtc_l.
+    hauto lq:on use:Par_refl ctrs:Par.
+Qed.
+
+Lemma P_IndSuc_star' a b c c0 t :
+  b[(tInd a b c0) .: c0 ..] = t ->
+  (c ⇒* tSuc c0) ->
+  (tInd a b c  ⇒* t).
+Proof. move => > <-. apply P_IndSuc_star. Qed.
 
 Lemma P_JRefl_star t a b p :
   (p ⇒* tRefl)  ->
@@ -437,7 +458,7 @@ Function tstar (a : tm) :=
   | tZero => tZero
   | tSuc a => tSuc (tstar a)
   | tInd a b tZero => tstar a
-  | tInd a b (tSuc c) => (tstar b) [(tstar c) .: (tInd (tstar a) (tstar b) (tstar c)) .. ]
+  | tInd a b (tSuc c) => (tstar b) [(tInd (tstar a) (tstar b) (tstar c)) .: (tstar c)  .. ]
   | tInd a b c => tInd (tstar a) (tstar b) (tstar c)
   | tNat => tNat
   | tRefl => tRefl

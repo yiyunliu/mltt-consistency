@@ -137,7 +137,7 @@ Proof.
     move : iha => [a2 [iha ?]].
     move : ihb => [b2 [ihb ?]].
     move : ihc => [c2 [ihc ?]]. subst.
-    exists (b2[c2 .: (tInd a2 b2 c2)..]).
+    exists (b2[(tInd a2 b2 c2) .: c2 ..]).
     split; [by auto with par | by asimpl].
   - hauto q:on ctrs:Par inv:tm.
   - hauto inv:tm q:on ctrs:Par.
@@ -324,6 +324,16 @@ Proof.
   split.
   - by apply S_Eq.
   - hauto lqb:on.
+Qed.
+
+Lemma wne_ind a b c : wn a -> wn b -> wne c -> wne (tInd a b c).
+Proof.
+  rewrite /wn/wne.
+  move => [va [? ?]] [vb [? ?]] [vc [? ?]].
+  exists (tInd va vb vc).
+  split=>//=.
+  - by apply S_Ind.
+  - sfirstorder b:on.
 Qed.
 
 (* --------------------------------------------------------------- *)
