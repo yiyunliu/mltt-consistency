@@ -159,7 +159,12 @@ Proof.
   (* Zero *)
   - hauto l:on.
   (* Suc *)
-  - admit.
+  - move => Γ a _ ha _ hΓ ρ hρ.
+    move /(_ ρ hρ) : ha.
+    move => [m][PA][h] h0.
+    exists m, PA. split=>//.
+    move /InterpUnivN_Nat_inv in h.
+    hauto lq:on use:S_Suc.
   (* Ind *)
   - move => Γ a b c A l _ /SemWt_Univ hA _ ha _ hb _ hc ρ hρ.
     case /(_ ρ hρ) : ha => i [? [/InterpUnivN_Bool_inv ? ha']]; subst.

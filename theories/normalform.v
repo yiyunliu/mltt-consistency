@@ -267,6 +267,12 @@ Proof.
   - solve_s_rec.
 Qed.
 
+Lemma S_Suc a b (h : a ⇒* b) : tSuc a ⇒* tSuc b.
+Proof.
+  elim : a b / h; last by solve_s_rec.
+  move => ?; apply rtc_refl.
+Qed.
+
 (* ------------------------------------------------------ *)
 
 (* We can construct proofs that terms are weakly neutral 
