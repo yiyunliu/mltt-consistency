@@ -340,17 +340,18 @@ Inductive stm (n : nat) : tm -> Prop :=
   (* ----------- *)
   stm n (tUniv i)
 
-| SC_True :
+| SC_Zero :
   (* --------- *)
-  stm n tTrue
+  stm n tZero
 
-| SC_False :
+| SC_Suc a :
+  stm n a ->
   (* -------------- *)
-  stm n tFalse
+  stm n (tSuc a)
 
-| SC_Bool :
+| SC_Nat :
   (* -------------- *)
-  stm n tBool
+  stm n tNat
 
 | SC_Eq a b A :
   stm n a ->
@@ -367,17 +368,18 @@ Inductive stm (n : nat) : tm -> Prop :=
   (* ------------- *)
   stm n (tJ t a b p)
 
-| SC_If a b c :
+| SC_Ind a b c :
   stm n a ->
-  stm n b ->
+  stm (2 + n) b ->
   stm n c ->
-  stm n (tIf a b c)
+  stm n (tInd a b c)
 
 | SC_Refl :
   (* --------- *)
   stm n tRefl.
 
 #[export]Hint Constructors stm : stm.
+
 
 Lemma scope_lt n a : stm n a -> forall m, n <= m -> stm m a.
 Proof. move => h. elim : a / h; hauto lq:on ctrs:stm solve+:lia. Qed.
@@ -437,7 +439,24 @@ Proof.
 Qed.
 
 Lemma Par_scope a b (h : a ⇒ b) : forall n, stm n a -> stm n b.
-Proof. elim : a b / h; hauto lq:on inv:stm ctrs:stm use:scope_subst. Qed.
+Proof.
+  elim : a b / h;
+    match goal with
+    | [|-context[subst_tm]] => idtac
+    | _ => hauto lq:on inv:stm ctrs:stm
+    end.
+  - hauto lq:on inv:stm ctrs:stm use:scope_subst.
+  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc n hi.
+    inversion hi; subst.
+    apply scope_morphing with (n := 2 +  n);simpl;  eauto.
+    case => [_|].
+    + hauto lq:on inv:stm ctrs:stm.
+    + case => [_|]/=.
+      hauto lq:on inv:stm.
+      move => n0 h.
+      have {h}: n0 < n by lia.
+      hauto lq:on ctrs:stm.
+Qed.
 
 Lemma Pars_scope a b (h : a ⇒* b) : forall n, stm n a -> stm n b.
 Proof. elim : a b / h; sfirstorder use:Par_scope. Qed.
