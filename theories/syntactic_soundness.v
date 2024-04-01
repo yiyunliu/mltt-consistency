@@ -110,15 +110,15 @@ Proof.
 Qed.
 (* -------------------------------------------------- *)
 
-Lemma T_If' Γ t a b c A i :
-  t = (subst_tm (a..) A) ->
-  Wt (tBool :: Γ) A (tUniv i) ->
-  Γ ⊢ a ∈ tBool ->
-  Γ ⊢ b ∈ (subst_tm (tTrue..) A) ->
-  Γ ⊢ c ∈ (subst_tm (tFalse..) A) ->
+Lemma T_Ind' Γ a b c A i T :
+  T = A [c..] ->
+  tNat :: Γ ⊢ A ∈ tUniv i ->
+  Γ ⊢ a ∈ A [tZero..] ->
+  A :: tNat :: Γ ⊢ b ∈ A[tSuc (var_tm 0) .: ↑ >> var_tm]⟨↑⟩ ->
+  Γ ⊢ c ∈ tNat ->
   (* ------------ *)
-  Γ ⊢ (tIf a b c) ∈ t.
-Proof. move =>> ->. apply T_If. Qed.
+  Γ ⊢ tInd a b c ∈ T.
+Proof. move  =>> ->. apply T_Ind. Qed.
 
 Lemma T_App' Γ a A B0 B b :
   B0 = (subst_tm (b..) B) ->
@@ -215,17 +215,32 @@ Proof.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - qauto l:on ctrs:Wt use:Sub_renaming.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
-    apply  T_If' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
+    apply  T_Ind' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
     + by asimpl.
     + apply ihA. by apply good_renaming_up.
       apply Wff_cons with (i := 0); qauto l:on ctrs:Wt.
-    + hauto l:on.
-    + set q := (subst_tm _ _).
-      replace q with (ren_tm ξ (subst_tm (tTrue..) A)); auto.
-      subst q; by asimpl.
-    + set q := (subst_tm _ _).
-      replace q with (ren_tm ξ (subst_tm (tFalse..) A)); auto.
-      subst q; by asimpl.
+    + have -> : A ⟨upRen_tm_tm ξ⟩[tZero..] = A[tZero..]⟨ξ⟩ by asimpl. auto.
+    + move /(_ (A ⟨upRen_tm_tm ξ⟩ :: tNat :: Δ) (upRen_tm_tm (upRen_tm_tm ξ)))
+        : ihb. asimpl. apply.
+      * case => [A0|[A0|n]].
+        inversion 1; subst. asimpl.
+        apply here'. by asimpl.
+
+        elim /lookup_inv=>// _ []// A1 Γ0 B  h _ [*]. subst.
+        have -> : A1 = tNat by hauto lq:on inv:lookup.
+        asimpl. apply : there'; last by sfirstorder ctrs:lookup. by asimpl.
+
+        move => A0 h.
+        have {h} : exists A1, lookup n Γ A1 /\ A0 = A1 ⟨↑⟩ ⟨↑⟩ by hauto lq:on inv:lookup.
+        move => [A1 [hA1 hA1']]. subst.
+        simpl. asimpl.
+        apply : there'; cycle 1. apply : there'; cycle 1.
+        sfirstorder.
+        done.
+        by asimpl.
+      * have ? : ⊢ tNat :: Δ by hauto lq:on ctrs:Wt db:wff.
+        eauto using good_renaming_up with wff.
+    + auto.
   - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     rewrite -renaming_Syn_helper.
@@ -305,18 +320,19 @@ Proof.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - hauto q:on ctrs:Wt use:Sub_morphing.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ρ hρ hΔ /=.
-    have ? : Wff (tBool :: Δ) by apply Wff_cons with (i := 0); eauto using T_Bool.
-    apply T_If' with (A := subst_tm (up_tm_tm ρ) A) (i := i); first by asimpl.
+    have ? : Wff (tNat :: Δ) by apply Wff_cons with (i := 0); eauto using T_Nat.
+    apply T_Ind' with (A := subst_tm (up_tm_tm ρ) A) (i := i); first by asimpl.
     + hauto lq:on ctrs:Wt use:good_morphing_up.
-    + hauto l:on.
-    + set q := subst_tm (tTrue..) _.
-      replace q with (subst_tm ρ (subst_tm (tTrue..) A)).
-      hauto l:on.
-      subst q; by asimpl.
-    + set q := subst_tm (tFalse..) _.
-      replace q with (subst_tm ρ (subst_tm (tFalse..) A)).
-      hauto l:on.
-      subst q; by asimpl.
+    + move /iha : hρ {iha}.
+      asimpl. tauto.
+    + have hw : lookup_good_morphing (up_tm_tm ρ) (tNat :: Γ) (tNat :: Δ)
+        by hauto lq:on ctrs:Wt use:good_morphing_up db:wff.
+      have /ihb : lookup_good_morphing (up_tm_tm (up_tm_tm ρ)) (A :: tNat :: Γ) (A[up_tm_tm ρ] :: tNat :: Δ) by hauto lq:on ctrs:Wt use:good_morphing_up db:wff.
+      asimpl. substify. apply.
+      apply : Wff_cons=>//.
+      apply ihA=>//.
+      move : hw. asimpl. by substify.
+    + auto.
   - move => Γ t a b p A i j C ha iha hb ihb hA ihA  hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     have ? : Wt Δ (subst_tm ξ a) (subst_tm ξ A) by hauto l:on.
