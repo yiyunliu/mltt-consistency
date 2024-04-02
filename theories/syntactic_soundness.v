@@ -8,7 +8,6 @@
 
 Require Import imports join typing.
 
-
 (* -------------------------------------------------- *)
 (* Parallel reduction preserves head forms. We use this
    to show that Coherent terms have the same head form.
@@ -44,7 +43,7 @@ Function hleq (a b : head) :=
   | _, _ => false
   end.
 
-Notation "a \≤ b" := (hleq a b) (at level 60, no associativity).
+Notation "a \≤ b" := (hleq a b) (at level 80, no associativity).
 
 Lemma hleq_refl a : a \≤ a.
 Proof. elim : a=>//. Qed.
@@ -363,6 +362,15 @@ Proof.
   - asimpl; eauto using T_Var with wff.
 Qed.
 
+Lemma subst_Syn_Univ Γ A a b i :
+  (A :: Γ) ⊢ b ∈ tUniv i ->
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ b[a..] ∈ tUniv i.
+Proof.
+  change (tUniv i) with (tUniv i)[a..].
+  apply subst_Syn.
+Qed.
+
 Lemma Wff_lookup : forall Γ i A,
     ⊢ Γ -> lookup i Γ A -> exists j, Γ ⊢ A ∈ tUniv j.
 Proof.
@@ -385,9 +393,7 @@ Proof.
   elim: Γ a A/h; try qauto ctrs:Wt depth:2.
   - apply Wff_lookup.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
-  - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc.
-    exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
-    eauto using subst_Syn.
+  - eauto using subst_Syn_Univ.
   - hauto lq:on ctrs:Wt db:wff.
   - move => Γ t a b p A i j C ha iha hb ihb hA ihA hp ihp hC ihC ht iht.
     exists i. change (tUniv i) with (subst_tm (p .: b..) (tUniv i)).
@@ -413,33 +419,27 @@ Proof.
   - move => Γ a A B b h0 _ h1 _ ? ? [] *; subst.
     exists A, B; repeat split => //.
     + apply Sub_morphing. apply Sub_reflexive.
-    + move /Wt_regularity : h0.
-      move => [i /Wt_Pi_Univ_inv] [hA hB].
-      exists i.
-      change (tUniv i) with (tUniv i)[b..].
-      apply : subst_Syn; eauto.
+    + qauto ctrs:Wt use:Wt_Pi_Univ_inv, subst_Syn_Univ, Wt_regularity.
   - hauto lq:on rew:off use:Sub_transitive.
 Qed.
 
-Lemma Wt_If_inv Γ a b c T (h : Γ ⊢ (tIf a b c) ∈ T) :
-  exists A, Γ ⊢ a ∈ tBool /\
-         Γ ⊢ b ∈ A [tTrue..] /\
-         Γ ⊢ c ∈ A [tFalse..] /\
-         A[a..] <: T /\
-         (exists j, tBool :: Γ ⊢ A ∈ tUniv j) /\
+Lemma Wt_Ind_inv Γ a b c T (h : Γ ⊢ (tInd a b c) ∈ T) :
+  exists A, Γ ⊢ a ∈ A[tZero..] /\
+       A :: tNat :: Γ ⊢ b ∈ A [tSuc (var_tm 0) .: ↑ >> var_tm]⟨↑⟩  /\
+         Γ ⊢ c ∈ tNat /\
+         A[c..] <: T /\
+         (exists j, tNat :: Γ ⊢ A ∈ tUniv j) /\
          exists i, Γ ⊢ T ∈ tUniv i.
 Proof.
-  move E : (tIf a b c) h => a0 h.
+  move E : (tInd a b c) h => a0 h.
   move : a b c E.
   elim : Γ a0 T / h => //.
   - hauto lq:on rew:off use:Sub_transitive.
   - move => Γ a b c A i hA _ ha _ hb _ hc _ ? ? ?[*]. subst.
     exists A. repeat split=>//.
     + apply Sub_reflexive.
-    + exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
-      eauto using subst_Syn.
-    + exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
-      eauto using subst_Syn.
+    + eauto using subst_Syn_Univ.
+    + eauto using subst_Syn_Univ.
 Qed.
 
 Lemma Wt_Eq_inv Γ a b A U (h : Γ ⊢ (tEq a b A) ∈ U) :
@@ -563,13 +563,24 @@ Qed.
 Lemma Wt_Refl_inv Γ T (h : Γ ⊢ tRefl ∈ T) :
   exists a A, Γ ⊢ tRefl ∈ (tEq a a A)  /\
          Γ ⊢ a ∈ A /\
-         Sub (tEq a a A) T /\ exists i, Γ ⊢ T ∈ (tUniv i).
+         tEq a a A <: T /\ exists i, Γ ⊢ T ∈ (tUniv i).
 Proof.
   move E : tRefl h => p h.
   move : E.
   elim : p T / h=>//.
   - hauto lq:on rew:off use:Sub_transitive.
   - hauto lq:on ctrs:Wt use:T_Eq_simpl, Sub_reflexive.
+Qed.
+
+Lemma Wt_Suc_inv Γ a T (h : Γ ⊢ tSuc a ∈ T) :
+  Γ ⊢ a ∈ tNat /\
+  tNat <: T /\ exists i, Γ ⊢ T ∈ tUniv i.
+Proof.
+  move E : (tSuc a) h => a0 h.
+  move : a E.
+  elim : Γ a0 T / h=>//.
+  - hauto lq:on rew:off use:Sub_transitive.
+  - hauto lq:on ctrs:Wt use:T_Nat, Sub_reflexive.
 Qed.
 
 Lemma Wt_Refl_Coherent Γ a b A (h : Γ ⊢ tRefl ∈ (tEq a b A)) :
@@ -617,14 +628,40 @@ Proof.
       have : B0[b0..] ⇒ B0[b1..]; last by hauto l:on use:Par_Sub.
       sfirstorder use:Par_cong, Par_refl.
       hauto l:on use:Sub_morphing.
-  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_If_inv.
+  - move => a b h ih Γ A /Wt_Suc_inv.
+    move => [h0][h1][i]h2.
+    apply : T_Conv; eauto.
+    have : ⊢ Γ by eauto with wff.
+    have : Γ ⊢ b ∈ tNat by auto.
+    apply T_Suc.
+  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_Ind_inv.
     move => [A0][ha0][hb0][hc0][hC][[i hA0]][j hAj].
-    apply : T_Conv. apply T_If with (i := i); eauto. eauto.
+    apply : T_Conv. apply T_Ind with (i := i); eauto. eauto.
     apply : Sub_transitive; eauto.
-    have : A0[a0..] ⇒ A0[a1..]; last by hauto l:on use:Par_Sub.
+    have : A0[c0..] ⇒ A0[c1..]; last by hauto l:on use:Par_Sub.
     sfirstorder use:Par_cong, Par_refl.
-  - qauto l:on use:Wt_If_inv ctrs:Wt.
-  - qauto l:on use:Wt_If_inv ctrs:Wt.
+  - qauto l:on use:Wt_Ind_inv ctrs:Wt.
+  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_Ind_inv.
+    move => [A0][ha0][hb0][hc0][hA0][[j hA0']][i hA'].
+    apply : T_Conv; eauto.
+    have : A0[(tSuc c1)..] <: A0[(tSuc c0)..].
+    apply Par_Sub.
+    apply Par_morphing. case => //=; hauto l:on ctrs:Par. apply Par_refl.
+    move/T_Conv. apply.
+    have /morphing_Syn /(_ Γ (tInd a1 b1 c1 .: c1..))  := ihb _ _ hb0.
+    asimpl. apply; eauto with wff.
+    rewrite /lookup_good_morphing.
+    have ? : Γ ⊢ c0 ∈ tNat by hauto l:on use:Wt_Suc_inv.
+    move => i0 A1. elim/lookup_inv => _.
+    + move => A2 Γ0 ? []*. subst.
+      asimpl.
+      apply : T_Ind; eauto.
+    + move => n A2 Γ0 B + ? [*]. subst.
+      elim/lookup_inv => _.
+      move => A1 Γ0 ? [*]. subst. by asimpl; auto.
+      move => n0 A1 Γ0 B ? ? [*]. subst.
+      asimpl.  hauto lq:on ctrs:Wt db:wff.
+    + eauto using subst_Syn_Univ.
   - move => a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ A /Wt_Eq_inv.
     intros (ha0' & hb0' & (q & hA0') & (i & eq) & (j & hA)).
     apply T_Conv with (A := (tUniv i)) (i := j); eauto.
@@ -673,17 +710,16 @@ Proof.
     apply Coherent_cong. apply Coherent_reflexive. auto.
 Qed.
 
-
 (* ----------------------------------------------- *)
 Definition is_value (a : tm) :=
   match a with
   | tPi A B => true
   | tAbs a => true
-  | tBool => true
-  | tTrue => true
-  | tFalse => true
+  | tNat => true
+  | tSuc _ => true
+  | tZero => true
   | tVoid => true
-  | tIf a b c => false
+  | tInd a b c => false
   | tApp a b => false
   | tUniv _ => true
   | tRefl => true
@@ -692,32 +728,38 @@ Definition is_value (a : tm) :=
   | var_tm _ => false
   end.
 
-Definition head_inhab (a : head) : head :=
+Definition head_inhab (a : tm) : head :=
   match a with
-  | hPi => hUniv
-  | hAbs => hPi
-  | hBool => hUniv
-  | hTrue => hBool
-  | hFalse => hBool
-  | hVoid => hUniv
-  | hUniv => hUniv
-  | hEq => hUniv
-  | hRefl => hEq
+  | tAbs _ => hPi
+  | tSuc _ => hNat
+  | tZero => hNat
+  | tRefl => hEq
+  | tPi _ _ => hUniv
+  | tEq _ _ _ => hUniv
+  | tUniv _ => hUniv
+  | tVoid => hUniv
+  | tNat => hUniv
+  | _ => hBot
   end.
 
-Lemma wt_winv Γ A B (h : Γ ⊢ A ∈ B) : forall hf,
-  tm_to_head A = Some hf ->
-  exists U, Γ ⊢ A ∈ U /\ U <: B /\ Some (head_inhab hf) = tm_to_head U.
+Lemma wt_winv Γ A T (h : Γ ⊢ A ∈ T) :
+  ~~ (head_inhab A \≤ hBot) ->
+  exists B, tm_to_head B = head_inhab A /\ B <: T.
 Proof.
-  elim : Γ A B / h; hauto q:on dep:on ctrs:Wt use:Sub_reflexive, Sub_transitive.
+  elim : Γ A T / h => //=; solve [sfirstorder use:Sub_reflexive | hauto lq:on use:Sub_reflexive, Sub_transitive].
 Qed.
 
-Lemma wt_wrong_hf_contra Γ A B (h : Γ ⊢ A ∈ B) :
-  forall hf hf',
-  tm_to_head A = Some hf ->
-  tm_to_head B = Some hf' ->
-  head_inhab hf = hf'.
-Proof. hauto l:on use:wt_winv, Sub_consistent. Qed.
+Lemma bot_is_bot a : hBot \≤ a.
+Proof. case : a => //. Qed.
+
+Lemma hleq_bot a : a \≤ hBot -> a = hBot.
+Proof. auto using bot_is_bot, hleq_antisym. Qed.
+
+Lemma wt_wrong_hf_contra Γ a A (h : Γ ⊢ a ∈ A) :
+  (head_inhab a \≤ tm_to_head A) || (tm_to_head A \≤ head_inhab a).
+Proof.
+  case E : (head_inhab a \≤ hBot)=>//; qauto l:on use:wt_winv, Sub_consistent, hleq_bot.
+Qed.
 
 (* Canonical forms lemmas *)
 Definition canon_prop (U : tm) (a : tm) : Prop :=
@@ -725,14 +767,14 @@ Definition canon_prop (U : tm) (a : tm) : Prop :=
   match U with
   | tPi A B => exists a0, a = tAbs a0
   | tEq _ _ _ => a = tRefl
-  | tBool => is_bool_val a
+  | tNat => a = tZero \/ exists b, a = tSuc b
   | _ => True
   end.
 
 Lemma wt_canon a U :
   nil ⊢ a ∈ U -> canon_prop U a.
 Proof.
-  case : U=> //; case : a => //; hauto drew:off use:wt_wrong_hf_contra.
+  move /wt_wrong_hf_contra; hauto drew:off ctrs:tm inv:tm unfold:canon_prop.
 Qed.
 
 Lemma wt_progress a A (h :nil ⊢ a ∈ A) : is_value a \/ exists a0, a ⇒ a0.
