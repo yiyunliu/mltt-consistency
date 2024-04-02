@@ -34,7 +34,9 @@ In short, the system is most similar to the predicative part of
 $CC^\omega$, which is notable for its untyped conversion rule and
 cumulativity.
 We add extensions such as an intensional identity type, a
-boolean base type, and a Void type.
+natural number base type, and a Void type. The Void type can instead be
+encoded as `0 = 1 ∈ Nat`. Likewise, we can encode a singleton type as
+`0 = 0 ∈ Nat`.
 
 Our subtyping relation is contravariant on the argument, unlike
 $CC^\omega$ or Coq. The semantic model is enough to justify this more
