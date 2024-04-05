@@ -4,7 +4,6 @@ nat : Type
 tAbs : (tm -> tm) -> tm
 tApp : tm -> tm -> tm
 tPi : tm -> (tm -> tm) -> tm
-tVoid : tm
 tUniv : nat -> tm
 tEq : tm -> tm -> tm -> tm
 tJ : tm -> tm -> tm -> tm -> tm

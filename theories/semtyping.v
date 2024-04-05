@@ -18,7 +18,6 @@ Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm
 Reserved Notation "⟦ A ⟧ i , I ↘ S" (at level 70).
 Inductive InterpExt i (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Ne A : ne A -> ⟦ A ⟧ i , I ↘ wne
-| InterpExt_Void : ⟦ tVoid ⟧ i , I ↘ wne
 | InterpExt_Nat : ⟦ tNat ⟧ i , I ↘ (fun a => exists v, a ⇒* v /\ is_nat_val v)
 | InterpExt_Fun A B PA PF :
   ⟦ A ⟧ i , I ↘ PA ->
@@ -80,7 +79,6 @@ Proof.
   elim : A PA / h.
   - hauto lq:on ctrs:InterpExt.
   - hauto l:on.
-  - hauto l:on.
   - hauto l:on ctrs:InterpExt.
   - move => m h.
     apply InterpExt_Univ' => //.
@@ -99,7 +97,6 @@ Lemma InterpExt_lt_redundant2 i I A PA
 Proof.
   elim : A PA / h.
   - hauto lq:on ctrs:InterpExt.
-  - hauto l:on.
   - hauto l:on.
   - hauto l:on ctrs:InterpExt.
   - move => m ?.
@@ -194,7 +191,6 @@ Proof.
   elim : A P / h; auto.
   - hauto lq:on ctrs:InterpExt db:nfne.
   - hauto lq:on inv:Par ctrs:InterpExt.
-  - hauto lq:on inv:Par ctrs:InterpExt.
   - move => A B PA PF hPA ihPA hPB hPB' ihPB T hT.
     elim /Par_inv :  hT => //.
     move => hPar A0 A1 B0 B1 h0 h1 [? ?] ?; subst.
@@ -273,15 +269,6 @@ Proof.
   elim : A P / h; hauto q:on inv:tm,Par.
 Qed.
 
-Lemma InterpExt_Void_inv i I P :
-  ⟦ tVoid ⟧ i , I ↘ P ->
-  P = wne.
-Proof.
-  move E : tVoid => A h.
-  move : E.
-  elim : A P / h; hauto lq:on inv:Par.
-Qed.
-
 Lemma InterpExt_Univ_inv i I P j :
   ⟦ tUniv j ⟧ i , I ↘ P ->
   P = I j /\ j < i.
@@ -336,7 +323,6 @@ Proof.
   move : PB.
   elim : A PA / h.
   - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_Ne_inv.
-  - hauto lq:on inv:InterpExt ctrs:InterpExt use:InterpExt_Void_inv.
   - hauto lq:on inv:InterpExt use:InterpExt_Nat_inv.
   - move => A B PA PF hPA ihPA hPB hPB' ihPB P hP.
     move /InterpExt_Fun_inv : hP.
@@ -432,7 +418,6 @@ Proof.
   elim : A PA /h.
   - hauto lq:on ctrs:rtc.
   - hauto lq:on ctrs:rtc.
-  - hauto lq:on ctrs:rtc.
   - move => A B PA PF hPA ihA hPFTot hPF ihPF b0 b1 hb01.
     rewrite /ProdSpace => hPB a PB ha hPFa.
     have ? : (tApp b0 a ⇒ tApp b1 a) by hauto lq:on ctrs:Par use:Par_refl.
@@ -486,7 +471,6 @@ Proof.
   elim : A PA / h =>//.
   - firstorder with nfne.
   - firstorder with nfne.
-  - hauto lq:on db:nfne.
   - move => A B PA PF hA ihA hTot hRes ih.
     split.
     + rewrite /ProdSpace => b hb.
@@ -542,9 +526,6 @@ Proof.
     split => ?; have : ne B by hauto l:on use:Sub1_ne inv:Sub1.
     hauto lq:on rew:off inv:Sub1 use:InterpExt_Ne_inv.
     hauto lq:on rew:off inv:Sub1 use:InterpExt_Ne_inv.
-  - move => > h *. split. hauto q:on inv:Sub1 ctrs:InterpExt use:InterpExt_Void_inv.
-    inversion 1; subst.
-    move /InterpExt_Void_inv : h => ->. done.
   - hauto lq:on inv:Sub1, InterpExt use:InterpExt_Nat_inv.
   - move => A0 B0 PA0 PF0 hPA0 ihA0 hTot hPF ihPF j ? PB hPB.
     have ? : ⟦ tPi A0 B0 ⟧ i, I ↘ (ProdSpace PA0 PF0) by hauto l:on ctrs:InterpExt.

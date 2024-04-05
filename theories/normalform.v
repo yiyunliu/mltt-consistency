@@ -7,7 +7,6 @@ Fixpoint ne (a : tm) : bool :=
   | tApp a b => ne a && nf b
   | tAbs _ => false
   | tPi A B => false
-  | tVoid => false
   | tJ t a b p => nf t && nf a && nf b && ne p
   | tUniv _ => false
   | tZero => false
@@ -23,7 +22,6 @@ with nf (a : tm) : bool :=
   | tApp a b => ne a && nf b
   | tAbs a => nf a
   | tPi A B => nf A && nf B
-  | tVoid => true
   | tJ t a b p => nf t && nf a && nf b && ne p
   | tUniv _ => true
   | tZero => true
@@ -105,7 +103,6 @@ Proof.
   elim : a0 b0 / h.
   - move => + []//. eauto with par.
   - move => + []//. eauto with par.
-  - move => []//. eauto with par.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 [] // /=.
     hauto lq:on ctrs:Par.
   - move => a0 a1 h ih [] // a ξ [] ?.

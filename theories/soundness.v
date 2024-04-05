@@ -1,4 +1,4 @@
-Require Import join semtyping normalform typing imports.
+Require Import join par_consistency semtyping normalform typing imports.
 
 (* Semantic substitution well-formedness *)
 Definition ρ_ok Γ ρ := forall i A, lookup i Γ A -> forall m PA, ⟦ A [ρ] ⟧ m ↘ PA -> PA (ρ i).
@@ -112,8 +112,6 @@ Proof.
     exists j. exists PA. split. auto.
     move: (hρ _ _ l _ _ h1).
     by asimpl.
-  (* Void *)
-  - hauto l:on use:SemWt_Univ.
   (* Pi *)
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.
@@ -332,10 +330,6 @@ Inductive stm (n : nat) : tm -> Prop :=
   (* ------------ *)
   stm n (tPi A B)
 
-| SC_Void :
-  (* ------------ *)
-  stm n tVoid
-
 | SC_Univ i :
   (* ----------- *)
   stm n (tUniv i)
@@ -416,11 +410,9 @@ Lemma scope_morphing_up n m ρ :
   forall i, i < S n -> stm (S m) (up_tm_tm ρ i).
 Proof.
   move => h.
-  case. asimpl.
-  hauto l:on ctrs:stm use:scope_weaken.
-  move => p ?. asimpl.
-  apply scope_weaken.
-  apply h. lia.
+  case.
+  asimpl. hauto lq:on ctrs:stm solve+:lia.
+  hauto lq:on use:scope_weaken simp+:asimpl solve+:lia.
 Qed.
 
 Lemma scope_morphing n a (h : stm n a) :
@@ -461,7 +453,7 @@ Qed.
 Lemma Pars_scope a b (h : a ⇒* b) : forall n, stm n a -> stm n b.
 Proof. elim : a b / h; sfirstorder use:Par_scope. Qed.
 
-Lemma consistency a : ~ nil ⊢ a ∈ tVoid.
+Lemma consistency a : ~ nil ⊢ a ∈ tEq tZero (tSuc tZero) tNat.
 Proof.
   move => /[dup] /wt_scope /= h.
   move /(proj1 soundness).
@@ -469,10 +461,7 @@ Proof.
   have : ρ_ok nil var_tm by
     hauto lq:on inv:lookup unfold:ρ_ok.
   move/[swap]/[apply].
-  move => [m][PA][]. simp InterpUniv. asimpl.
-  move/InterpExt_Void_inv => ->.
-  rewrite /wne.
-  move => [b][]. move : h.
-  move /Pars_scope. move/[apply].
-  hauto lq:on use:ne_scope solve+:lia.
+  move => [m][PA][].
+  move /InterpUnivN_Eq_inv => [->]_[[_/Coherent_consistent]|[v[/Pars_scope]]]//.
+  asimpl. move /(_ 0 h). move/ne_scope/[apply]. lia.
 Qed.

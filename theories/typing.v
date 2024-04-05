@@ -22,11 +22,6 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   (* ------ *)
   Γ ⊢ (var_tm i) ∈ A
 
-| T_Void Γ i :
-  ⊢ Γ ->
-  (* -------- *)
-  Γ ⊢ tVoid ∈ (tUniv i)
-
 | T_Pi Γ i A B :
   Γ ⊢ A ∈ (tUniv i) ->
   (A :: Γ) ⊢ B ∈ (tUniv i) ->

@@ -21,9 +21,6 @@ Inductive Par : tm -> tm -> Prop :=
 | P_Univ n :
   (* -------- *)
   (tUniv n) ⇒ (tUniv n)
-| P_Void :
-  (* -------- *)
-  tVoid ⇒ tVoid
 | P_Pi A0 A1 B0 B1 :
   (A0 ⇒ A1) ->
   (B0 ⇒ B1) ->
@@ -450,7 +447,6 @@ Function tstar (a : tm) :=
   match a with
   | var_tm i => a
   | tUniv _ => a
-  | tVoid => a
   | tPi A B => tPi (tstar A) (tstar B)
   | tAbs a => tAbs (tstar a)
   | tApp (tAbs a) b =>  (tstar a) [(tstar b)..]
@@ -507,8 +503,6 @@ Inductive Sub1 : tm -> tm -> Prop :=
   Sub1 (tAbs b) (tAbs b)
 | Sub_App b a :
   Sub1 (tApp b a) (tApp b a)
-| Sub_Void :
-  Sub1 tVoid tVoid
 | Sub_Zero :
   Sub1 tZero tZero
 | Sub_Suc a :
