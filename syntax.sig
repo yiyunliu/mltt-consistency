@@ -12,3 +12,6 @@ tZero : tm
 tSuc : tm -> tm
 tInd : tm -> (tm -> tm -> tm) -> tm -> tm
 tNat : tm
+tSig : tm -> (tm -> tm) -> tm
+tPack : tm -> tm -> tm
+tLet : tm -> (tm -> tm -> tm) -> tm

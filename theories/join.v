@@ -86,8 +86,27 @@ Inductive Par : tm -> tm -> Prop :=
   (t0 ⇒ t1) ->
   (* ---------- *)
   (tJ t0 a b tRefl) ⇒ t1
+| P_Sig A0 A1 B0 B1 :
+  (A0 ⇒ A1) ->
+  (B0 ⇒ B1) ->
+  (* --------------------- *)
+  tSig A0 B0 ⇒ tSig A1 B1
+| P_Pack a0 a1 b0 b1 :
+  (a0 ⇒ a1) ->
+  (b0 ⇒ b1) ->
+  (* ------------------------- *)
+  (tPack a0 b0) ⇒ (tPack a1 b1)
+| P_Let a0 b0 a1 b1 :
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  (* --------------------- *)
+  tLet a0 b0 ⇒ tLet a1 b1
+| P_LetPack a0 b0 c0 a1 b1 c1 :
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  c0 ⇒ c1 ->
+  tLet (tPack a0 b0) c0 ⇒ c1[b1 .: a1 ..]
 where "A ⇒ B" := (Par A B).
-
 #[export]Hint Constructors Par : par.
 
 (* The reflexive, transitive closure of parallel reduction. *)
