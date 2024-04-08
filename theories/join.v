@@ -151,6 +151,14 @@ Lemma P_IndSuc' a0 a1 b0 b1 c0 c1 t :
   tInd a0 b0 (tSuc c0) ⇒ t.
 Proof. move => > ->. apply P_IndSuc. Qed.
 
+Lemma P_LetPack' a0 b0 c0 a1 b1 c1 t :
+  t = c1[b1 .: a1 ..] ->
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  c0 ⇒ c1 ->
+  tLet (tPack a0 b0) c0 ⇒ t.
+Proof. move => > ->. apply P_LetPack. Qed.
+
 (* ------------------------------------------------------------ *)
 
 (* Par (⇒), Pars (⇒* ), and ⇔ are closed under renaming *)
@@ -165,6 +173,8 @@ Proof.
     apply : P_AppAbs'; eauto. by asimpl.
   - move => *.
     apply : P_IndSuc'; eauto; by asimpl.
+  - move => *.
+    apply : P_LetPack'; eauto; by asimpl.
 Qed.
 
 Lemma Pars_renaming a b (ξ : fin -> fin) :
@@ -222,6 +232,9 @@ Proof.
       eauto => /=. by asimpl.
     sfirstorder use:(Par_morphing_lift_n 2).
   - hauto lq:on db:par use:(Par_morphing_lift_n 1).
+  - qauto db:par use:(Par_morphing_lift_n 1).
+  - move => a0 b0 a1 b1 ha iha hb ihb.
+
 Qed.
 
 Lemma Par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
