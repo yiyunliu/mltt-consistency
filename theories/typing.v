@@ -98,6 +98,26 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   Γ ⊢ t ∈ (C [tRefl .: a ..]) ->
   Γ ⊢ (tJ t a b p) ∈ (C [p .: b..])
 
+| T_Sig Γ i A B :
+  Γ ⊢ A ∈ (tUniv i) ->
+  (A :: Γ) ⊢ B ∈ (tUniv i) ->
+  (* --------------------- *)
+  Γ ⊢ (tSig A B) ∈ (tUniv i)
+
+| T_Pack Γ a A b B i :
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ b ∈ B[a..] ->
+  A :: Γ ⊢ B ∈ tUniv i ->
+  (* -------------------- *)
+  Γ ⊢ tPack a b ∈ tSig A B
+
+| T_Let Γ a b A B C i : 
+  Γ ⊢ a ∈ tSig A B ->
+  B :: A :: Γ ⊢ b ∈ C[(tPack (var_tm 1) (var_tm 0))..] ->
+  tSig A B :: Γ ⊢ C ∈ tUniv i ->
+  (* ----------------------- *)
+  Γ ⊢ tLet a b ∈ C[a ..]
+
 with Wff : context -> Prop :=
 | Wff_nil :
 (* ----------------- *)

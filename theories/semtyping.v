@@ -664,10 +664,11 @@ Proof.
       move /ihPF : hPB1 (hPB0). move/[apply].
       qauto l:on.
     + elim /sub1_inv=>//.
-      move => _ A1 B1 A2 B2 hs1 hs2 []? ? ?. subst.
+      move => _ A1 B1 A2 B2 hs1 hs2 ? [? ?] t. subst.
       move /InterpExt_Sig_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
       have {}ihA0 : forall a, PA1 a -> PA0 a by hauto l:on.
-      
+      rewrite /SumSpace. move => []; last by tauto.
+      qauto l:on use:Sub1_morphing.
   - move => A A0 PA hred hPA ih j B PB hPB.
     split.
     + move => hSub a ha.
