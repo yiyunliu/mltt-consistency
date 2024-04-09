@@ -233,8 +233,11 @@ Proof.
     sfirstorder use:(Par_morphing_lift_n 2).
   - hauto lq:on db:par use:(Par_morphing_lift_n 1).
   - qauto db:par use:(Par_morphing_lift_n 1).
-  - move => a0 b0 a1 b1 ha iha hb ihb.
-
+  - qauto l:on ctrs:Par use:(Par_morphing_lift_n 2).
+  - move => a0 b0 c0 a1 b1 c1 ha iha hb ihb hc ihc σ0 σ1 hσ /=.
+    apply P_LetPack' with (a1 := a1[σ1]) (b1 := b1[σ1]) (c1 := c1[up_tm_tm (up_tm_tm σ1)]); eauto.
+    by asimpl.
+    sfirstorder use:(Par_morphing_lift_n 2).
 Qed.
 
 Lemma Par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
@@ -401,7 +404,7 @@ Lemma Pars_univ_inv i A (h : (tUniv i) ⇒* A) :
 Proof.
   move E : (tUniv i) h => A0 h.
   move : E.
-  elim : A0 A / h; hauto lq:on rew:off ctrs:rtc, Par inv:Par.
+  elim : A0 A / h; hauto q:on rew:off ctrs:rtc, Par inv:Par.
 Qed.
 
 Lemma Coherent_univ_inj i j (h : Coherent (tUniv i) (tUniv j)) : i = j.
@@ -493,6 +496,10 @@ Function tstar (a : tm) :=
   | tEq a b A => tEq (tstar a) (tstar b) (tstar A)
   | tJ t a b tRefl => tstar t
   | tJ t a b p => tJ (tstar t) (tstar a) (tstar b) (tstar p)
+  | tLet (tPack a b) c => (tstar c)[(tstar b) .: (tstar a)..]
+  | tLet a b => tLet (tstar a) (tstar b)
+  | tSig A B => tSig (tstar A) (tstar B)
+  | tPack a b => tPack (tstar a) (tstar b)
   end.
 
 Lemma Par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
@@ -555,7 +562,15 @@ Inductive Sub1 : tm -> tm -> Prop :=
 | Sub_Prod A0 B0 A1 B1 :
   Sub1 A1 A0 ->
   Sub1 B0 B1 ->
-  Sub1 (tPi A0 B0) (tPi A1 B1).
+  Sub1 (tPi A0 B0) (tPi A1 B1)
+| Sub_Sig A0 B0 A1 B1 :
+  Sub1 A0 A1 ->
+  Sub1 B0 B1 ->
+  Sub1 (tSig A0 B0) (tSig A1 B1)
+| Sub_Pack a b :
+  Sub1 (tPack a b) (tPack a b)
+| Sub_Let a b :
+  Sub1 (tLet a b) (tLet a b).
 
 Lemma Sub1_refl A : Sub1 A A.
 Proof. elim : A; hauto ctrs:Sub1 solve+:lia. Qed.
@@ -586,6 +601,7 @@ Proof.
   elim : A0 A1 /h;
     match goal with
     | [|-context[tPi]] =>hauto lq:on rew:off ctrs:Sub1,Par inv:Sub1
+    | [|-context[tSig]] =>hauto lq:on rew:off ctrs:Sub1,Par inv:Sub1
     | _ => hauto lq:on ctrs:Sub1, Par use:Sub1_refl inv:Sub1
     end.
 Qed.

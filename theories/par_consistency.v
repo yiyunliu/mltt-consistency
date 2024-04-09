@@ -5,7 +5,7 @@ Require Import imports join.
    to show that Coherent terms have the same head form.
 *)
 
-Inductive head := hPi | hNat | hUniv | hEq | hBot | hZero | hSuc.
+Inductive head := hPi | hNat | hUniv | hEq | hBot | hZero | hSuc | hSig | hPack.
 
 Definition tm_to_head (a : tm) :=
   match a with
@@ -20,7 +20,10 @@ Definition tm_to_head (a : tm) :=
   | var_tm _ => hBot
   | tEq _ _ _ => hEq
   | tRefl => hBot
+  | tLet _ _ => hBot
   | tJ _ _ _ _ => hBot
+  | tSig _ _ => hSig
+  | tPack _ _ => hPack
   end.
 
 Function hleq (a b : head) :=
@@ -32,6 +35,8 @@ Function hleq (a b : head) :=
   | hEq, hEq => true
   | hSuc, hSuc => true
   | hZero, hZero => true
+  | hPack, hPack => true
+  | hSig, hSig => true
   | _, _ => false
   end.
 
@@ -41,10 +46,10 @@ Lemma hleq_refl a : a \≤ a.
 Proof. elim : a=>//. Qed.
 
 Lemma hleq_trans a b c : a \≤ b -> b \≤ c -> a \≤ c.
-Proof. hauto q:on inv:head. Qed.
+Proof. case : a; case : b; case : c => //. Qed.
 
 Lemma hleq_antisym a b : a \≤ b -> b \≤ a -> a = b.
-Proof. hauto q:on inv:head. Qed.
+Proof. case : a; case : b =>//. Qed.
 
 Lemma Par_head a b (h : a ⇒ b) :
   tm_to_head a \≤ tm_to_head b.
@@ -65,7 +70,7 @@ Proof. hauto lq:on use:Par_head_star, Sub1_consistent b:on unfold:Sub. Qed.
 
 Lemma Sub_consistent_helper a b :
   (exists c, (a \≤ c) && (b \≤ c)) -> (a \≤ b) || (b \≤ a).
-Proof. hauto qb:on inv:head. Qed.
+Proof. case : a ; case : b; hauto lq:on rew:off. Qed.
 
 Lemma Sub_consistent a b (h : a <: b) :
   (tm_to_head a \≤ tm_to_head b) || (tm_to_head b \≤ tm_to_head a).

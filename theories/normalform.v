@@ -15,6 +15,9 @@ Fixpoint ne (a : tm) : bool :=
   | tNat => false
   | tEq a b A => false
   | tRefl => false
+  | tSig A B => false
+  | tPack a b => false
+  | tLet a b => ne a && nf b
   end
 with nf (a : tm) : bool :=
   match a with
@@ -30,6 +33,9 @@ with nf (a : tm) : bool :=
   | tNat => true
   | tEq a b A => nf a && nf b && nf A
   | tRefl => true
+  | tSig A B => nf A && nf B
+  | tPack a b => nf a && nf b
+  | tLet a b => ne a && nf b
   end.
 
 Function is_nat_val (a : tm) : bool :=
@@ -93,7 +99,7 @@ Create HintDb nfne.
 
 (* ------------------ antirenaming ------------------------- *)
 
-(* Next we show that if a renamed term reduces, then 
+(* Next we show that if a renamed term reduces, then
    we can extract the unrenamed term from the derivation. *)
 Local Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
   (h : a⟨ξ⟩ ⇒ b0) : exists b, (a ⇒ b) /\ b0 = b⟨ξ⟩.
@@ -118,7 +124,8 @@ Proof.
     split; last by asimpl.
     hauto lq:on ctrs:Par.
   - hauto q:on ctrs:Par inv:tm.
-  - hauto q:on ctrs:Par inv:tm.
+  - move => + + + + []//=.
+    qauto l:on ctrs:Par.
   - move => > ++++++ [] //.
     hauto q:on ctrs:Par.
   - move => a0 a1 b h0 ih0 []// a2 b1 c1 ξ.
@@ -144,6 +151,21 @@ Proof.
     hauto q:on ctrs:Par.
   - move => t0 a b t1 ++[]//+++[]//.
     hauto q:on ctrs:Par.
+  - move => > + + + + []//=.
+    hauto lq:on ctrs:Par.
+  - move => > + + + + []//=.
+    hauto lq:on ctrs:Par.
+  - move => > + + + + []//=.
+    hauto lq:on ctrs:Par.
+  - move => ? ? ? a1 b1 c1 > ha iha hb ihb hc ihc []//= []//= a0 b0 c0 ξ [*]. subst.
+    specialize iha with (1 := eq_refl).
+    specialize ihb with (1 := eq_refl).
+    specialize ihc with (1 := eq_refl).
+    move : iha => [a2 [iha ?]].
+    move : ihb => [b2 [ihb ?]].
+    move : ihc => [c2 [ihc ?]]. subst.
+    exists (c2[b2 .: a2 ..]).
+    split; [by auto with par | by asimpl].
 Qed.
 
 Local Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
@@ -168,7 +190,7 @@ Qed.
 
 (* ------------------------------------------------------------- *)
 
-(* The next set of lemmas are congruence rules for multiple steps 
+(* The next set of lemmas are congruence rules for multiple steps
    of parallel reduction. *)
 
 #[local]Ltac solve_s_rec :=
@@ -240,6 +262,21 @@ Proof.
   - solve_s_rec.
 Qed.
 
+Lemma S_Sig (a a0 b b0 : tm) :
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tSig a b) ⇒* (tSig a0 b0).
+Proof.
+  move => h.
+  move : b b0.
+  elim : a a0/h.
+  - move => + b b0 h.
+    elim : b b0/h.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
 Lemma S_Abs (a b : tm)
   (h : a ⇒* b) :
   (tAbs a) ⇒* (tAbs b).
@@ -264,6 +301,21 @@ Proof.
   - solve_s_rec.
 Qed.
 
+Lemma S_Pack (a b a0 b0 : tm) :
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tPack a b) ⇒* (tPack a0 b0).
+Proof.
+  move => h.
+  move : b b0.
+  elim : a a0/h.
+  - move => + b b0 h.
+    elim : b b0/h.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
 Lemma S_Suc a b (h : a ⇒* b) : tSuc a ⇒* tSuc b.
 Proof.
   elim : a b / h; last by solve_s_rec.
@@ -272,7 +324,7 @@ Qed.
 
 (* ------------------------------------------------------ *)
 
-(* We can construct proofs that terms are weakly neutral 
+(* We can construct proofs that terms are weakly neutral
    and weakly normal compositionally. *)
 
 Lemma wne_j (t a b p : tm) :
@@ -283,7 +335,7 @@ Proof.
   hauto lq:on b:on use:S_J.
 Qed.
 
-Lemma wne_if (a b c : tm) :
+Lemma wne_ind (a b c : tm) :
   wn a -> wn b -> wne c -> wne (tInd a b c).
 Proof.
   move => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]].
@@ -313,6 +365,20 @@ Proof.
   hauto lqb:on use:S_Pi.
 Qed.
 
+Lemma wn_sig A B : wn A -> wn B -> wn (tSig A B).
+Proof.
+  move => [A0 [? ?]] [B0 [? ?]].
+  exists (tSig A0 B0).
+  hauto lqb:on use:S_Sig.
+Qed.
+
+Lemma wn_pack A B : wn A -> wn B -> wn (tPack A B).
+Proof.
+  move => [A0 [? ?]] [B0 [? ?]].
+  exists (tPack A0 B0).
+  hauto lqb:on use:S_Pack.
+Qed.
+
 Lemma wn_eq a b A : wn a -> wn b -> wn A -> wn (tEq a b A).
 Proof.
   rewrite /wn.
@@ -321,16 +387,6 @@ Proof.
   split.
   - by apply S_Eq.
   - hauto lqb:on.
-Qed.
-
-Lemma wne_ind a b c : wn a -> wn b -> wne c -> wne (tInd a b c).
-Proof.
-  rewrite /wn/wne.
-  move => [va [? ?]] [vb [? ?]] [vc [? ?]].
-  exists (tInd va vb vc).
-  split=>//=.
-  - by apply S_Ind.
-  - sfirstorder b:on.
 Qed.
 
 (* --------------------------------------------------------------- *)
