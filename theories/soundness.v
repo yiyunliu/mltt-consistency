@@ -302,15 +302,25 @@ Proof.
   - move => Γ a A b B i _ ha _ hb _ /SemWt_Univ hB ρ hρ.
     move /ha : (hρ) => [m][PA][ha0]ha1.
     move /hb : (hρ) => [m0][PB][hb0]hb1.
-    have /hB : ρ_ok (A::Γ) (a[ρ].:ρ) by hauto l:on use: ρ_ok_cons.
-    move => [S h1].
+    move /hB : (hρ) => [S]/=hS.
     exists i, S => /=.
-    split.
+    split => //.
+    move /InterpUnivN_Sig_inv_nopf : hS => [PA0][hPA0][hPB0]?. subst.
+    rewrite /SumSpace.
+    left. do 2 eexists. split; first by apply rtc_refl.
+    have ? : PA = PA0 by eauto using InterpUnivN_deterministic'. subst.
+    split => // PB0. asimpl.
+    move /hPB0 :ha1.
+    move => [PB1]. asimpl => *.
+    asimpl in hb0.
+    have [*] : PB = PB1 /\ PB0 = PB1 by  eauto using InterpUnivN_deterministic'.
+    congruence.
+  - admit.
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)
   - eauto using SemWff_cons.
-Qed.
+Admitted.
 
 Lemma mltt_normalizing Γ a A : Γ ⊢ a ∈ A -> wn a /\ wn A.
 Proof.
@@ -386,7 +396,25 @@ Inductive stm (n : nat) : tm -> Prop :=
 
 | SC_Refl :
   (* --------- *)
-  stm n tRefl.
+  stm n tRefl
+
+| SC_Pack a b :
+  stm n a ->
+  stm n b ->
+  (* ------------- *)
+  stm n (tPack a b)
+
+| SC_Sig A B :
+  stm n A ->
+  stm (S n) B ->
+  (* ------------ *)
+  stm n (tSig A B)
+
+| SC_Let a b :
+  stm n a ->
+  stm (S (S n)) b ->
+  (* -------------- *)
+  stm n (tLet a b).
 
 #[export]Hint Constructors stm : stm.
 
@@ -460,6 +488,18 @@ Proof.
     case => [_|].
     + hauto lq:on inv:stm ctrs:stm.
     + case => [_|]/=.
+      hauto lq:on inv:stm.
+      move => n0 h.
+      have {h}: n0 < n by lia.
+      hauto lq:on ctrs:stm.
+  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc n hi.
+    inversion hi; subst.
+    apply scope_morphing with (n := 2 +  n);simpl;  eauto.
+    case => [_|].
+    + asimpl. apply ihb. move : hi. clear. qauto l:on inv:stm.
+    + case => [_|]/=. apply iha.
+      move : hi. clear. qauto l:on inv:stm.
+
       hauto lq:on inv:stm.
       move => n0 h.
       have {h}: n0 < n by lia.
