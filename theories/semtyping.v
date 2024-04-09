@@ -168,20 +168,20 @@ Qed.
 (* -----  I-PiAlt is admissible (free of PF, the relation R on paper)  ---- *)
 
 
-Lemma InterpExt_Fun_nopf i I A B PA  :
-  ⟦ A ⟧ i , I ↘ PA ->
-  (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ i , I ↘  PB) ->
-  ⟦ tPi A B ⟧ i , I ↘ (ProdSpace PA (fun a PB => ⟦ B[a..] ⟧ i , I ↘ PB)).
-Proof.
-  move => h0 h1. apply InterpExt_Fun =>//.
-Qed.
-
 Lemma InterpUnivN_Fun_nopf i A B PA :
   ⟦ A ⟧ i ↘ PA ->
   (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ i ↘ PB) ->
   ⟦ tPi A B ⟧ i ↘ (ProdSpace PA (fun a PB => ⟦ B[a..] ⟧ i ↘ PB)).
 Proof.
-  hauto l:on use:InterpExt_Fun_nopf rew:db:InterpUniv.
+  hauto l:on ctrs:InterpExt rew:db:InterpUniv.
+Qed.
+
+Lemma InterpUnivN_Sig_nopf i A B PA :
+  ⟦ A ⟧ i ↘ PA ->
+  (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ i ↘ PB) ->
+  ⟦ tSig A B ⟧ i ↘ (SumSpace PA (fun a PB => ⟦ B[a..] ⟧ i ↘ PB)).
+Proof.
+  hauto l:on ctrs:InterpExt rew:db:InterpUniv.
 Qed.
 
 (* --------------- relation is cumulative ----------------- *)
@@ -456,6 +456,15 @@ Proof.
       suff : PB0 = PB by hauto lq:on.
       eauto using InterpExt_deterministic.
     + sfirstorder.
+Qed.
+
+Lemma InterpUnivN_Sig_inv_nopf i A B P  (h : InterpUnivN i (tSig A B) P) :
+  exists (PA : tm -> Prop),
+    ⟦ A ⟧ i ↘ PA /\
+    (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ i ↘ PB) /\
+      P = SumSpace PA (fun a PB => ⟦ B[a..] ⟧ i ↘ PB).
+Proof.
+  qauto use:InterpExt_Sig_inv_nopf l:on rew:db:InterpUniv.
 Qed.
 
 (* ---- Alternative intro rule for Eq ----------- *)

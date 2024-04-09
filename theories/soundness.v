@@ -290,6 +290,22 @@ Proof.
       * move => PC hPC.
         exists i, PC. split; first tauto.
         qauto l:on use:adequacy,wne_j unfold:CR.
+  (* Sig *)
+  - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
+    apply SemWt_Univ.
+    move => ρ hρ.
+    move /(_ ρ hρ) : h0; intros (PA & hPA).
+    eexists => /=.
+    apply InterpUnivN_Sig_nopf; eauto.
+    move => *; asimpl. eauto using ρ_ok_cons.
+  (* Pack *)
+  - move => Γ a A b B i _ ha _ hb _ /SemWt_Univ hB ρ hρ.
+    move /ha : (hρ) => [m][PA][ha0]ha1.
+    move /hb : (hρ) => [m0][PB][hb0]hb1.
+    have /hB : ρ_ok (A::Γ) (a[ρ].:ρ) by hauto l:on use: ρ_ok_cons.
+    move => [S h1].
+    exists i, S => /=.
+    split.
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)
