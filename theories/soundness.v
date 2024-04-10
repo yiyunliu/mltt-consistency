@@ -315,12 +315,54 @@ Proof.
     asimpl in hb0.
     have [*] : PB = PB1 /\ PB0 = PB1 by  eauto using InterpUnivN_deterministic'.
     congruence.
-  - admit.
+  (* Let Pack *)
+  - move => Γ t b A B C i _ ht _ hb _ /SemWt_Univ hC ρ hρ.
+    move /ht : (hρ) {ht} => [m][PA][/= /[dup] hSig /InterpUnivN_Sig_inv_nopf].
+    move => [PA0][h0][h1]?. subst.
+    rewrite /SumSpace.
+    case.
+    + move => [a0][b0][h2][h3]h4.
+      have : ρ_ok (tSig A B :: Γ) ((tPack a0 b0) .: ρ) by
+        hauto  use:ρ_ok_cons,InterpUnivN_Sig_nopf  unfold:SumSpace.
+      move /hC => [S] hS {hC}.
+      exists i, S. split=>//.
+      asimpl.
+      move /InterpUnivN_back_preservation_star : (hS). apply.
+      qauto l:on use:Pars_morphing_star,good_Pars_morphing_ext ctrs:rtc.
+      apply : InterpUnivN_back_clos_star; eauto.
+      apply P_LetPack_star; eauto.
+      asimpl.
+      have ?: ρ_ok (A :: Γ) (a0 .: ρ) by eauto using ρ_ok_cons.
+      move /h1 : (h3) => [PB] /[dup] hPB.
+      move /h4 => ?.
+      asimpl in hPB.
+      have : ρ_ok (B :: A :: Γ) (b0 .: (a0 .: ρ)) by eauto using ρ_ok_cons.
+      move /hb => [m0][PA]. asimpl. move => [hPA] hPA0.
+      by have <- : PA = S by eauto using InterpUnivN_deterministic'.
+    + move => h.
+      have /hC : ρ_ok (tSig A B :: Γ) (t[ρ] .: ρ) by
+        apply : ρ_ok_cons; hauto lq:on use:adequacy.
+      move => [S hS].
+      exists i, S. asimpl; split => //.
+      set a := (X in S X).
+      suff : wne a by hauto q:on use:adequacy.
+      subst a.
+      apply wne_let=>//.
+      have hz : wne (var_tm 0) by hauto lq:on ctrs:rtc.
+      have hz' : PA0 (var_tm 0) by move : h0 hz; clear; hauto lq:on use:adequacy unfold:CR.
+      apply wn_antirenaming with (ξ := var_zero .: (var_zero .: id)).
+      asimpl.
+      have hρ' : ρ_ok (A :: Γ) (var_tm 0 .: ρ) by eauto using ρ_ok_cons.
+      move /h1 : hz' => [PB /ltac:(asimpl) hPB].
+      have hz'' : PB (var_tm 0) by move : hPB hz; clear; hauto lq:on use:adequacy unfold:CR.
+      have : ρ_ok (B :: A :: Γ) (var_tm 0 .: (var_tm 0 .: ρ)) by eauto using ρ_ok_cons.
+      move /hb. clear.
+      hauto l:on use:adequacy unfold:CR.
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)
   - eauto using SemWff_cons.
-Admitted.
+Qed.
 
 Lemma mltt_normalizing Γ a A : Γ ⊢ a ∈ A -> wn a /\ wn A.
 Proof.

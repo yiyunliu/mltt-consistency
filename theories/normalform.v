@@ -247,6 +247,18 @@ Proof.
   auto using rtc_refl.
 Qed.
 
+Lemma S_Let a0 a1 : forall b0 b1,
+    a0 ⇒* a1 ->
+    b0 ⇒* b1 ->
+    tLet a0 b0 ⇒* tLet a1 b1.
+Proof.
+  move => + + h.
+  elim : a0 a1 /h; last by solve_s_rec.
+  move => + b0 b1 h.
+  elim : b0 b1 /h; last by solve_s_rec.
+  auto using rtc_refl.
+Qed.
+
 Lemma S_Pi (a a0 b b0 : tm) :
   a ⇒* a0 ->
   b ⇒* b0 ->
@@ -349,6 +361,14 @@ Proof.
   move => [a0 [? ?]] [b0 [? ?]].
   exists (tApp a0 b0).
   hauto b:on use:S_AppLR.
+Qed.
+
+Lemma wne_let (a b : tm) :
+  wne a -> wn b -> wne (tLet a b).
+Proof.
+  move => [a0 [? ?]] [b0 [? ?]].
+  exists (tLet a0 b0).
+  hauto b:on use:S_Let.
 Qed.
 
 Lemma wn_abs (a : tm) (h : wn a) : wn (tAbs a).
