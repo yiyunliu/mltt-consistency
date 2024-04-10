@@ -71,7 +71,7 @@ Lemma SemWt_Univ Γ A i :
 Proof.
   rewrite /SemWt.
   split.
-  - hauto lq:on rew:off use:InterpUnivN_Univ_inv'.
+  - hauto lq:on rew:off use:InterpUnivN_Univ_inv.
   - move => /[swap] ρ /[apply].
     case => PA hPA.
     exists (S i). eexists.

@@ -1,5 +1,4 @@
 Require Import join normalform imports.
-From Hammer Require Import Hammer.
 
 Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm) :=
   forall a PB, PA a -> PF a PB -> PB (tApp b a).
@@ -312,6 +311,14 @@ Proof.
   elim : A P / h; hauto q:on rew:off inv:Par,tm.
 Qed.
 
+Lemma InterpUnivN_Ne_inv i A P :
+  ne A ->
+  ⟦ A ⟧ i ↘ P ->
+  P = wne.
+Proof.
+  sfirstorder use:InterpExt_Ne_inv rew:db:InterpUniv.
+Qed.
+
 Lemma InterpUnivN_Nat_inv i P :
   ⟦ tNat ⟧ i ↘ P ->
   P = fun a => exists v, a ⇒* v /\ (is_nat_val v).
@@ -468,6 +475,13 @@ Proof.
   qauto use:InterpExt_Sig_inv_nopf l:on rew:db:InterpUniv.
 Qed.
 
+Lemma InterpUnivN_Univ_inv i j P :
+  ⟦ tUniv j ⟧ i ↘ P ->
+  P = (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA) /\ j < i.
+Proof.
+  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv.
+Qed.
+
 Lemma InterpUniv_ind (P : nat -> tm -> (tm -> Prop) -> Prop) :
   (* Ne *)
   (forall i A, ne A -> P i A wne) ->
@@ -608,13 +622,6 @@ Proof.
   induction 1; sfirstorder use:InterpUnivN_back_clos.
 Qed.
 
-Lemma InterpUnivN_Univ_inv' i j P :
-  ⟦ tUniv j ⟧ i ↘ P ->
-  P = (fun A : tm => exists (PA : tm -> Prop), InterpUnivN j A PA) /\ j < i.
-Proof.
-  hauto q:on rew:db:InterpUniv use:InterpExt_Univ_inv.
-Qed.
-
 (* ------------------------ adequacy ------------------------------- *)
 
 (* P identifies a set of "reducibility candidates" *)
@@ -682,109 +689,96 @@ Derive Inversion sub1_inv with (forall A B, Sub1 A B).
 Lemma Sub1_ne A B : Sub1 A B -> ne A = ne B /\ nf A = nf B.
 Proof. elim; sfirstorder. Qed.
 
-Lemma InterpExt_Sub1 I i j A B PA PB (_I : forall i j A, i <= j -> I i A -> I j A) (h : ⟦ A ⟧ i , I ↘ PA) (h2 : ⟦ B ⟧ j , I ↘ PB) :
+Lemma InterpUnivN_Sub1 : forall i  A PA,
+   ⟦ A ⟧ i  ↘ PA ->  forall j B PB, ⟦ B ⟧ j  ↘ PB ->
   (Sub1 A B ->
   forall a, PA a -> PB a) /\ (Sub1 B A -> forall a, PB a -> PA a).
 Proof.
-  move : j B PB h2.
-  elim : A PA / h.
-  - move => A h j B PB hPB.
-    split => ?; have : ne B by hauto l:on use:Sub1_ne inv:Sub1.
-    hauto lq:on rew:off inv:Sub1 use:InterpExt_Ne_inv.
-    hauto lq:on rew:off inv:Sub1 use:InterpExt_Ne_inv.
-  - hauto lq:on inv:Sub1, InterpExt use:InterpExt_Nat_inv.
-  - move => A0 B0 PA0 PF0 hPA0 ihA0 hTot hPF ihPF j ? PB hPB.
-    have ? : ⟦ tPi A0 B0 ⟧ i, I ↘ (ProdSpace PA0 PF0) by hauto l:on ctrs:InterpExt.
+  apply : InterpUniv_ind.
+  - move => _ A h j B PB hPB.
+    split => ?;
+      (have : ne B by hauto l:on use:Sub1_ne inv:Sub1);
+      hauto lq:on rew:off inv:Sub1 use:InterpUnivN_Ne_inv.
+  - move => _ j B PB hB.
+    split;inversion 1; subst; move/InterpUnivN_Nat_inv in hB;
+      sfirstorder.
+  - move => i A0 B0 PA0 hPA0 ihA0 hTot ihPF j B PB hPB.
+    have ? : ⟦ tPi A0 B0 ⟧ i ↘ (ProdSpace PA0 (fun (a0 : tm) (PB0 : tm -> Prop) => ⟦ B0[a0..] ⟧ i ↘ PB0)) by hauto l:on use:InterpUnivN_Fun_nopf.
     split.
     + elim /sub1_inv=>//.
       move => _ A1 B1 A2 B2 hs1 hs2 []? ? ?. subst.
-      move /InterpExt_Fun_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
+      move /InterpUnivN_Fun_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
       have {}ihA0 : forall a, PA1 a -> PA0 a by hauto l:on.
       move => b hb a PB2 ha hPB2.
-      have [ PB0 [hPB0 hPB1] ] : exists PB, PF0 a PB /\ ⟦ B0[a..] ⟧ i , I ↘ PB
+      have [ PB0 hPB0 ] : exists PB, ⟦ B0[a..] ⟧ i  ↘ PB
         by qauto l:on.
       have : Sub1 B0[a..] B2[a..] by sfirstorder use:Sub1_morphing.
-      (* specialize ihPF with (1 := hPB0). *)
+      rewrite /ProdSpace in hb.
       move /ihPF : hPB2 (hPB0). move/[apply].
-      sfirstorder unfold:ProdSpace.
+      hauto lq:on unfold:ProdSpace.
     + elim /sub1_inv=>//.
       move => _ A1 B1 A2 B2 hs1 hs2 ?[] ? ?. subst.
-      move /InterpExt_Fun_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
+      move /InterpUnivN_Fun_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
       have {}ihA0 : forall a, PA0 a -> PA1 a by hauto l:on.
       move => b hb a PB0 ha hPB0.
       have ? : Sub1 B1[a..] B0[a..] by sfirstorder use:Sub1_morphing.
       move /ihPF : hPB0 {ihPF}.
       move /(_ _ ltac:(sfirstorder)) : hTot'  => [PB1 hPB1].
-      move /(_ _ _ _ hPB1) => [_].
+      move => h. eapply h; eauto.
       sfirstorder.
-  - move => j ? j0 B PB hPB.
+  - move => j j0 ? ? j1 B PB hPB.
     split.
     + elim /sub1_inv=>//.
       move => _ p q ? []? ? a ha. subst.
-      move /InterpExt_Univ_inv  : hPB.
-      move => [? ?]. subst. firstorder.
+      move /InterpUnivN_Univ_inv  : hPB.
+      hauto l:on use:InterpUnivN_cumulative.
     + elim /sub1_inv=>//.
       move => _ p q ? ? [?] a ha. subst.
-      move /InterpExt_Univ_inv  : hPB => [? ?]. subst.
-      hauto l:on.
-  - move => > h0 h1 h2 > h.
-    split. inversion 1; subst. move /InterpExt_Eq_inv : h => [? ?]. subst. auto.
-    inversion 1; subst. move /InterpExt_Eq_inv : h => [? ?]. subst. auto.
-  - move => A0 B0 PA0 PF0 hPA0 ihA0 hTot hPF ihPF j ? PB hPB.
-    have ? : ⟦ tSig A0 B0 ⟧ i, I ↘ (SumSpace PA0 PF0) by hauto l:on ctrs:InterpExt.
+      move /InterpUnivN_Univ_inv  : hPB.
+      move => [? ?]. subst.
+      hauto l:on use:InterpUnivN_cumulative.
+  - move => i  > h0 h1 h2 > h.
+    split; inversion 1; subst;
+      move /InterpUnivN_Eq_inv : h => [? ?]; subst; auto.
+  - move => i A0 B0 PA0 hPA0 ihPA0 hPF ihPF j B PB hPB.
+    have ? : ⟦ tSig A0 B0 ⟧ i ↘ (SumSpace PA0 (fun (a0 : tm) (PB0 : tm -> Prop) => ⟦ B0[a0..] ⟧ i ↘ PB0)) by hauto l:on use:InterpUnivN_Sig_nopf.
     split.
     + elim /sub1_inv=>//.
       move => _ A1 B1 A2 B2 hs1 hs2 []? ? ?. subst.
-      move /InterpExt_Sig_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
+      move /InterpUnivN_Sig_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
       have {}ihA0 : forall a, PA0 a -> PA1 a by hauto l:on.
       move => t. rewrite /SumSpace.
       move => []; last by tauto.
       move => [a][b][h0][h1]h2.
       left. exists a,b. (repeat split) => //. by firstorder.
-      have [ PB0 [hPB0 hPB1] ] : (exists PB, PF0 a PB /\ ⟦ B0[a..] ⟧ i , I ↘ PB)
+      move => PB hPB.
+      have [ PB0 hPB0 ] : (exists PB, ⟦ B0[a..] ⟧ i  ↘ PB)
         by qauto l:on.
       have : Sub1 B0[a..] B2[a..] by sfirstorder use:Sub1_morphing.
-      move /ihPF : hPB1 (hPB0). move/[apply].
       qauto l:on.
     + elim /sub1_inv=>//.
       move => _ A1 B1 A2 B2 hs1 hs2 ? [? ?] t. subst.
-      move /InterpExt_Sig_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
+      move /InterpUnivN_Sig_inv_nopf : hPB => [PA1][hPA1][hTot']?. subst.
       have {}ihA0 : forall a, PA1 a -> PA0 a by hauto l:on.
       rewrite /SumSpace. move => []; last by tauto.
       qauto l:on use:Sub1_morphing.
-  - move => A A0 PA hred hPA ih j B PB hPB.
+  - move => i A A0 PA hred hPA ih j B PB hPB.
     split.
     + move => hSub a ha.
       have : exists B0, B ⇒ B0 /\ Sub1 A0 B0 by qauto l:on use:Sub1_simulation.
       move => [B0][h0]h1.
-      have /ih : ⟦ B0 ⟧ j, I ↘ PB by eauto using InterpExt_preservation.
+      have /ih : ⟦ B0 ⟧ j ↘ PB by eauto using InterpUnivN_preservation.
       sfirstorder.
     + move => hSub a ha.
       have : exists B0, B ⇒ B0 /\ Sub1 B0 A0 by qauto l:on use:Sub1_simulation.
       move => [B0][h0]h1.
-      have /ih : ⟦ B0 ⟧ j, I ↘ PB by eauto using InterpExt_preservation.
+      have /ih : ⟦ B0 ⟧ j ↘ PB by eauto using InterpUnivN_preservation.
       sfirstorder.
-Qed.
-
-Lemma InterpUnivN_Sub1 i j A B PA PB (h : ⟦ A ⟧ i ↘ PA) (h2 : ⟦ B ⟧ j ↘ PB) :
-  (Sub1 A B -> forall a, PA a -> PB a) /\ (Sub1 B A -> forall a, PB a -> PA a).
-Proof.
-  move : h h2.
-  simp InterpUniv.
-  apply InterpExt_Sub1.
-  move => i0 j0 A0 h [PA0 hPA0].
-  exists PA0.
-  move /InterpUnivN_cumulative : hPA0.
-  apply. lia.
 Qed.
 
 Lemma InterpUnivN_Sub1' i j A B PA PB (h : ⟦ A ⟧ i ↘ PA) (h2 : ⟦ B ⟧ j ↘ PB) :
   (Sub1 A B -> forall a, PA a -> PB a).
-Proof.
-  move /InterpUnivN_Sub1 : h h2.
-  move /[apply]. move => [+ _].
-  apply.
-Qed.
+Proof. hauto l:on use:InterpUnivN_Sub1. Qed.
 
 Lemma InterpUnivN_Sub i j A B PA PB (h0 : ⟦ A ⟧ i ↘ PA) (h1 : ⟦ B ⟧ j ↘ PB) (h2 : Sub A B) :
   forall a, PA a -> PB a.
