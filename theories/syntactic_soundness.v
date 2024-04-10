@@ -42,7 +42,7 @@ Lemma T_Ind' Γ a b c A i T :
   T = A [c..] ->
   tNat :: Γ ⊢ A ∈ tUniv i ->
   Γ ⊢ a ∈ A [tZero..] ->
-  A :: tNat :: Γ ⊢ b ∈ A[tSuc (var_tm 0) .: ↑ >> var_tm]⟨↑⟩ ->
+  A :: tNat :: Γ ⊢ b ∈ A[tSuc (var_tm 0) .: S >> var_tm]⟨S⟩ ->
   Γ ⊢ c ∈ tNat ->
   (* ------------ *)
   Γ ⊢ tInd a b c ∈ T.
@@ -159,7 +159,7 @@ Proof.
         asimpl. apply : there'; last by sfirstorder ctrs:lookup. by asimpl.
 
         move => A0 h.
-        have {h} : exists A1, lookup n Γ A1 /\ A0 = A1 ⟨↑⟩ ⟨↑⟩ by hauto lq:on inv:lookup.
+        have {h} : exists A1, lookup n Γ A1 /\ A0 = A1 ⟨S⟩ ⟨S⟩ by hauto lq:on inv:lookup.
         move => [A1 [hA1 hA1']]. subst.
         simpl. asimpl.
         apply : there'; cycle 1. apply : there'; cycle 1.
@@ -354,7 +354,7 @@ Qed.
 
 Lemma Wt_Ind_inv Γ a b c T (h : Γ ⊢ (tInd a b c) ∈ T) :
   exists A, Γ ⊢ a ∈ A[tZero..] /\
-       A :: tNat :: Γ ⊢ b ∈ A [tSuc (var_tm 0) .: ↑ >> var_tm]⟨↑⟩  /\
+       A :: tNat :: Γ ⊢ b ∈ A [tSuc (var_tm 0) .: S >> var_tm]⟨S⟩  /\
          Γ ⊢ c ∈ tNat /\
          A[c..] <: T /\
          (exists j, tNat :: Γ ⊢ A ∈ tUniv j) /\

@@ -58,7 +58,7 @@ Qed.
 Lemma weakening_Sem Γ a A B i
   (h0 : Γ ⊨ B ∈ tUniv i)
   (h1 : Γ ⊨ a ∈ A) :
-   B :: Γ ⊨ a ⟨↑⟩ ∈ A ⟨↑⟩.
+   B :: Γ ⊨ a ⟨S⟩ ∈ A ⟨S⟩.
 Proof.
   apply : renaming_SemWt; eauto.
   hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
@@ -93,7 +93,7 @@ Proof.
   move => k h1. elim/lookup_inv.
   - hauto q:on use:weakening_Sem.
   - move => _ n A0 Γ0 B + ? []*. subst. move /h => [j ?].
-    exists j. change (tUniv j) with (tUniv j) ⟨↑⟩.
+    exists j. change (tUniv j) with (tUniv j) ⟨S⟩.
     eauto using weakening_Sem.
 Qed.
 

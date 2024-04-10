@@ -61,7 +61,7 @@ Inductive Wt : context -> tm -> tm -> Prop :=
 | T_Ind Γ a b c A i :
   tNat :: Γ ⊢ A ∈ tUniv i ->
   Γ ⊢ a ∈ A [tZero..] ->
-  A :: tNat :: Γ ⊢ b ∈ A[tSuc (var_tm 0) .: ↑ >> var_tm]⟨↑⟩ ->
+  A :: tNat :: Γ ⊢ b ∈ A[tSuc (var_tm 0) .: S >> var_tm]⟨S⟩ ->
   Γ ⊢ c ∈ tNat ->
   (* ------------ *)
   Γ ⊢ tInd a b c ∈ (A [c..])
