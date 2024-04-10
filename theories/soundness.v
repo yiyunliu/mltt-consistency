@@ -239,7 +239,7 @@ Proof.
   (* Bool *)
   - hauto l:on use:SemWt_Univ.
   (* Univ *)
-  - hauto lq:on use:InterpUnivN_Univ_inv, SemWt_Univ.
+  - hauto lq:on use:InterpUnivN_Univ, SemWt_Univ.
   (* Refl *)
   - move => Γ a A _ _ _ ha ρ.
     move : ha. move/[apply]. move => [m [PA [h0 h1]]].
