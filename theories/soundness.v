@@ -499,10 +499,8 @@ Proof.
     + asimpl. apply ihb. move : hi. clear. qauto l:on inv:stm.
     + case => [_|]/=. apply iha.
       move : hi. clear. qauto l:on inv:stm.
-
-      hauto lq:on inv:stm.
-      move => n0 h.
-      have {h}: n0 < n by lia.
+      move => m h.
+      have {}h : m < n by lia.
       hauto lq:on ctrs:stm.
 Qed.
 
