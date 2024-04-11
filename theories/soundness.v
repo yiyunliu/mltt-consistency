@@ -316,7 +316,7 @@ Proof.
     have [*] : PB = PB1 /\ PB0 = PB1 by  eauto using InterpUnivN_deterministic'.
     congruence.
   (* Let Pack *)
-  - move => Γ t b A B C i _ ht _ hb _ /SemWt_Univ hC ρ hρ.
+  - move => Γ t b A B C i _ _ _ _ _ _ ht _ hb _ /SemWt_Univ hC ρ hρ.
     move /ht : (hρ) {ht} => [m][PA][/= /[dup] hSig /InterpUnivN_Sig_inv_nopf].
     move => [PA0][h0][h1]?. subst.
     rewrite /SumSpace.

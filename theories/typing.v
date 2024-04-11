@@ -111,7 +111,9 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   (* -------------------- *)
   Γ ⊢ tPack a b ∈ tSig A B
 
-| T_Let Γ a b A B C i : 
+| T_Let Γ a b A B C i j :
+  Γ ⊢ A ∈ tUniv j ->
+  A :: Γ ⊢ B ∈ tUniv j ->
   Γ ⊢ a ∈ tSig A B ->
   B :: A :: Γ ⊢ b ∈ C[(tPack (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] ->
   tSig A B :: Γ ⊢ C ∈ tUniv i ->
