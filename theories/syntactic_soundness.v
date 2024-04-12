@@ -67,6 +67,26 @@ Lemma T_J' (Γ : context) (t a b p A : tm) (i j : fin) (C C0 : tm) :
   Γ ⊢ (tJ t a b p) ∈ C0.
 Proof. move =>> ->. apply T_J. Qed.
 
+Lemma T_Pack' Γ a A b B B0 i :
+  B0 = (subst_tm (a..) B) ->
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ b ∈ B0 ->
+  Γ ⊢ tSig A B ∈ tUniv i ->
+  (* -------------------- *)
+  Γ ⊢ (tPack a b) ∈ tSig A B.
+Proof. move =>> ->. apply T_Pack. Qed.
+
+Lemma T_Let' Γ a b A B C C0 C1 i j :
+  C0 = (subst_tm (a..) C) ->
+  C1 = (subst_tm ((tPack (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)) C) ->
+  Γ ⊢ A ∈ tUniv j ->
+  A :: Γ ⊢ B ∈ tUniv j ->
+  Γ ⊢ a ∈ tSig A B ->
+  B :: A :: Γ ⊢ b ∈ C1 ->
+  tSig A B :: Γ ⊢ C ∈ tUniv i ->
+  Γ ⊢ tLet a b ∈ C0.
+Proof. move =>> -> ->. apply T_Let. Qed.
+
 (* ------------------------------------- *)
 (* If a term is well-typed, then the context must be well-formed. *)
 
@@ -89,7 +109,7 @@ Qed.
 
 Lemma Wt_Pi_inv Γ A B U (h : Γ ⊢ (tPi A B) ∈ U) :
   exists i, Γ ⊢ A ∈ (tUniv i) /\
-         (A :: Γ) ⊢ B ∈(tUniv i) /\
+         (A :: Γ) ⊢ B ∈ (tUniv i) /\
          tUniv i <: U /\
          exists i, Γ ⊢ U ∈ (tUniv i).
 Proof.
@@ -98,6 +118,19 @@ Proof.
   elim :  Γ T U / h => //.
   - hauto lq:on use:Wt_Univ, Sub_reflexive.
   - qauto l:on use:Sub_transitive.
+Qed.
+
+Lemma Wt_Sig_inv Γ A B U (h : Γ ⊢ (tSig A B) ∈ U) :
+  exists i, Γ ⊢ A ∈ (tUniv i) /\
+         (A :: Γ) ⊢ B ∈ (tUniv i) /\
+         tUniv i <: U /\
+         exists i, Γ ⊢ U ∈ (tUniv i).
+Proof.
+  move E : (tSig A B) h => T h.
+  move : A B E.
+  elim : Γ T U / h => //.
+  - hauto lq:on rew:off use:Sub_transitive.
+  - hauto lq:on use:Wt_Univ, Sub_reflexive.
 Qed.
 
 Lemma Wt_Pi_Univ_inv Γ A B i (h : Γ ⊢ (tPi A B) ∈ (tUniv i)) :
@@ -124,6 +157,33 @@ Proof.
   elim : Γ a0 T / h => //.
   - hauto lq:on use:Sub_reflexive.
   - hauto lq:on use:Sub_transitive.
+Qed.
+
+Lemma Wt_Sig_Univ_inv Γ A B i (h : Γ ⊢ (tSig A B) ∈ (tUniv i)) :
+  Γ ⊢ A ∈ (tUniv i) /\
+  (A :: Γ) ⊢ B ∈ (tUniv i).
+Proof.
+  move /Wt_Sig_inv : h.
+  move => [j][hA][hB][h1][k]h2.
+  have ? : j <= i by hauto lq:on use:Sub_univ_inj.
+  split.
+  hauto lq:on ctrs:Wt.
+  have : A :: Γ ⊢ tUniv i ∈ tUniv (S i) by hauto lq:on ctrs:Wt db:wff.
+  hauto lq:on ctrs:Wt.
+Qed.
+
+Lemma Wt_Pack_inv Γ a b T (h : Γ ⊢ tPack a b ∈ T) :
+  exists A B i, Γ ⊢ a ∈ A /\
+    Γ ⊢ b ∈ B[a..] /\
+    Γ ⊢ tSig A B ∈ tUniv i /\
+    tSig A B <: T /\
+    exists j, (Γ ⊢ T ∈ tUniv j).
+Proof.
+  move E : (tPack a b) h => p h.
+  move : a b E.
+  elim : Γ p T / h => //.
+  - hauto lq:on use:Sub_transitive.
+  - hauto lq:on use:Sub_reflexive.
 Qed.
 
 (* -------------------------------------------------- *)
@@ -187,6 +247,18 @@ Proof.
         asimpl.
         sfirstorder use:good_renaming_suc.
     + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
+  - hauto lq:on ctrs:Wt, Wff use:good_renaming_up, Wt_Sig_Univ_inv.
+  - move => Γ a A b B i hA ihA hB ihB hS ihS Δ ξ hξ hΔ /=.
+    eapply T_Pack' with (B0 := B[a..] ⟨ξ⟩); eauto. by asimpl.
+  - move => Γ a b A B C i j hA ihA hB ihB ha iha hb ihb hS ihS Δ ξ hξ hΔ /=.
+    eapply T_Let' with
+      (C := C ⟨upRen_tm_tm ξ⟩)
+      (C1 := C[(tPack (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] ⟨upRen_tm_tm (upRen_tm_tm ξ)⟩);
+      eauto.
+    1-2: by asimpl.
+    + sauto q:on dep:on use:good_renaming_up.
+    + hauto q:on use:Wff_cons, good_renaming_up.
+    + hauto q:on ctrs:Wt use:Wff_cons, good_renaming_up.
 Qed.
 
 Lemma weakening_Syn Γ a A B i
@@ -278,6 +350,20 @@ Proof.
         ** hauto lq:on use:good_morphing_suc.
       * qauto l:on use:Wff_cons simp+:asimpl.
     + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
+  - move => *. apply T_Sig; eauto.
+    hauto lq:on use:good_morphing_up, Wff_cons.
+  - move => Γ a A b B i hA ihA hB ihB hS ihS Δ ρ hρ hΔ.
+    eapply T_Pack' with (B0 := B[a .: var_tm][ρ]); eauto. by asimpl.
+  - move => Γ a b A B C i j hA ihA hB ihB ha iha hb ihb hS ihS Δ ρ hρ hΔ.
+    eapply T_Let' with
+      (C := C[up_tm_tm ρ])
+      (C1 := C[tPack (var_tm 1) (var_tm 0) .: (S >> S) >> var_tm][up_tm_tm (up_tm_tm ρ)]);
+      eauto.
+    + by asimpl.
+    + by asimpl; substify.
+    + hauto lq:on use:good_morphing_up, Wff_cons.
+    + hauto lq:on use:good_morphing_up, Wff_cons.
+    + hauto q:on ctrs:Wt, tm use:good_morphing_up, Wff_cons.
 Qed.
 
 Lemma subst_Syn Γ A a b B
@@ -334,6 +420,7 @@ Proof.
       inversion 1; subst.
       * by asimpl.
       * asimpl. eauto using T_Var with wff.
+  - eauto using subst_Syn_Univ.
 Qed.
 
 Lemma Wt_App_inv Γ b a T (h : Γ ⊢ (tApp b a) ∈ T) :
@@ -373,7 +460,7 @@ Qed.
 
 Lemma Wt_Eq_inv Γ a b A U (h : Γ ⊢ (tEq a b A) ∈ U) :
   Γ ⊢ a ∈ A /\
-  Γ ⊢ b ∈A /\
+  Γ ⊢ b ∈ A /\
   (exists q,
   Γ ⊢ A ∈ (tUniv q)) /\
   (exists i, Sub (tUniv i) U) /\ exists j, Γ ⊢ U ∈ (tUniv j).
@@ -383,6 +470,27 @@ Proof.
   elim :  Γ T U / h => //.
   - hauto l:on use:Sub_transitive.
   - hauto l:on use:T_Univ, Sub_reflexive db:wff.
+Qed.
+
+Lemma Wt_Let_inv Γ a b T (h : Γ ⊢ tLet a b ∈ T) :
+  exists i j A B C,
+    Γ ⊢ A ∈ tUniv j /\
+    A :: Γ ⊢ B ∈ tUniv j /\
+    Γ ⊢ a ∈ tSig A B /\
+    B :: A :: Γ ⊢ b ∈ C[(tPack (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] /\
+    tSig A B :: Γ ⊢ C ∈ tUniv i /\
+    C[a..] <: T /\
+    (exists i, Γ ⊢ T ∈ tUniv i).
+Proof.
+  move E : (tLet a b) h => a0 h.
+  move : a b E.
+  elim : Γ a0 T / h => //.
+  - move => Γ a0 T U i ha0 ih0 hU _ hSub a b E.
+    destruct (ih0 a b E) as (j & k & A & B & C & hA & hB & ha & hb & hC & hCoherent & hT).
+    exists j, k. (* not sure why these need to be explicit for CoqHammer to work *)
+    hauto l:on use:Sub_transitive.
+  - move => *.
+    hauto q:on use:subst_Syn, Sub_reflexive.
 Qed.
 
 (* ------------------------------------------------- *)
@@ -473,6 +581,37 @@ Proof.
       apply weakening_Syn with (i := j) => //.
       apply T_Var; hauto lq:on db:wff.
   - eauto with wff.
+Qed.
+
+Lemma preservation_helper2 A0 A1 B0 B1 i j k l Γ a A :
+  (B0 :: A0 :: Γ) ⊢ a ∈ A ->
+  Γ ⊢ A0 ∈ tUniv i ->
+  Γ ⊢ A1 ∈ tUniv j ->
+  A0 :: Γ ⊢ B0 ∈ tUniv k ->
+  A1 :: Γ ⊢ B1 ∈ tUniv l ->
+  A1 <: A0 -> B1 <: B0 ->
+  (B1 :: A1 :: Γ ⊢ a ∈ A).
+Proof.
+  move => ha hA0 hA1 hB0 hB1 hSubA hSubB.
+  replace a with (a[ids]); last by asimpl.
+  replace A with (A[ids]); last by asimpl.
+  apply morphing_Syn with (Γ := B0 :: A0 :: Γ);
+    auto; last by eauto with wff.
+  move => m C. elim /lookup_inv.
+  - move => lookm B0' Γ' _ E _. inversion E. asimpl.
+    apply T_Conv with (A := B1 ⟨S⟩) (i := k).
+    + apply T_Var; hauto lq:on ctrs:lookup db:wff.
+    + eapply weakening_Syn' with (A := tUniv k); eauto.
+      eapply preservation_helper; eauto.
+    + apply Sub_renaming; auto.
+  - move => lookm n C' Γ' B' lookn _ E _. asimpl.
+    elim /lookup_inv : lookn.
+    + move => lookn A0' Γ'' _ E' _. subst. inversion E.
+      apply T_Conv with (A := A1 ⟨S⟩ ⟨S⟩) (i := i).
+      * apply T_Var; hauto lq:on ctrs:lookup db:wff.
+      * repeat eapply weakening_Syn' with (A := tUniv i); eauto.
+      * repeat apply Sub_renaming; auto.
+    + move => *. apply T_Var; hauto lq:on ctrs:lookup db:wff.
 Qed.
 
 Lemma T_Refl' Γ a0 a1 A
@@ -637,6 +776,57 @@ Proof.
     replace (subst_tm (tRefl .: b..) C)
       with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl.
     apply Coherent_cong. apply Coherent_reflexive. auto.
+  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Sig_inv.
+    intros (i & hA0 & hB0 & hACoherent & j & hA).
+    have ? : ⊢ Γ by eauto with wff.
+    apply T_Conv with (A := tUniv i) (i := j) => //.
+    hauto q:on ctrs:Wt use:preservation_helper, Par_Sub.
+  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_Pack_inv.
+    intros (A0 & B0 & i & ha & hb & hSig & hCoherent & j & hA).
+    apply T_Conv with (A := tSig A0 B0) (i := j) => //.
+    eapply T_Pack; eauto.
+    apply ih1.
+    have ? : B0[a0..] <: B0[a1..] by hauto lq:on use:Par_cong, Par_refl, Par_Sub.
+    apply T_Conv with (A := B0[a0..]) (i := i) => //.
+    change (tUniv i) with (tUniv i)[a1..].
+    eapply subst_Syn; eauto.
+    apply Wt_Sig_Univ_inv => //.
+  - move => a0 b0 a1 b1 h0 ih0 h1 ih1 Γ A /Wt_Let_inv.
+    intros (i & j & A0 & B0 & C & hA0 & hB0 & ha & hb & hC & hCoherent & k & hA).
+    apply T_Conv with (A := C[a1..]) (i := k) => //.
+    + eapply T_Let' with (j := j); eauto.
+    + apply : Sub_transitive; eauto.
+      hauto lq:on drew:off
+        use:Sub_transitive, Coherent_Sub, Coherent_cong,
+            Coherent_reflexive, Coherent_symmetric, Par_Coherent.
+  - move => a0 b0 c0 a1 b1 c1 h0 ih0 h1 ih1 h2 ih2 Γ A /Wt_Let_inv.
+    intros (i & j & A0 & B0 & C & hA0 & hB0 & hPack & hc0 & hC & hCoherent & k & hA).
+    move /Wt_Pack_inv : hPack.
+    intros (A1 & B1 & l & ha0 & hb0 & hSig & hSub & _).
+    move /Wt_Sig_Univ_inv : hSig => [hA1 hB1].
+    move /Sub_sig_inj : hSub => [hSubA hSubB].
+    apply ih0 in ha0.
+    apply ih1 in hb0.
+    apply ih2 in hc0.
+    have hb1 : Γ ⊢ b1 ∈ B1[a1..]. {
+      apply T_Conv with (A := B1[a0..]) (i := l); auto.
+      + change (tUniv l) with (tUniv l)[a1..].
+        eapply subst_Syn with (a := a1); eauto.
+      + hauto lq:on use:Par_cong, Par_refl, Par_Sub.
+    }
+    eapply T_Conv with (A := C[(tPack a1 b1)..]); eauto.
+    + have -> : C[(tPack a1 b1)..] = C[tPack (var_tm 1) (var_tm 0) .: shift >> shift >> var_tm][b1 .: a1..]
+        by asimpl.
+      eapply preservation_helper2 with
+        (A0 := A0) (A1 := A1) (B0 := B0) (B1 := B1) in hc0; eauto.
+      move : morphing_Syn hc0. move /[apply].
+      apply; last by hauto lq:on db:wff.
+      move => m D. elim/lookup_inv.
+      * move => *. asimpl. scongruence.
+      * inversion 2; asimpl;
+        hauto lq:on ctrs:Wt db:wff.
+    + eapply Sub_transitive; eauto.
+      sauto lq:on use:Par_cong, Par_refl, Par_Sub.
 Qed.
 
 (* ----------------------------------------------- *)
@@ -653,6 +843,9 @@ Definition is_value (a : tm) :=
   | tRefl => true
   | tJ _ _ _ _ => false
   | tEq _ _ _ => true
+  | tSig _ _ => true
+  | tPack _ _ => true
+  | tLet _ _ => false
   | var_tm _ => false
   end.
 
@@ -666,6 +859,8 @@ Definition head_inhab (a : tm) : head :=
   | tEq _ _ _ => hUniv
   | tUniv _ => hUniv
   | tNat => hUniv
+  | tSig _ _ => hUniv
+  | tPack _ _ => hSig
   | _ => hBot
   end.
 
