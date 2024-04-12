@@ -407,6 +407,14 @@ Proof.
   elim : A0 A / h; hauto q:on rew:off ctrs:rtc, Par inv:Par.
 Qed.
 
+Lemma Pars_sig_inv A B C (h : tSig A B ⇒* C) :
+  exists A0 B0, C = tSig A0 B0 /\ (A ⇒* A0) /\ (B ⇒* B0).
+Proof.
+  move E : (tSig A B) h => T h.
+  move : A B E.
+  elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
+Qed.
+
 Lemma Coherent_univ_inj i j (h : Coherent (tUniv i) (tUniv j)) : i = j.
 Proof. hauto lq:on rew:off inv:rtc use:Pars_univ_inv. Qed.
 
@@ -668,6 +676,17 @@ Proof.
   move => [A1][A2][/Pars_eq_inv h0][/Pars_eq_inv h1]h2.
   rewrite /Coherent.
   hauto lq:on rew:off inv:Sub1.
+Qed.
+
+Lemma Sub_sig_inj A B A0 B0 : Sub (tSig A B) (tSig A0 B0) ->
+  A <: A0 /\ B <: B0.
+Proof.
+  rewrite /Sub.
+  move => [?][?][/Pars_sig_inv].
+  move => [A'][B'][->][? ?].
+  move => [/Pars_sig_inv].
+  move => [A''][B''][->][? ?].
+  hauto lq:on inv:Sub1.
 Qed.
 
 Lemma Sub_renaming A B : forall ξ, A <: B -> A⟨ξ⟩ <: B⟨ξ⟩.
