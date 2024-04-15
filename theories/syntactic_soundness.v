@@ -942,13 +942,13 @@ Proof.
   move E : nil h => Γ h.
   move : E.
   elim: Γ a A/h; auto.
-  - move => Γ i A _ hi E. subst. inversion hi.
+  - hauto lq:on inv:lookup.
   - hauto lq:on use:wt_canon ctrs:CBN unfold:canon_prop.
-  - move => Γ a b c i _ _ _ _ _ _ _ hc ihc E.
+  - move => > _ _ _ _ _ _.
     hauto lq: on use: wt_canon ctrs: CBN unfold: canon_prop.
-  - move => Γ t a b p A i j C _ _ _ _ _ _ hp ihp _ _ _ _ E.
+  - move => > _ _ _ _ _ _ + + _ _ _ _.
     hauto lq: on use: wt_canon ctrs: CBN unfold: canon_prop.
-  - move => Γ a b A B C i j _ _ _ _ ha iha _ _ _ _ E.
+  - move => > _ _ _ _ + + _ _ _ _.
     hauto lq: on use: wt_canon ctrs: CBN unfold: canon_prop.
 Qed.
 
