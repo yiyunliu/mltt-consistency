@@ -943,30 +943,13 @@ Proof.
   move : E.
   elim: Γ a A/h; auto.
   - move => Γ i A _ hi E. subst. inversion hi.
-  - move => Γ a A B b ha iha hb ihb E. subst.
-    move : (iha eq_refl) => [va | [a' ra]].
-    + move /wt_canon : ha va => ca va.
-      case ca => // [a' ->]; auto.
-      hauto lq:on ctrs:CBN.
-    + hauto lq:on ctrs:CBN.
-  - move => Γ a b c i _ _ _ _ _ _ _ hc ihc E. subst.
-    move : (ihc eq_refl) => [vc | [c' rc]].
-    + move /wt_canon : hc vc => cc vc.
-      case cc => // [-> | [c' ->]];
-      hauto lq:on ctrs:CBN.
-    + hauto lq:on ctrs:CBN.
-  - move => Γ t a b p A i j C _ _ _ _ _ _ hp ihp _ _ _ _ E. subst.
-    move : (ihp eq_refl) => [vp | [p' rp]].
-    + move /wt_canon : hp vp => cp vp.
-      move : cp => -> //.
-      hauto lq:on ctrs:CBN.
-    + hauto lq:on ctrs:CBN.
-  - move => Γ a b A B C i j _ _ _ _ ha iha _ _ _ _ E. subst.
-    move : (iha eq_refl) => [va | [a' ra]].
-    + move /wt_canon : ha va => ca va.
-      case ca => // [a' [b' ->]].
-      hauto lq:on ctrs:CBN.
-    + hauto lq:on ctrs:CBN.
+  - hauto lq:on use:wt_canon ctrs:CBN unfold:canon_prop.
+  - move => Γ a b c i _ _ _ _ _ _ _ hc ihc E.
+    hauto lq: on use: wt_canon ctrs: CBN unfold: canon_prop.
+  - move => Γ t a b p A i j C _ _ _ _ _ _ hp ihp _ _ _ _ E.
+    hauto lq: on use: wt_canon ctrs: CBN unfold: canon_prop.
+  - move => Γ a b A B C i j _ _ _ _ ha iha _ _ _ _ E.
+    hauto lq: on use: wt_canon ctrs: CBN unfold: canon_prop.
 Qed.
 
 Lemma CBN_Par a0 a1 (h : a0 ⇝ a1) : a0 ⇒ a1.
