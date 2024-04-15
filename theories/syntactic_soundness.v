@@ -890,6 +890,7 @@ Definition canon_prop (U : tm) (a : tm) : Prop :=
   | tPi A B => exists a0, a = tAbs a0
   | tEq _ _ _ => a = tRefl
   | tNat => a = tZero \/ exists b, a = tSuc b
+  | tSig _ _ => exists a0 b0, a = tPack a0 b0
   | _ => True
   end.
 
@@ -899,9 +900,104 @@ Proof.
   move /wt_wrong_hf_contra; hauto drew:off ctrs:tm inv:tm unfold:canon_prop.
 Qed.
 
-Lemma wt_progress a A (h :nil ⊢ a ∈ A) : is_value a \/ exists a0, a ⇒ a0.
+(* Call by name reduction *)
+Reserved Infix "⇝" (at level 60, right associativity).
+Inductive CBN : tm -> tm -> Prop :=
+| N_App a0 a1 b :
+  (a0 ⇝ a1) ->
+  (* ------------------- *)
+  (tApp a0 b) ⇝ (tApp a1 b)
+| N_AppAbs a b :
+  (* -------------------- *)
+  (tApp (tAbs a) b) ⇝ a[b..]
+| N_Ind a b c0 c1 :
+  (c0 ⇝ c1) ->
+  (* ----------------------- *)
+  (tInd a b c0) ⇝ (tInd a b c1)
+| N_IndZero a b :
+  (* -------------- *)
+  (tInd a b tZero) ⇝ a
+| N_IndSuc a b c :
+  (* -------------------------------------- *)
+  (tInd a b (tSuc c)) ⇝ b[(tInd a b c) .: c..]
+| N_J t a b p0 p1 :
+  (p0 ⇝ p1) ->
+  (* ----------------------- *)
+  (tJ t a b p0) ⇝ (tJ t a b p1)
+| N_JRefl t a b :
+  (* --------------- *)
+  (tJ t a b tRefl) ⇝ t
+| N_Let a0 a1 b :
+  (a0 ⇝ a1) ->
+  (* ------------------- *)
+  (tLet a0 b) ⇝ (tLet a1 b)
+| N_LetPack a b c :
+  (* ---------------------------- *)
+  (tLet (tPack a b) c) ⇝ c[b .: a..]
+where "A ⇝ B" := (CBN A B).
+#[export]Hint Constructors CBN : cbn.
+
+Lemma wt_progress a A (h : nil ⊢ a ∈ A) : is_value a \/ exists a0, a ⇝ a0.
 Proof.
   move E : nil h => Γ h.
   move : E.
-  elim: Γ a A/h; hauto l:on use:wt_canon, Par_refl.
+  elim: Γ a A/h; auto.
+  - move => Γ i A _ hi E. subst. inversion hi.
+  - move => Γ a A B b ha iha hb ihb E. subst.
+    move : (iha eq_refl) => [va | [a' ra]].
+    + move /wt_canon : ha va => ca va.
+      case ca => // [a' ->]; auto.
+      hauto lq:on ctrs:CBN.
+    + hauto lq:on ctrs:CBN.
+  - move => Γ a b c i _ _ _ _ _ _ _ hc ihc E. subst.
+    move : (ihc eq_refl) => [vc | [c' rc]].
+    + move /wt_canon : hc vc => cc vc.
+      case cc => // [-> | [c' ->]];
+      hauto lq:on ctrs:CBN.
+    + hauto lq:on ctrs:CBN.
+  - move => Γ t a b p A i j C _ _ _ _ _ _ hp ihp _ _ _ _ E. subst.
+    move : (ihp eq_refl) => [vp | [p' rp]].
+    + move /wt_canon : hp vp => cp vp.
+      move : cp => -> //.
+      hauto lq:on ctrs:CBN.
+    + hauto lq:on ctrs:CBN.
+  - move => Γ a b A B C i j _ _ _ _ ha iha _ _ _ _ E. subst.
+    move : (iha eq_refl) => [va | [a' ra]].
+    + move /wt_canon : ha va => ca va.
+      case ca => // [a' [b' ->]].
+      hauto lq:on ctrs:CBN.
+    + hauto lq:on ctrs:CBN.
+Qed.
+
+Lemma CBN_Par a0 a1 (h : a0 ⇝ a1) : a0 ⇒ a1.
+Proof.
+  elim: h; hauto lq:on ctrs:Par use:Par_refl.
+Qed.
+
+Lemma wt_preservation Γ a b A (r : a ⇝ b) (h : Γ ⊢ a ∈ A) : Γ ⊢ b ∈ A.
+Proof.
+  sfirstorder use:CBN_Par, subject_reduction.
+Qed.
+
+(* Evaluation will either step to a value or diverge *)
+CoInductive Eval a : Prop :=
+| E_Value : is_value a -> Eval a
+| E_Step b : a ⇝ b -> Eval b -> Eval a.
+
+(* We need evaluation to be coinductive to express divergence of e.g. (λx. x x) (λx. x x) *)
+CoFixpoint Omega (omega := tAbs (tApp (var_tm 0) (var_tm 0))) :
+  Eval (tApp omega omega).
+Proof.
+  eapply E_Step; last by (exact Omega).
+  apply N_AppAbs.
+Qed.
+
+(* Well typed terms don't get stuck, i.e. will always evaluate *)
+CoFixpoint wt_safety a A (h : nil ⊢ a ∈ A) : Eval a.
+Proof.
+  destruct (wt_progress _ _ h) as [va | [a' ra]].
+  - apply E_Value; auto.
+  - eapply E_Step; eauto.
+    have ha' : nil ⊢ a' ∈ A by eapply wt_preservation; eauto.
+    eapply wt_safety; eauto.
 Qed.
