@@ -3,7 +3,7 @@
 set-up felt too heavy and I'm not sure what the best practice is. *)
 From Coq Require Import ssreflect.
 From Equations Require Import Equations.
-From Hammer Require Import Tactics Hammer.
+From Hammer Require Import Tactics.
 From Ltac2 Require Ltac2.
 
   Module Type Lattice.
@@ -167,6 +167,56 @@ From Ltac2 Require Ltac2.
       hauto depth:1 use: @splitLeq_sound, @splitLeq_complete.
     Qed.
 
+    Import Ltac2.
+    Ltac2 rec reify_lexp (e : constr) :=
+      lazy_match! e with
+      | meet ?a1 ?a2 =>
+          let e1 := reify_lexp a1 in
+          let e2 := reify_lexp a2 in
+          '(Meet $e1 $e2)
+      | join ?a1 ?a2 =>
+          let e1 := reify_lexp a1 in
+          let e2 := reify_lexp a2 in
+          '(Join $e1 $e2)
+      | ?e => '(Var $e)
+      end.
 
+    (* takes as input a hypothesis' identifier and type; erase the hypothesis if it's not relevant to lattices *)
+    Ltac2 simplify_lattice_hyp (id : ident) (ty : constr) : unit :=
+      simpl in $id;
+      lazy_match! ty with
+      | ?a1 ⊆ ?a2 =>
+          let e1 := reify_lexp a1 in
+          let e2 := reify_lexp a2 in
+          apply (splitLeqForward_complete $e1 $e2) in $id;
+          ltac1:(h1 |- simp splitLeqForward in h1) (Ltac1.of_ident id);
+          simpl in $id
+      (* TODO: keep the equalities about lattices *)
+      | _ => clear id
+      end.
+
+    Ltac2 simplify_lattice_hyps () : unit :=
+      (* iterate through the list of hypotheses *)
+      List.iter
+        (fun (id, _, ty) =>
+           simplify_lattice_hyp id ty)
+        (Control.hyps ()).
+
+    Ltac2 simplify_lattice_goal () : unit :=
+      simpl; intros;
+      lazy_match! goal with
+      | [|- ?a1 ⊆ ?a2] =>
+          let e1 := reify_lexp a1 in
+          let e2 := reify_lexp a2 in
+          apply (splitLeq_sound $e1 $e2); ltac1:(simp splitLeq)
+      | [|- _] =>
+          ltac1:(exfalso)
+      end.
+
+    Ltac2 solve_lattice () :=
+      simplify_lattice_goal ();
+      simplify_lattice_hyps ().
+
+    Ltac2 Notation "solve_lattice" := solve_lattice ().
 
   End Solver.
