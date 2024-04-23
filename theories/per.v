@@ -40,7 +40,7 @@ Inductive InterpExt (i : nat) (I : nat -> tm_rel) : tm -> tm_rel -> Prop :=
   ⟦ A0 ⟧ i , I ↘ RA
 where "⟦ A ⟧ i , I ↘ R" := (InterpExt i I A R).
 
-Reserved Notation "⟦ A ⟧ ~ ⟦ B ⟧ i , I" (at level 70).
+Reserved Notation "⟦ A ⟧ ~ ⟦ B ⟧ i , I" (at level 70, i at next level).
 Inductive PerType (i : nat) (I : nat -> tm_rel) : tm_rel :=
 (* | PerType_Ne A B :
   wne_coherent A B ->
@@ -87,7 +87,7 @@ Qed.
 
 Lemma PerType_sym i I A B
   (ih : forall j A B, j < i -> I j A B -> I j B A)
-  (h : PerType i I A B) : PerType i I B A.
+  (h : ⟦ A ⟧ ~ ⟦ B ⟧ i , I) : ⟦ B ⟧ ~ ⟦ A ⟧ i , I.
 Proof.
   elim h;
   hauto lq:on ctrs:PerType use:InterpExt_sym.
@@ -126,7 +126,7 @@ Proof.
 Qed.
 
 Lemma PerType_Steps A0 A1 B0 B1 i I (rA : A0 ⇒* A1) (rB : B0 ⇒* B1) :
-  PerType i I A1 B1 -> PerType i I A0 B0.
+  ⟦ A1 ⟧ ~ ⟦ B1 ⟧ i , I -> ⟦ A0 ⟧ ~ ⟦ B0 ⟧ i , I.
 Proof.
   elim : A0 A1 /rA; elim : B0 B1 /rB; auto;
   sfirstorder use:PerType_Step, Par_refl.
@@ -163,11 +163,11 @@ Qed.
 
 Lemma InterpExt_lt_redundant i I A RA
   (h : ⟦ A ⟧ i , I ↘ RA) :
-       ⟦ A ⟧ i , (fun j A0 A1 =>
-                  match Compare_dec.lt_dec j i with
-                  | left h => I j A0 A1
-                  | right _ => False
-                  end) ↘ RA.
+  ⟦ A ⟧ i , (fun j A0 A1 =>
+             match Compare_dec.lt_dec j i with
+             | left h => I j A0 A1
+             | right _ => False
+             end) ↘ RA.
 Proof.
   elim : A RA /h.
   - hauto lq:on ctrs:InterpExt.
@@ -200,28 +200,26 @@ Proof.
 Qed.
 
 Lemma PerType_lt_redundant i I A0 A1
-  (h : PerType i I A0 A1) :
-       PerType i
-        (fun j A0 A1 =>
-          match Compare_dec.lt_dec j i with
-          | left h => I j A0 A1
-          | right _ => False
-          end)
-        A0 A1.
+  (h : ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i , I) :
+  ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i ,
+    (fun j A0 A1 =>
+      match Compare_dec.lt_dec j i with
+      | left h => I j A0 A1
+      | right _ => False
+      end).
 Proof.
   elim : A0 A1 /h;
   hauto lq:on ctrs:PerType use:InterpExt_lt_redundant.
 Qed.
 
 Lemma PerType_lt_redundant2 i I A0 A1
-  (h : PerType i
+  (h : ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i ,
     (fun j A0 A1 =>
       match Compare_dec.lt_dec j i with
       | left h => I j A0 A1
       | right _ => False
-      end)
-    A0 A1) :
-  PerType i I A0 A1.
+      end)) :
+  ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i , I.
 Proof.
   elim : A0 A1 /h;
   hauto lq:on ctrs:PerType use:InterpExt_lt_redundant2.
@@ -269,7 +267,7 @@ Proof.
 Qed.
 
 Lemma PerType_preservation i I A0 A1 B0 B1 (rA : A0 ⇒ A1) (rB : B0 ⇒ B1) :
-  PerType i I A0 B0 -> PerType i I A1 B1.
+  ⟦ A0 ⟧ ~ ⟦ B0 ⟧ i , I -> ⟦ A1 ⟧ ~ ⟦ B1 ⟧ i , I.
 Proof.
   move => h. move : A1 B1 rA rB.
   elim : A0 B0 /h.
@@ -290,7 +288,7 @@ Lemma InterpExt_preservations i I A B R (r : A ⇒* B) :
 Proof. elim : A B /r; sfirstorder use:InterpExt_preservation. Qed.
 
 Lemma PerType_preservations i I A0 A1 B0 B1 (rA : A0 ⇒* A1) (rB : B0 ⇒* B1) :
-  PerType i I A0 B0 -> PerType i I A1 B1.
+  ⟦ A0 ⟧ ~ ⟦ B0 ⟧ i , I -> ⟦ A1 ⟧ ~ ⟦ B1 ⟧ i , I.
 Proof.
   elim : A0 A1 /rA; elim : B0 B1 /rB;
   hauto lq:on use:PerType_preservation, Par_refl.
@@ -349,7 +347,7 @@ Proof.
 Qed.
 
 Lemma PerType_coherent i I A0 A1 B0 B1 (rA : A0 ⇔ A1) (rB : B0 ⇔ B1) :
-  PerType i I A0 B0 -> PerType i I A1 B1.
+  ⟦ A0 ⟧ ~ ⟦ B0 ⟧ i , I -> ⟦ A1 ⟧ ~ ⟦ B1 ⟧ i , I.
 Proof.
   move => h.
   case : rA => [A [rA0 rA1]].
@@ -369,13 +367,13 @@ Proof. hauto lq:on use:PerType_coherent, PerTypeN_nolt. Qed.
 (* PerType_Fun inversion lemmas *)
 
 Lemma PerType_Fun_inv i I A0 B0 T
-  (h : PerType i I (tPi A0 B0) T) :
+  (h : ⟦ tPi A0 B0 ⟧ ~ ⟦ T ⟧ i , I) :
   exists A1 B1 RA,
     T ⇒* tPi A1 B1 /\
-    PerType i I A0 A1 /\
+    ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i , I /\
     ⟦ A0 ⟧ i , I ↘ RA /\
     ⟦ A1 ⟧ i , I ↘ RA /\
-    (forall a0 a1, RA a0 a1 -> PerType i I (B0[a0..]) (B1[a1..])).
+    (forall a0 a1, RA a0 a1 -> ⟦ B0[a0..] ⟧ ~ ⟦ B1[a1..] ⟧ i , I).
 Proof.
   move E : (tPi A0 B0) h => T0 h.
   move : A0 B0 E.
@@ -394,12 +392,12 @@ Proof.
 Qed.
 
 Lemma PerType_Fun_inv' i I A0 B0 A1 B1
-  (h : PerType i I (tPi A0 B0) (tPi A1 B1)) :
+  (h : ⟦ tPi A0 B0 ⟧ ~ ⟦ tPi A1 B1 ⟧ i , I) :
   exists RA,
-    PerType i I A0 A1 /\
+    ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i , I /\
     ⟦ A0 ⟧ i , I ↘ RA /\
     ⟦ A1 ⟧ i , I ↘ RA /\
-    (forall a0 a1, RA a0 a1 -> PerType i I (B0[a0..]) (B1[a1..])).
+    (forall a0 a1, RA a0 a1 -> ⟦ B0[a0..] ⟧ ~ ⟦ B1[a1..] ⟧ i , I).
 Proof.
   move /PerType_Fun_inv : h => [A2] [B2] [RA] [r] [hA] [hRA0] [hRA2] hB.
   case /Pars_pi_inv : r => [A3] [B3] [E] [rA] rB. inversion E. subst.
@@ -442,8 +440,8 @@ Qed.
 
 Lemma PerType_cumulative i j I A B :
   i <= j ->
-  (PerType i I A B) ->
-  (PerType j I A B).
+  (⟦ A ⟧ ~ ⟦ B ⟧ i , I) ->
+  (⟦ A ⟧ ~ ⟦ B ⟧ j , I).
 Proof.
   move => ij hi.
   elim : A B /hi;
@@ -544,10 +542,10 @@ Lemma InterpExt_refl i I A R
 Proof. hauto lq:on use:InterpExt_sym, InterpExt_trans. Qed.
 
 Lemma PerType_trans i I
-  (hsym : forall A B, PerType i I A B -> PerType i I B A)
+  (hsym : forall A B, (⟦ A ⟧ ~ ⟦ B ⟧ i , I) -> (⟦ B ⟧ ~ ⟦ A ⟧ i , I))
   (Isym : forall j A B, j < i -> I j A B -> I j B A)
   (Itrans : forall j A B C, j < i -> I j A B -> I j B C -> I j A C) :
-  forall A B C, PerType i I A B -> PerType i I B C -> PerType i I A C.
+  forall A B C, (⟦ A ⟧ ~ ⟦ B ⟧ i , I) -> (⟦ B ⟧ ~ ⟦ C ⟧ i , I) -> (⟦ A ⟧ ~ ⟦ C ⟧ i , I).
 Proof.
   move => A B C h. move : C.
   elim : A B /h.
@@ -592,7 +590,7 @@ Proof. hauto lq:on use:PerTypeN_sym, PerTypeN_trans. Qed.
 (* Related types have common interpretations *)
 
 Lemma PerType_InterpExt i I A B
-  (h : PerType i I A B)
+  (h : ⟦ A ⟧ ~ ⟦ B ⟧ i , I)
   (Isym : forall j A B, j < i -> I j A B -> I j B A)
   (Itrans : forall j A B C, j < i -> I j A B -> I j B C -> I j A C) :
   exists R, ⟦ A ⟧ i , I ↘ R /\ ⟦ B ⟧ i , I ↘ R.
