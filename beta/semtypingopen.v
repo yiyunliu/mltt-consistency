@@ -521,6 +521,9 @@ Proof.
   - hauto lq:on db:nfne.
 Qed.
 
+Lemma InterpUnivN_Bool : ⟦ tBool ⟧ 0 ↘ (fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v)).
+Proof. sfirstorder ctrs:InterpExt rew:db:InterpUniv. Qed.
+
 Corollary InterpUniv_wn_ty i A PA
   (h : ⟦ A ⟧ i ↘ PA) :
   wn A.

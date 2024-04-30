@@ -97,6 +97,13 @@ Proof.
     eauto using weakening_Sem.
 Qed.
 
+Lemma wn_helper (a : tm) ρ
+  (h : wn a[var_tm 0 .: ρ]) :
+  wn a[up_tm_tm ρ].
+Proof.
+  apply wn_antirenaming with (ξ := 0 .: id). by asimpl.
+Qed.
+
 (* Fundamental theorem: Syntactic typing implies semantic typing *)
 Theorem soundness :
   (forall Γ a A, Γ ⊢ a ∈ A -> Γ ⊨ a ∈ A) /\
@@ -179,11 +186,10 @@ Proof.
       have : ρ_ok (tBool :: Γ) (subst_tm ρ a .: ρ). apply : (ρ_ok_cons i); hauto l:on ctrs:InterpExt.
       move /hA => [PN hPN]. exists l, PN. split; first by asimpl.
       suff : wn A[up_tm_tm ρ] by qauto l:on use:adequacy, wne_if unfold:CR .
-      apply wn_antirenaming with (ξ := (0 .: id)). asimpl.
-      suff : exists S, ⟦ A[var_tm 0 .: ρ] ⟧ l ↘ S by hauto l:on use:InterpUniv_wn_ty.
+      suff : exists S : tm -> Prop, ⟦ A[var_tm 0 .: ρ] ⟧ l ↘ S
+          by hauto l:on use:InterpUniv_wn_ty, wn_helper.
       apply hA.
-      apply : ρ_ok_cons; eauto.
-      simp InterpUniv. apply InterpExt_Bool with (i := 0).
+      apply : ρ_ok_cons=>//. apply InterpUnivN_Bool.
       hauto lq:on ctrs:rtc.
   (* Bool *)
   - hauto l:on use:SemWt_Univ.
