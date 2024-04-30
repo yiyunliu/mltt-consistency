@@ -131,21 +131,22 @@ Proof.
 Qed.
 
 Lemma Wt_Pi_inv Γ A B U (h : Γ ⊢ (tPi A B) ∈ U) :
-  exists i, Γ ⊢ A ∈ (tUniv i) /\
-         (A :: Γ) ⊢ B ∈(tUniv i) /\
-         Coherent (tUniv i) U /\
+  exists i j, Γ ⊢ A ∈ (tUniv i) /\
+         (A :: Γ) ⊢ B ∈(tUniv j) /\
+         Coherent (tUniv (max i j)) U /\
          exists i, Γ ⊢ U ∈ (tUniv i).
 Proof.
   move E : (tPi A B) h => T h.
   move : A B E.
   elim :  Γ T U / h => //.
-  - hauto l:on use:Wt_Univ.
-  - qauto l:on use:Coherent_transitive.
+  - hauto lq:on ctrs:rtc, Wt db:wff.
+  - hauto lq:on rew:off use:Coherent_transitive ctrs:Wt db:wff.
 Qed.
 
 Lemma Wt_Pi_Univ_inv Γ A B i (h : Γ ⊢ (tPi A B) ∈ (tUniv i)) :
-  Γ ⊢ A ∈ (tUniv i) /\
-  (A :: Γ) ⊢ B ∈ (tUniv i).
+  exists j k,
+  Γ ⊢ A ∈ (tUniv j) /\
+  (A :: Γ) ⊢ B ∈ (tUniv k) /\ i = max j k.
 Proof.
   qauto l:on use:Coherent_univ_inj, Wt_Pi_inv.
 Qed.
@@ -176,7 +177,9 @@ Lemma renaming_Syn
 Proof.
   elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:lookup_good_renaming.
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
-  - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
+  - move => Γ A a B i /Wt_Pi_Univ_inv.
+    move => [j][k].
+    hauto lq:on rew:off ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - qauto l:on ctrs:Wt use:Coherent_renaming.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
@@ -264,9 +267,9 @@ Proof.
   - move => *.
     apply T_Pi; eauto.
     hauto q:on use:good_morphing_up db:wff.
-  - move => *.
+  - move => * //=.
     apply : T_Abs; eauto.
-    hauto q:on use:good_morphing_up, Wt_Pi_Univ_inv db:wff.
+    hecrush use:good_morphing_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
   - hauto q:on ctrs:Wt use:Coherent_subst_star.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ρ hρ hΔ /=.
@@ -333,7 +336,10 @@ Lemma Wt_regularity Γ a A
 Proof.
   elim: Γ a A/h; try qauto ctrs:Wt depth:2.
   - apply Wff_lookup.
-  - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
+  - hauto lq:on ctrs:Wt use:subst_Syn, Wt_Pi_Univ_inv db:wff.
+  - move => Γ a A B b ha [i hPi]  hb [j hA].
+    move /Wt_Pi_Univ_inv : hPi => [j0 [k ?]].
+    hauto lq:on use: subst_Syn.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc.
     exists i. change (tUniv i) with (subst_tm (a..) (tUniv i)).
     eauto using subst_Syn.
@@ -363,10 +369,10 @@ Proof.
     exists A, B; repeat split => //.
     + apply Coherent_subst_star. apply Coherent_reflexive.
     + move /Wt_regularity : h0.
-      move => [i /Wt_Pi_Univ_inv] [hA hB].
-      exists i.
-      change (tUniv i) with (tUniv i)[b..].
-      apply : subst_Syn; eauto.
+      move => [i /Wt_Pi_Univ_inv] [j [k [hA hB]]].
+      exists k.
+      change (tUniv k) with (tUniv k)[b..].
+      apply : subst_Syn; eauto. tauto.
   - hauto lq:on rew:off use:Coherent_transitive.
 Qed.
 
@@ -513,9 +519,9 @@ Lemma subject_reduction a b (h : a ⇒ b) : forall Γ A,
 Proof.
   elim : a b /h => //.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Pi_inv.
-    intros (i & hA0 & hAB0 & hACoherent & j & hA).
+    intros (i & j & hA0 & hAB0 & hACoherent & k & hA).
     have ? : ⊢ Γ by eauto with wff.
-    apply T_Conv with (A := tUniv i) (i := j) => //.
+    apply T_Conv with (A := tUniv (Nat.max i j)) (i := k) => //.
     qauto l:on ctrs:Wt use:preservation_helper, Par_Coherent.
   - move => a0 a1 h0 ih0 Γ A /Wt_Abs_inv.
     intros (A1 & B & i & hPi & ha0 & hCoherent & j & hA).
@@ -543,6 +549,7 @@ Proof.
     eapply T_Conv with (A := subst_tm (b1..) B0); eauto.
     + apply : subst_Syn; eauto.
       eapply T_Conv with (A := A1); eauto.
+      hauto l:on.
       qauto l:on use:Coherent_symmetric.
     + apply : Coherent_transitive; eauto.
       apply Coherent_symmetric.

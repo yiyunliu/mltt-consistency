@@ -103,6 +103,15 @@ Proof.
     eauto using weakening_Sem.
 Qed.
 
+Lemma InterpUnivN_cumulative' i A PA :
+   ⟦ A ⟧ i ↘ PA -> forall j, i <= j ->
+   ⟦ A ⟧ j ↘ PA.
+Proof.
+  move => ? j h.
+  have {}h : i < j \/ i = j by lia.
+  hauto q:on use:InterpUnivN_cumulative.
+Qed.
+
 (* Fundamental theorem: Syntactic typing implies semantic typing *)
 Theorem soundness :
   (forall Γ a A, Γ ⊢ a ∈ A -> Γ ⊨ a ∈ A) /\
@@ -121,13 +130,16 @@ Proof.
   (* Void *)
   - hauto l:on use:SemWt_Univ.
   (* Pi *)
-  - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
+  - move => Γ i j A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.
     move => ρ hρ.
     move /(_ ρ hρ) : h0; intros (PA & hPA).
     eexists => /=.
+    have ? : i <= max i j /\ j <= max i j by lia.
     apply InterpUnivN_Fun_nopf; eauto.
-    move => *; asimpl. eauto using ρ_ok_cons.
+    hauto l:on use:InterpUnivN_cumulative'.
+    move => *; asimpl.
+    hauto lq:on use:InterpUnivN_cumulative', ρ_ok_cons.
   (* Abs *)
   - move => Γ A b B i _ /SemWt_Univ hB _ hb ρ hρ.
     case /(_ ρ hρ) : hB => /= PPi hPPi.

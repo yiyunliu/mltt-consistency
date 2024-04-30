@@ -27,11 +27,11 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   (* -------- *)
   Γ ⊢ tVoid ∈ (tUniv i)
 
-| T_Pi Γ i A B :
+| T_Pi Γ i j A B :
   Γ ⊢ A ∈ (tUniv i) ->
-  (A :: Γ) ⊢ B ∈ (tUniv i) ->
+  (A :: Γ) ⊢ B ∈ (tUniv j) ->
   (* --------------------- *)
-  Γ ⊢ (tPi A B) ∈ (tUniv i)
+  Γ ⊢ (tPi A B) ∈ (tUniv (max i j))
 
 | T_Abs Γ A a B i :
   Γ ⊢ (tPi A B) ∈ (tUniv i) ->
