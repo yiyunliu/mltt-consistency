@@ -209,7 +209,7 @@ Proof.
     eexists => /=. apply InterpUnivN_Eq;
       hauto l:on use:adequacy, InterpUniv_wn_ty unfold:SemWt, CR.
   (* J *)
-  - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht ρ hρ.
+  - move => Γ t a b p A i j C _ ha _ hb _ /SemWt_Univ hA _ hp _ /SemWt_Univ hC _ ht ρ hρ.
     move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
     move  /InterpUnivN_Eq_inv : hPA. intros (-> & ? & ? & ?).
     move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
@@ -233,9 +233,10 @@ Proof.
         eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
         sfirstorder use: P_JRefl_star.
     + asimpl.
-      move /(_ (subst_tm ρ p .: (subst_tm ρ b .: ρ))) : hC.
+      move /(_ (subst_tm ρ p .: (subst_tm ρ b .: ρ))) : (hC).
       case.
-      * eapply ρ_ok_cons with (i := 0).
+      * move {hC}.
+        eapply ρ_ok_cons with (i := 0).
         asimpl.
         apply InterpUnivN_Eq; eauto.
         right. auto.
@@ -244,7 +245,18 @@ Proof.
         hauto l:on use:ρ_ok_cons.
       * move => PC hPC.
         exists i, PC. split; first tauto.
-        qauto l:on use:adequacy,wne_j unfold:CR.
+        suff : wn C[var_tm 0 .: (var_tm 1 .: ρ >> ren_tm (S >> S))]
+          by qauto l:on use:adequacy,wne_j unfold:CR.
+        apply wn_antirenaming with (ξ := 0 .: (0.:id)). asimpl.
+        suff : exists S, ⟦C[var_tm 0 .: (var_tm 0 .: ρ)]⟧ i ↘ S
+            by hauto lq:on use:InterpUniv_wn_ty.
+        apply hC.
+        apply : ρ_ok_cons; eauto => //=.
+        apply (InterpUnivN_Eq 0). by asimpl. hauto lq:on ctrs:rtc. by asimpl.
+        hauto lq:on ctrs:rtc.
+        move /hA : (hρ) => [S]?.
+        apply : ρ_ok_cons; eauto => //=.
+        hauto q:on ctrs:rtc use:adequacy.
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)

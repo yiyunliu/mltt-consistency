@@ -100,7 +100,7 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   Γ ⊢ p ∈ (tEq a b A) ->
   (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) ->
   Γ ⊢ t ∈ (C [tRefl .: a ..]) ->
-  Γ ⊢ (tJ t a b p) ∈ (C [p .: b..])
+  Γ ⊢ (tJ C t a b p) ∈ (C [p .: b..])
 
 with Wff : context -> Prop :=
 | Wff_nil :
