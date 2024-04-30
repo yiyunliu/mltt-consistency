@@ -57,20 +57,21 @@ Inductive Par : tm -> tm -> Prop :=
 | P_False :
   (* ---------- *)
   tFalse ⇒ tFalse
-| P_If a0 a1 b0 b1 c0 c1:
+| P_If A0 A1 a0 a1 b0 b1 c0 c1:
+  (A0 ⇒ A1) ->
   (a0 ⇒ a1) ->
   (b0 ⇒ b1) ->
   (c0 ⇒ c1) ->
   (* ---------- *)
-  (tIf a0 b0 c0) ⇒ (tIf a1 b1 c1)
-| P_IfTrue b0 b1 c0 :
+  (tIf A0 a0 b0 c0) ⇒ (tIf A1 a1 b1 c1)
+| P_IfTrue A b0 b1 c0 :
   (b0 ⇒ b1) ->
   (* ---------- *)
-  (tIf tTrue b0 c0) ⇒ b1
-| P_IfFalse b0 c0 c1 :
+  (tIf A tTrue b0 c0) ⇒ b1
+| P_IfFalse A b0 c0 c1 :
   (c0 ⇒ c1) ->
   (* ---------- *)
-  (tIf tFalse b0 c0) ⇒ c1
+  (tIf A tFalse b0 c0) ⇒ c1
 | P_Bool :
   (* ---------- *)
   tBool ⇒ tBool
@@ -197,6 +198,7 @@ Proof.
   - move => a a0 b0 b1 h0 ih0 h1 ih1 σ0 σ h /=.
     apply P_AppAbs' with (a0 := a0 [up_tm_tm σ]) (b1 := b1 [σ]).
     by asimpl. hauto l:on unfold:Par_m use:Par_renaming inv:nat. eauto.
+  - qauto db:par use:Par_morphing_lift.
   - hauto lq:on db:par use:Par_morphing_lift.
 Qed.
 
@@ -372,9 +374,9 @@ Proof. hauto lq:on rew:off inv:rtc use:Pars_univ_inv. Qed.
 (* ------------------------------------------------------------ *)
 
 
-Lemma P_IfTrue_star a b c :
+Lemma P_IfTrue_star A a b c :
   (a ⇒* tTrue) ->
-  ((tIf a b c) ⇒* b).
+  ((tIf A a b c) ⇒* b).
   move E : tTrue => v h.
   move : E.
   elim : a v / h.
@@ -386,9 +388,9 @@ Lemma P_IfTrue_star a b c :
     hauto lq:on use:@rtc_once,Par_refl ctrs:Par.
 Qed.
 
-Lemma P_IfFalse_star a b c :
+Lemma P_IfFalse_star A a b c :
   (a ⇒* tFalse) ->
-  ((tIf a b c) ⇒* c).
+  ((tIf A a b c) ⇒* c).
   move E : tFalse => v h.
   move : E.
   elim : a v / h.
@@ -441,9 +443,9 @@ Function tstar (a : tm) :=
   | tApp a b => tApp (tstar a) (tstar b)
   | tTrue => tTrue
   | tFalse => tFalse
-  | tIf tTrue b c => tstar b
-  | tIf tFalse b c => tstar c
-  | tIf a b c => tIf (tstar a) (tstar b) (tstar c)
+  | tIf A tTrue b c => tstar b
+  | tIf A tFalse b c => tstar c
+  | tIf A a b c => tIf (tstar A) (tstar a) (tstar b) (tstar c)
   | tBool => tBool
   | tRefl => tRefl
   | tEq a b A => tEq (tstar a) (tstar b) (tstar A)

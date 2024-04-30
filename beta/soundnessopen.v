@@ -178,7 +178,13 @@ Proof.
     + have ? : wne (subst_tm ρ a) by hauto lq:on use:wne_if, adequacy.
       have : ρ_ok (tBool :: Γ) (subst_tm ρ a .: ρ). apply : (ρ_ok_cons i); hauto l:on ctrs:InterpExt.
       move /hA => [PN hPN]. exists l, PN. split; first by asimpl.
-      qauto l:on use:adequacy, wne_if unfold:CR .
+      suff : wn A[up_tm_tm ρ] by qauto l:on use:adequacy, wne_if unfold:CR .
+      apply wn_antirenaming with (ξ := (0 .: id)). asimpl.
+      suff : exists S, ⟦ A[var_tm 0 .: ρ] ⟧ l ↘ S by hauto l:on use:InterpUniv_wn_ty.
+      apply hA.
+      apply : ρ_ok_cons; eauto.
+      simp InterpUniv. apply InterpExt_Bool with (i := 0).
+      hauto lq:on ctrs:rtc.
   (* Bool *)
   - hauto l:on use:SemWt_Univ.
   (* Univ *)

@@ -12,7 +12,7 @@ Fixpoint ne (a : tm) : bool :=
   | tUniv _ => false
   | tTrue => false
   | tFalse => false
-  | tIf a b c => ne a && nf b && nf c
+  | tIf A a b c => nf A && ne a && nf b && nf c
   | tBool => false
   | tEq a b A => false
   | tRefl => false
@@ -28,7 +28,7 @@ with nf (a : tm) : bool :=
   | tUniv _ => true
   | tTrue => true
   | tFalse => true
-  | tIf a b c => ne a && nf b && nf c
+  | tIf A a b c => nf A && ne a && nf b && nf c
   | tBool => true
   | tEq a b A => nf a && nf b && nf A
   | tRefl => true
@@ -112,11 +112,11 @@ Proof.
     hauto lq:on ctrs:Par.
   - hauto q:on ctrs:Par inv:tm.
   - hauto q:on ctrs:Par inv:tm.
-  - move => > ++++++ [] //.
+  - move => > ++++++++ [] //.
     hauto q:on ctrs:Par.
-  - move => b0 b1 c0 h ih []// []// t0 t1 ξ [].
+  - move => A b0 b1 c0 h ih []//+ []// t0 t1 ξ [].
     hauto lq:on ctrs:Par.
-  - move => b0 b1 c0 h ih []// []// t0 t1 ξ [].
+  - move => A b0 b1 c0 h ih []//+ []// t0 t1 ξ [].
     hauto lq:on ctrs:Par.
   - hauto inv:tm q:on ctrs:Par.
   - hauto inv:tm q:on ctrs:Par.
@@ -171,22 +171,22 @@ Proof.
   - solve_s_rec.
 Qed.
 
-Lemma S_If a0 a1 : forall b0 b1 c0 c1,
+Lemma S_If a0 a1 : forall A0 A1 b0 b1 c0 c1,
     a0 ⇒* a1 ->
+    A0 ⇒* A1 ->
     b0 ⇒* b1 ->
     c0 ⇒* c1 ->
-    (tIf a0 b0 c0) ⇒* (tIf a1 b1 c1).
+    (tIf A0 a0 b0 c0) ⇒* (tIf A1 a1 b1 c1).
 Proof.
-  move => + + + + h.
-  elim : a0 a1 /h.
-  - move => + b0 b1 + + h.
-    elim : b0 b1 /h.
-    + move => + + c0 c1 h.
-      elim : c0 c1 /h.
-      * auto using rtc_refl.
-      * solve_s_rec.
-    + solve_s_rec.
-  - solve_s_rec.
+  move => + + + + + +  h.
+  elim : a0 a1 /h; last by solve_s_rec.
+  move => ? A0 A1  + + + + h.
+  elim : A0 A1 /h; last by solve_s_rec.
+  move => ? b0 b1 + + h.
+  elim : b0 b1 /h; last by solve_s_rec.
+  move => ? c0 c1 h.
+  elim : c0 c1 / h; last by solve_s_rec.
+  auto using rtc_refl.
 Qed.
 
 Lemma S_J t0 t1 : forall a0 a1 b0 b1 p0 p1,
@@ -259,11 +259,11 @@ Proof.
   hauto lq:on b:on use:S_J.
 Qed.
 
-Lemma wne_if (a b c : tm) :
-  wne a -> wn b -> wn c -> wne (tIf a b c).
+Lemma wne_if (A a b c : tm) :
+  wn A -> wne a -> wn b -> wn c -> wne (tIf A a b c).
 Proof.
-  move => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]].
-  exists (tIf a0 b0 c0).
+  move => [A0 [? ?]] [a0 [? ?]] [b0 [? ?]] [c0 [? ?]].
+  exists (tIf A0 a0 b0 c0).
   qauto l:on use:S_If b:on.
 Qed.
 

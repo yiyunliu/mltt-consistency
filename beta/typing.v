@@ -68,7 +68,7 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   Γ ⊢ b ∈ (A [tTrue..]) ->
   Γ ⊢ c ∈ (A [tFalse..]) ->
   (* ------------ *)
-  Γ ⊢ (tIf a b c) ∈ (A [a..])
+  Γ ⊢ (tIf A a b c) ∈ (A [a..])
 
 | T_Bool Γ i :
   ⊢ Γ ->

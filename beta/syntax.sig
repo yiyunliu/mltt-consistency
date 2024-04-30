@@ -8,7 +8,7 @@ tVoid : tm
 tUniv : nat -> tm
 tTrue : tm
 tFalse : tm
-tIf : tm -> tm -> tm -> tm
+tIf : (tm -> tm) -> tm -> tm -> tm -> tm
 tBool : tm
 tEq : tm -> tm -> tm -> tm
 tJ : tm -> tm -> tm -> tm -> tm
