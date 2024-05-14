@@ -1,4 +1,4 @@
-Require Import typing imports.
+Require Import typing typing_prop imports.
 
 (* Identifying neutral (ne) and normal (nf) terms *)
 Fixpoint ne (a : tm) : bool :=
@@ -20,34 +20,44 @@ with nf (a : tm) : bool :=
 
 Definition tm_rel := tm -> tm -> Prop.
 
-Definition ProdSpace (RA : tm_rel) (RF : tm -> tm_rel -> Prop) (b0 b1 : tm) :=
-  forall a0 a1 RB, RA a0 a1 -> RF a0 RB -> RF a1 RB -> RB (tApp b0 a0) (tApp b1 a1).
+Definition ProdSpace Γ (FA : context -> tm_rel) (FB : context -> tm -> tm_rel) (b0 b1 : tm) :=
+  forall ξ Δ, lookup_good_renaming ξ Γ Δ ->  ⊢ Δ ->
+  forall a0 a1, FA Δ a0 a1 -> FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a1).
 
-Reserved Notation "⟦ A ⟧ i ; I ↘ R" (at level 70).
+Definition wne_coherent Γ A a b :=
+  Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A /\ Γ ⊢ a ≡ b ∈ A.
+
+Reserved Notation "⟦ Γ ⊨ A ⟧ i ; I ↘ R" (at level 70, no associativity).
 Inductive InterpExt (Γ : context) (i : nat) (I : nat -> tm_rel) : tm -> tm_rel -> Prop :=
-| InterpExt_Ne A : ne A -> ⟦ A ⟧ i , I ↘ wne_coherent
-| InterpExt_Fun A B RA RF :
-  ⟦ A ⟧ i , I ↘ RA ->
-  (forall a0 a1, RA a0 a1 -> exists RB, RF a0 RB /\ RF a1 RB) ->
-  (forall a RB, RF a RB -> ⟦ B[a..] ⟧ i , I ↘ RB) ->
-  ⟦ tPi A B ⟧ i , I ↘ (ProdSpace RA RF)
+| InterpExt_Ne A : 
+  Γ ⊢ A ∈ tUniv i ->
+  ne A -> ⟦ Γ ⊨ A ⟧ i ; I ↘ wne_coherent Γ A
+| InterpExt_Fun A B FA FB :
+  (forall ξ Δ, lookup_good_renaming ξ Γ Δ -> ⊢ Δ ->
+      ⟦ Δ ⊨ ren_tm ξ A ⟧ i ; I ↘ FA Δ) ->
+  (forall ξ Δ, lookup_good_renaming ξ Γ Δ -> ⊢ Δ ->
+          forall a, FA Δ a a -> ⟦ Δ ⊨ (ren_tm (upRen_tm_tm ξ) B)[a..] ⟧ i ; I ↘ FB Δ a) ->
+  ⟦ Γ ⊨ tPi A B ⟧ i ; I ↘ ProdSpace Γ FA FB
 | InterpExt_Univ j :
+  ⊢ Γ -> 
   j < i ->
-  ⟦ tUniv j ⟧ i , I ↘ (I j)
+  ⟦ Γ ⊨ tUniv j ⟧ i ; I ↘ (I j)
 | InterpExt_Step A0 A1 RA :
-  A0 ⇒ A1 ->
-  ⟦ A1 ⟧ i , I ↘ RA ->
-  ⟦ A0 ⟧ i , I ↘ RA
-where "⟦ A ⟧ i , I ↘ R" := (InterpExt i I A R).
+  Γ ⊢ A0 ⤳ A1 ∈ tUniv i ->
+  ⟦ Γ ⊨ A1 ⟧ i ; I ↘ RA ->
+  ⟦ Γ ⊨ A0 ⟧ i ; I ↘ RA
+where "⟦ Γ ⊨ A ⟧ i ; I ↘ R" := (InterpExt Γ i I A R).
 
-Reserved Notation "⟦ A ⟧ ~ ⟦ B ⟧ i , I" (at level 70, i at next level).
-Inductive PerType (i : nat) (I : nat -> tm_rel) : tm_rel :=
-(* | PerType_Ne A B :
-  wne_coherent A B ->
-  ⟦ A ⟧ ~ ⟦ B ⟧ i , I *)
+Reserved Notation "Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I" (at level 70, i at next level).
+Inductive PerType (Γ : context) (i : nat) (I : nat -> tm_rel) : tm_rel :=
+| PerType_Ne A B :
+  ne A ->
+  ne B ->
+  Γ ⊢ A ≡ B ∈ tUniv i ->
+  Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I
 | PerType_Fun A0 A1 B0 B1 RA :
-  ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i , I ->
-  ⟦ A0 ⟧ i , I ↘ RA ->
+  Γ ⊨ ⟦ A0 ⟧ ~ ⟦ A1 ⟧ i , I ->
+  Γ ⊨ ⟦ A0 ⟧ i , I ↘ RA ->
   ⟦ A1 ⟧ i , I ↘ RA ->
   (forall a0 a1, RA a0 a1 -> ⟦ B0[a0..] ⟧ ~ ⟦ B1[a1..] ⟧ i , I) ->
   ⟦ tPi A0 B0 ⟧ ~ ⟦ tPi A1 B1 ⟧ i , I
@@ -58,7 +68,8 @@ Inductive PerType (i : nat) (I : nat -> tm_rel) : tm_rel :=
   A0 ⇒ A1 -> B0 ⇒ B1 ->
   ⟦ A1 ⟧ ~ ⟦ B1 ⟧ i , I ->
   ⟦ A0 ⟧ ~ ⟦ B0 ⟧ i , I
-where "⟦ A ⟧ ~ ⟦ B ⟧ i , I" := (PerType i I A B).
+where "Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I" := (PerType Γ i I A B).
+
 
 Equations PerTypeN (n : nat) : tm_rel by wf n lt :=
   PerTypeN n := PerType n
