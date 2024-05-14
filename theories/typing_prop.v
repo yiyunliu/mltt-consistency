@@ -16,10 +16,10 @@ Lemma there' : forall {n A Γ B T}, T = A ⟨shift⟩ ->
 Proof. move => > ->. by apply there. Qed.
 
 Lemma good_renaming_up ξ Γ Δ A :
-  lookup_good_renaming ξ Γ Δ ->
-  lookup_good_renaming (upRen_tm_tm ξ)  (A :: Γ) (A⟨ξ⟩ :: Δ).
+  ren_ok ξ Γ Δ ->
+  ren_ok (upRen_tm_tm ξ)  (A :: Γ) (A⟨ξ⟩ :: Δ).
 Proof.
-  rewrite /lookup_good_renaming => h.
+  rewrite /ren_ok => h.
   move => i B.
   inversion 1 =>*; subst.
   - apply here'. by asimpl.
@@ -27,10 +27,10 @@ Proof.
 Qed.
 
 Lemma good_renaming_suc ξ Γ A Δ
-  (h : lookup_good_renaming ξ Γ Δ) :
-  lookup_good_renaming (ξ >> S) Γ (A⟨ξ⟩ :: Δ).
+  (h : ren_ok ξ Γ Δ) :
+  ren_ok (ξ >> S) Γ (A⟨ξ⟩ :: Δ).
 Proof.
-  rewrite /lookup_good_renaming in h *.
+  rewrite /ren_ok in h *.
   move => i A0 /h ?.
   asimpl. apply : there'; eauto. by asimpl.
 Qed.
@@ -75,7 +75,7 @@ Lemma Wt_Univ Γ a A i
   exists j, Γ ⊢ (tUniv i) ∈ (tUniv j).
 Proof.
   exists (S i).
-  qauto l:on use:Wt_Wff ctrs:Wt.
+  qauto l:on use:Wt_Wff ctrs:Wt solve+:lia.
 Qed.
 
 Lemma Wt_Pi_inv Γ A B U (h : Γ ⊢ (tPi A B) ∈ U) :
@@ -90,13 +90,13 @@ Qed.
 
 Lemma renaming_wt_equiv :
   (forall Γ a A, Γ ⊢ a ∈ A -> forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ∈ A⟨ξ⟩) /\
   (forall Γ a b A, Γ ⊢ a ≡ b ∈ A -> forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ≡ b⟨ξ⟩ ∈ A⟨ξ⟩).
 Proof.
-  apply wt_mutual; try qauto l:on depth:1 ctrs:Wt,Equiv, lookup unfold:lookup_good_renaming.
+  apply wt_mutual; try qauto l:on depth:1 ctrs:Wt,Equiv, lookup unfold:ren_ok.
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
   - move => > _.
     hauto q:on ctrs:Wt, Wff use:good_renaming_up, Wt_Pi_inv.
@@ -111,17 +111,17 @@ Proof.
 Qed.
 
 Lemma renaming_wt : forall Γ a A, Γ ⊢ a ∈ A -> forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ∈ A⟨ξ⟩.
 Proof. have := renaming_wt_equiv. tauto. Qed.
 
 Lemma renaming_wt_univ : forall Γ A i, Γ ⊢ A ∈ tUniv i -> forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ⊢ Δ ->  Δ ⊢ A⟨ξ⟩ ∈ tUniv i.
 Proof. sfirstorder use:renaming_wt. Qed.
 
 Lemma renaming_equiv : forall Γ a b A, Γ ⊢ a ≡ b ∈ A -> forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ≡ b⟨ξ⟩ ∈ A⟨ξ⟩.
 Proof. have := renaming_wt_equiv. tauto. Qed.
 
@@ -142,7 +142,7 @@ Lemma R_Beta' Γ A B a b i t T :
 Proof. move => -> ->. apply R_Beta. Qed.
 
 Lemma renaming_Red Γ a b A (h : Γ ⊢ a ⤳ b ∈ A) : forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ⤳ b⟨ξ⟩ ∈ A⟨ξ⟩.
 Proof.
   elim : a b A / h.

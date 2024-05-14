@@ -7,7 +7,7 @@ Inductive lookup : nat -> context -> tm -> Prop :=
   | there : forall {n A Γ B},
       lookup n Γ A -> lookup (S n) (B :: Γ) (A ⟨shift⟩).
 
-Definition lookup_good_renaming ξ Γ Δ :=
+Definition ren_ok ξ Γ Δ :=
   forall i A, lookup i Γ A -> lookup (ξ i) Δ A⟨ξ⟩.
 
 Derive Inversion lookup_inv with (forall i Γ A, lookup i Γ A).
@@ -47,10 +47,11 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   (* ----------- *)
   Γ ⊢ a ∈ B
 
-| T_Univ Γ i :
+| T_Univ Γ i j :
   ⊢ Γ ->
+  i < j ->
   (* ------------ *)
-  Γ ⊢ (tUniv i) ∈ (tUniv (S i))
+  Γ ⊢ (tUniv i) ∈ (tUniv j)
 
 with Equiv : context -> tm -> tm -> tm -> Prop :=
 | E_Var Γ i A :

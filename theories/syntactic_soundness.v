@@ -18,10 +18,10 @@ Lemma there' : forall {n A Γ B T}, T = A ⟨shift⟩ ->
 Proof. move => > ->. by apply there. Qed.
 
 Lemma good_renaming_up ξ Γ Δ A :
-  lookup_good_renaming ξ Γ Δ ->
-  lookup_good_renaming (upRen_tm_tm ξ)  (A :: Γ) (A⟨ξ⟩ :: Δ).
+  ren_ok ξ Γ Δ ->
+  ren_ok (upRen_tm_tm ξ)  (A :: Γ) (A⟨ξ⟩ :: Δ).
 Proof.
-  rewrite /lookup_good_renaming => h.
+  rewrite /ren_ok => h.
   move => i B.
   inversion 1 =>*; subst.
   - apply here'. by asimpl.
@@ -29,10 +29,10 @@ Proof.
 Qed.
 
 Lemma good_renaming_suc ξ Γ A Δ
-  (h : lookup_good_renaming ξ Γ Δ) :
-  lookup_good_renaming (ξ >> S) Γ (A⟨ξ⟩ :: Δ).
+  (h : ren_ok ξ Γ Δ) :
+  ren_ok (ξ >> S) Γ (A⟨ξ⟩ :: Δ).
 Proof.
-  rewrite /lookup_good_renaming in h *.
+  rewrite /ren_ok in h *.
   move => i A0 /h ?.
   asimpl. apply : there'; eauto. by asimpl.
 Qed.
@@ -194,10 +194,10 @@ Proof. by asimpl. Qed.
 
 Lemma renaming_Syn
   Γ a A (h : Γ ⊢ a ∈ A) : forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ∈ A⟨ξ⟩.
 Proof.
-  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:lookup_good_renaming.
+  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:ren_ok.
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
@@ -267,7 +267,7 @@ Lemma weakening_Syn Γ a A B i
   (B :: Γ) ⊢ (ren_tm shift a) ∈ (ren_tm shift A).
 Proof.
   apply : renaming_Syn; eauto with wff.
-  hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
+  hauto lq:on ctrs:lookup unfold:ren_ok.
 Qed.
 
 Lemma weakening_Syn' Γ a A A0 B i

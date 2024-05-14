@@ -31,7 +31,7 @@ Qed.
 (* Well-formed substitutions are stable under renaming *)
 Lemma ρ_ok_renaming Γ ρ :
   forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     ρ_ok Δ ρ ->
     ρ_ok Γ (ξ >> ρ).
 Proof.
@@ -46,7 +46,7 @@ Qed.
 Lemma renaming_SemWt Γ a A :
   (Γ ⊨ a ∈ A) ->
   forall Δ ξ,
-    lookup_good_renaming ξ Γ Δ ->
+    ren_ok ξ Γ Δ ->
     Δ ⊨ a⟨ξ⟩ ∈ A⟨ξ⟩ .
 Proof.
   rewrite /SemWt => h Δ ξ hξ ρ hρ.
@@ -61,7 +61,7 @@ Lemma weakening_Sem Γ a A B i
    B :: Γ ⊨ a ⟨S⟩ ∈ A ⟨S⟩.
 Proof.
   apply : renaming_SemWt; eauto.
-  hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
+  hauto lq:on ctrs:lookup unfold:ren_ok.
 Qed.
 
 (* Well-formed types have interpretations *)
