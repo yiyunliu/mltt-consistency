@@ -1,4 +1,4 @@
-Require Import imports join.
+Require Import imports.
 
 Definition context := list tm.
 
@@ -12,8 +12,9 @@ Definition lookup_good_renaming ξ Γ Δ :=
 
 Derive Inversion lookup_inv with (forall i Γ A, lookup i Γ A).
 
-Reserved Notation "Γ ⊢ a ∈ A" (at level 70).
-Reserved Notation "⊢ Γ" (at level 70).
+Reserved Notation "Γ ⊢ a ∈ A" (at level 70, no associativity).
+Reserved Notation "Γ ⊢ a ≡ b ∈ A" (at level 70, no associativity).
+Reserved Notation "⊢ Γ" (at level 70, no associativity).
 
 Inductive Wt : context -> tm -> tm -> Prop :=
 | T_Var Γ i A :
@@ -32,7 +33,7 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   Γ ⊢ (tPi A B) ∈ (tUniv i) ->
   (A :: Γ) ⊢ a ∈ B ->
   (* -------------------- *)
-  Γ ⊢ (tAbs a) ∈ (tPi A B)
+  Γ ⊢ (tAbs A a) ∈ (tPi A B)
 
 | T_App Γ a A B b :
   Γ ⊢ a ∈ (tPi A B) ->
@@ -42,83 +43,63 @@ Inductive Wt : context -> tm -> tm -> Prop :=
 
 | T_Conv Γ a A B i :
   Γ ⊢ a ∈ A ->
-  Γ ⊢ B ∈ (tUniv i) ->
-  A <: B ->
+  Γ ⊢ A ≡ B ∈ tUniv i ->
   (* ----------- *)
   Γ ⊢ a ∈ B
-
-| T_Zero Γ :
-  ⊢ Γ ->
-  (* --------- *)
-  Γ ⊢ tZero ∈ tNat
-
-| T_Suc Γ a :
-  Γ ⊢ a ∈ tNat ->
-  ⊢ Γ ->
-  (* --------- *)
-  Γ ⊢ tSuc a ∈ tNat
-
-| T_Ind Γ a b c A i :
-  tNat :: Γ ⊢ A ∈ tUniv i ->
-  Γ ⊢ a ∈ A [tZero..] ->
-  A :: tNat :: Γ ⊢ b ∈ A[tSuc (var_tm 0) .: S >> var_tm]⟨S⟩ ->
-  Γ ⊢ c ∈ tNat ->
-  (* ------------ *)
-  Γ ⊢ tInd a b c ∈ (A [c..])
-
-| T_Nat Γ i :
-  ⊢ Γ ->
-  (* ----------- *)
-  Γ ⊢ tNat ∈ (tUniv i)
 
 | T_Univ Γ i :
   ⊢ Γ ->
   (* ------------ *)
   Γ ⊢ (tUniv i) ∈ (tUniv (S i))
 
-| T_Refl Γ a A:
+with Equiv : context -> tm -> tm -> tm -> Prop :=
+| E_Var Γ i A :
   ⊢ Γ ->
-  Γ ⊢ a ∈ A ->
+  lookup i Γ A ->
   (* ------ *)
-  Γ ⊢ tRefl ∈ (tEq a a A)
+  Γ ⊢ var_tm i ≡ var_tm i ∈ A
 
-| T_Eq Γ a b A i j :
-  Γ ⊢ a ∈ A ->
-  Γ ⊢ b ∈ A ->
-  Γ ⊢ A ∈ (tUniv j) ->
-  (* ----------------------- *)
-  Γ ⊢ (tEq a b A) ∈ (tUniv i)
+| E_Sym Γ a b A :
+  Γ ⊢ a ≡ b ∈ A ->
+  (* ----------- *)
+  Γ ⊢ b ≡ a ∈ A
 
-| T_J Γ t a b p A i j C : 
-  Γ ⊢ a ∈  A ->
-  Γ ⊢ b ∈ A ->
-  Γ ⊢ A ∈ (tUniv j) ->
-  Γ ⊢ p ∈ (tEq a b A) ->
-  (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) ->
-  Γ ⊢ t ∈ (C [tRefl .: a ..]) ->
-  Γ ⊢ (tJ t a b p) ∈ (C [p .: b..])
+| E_Trans Γ a b c A :
+  Γ ⊢ a ≡ b ∈ A ->
+  Γ ⊢ b ≡ c ∈ A ->
+  (* ----------- *)
+  Γ ⊢ a ≡ c ∈ A
 
-| T_Sig Γ i A B :
-  Γ ⊢ A ∈ (tUniv i) ->
-  (A :: Γ) ⊢ B ∈ (tUniv i) ->
+| E_Pi Γ i A0 B0 A1 B1 :
+  Γ ⊢ A0 ≡ A1 ∈ tUniv i ->
+  A0 :: Γ ⊢ B0 ≡ B1 ∈ tUniv i ->
+  Γ ⊢ A0 ∈ tUniv i ->
   (* --------------------- *)
-  Γ ⊢ (tSig A B) ∈ (tUniv i)
+  Γ ⊢ tPi A0 B0 ≡ tPi A1 B1 ∈ tUniv i
 
-| T_Pack Γ a A b B i :
-  Γ ⊢ a ∈ A ->
-  Γ ⊢ b ∈ B[a..] ->
-  Γ ⊢ tSig A B ∈ tUniv i ->
+| E_Abs Γ A0 A1 a0 a1 B i :
+  Γ ⊢ A0 ≡ A1 ∈ tUniv i ->
+  Γ ⊢ tPi A0 B ∈ tUniv i ->
+  A0 :: Γ ⊢ a0 ≡ a1 ∈ B ->
   (* -------------------- *)
-  Γ ⊢ tPack a b ∈ tSig A B
+  Γ ⊢ tAbs A0 a0 ≡ tAbs A1 a1 ∈ tPi A0 B
 
-| T_Let Γ a b A B C i j :
-  Γ ⊢ A ∈ tUniv j ->
-  A :: Γ ⊢ B ∈ tUniv j ->
-  Γ ⊢ a ∈ tSig A B ->
-  B :: A :: Γ ⊢ b ∈ C[(tPack (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] ->
-  tSig A B :: Γ ⊢ C ∈ tUniv i ->
-  (* ----------------------- *)
-  Γ ⊢ tLet a b ∈ C[a ..]
+| E_App Γ a0 b0 a1 b1 A B :
+  Γ ⊢ b0 ≡ b1 ∈ tPi A B ->
+  Γ ⊢ a0 ≡ a1 ∈ A ->
+  (* ----------------- *)
+  Γ ⊢ tApp b0 a0 ≡ tApp b1 a1 ∈ B[a0..]
+
+| E_Beta Γ A B a b i :
+  Γ ⊢ tPi A B ∈ tUniv i ->
+  A :: Γ ⊢ b ∈ B ->
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ tApp (tAbs A b) a ≡ b[a..] ∈ B[a..]
+
+| E_Univ Γ i :
+  ⊢ Γ ->
+  (* ------------ *)
+  Γ ⊢ tUniv i ≡ tUniv i ∈ (tUniv (S i))
 
 with Wff : context -> Prop :=
 | Wff_nil :
@@ -129,11 +110,37 @@ with Wff : context -> Prop :=
   Γ ⊢ A ∈ tUniv i ->
 (* ----------------- *)
   ⊢ A :: Γ
-where 
-  "Γ ⊢ a ∈ A" := (Wt Γ a A) and "⊢ Γ" := (Wff Γ).
-
+where
+  "Γ ⊢ a ∈ A" := (Wt Γ a A) and "⊢ Γ" := (Wff Γ) and
+  "Γ ⊢ a ≡ b ∈ A" := (Equiv Γ a b A).
 
 Scheme wt_ind := Induction for Wt Sort Prop
-    with wff_ind := Induction for Wff Sort Prop.
+    with equiv_ind := Induction for Equiv Sort Prop.
 
-Combined Scheme wt_mutual from wt_ind, wff_ind.
+Combined Scheme wt_mutual from wt_ind, equiv_ind.
+
+Reserved Notation "Γ ⊢ a ⤳ b ∈ A" (at level 70, no associativity).
+Inductive Red Γ : tm -> tm -> tm -> Prop :=
+| R_App b0 b1 a A B :
+  Γ ⊢ b0 ⤳ b1 ∈ tPi A B ->
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ tApp b0 a ⤳ tApp b1 a ∈ B[a..]
+| R_Beta A B a b i :
+  Γ ⊢ tPi A B ∈ tUniv i ->
+  A :: Γ ⊢ b ∈ B ->
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ tApp (tAbs A b) a ⤳ b[a..] ∈ B[a..]
+where  "Γ ⊢ a ⤳ b ∈ A" := (Red Γ a b A).
+
+
+Reserved Notation "Γ ⊢ a ⤳* b ∈ A" (at level 70, no associativity).
+Inductive Reds Γ a : tm -> tm -> Prop :=
+| R_Refl A :
+  Γ ⊢ a ∈ A ->
+  Γ ⊢ a ⤳* a ∈ A
+| R_Step b c A :
+  Γ ⊢ a ⤳ b ∈ A ->
+  Γ ⊢ b ⤳* c ∈ A ->
+  (* ----------- *)
+  Γ ⊢ a ⤳* c ∈ A
+where "Γ ⊢ a ⤳* b ∈ A" := (Reds Γ a b A).

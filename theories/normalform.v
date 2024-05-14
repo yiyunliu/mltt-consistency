@@ -1,49 +1,25 @@
-Require Import join imports.
+Require Import imports typing.
 
 (* Identifying neutral (ne) and normal (nf) terms *)
 Fixpoint ne (a : tm) : bool :=
   match a with
   | var_tm _ => true
   | tApp a b => ne a && nf b
-  | tAbs _ => false
+  | tAbs _ _ => false
   | tPi A B => false
-  | tJ t a b p => nf t && nf a && nf b && ne p
   | tUniv _ => false
-  | tZero => false
-  | tSuc _ => false
-  | tInd a b c => nf a && nf b && ne c
-  | tNat => false
-  | tEq a b A => false
-  | tRefl => false
-  | tSig A B => false
-  | tPack a b => false
-  | tLet a b => ne a && nf b
   end
 with nf (a : tm) : bool :=
   match a with
   | var_tm _ => true
   | tApp a b => ne a && nf b
-  | tAbs a => nf a
+  | tAbs A a => nf A && nf a
   | tPi A B => nf A && nf B
-  | tJ t a b p => nf t && nf a && nf b && ne p
   | tUniv _ => true
-  | tZero => true
-  | tSuc a => nf a
-  | tInd a b c => nf a && nf b && ne c
-  | tNat => true
-  | tEq a b A => nf a && nf b && nf A
-  | tRefl => true
-  | tSig A B => nf A && nf B
-  | tPack a b => nf a && nf b
-  | tLet a b => ne a && nf b
   end.
 
-Function is_nat_val (a : tm) : bool :=
-  match a with
-  | tZero => true
-  | tSuc a => is_nat_val a
-  | _ => ne a
-  end.
+Inductive Red Γ : tm -> tm -> tm -> Prop :=
+|
 
 (* Terms that are weakly normalizing to a neutral or normal form. *)
 Definition wn (a : tm) := exists b, a ⇒* b /\ nf b.

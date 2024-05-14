@@ -1,31 +1,31 @@
-Require Import join normalform imports.
+Require Import typing imports.
+
+(* Identifying neutral (ne) and normal (nf) terms *)
+Fixpoint ne (a : tm) : bool :=
+  match a with
+  | var_tm _ => true
+  | tApp a b => ne a && nf b
+  | tAbs _ _ => false
+  | tPi A B => false
+  | tUniv _ => false
+  end
+with nf (a : tm) : bool :=
+  match a with
+  | var_tm _ => true
+  | tApp a b => ne a && nf b
+  | tAbs A a => nf A && nf a
+  | tPi A B => nf A && nf B
+  | tUniv _ => true
+  end.
 
 Definition tm_rel := tm -> tm -> Prop.
-
-(* (* These are only needed for neutrals; I omit them for now *)
-Definition wne_coherent a b := exists c, a ⇒* c /\ b ⇒* c /\ ne c.
-
-Lemma ne_preservations a b (h : a ⇒* b) : ne a -> ne b.
-Proof.
-  elim : a b /h => //.
-  sfirstorder use:ne_preservation.
-Qed.
-
-Lemma wne_coherent_trans a b c :
-  wne_coherent a b -> wne_coherent b c -> wne_coherent a c.
-Proof.
-  - move => [d [rad [rbd ned]]] [f [rbf [rcf nef]]].
-    have [h [rdh rfh]] : _ := Pars_confluent b d f rbd rbf.
-    exists h. hauto l:on use:rtc_transitive, ne_preservations.
-Qed.
-*)
 
 Definition ProdSpace (RA : tm_rel) (RF : tm -> tm_rel -> Prop) (b0 b1 : tm) :=
   forall a0 a1 RB, RA a0 a1 -> RF a0 RB -> RF a1 RB -> RB (tApp b0 a0) (tApp b1 a1).
 
-Reserved Notation "⟦ A ⟧ i , I ↘ R" (at level 70).
-Inductive InterpExt (i : nat) (I : nat -> tm_rel) : tm -> tm_rel -> Prop :=
-(* | InterpExt_Ne A : ne A -> ⟦ A ⟧ i , I ↘ wne_coherent *)
+Reserved Notation "⟦ A ⟧ i ; I ↘ R" (at level 70).
+Inductive InterpExt (Γ : context) (i : nat) (I : nat -> tm_rel) : tm -> tm_rel -> Prop :=
+| InterpExt_Ne A : ne A -> ⟦ A ⟧ i , I ↘ wne_coherent
 | InterpExt_Fun A B RA RF :
   ⟦ A ⟧ i , I ↘ RA ->
   (forall a0 a1, RA a0 a1 -> exists RB, RF a0 RB /\ RF a1 RB) ->
