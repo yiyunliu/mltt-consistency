@@ -10,6 +10,8 @@ Fixpoint ne (a : tm) : bool :=
   | tUniv _ => false
   end.
 
+Lemma ne_renaming a ξ : ne a <-> ne a⟨ξ⟩.
+Proof. elim : a ξ => //=. Qed.
 
 (* Definition whnf (a : tm) : bool := *)
 (*   match a with *)
@@ -147,7 +149,17 @@ Definition wne Γ a A := exists v, ne a /\ Γ ⊢ a ⤳* v ∈ A.
 
 Definition wnEquiv Γ a b A := exists v0 v1, ne v0 /\ ne v1 /\ Γ ⊢ v0 ≡ v1 ∈ A /\ Γ ⊢ a ⤳* v0 ∈ A /\ Γ ⊢ b ⤳* v1 ∈ A.
 
-Lemma adequacy Γ i I A R
+Lemma neutral_pertype Γ i A B (h : wnEquiv Γ A B (tUniv i)) :
+  forall I, Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I.
+Proof.
+  rewrite /wnEquiv in h.
+  move : h => [v0][v1][hv0][hv1][hv][hA]hB.
+  move => I.
+  apply : PerType_Step; eauto.
+  by apply PerType_Ne.
+Qed.
+
+Lemma neutral_interpext Γ i I A R
   (h :  ⟦ Γ ⊨  A ⟧ i ; I ↘ R) 
   (hI : forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) :
   forall b0 b1, wnEquiv Γ b0 b1 A -> R b0 b1.
@@ -164,18 +176,32 @@ Proof.
     repeat split.
     (* morphing *)
     (* renaming for ne *)
-    admit.
-    admit.
+    hauto l:on use:ne_renaming.
+    hauto l:on use:ne_renaming.
     (* renaming for equiv? *)
-    admit.
+    apply : E_App.
+    move : renaming_equiv hv hξ. repeat move/[apply] => //=.
+    apply=>//. 
+    (* Lemma needs to be mutually defined with escape *)
     admit.
     (* renaming for app? *)
+    admit.
     admit.
   - hauto lq:on.
   - move => Γ i I A0 A1 RA hA01 hA1 ihA1 hI.
     move /(_ hI) in ihA1.
     (* Use some sort of Conv rule? *)
 Admitted.
+
+Lemma neutral_interpuniv Γ i A R (h :  ⟦ Γ ⊨  A ⟧ i ↘ R) :
+  forall b0 b1, wnEquiv Γ b0 b1 A -> R b0 b1.
+Proof.
+  move : h. rewrite /InterpUnivN.
+  move /neutral_interpext. apply.
+  move => *. simp PerTypeN.
+  hauto lq:on use:neutral_pertype.
+Qed.
+  
 
 Lemma ren_ok_id Γ : ren_ok id Γ Γ.
 Proof. hauto lq:on unfold:ren_ok simp+:asimpl. Qed.
@@ -200,7 +226,7 @@ Proof.
     + have hΓ' : ⊢ A :: Γ by hauto q:on ctrs:Wff.
       move /(_ S (A::Γ) ltac:(apply ren_ok_S) hΓ' (var_tm 0) (var_tm 0)) : ihFB.
       asimpl. apply=>//.
-      apply : adequacy; eauto.
+      apply : neutral_interpext; eauto.
       apply hFA => //.
       apply ren_ok_S.
       rewrite /wnEquiv.
