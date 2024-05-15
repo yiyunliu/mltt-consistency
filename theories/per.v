@@ -4,19 +4,21 @@ Require Import typing typing_prop imports.
 Fixpoint ne (a : tm) : bool :=
   match a with
   | var_tm _ => true
-  | tApp a b => ne a && nf b
+  | tApp a b => ne a
   | tAbs _ _ => false
   | tPi A B => false
   | tUniv _ => false
-  end
-with nf (a : tm) : bool :=
-  match a with
-  | var_tm _ => true
-  | tApp a b => ne a && nf b
-  | tAbs A a => nf A && nf a
-  | tPi A B => nf A && nf B
-  | tUniv _ => true
   end.
+
+
+(* Definition whnf (a : tm) : bool := *)
+(*   match a with *)
+(*   | var_tm _ => true *)
+(*   | tApp a b => ne a && nf b *)
+(*   | tAbs A a => nf A && nf a *)
+(*   | tPi A B => nf A && nf B *)
+(*   | tUniv _ => true *)
+(*   end. *)
 
 Definition tm_rel := tm -> tm -> Prop.
 
@@ -39,9 +41,8 @@ Inductive InterpExt (Γ : context) (i : nat) (I : context -> nat -> tm_rel) : tm
           forall a0 a1, FA Δ a0 a1 -> ⟦ Δ ⊨ (ren_tm (upRen_tm_tm ξ) B)[a0..] ⟧ i ; I ↘ FB Δ a0) ->
   ⟦ Γ ⊨ tPi A B ⟧ i ; I ↘ ProdSpace Γ FA FB
 | InterpExt_Univ j :
-  ⊢ Γ -> 
   j < i ->
-  ⟦ Γ ⊨ tUniv j ⟧ i ; I ↘ (I j)
+  ⟦ Γ ⊨ tUniv j ⟧ i ; I ↘ (I Γ j)
 | InterpExt_Step A0 A1 RA :
   Γ ⊢ A0 ⤳ A1 ∈ tUniv i ->
   ⟦ Γ ⊨ A1 ⟧ i ; I ↘ RA ->
@@ -49,7 +50,7 @@ Inductive InterpExt (Γ : context) (i : nat) (I : context -> nat -> tm_rel) : tm
 where "⟦ Γ ⊨ A ⟧ i ; I ↘ R" := (InterpExt Γ i I A R).
 Reserved Notation "Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I" (at level 70, i at next level).
 
-Inductive PerType (Γ : context) (i : nat) (I : nat -> tm_rel) : tm_rel :=
+Inductive PerType (Γ : context) (i : nat) I : tm_rel :=
 | PerType_Ne A B :
   ne A ->
   ne B ->
@@ -75,14 +76,14 @@ where "Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I" := (PerType Γ i I A B).
 
 Equations PerTypeN (Γ : context) (n : nat) : tm_rel by wf n lt :=
   PerTypeN Γ n := PerType Γ n
-    (fun m A0 A1 =>
+    (fun Γ m A0 A1 =>
       match Compare_dec.lt_dec m n with
       | left h => PerTypeN Γ m A0 A1
       | right _ => False
       end).
 
 Definition InterpUnivN Γ (n : nat) : tm -> tm_rel -> Prop :=
-  InterpExt Γ n (PerTypeN Γ).
+  InterpExt Γ n PerTypeN.
 
 Notation "Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i" := (PerTypeN Γ i A B) (at level 70).
 Notation "⟦ Γ ⊨ A ⟧ i ↘ S" := (InterpUnivN Γ i A S) (at level 70).
@@ -91,7 +92,7 @@ Notation "⟦ Γ ⊨ A ⟧ i ↘ S" := (InterpUnivN Γ i A S) (at level 70).
 
 Lemma InterpExt_sym Γ i I A R
   (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R)
-  (ih : forall j A B, j < i -> I j A B -> I j B A) :
+  (ih : forall Γ j A B, j < i -> I Γ j A B -> I Γ j B A) :
   forall a b, R a b -> R b a.
 Proof.
   move : ih.
@@ -103,7 +104,7 @@ Proof.
 Qed.
 
 Lemma PerType_sym Γ i I A B
-  (ih : forall j A B, j < i -> I j A B -> I j B A)
+  (ih : forall Γ j A B, j < i -> I Γ j A B -> I Γ j B A)
   (h : Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I) : Γ ⊨ ⟦ B ⟧ ~ ⟦ A ⟧ i ; I.
 Proof.
   move : ih.
@@ -116,12 +117,13 @@ Qed.
 
 Lemma PerTypeN_sym Γ i : forall A B, PerTypeN Γ i A B -> PerTypeN Γ i B A.
 Proof.
+  move : Γ.
   have h : Acc (fun x y => x < y) i by sfirstorder use:wellfounded.
   elim : i /h.
-  move => j h ih A B hAB.
+  move => j h ih Γ A B hAB.
   simp PerTypeN in hAB |- *.
   apply PerType_sym; auto.
-  hauto q:on use:Compare_dec.lt_dec.
+  hauto lq:on use:Compare_dec.lt_dec.
 Qed.
   
 Lemma InterpUnivN_sym Γ i A R (h : ⟦ Γ ⊨ A ⟧ i ↘ R) :
@@ -147,7 +149,7 @@ Definition wnEquiv Γ a b A := exists v0 v1, ne v0 /\ ne v1 /\ Γ ⊢ v0 ≡ v1 
 
 Lemma adequacy Γ i I A R
   (h :  ⟦ Γ ⊨  A ⟧ i ; I ↘ R) 
-  (hI : forall j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I j A B) :
+  (hI : forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) :
   forall b0 b1, wnEquiv Γ b0 b1 A -> R b0 b1.
 Proof.
   move : hI.
@@ -156,24 +158,59 @@ Proof.
   - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI b0 b1 hb.
     rewrite /ProdSpace => ξ Δ hξ hΔ a0 a1 ha he.
     apply : ihFB; eauto.
-    (* TODO: I is missing  *)
+    rewrite /wnEquiv in hb *.
+    move : hb => [v0][v1][hv0][hv1][hv][hbv0]hbv1.
+    exists (tApp (ren_tm ξ v0) a0), (tApp (ren_tm ξ v1) a1) => /=.
+    repeat split.
     (* morphing *)
+    (* renaming for ne *)
     admit.
-    a
+    admit.
+    (* renaming for equiv? *)
+    admit.
+    admit.
+    (* renaming for app? *)
+    admit.
   - hauto lq:on.
   - move => Γ i I A0 A1 RA hA01 hA1 ihA1 hI.
     move /(_ hI) in ihA1.
+    (* Use some sort of Conv rule? *)
 Admitted.
-have : forall A B, Γ 
+
+Lemma ren_ok_id Γ : ren_ok id Γ Γ.
+Proof. hauto lq:on unfold:ren_ok simp+:asimpl. Qed.
+
+Lemma ren_ok_S Γ A : ren_ok S Γ (A::Γ).
+Proof.
+  rewrite /ren_ok => *.
+  by constructor.
+Qed.
 
 Lemma InterpExt_ty_escape Γ i I A R (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R) :
-  Γ ⊢ A ∈ tUniv i.
+  (forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) ->
+  ⊢ Γ -> Γ ⊢ A ∈ tUniv i.
 Proof.
   elim : Γ i I A R / h => //.
-  - admit.
+  - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI hΓ [:hA].
+    apply T_Pi.
+    + abstract : hA.
+      have -> : A = A⟨id⟩ by asimpl.
+      apply ihFA; eauto.
+      apply ren_ok_id.
+    + have hΓ' : ⊢ A :: Γ by hauto q:on ctrs:Wff.
+      move /(_ S (A::Γ) ltac:(apply ren_ok_S) hΓ' (var_tm 0) (var_tm 0)) : ihFB.
+      asimpl. apply=>//.
+      apply : adequacy; eauto.
+      apply hFA => //.
+      apply ren_ok_S.
+      rewrite /wnEquiv.
+      exists (var_tm 0), (var_tm 0). repeat split => //=.
+      apply E_Var=>//. by constructor.
+      apply R_Refl. apply T_Var=>//. by constructor.
+      apply R_Refl. apply T_Var=>//. by constructor.
   - hauto lq:on ctrs:Wt.
   - sfirstorder use:Red_WtL.
-
+Qed.
 
 (* Constructors *)
 
