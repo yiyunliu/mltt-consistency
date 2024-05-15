@@ -31,6 +31,7 @@ Inductive Wt : context -> tm -> tm -> Prop :=
 
 | T_Abs Γ A a B i :
   Γ ⊢ (tPi A B) ∈ (tUniv i) ->
+  Γ ⊢ A ∈ tUniv i ->
   (A :: Γ) ⊢ a ∈ B ->
   (* -------------------- *)
   Γ ⊢ (tAbs A a) ∈ (tPi A B)
@@ -97,10 +98,17 @@ with Equiv : context -> tm -> tm -> tm -> Prop :=
   Γ ⊢ a ∈ A ->
   Γ ⊢ tApp (tAbs A b) a ≡ b[a..] ∈ B[a..]
 
-| E_Univ Γ i :
+| E_Univ Γ i j :
   ⊢ Γ ->
+  i < j ->
   (* ------------ *)
-  Γ ⊢ tUniv i ≡ tUniv i ∈ (tUniv (S i))
+  Γ ⊢ tUniv i ≡ tUniv i ∈ tUniv j
+
+| E_Conv Γ a b A B i :
+  Γ ⊢ a ≡ b ∈ A ->
+  Γ ⊢ A ≡ B ∈ tUniv i ->
+  (* ----------- *)
+  Γ ⊢ a ≡ b ∈ B
 
 with Wff : context -> Prop :=
 | Wff_nil :
@@ -128,11 +136,16 @@ Inductive Red Γ : tm -> tm -> tm -> Prop :=
   Γ ⊢ tApp b0 a ⤳ tApp b1 a ∈ B[a..]
 | R_Beta A B a b i :
   Γ ⊢ tPi A B ∈ tUniv i ->
+  Γ ⊢ A ∈ tUniv i ->
   A :: Γ ⊢ b ∈ B ->
   Γ ⊢ a ∈ A ->
   Γ ⊢ tApp (tAbs A b) a ⤳ b[a..] ∈ B[a..]
+| R_Conv a b A B i :
+  Γ ⊢ a ⤳ b ∈ A ->
+  Γ ⊢ A ≡ B ∈ tUniv i ->
+  (* ----------- *)
+  Γ ⊢ a ⤳ b ∈ B
 where  "Γ ⊢ a ⤳ b ∈ A" := (Red Γ a b A).
-
 
 Reserved Notation "Γ ⊢ a ⤳* b ∈ A" (at level 70, no associativity).
 Inductive Reds Γ a : tm -> tm -> Prop :=

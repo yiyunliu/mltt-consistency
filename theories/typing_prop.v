@@ -136,6 +136,7 @@ Lemma R_Beta' Γ A B a b i t T :
   t = b[a..] ->
   T = B[a..] ->
   Γ ⊢ tPi A B ∈ tUniv i ->
+  Γ ⊢ A ∈ tUniv i ->
   A :: Γ ⊢ b ∈ B ->
   Γ ⊢ a ∈ A ->
   Γ ⊢ tApp (tAbs A b) a ⤳ t ∈ T.
@@ -147,10 +148,27 @@ Lemma renaming_Red Γ a b A (h : Γ ⊢ a ⤳ b ∈ A) : forall Δ ξ,
 Proof.
   elim : a b A / h.
   - move => *. apply : R_App'; eauto using renaming_wt. by asimpl.
-  - move => A B a b i hPi hb ha Δ ξ hξ hΔ /=.
+  - move => A B a b i hPi hA hb ha Δ ξ hξ hΔ /=.
     apply R_Beta' with (B := ren_tm (upRen_tm_tm ξ) B) (i := i); try by asimpl.
     move /renaming_wt_univ : hPi. apply=>//.
+    move /renaming_wt_univ : hA. apply=>//.
     have /= /Wt_Pi_inv : Δ ⊢  (tPi A B) ⟨ξ⟩ ∈ tUniv i by eauto using renaming_wt_univ.
     hauto lq:on ctrs:Wt,Wff use:renaming_wt, good_renaming_up.
     eauto using renaming_wt.
+  - move => a b A B i h ih hAB Δ ξ hξ hΔ.
+    have /= /R_Conv : Δ ⊢ A⟨ξ⟩  ≡ B⟨ξ⟩ ∈ (tUniv i)⟨ξ⟩ by hauto l:on use:renaming_equiv. apply.
+    by apply ih.
 Qed.
+
+Lemma Wt_Equiv Γ a A : Γ ⊢ a ∈ A -> Γ ⊢ a ≡ a ∈ A.
+Proof. induction 1; qauto depth:1 ctrs:Equiv. Qed.
+
+Lemma Red_inj_Equiv Γ a b A : Γ ⊢ a ⤳ b ∈ A -> Γ ⊢ a ≡ b ∈ A.
+Proof. induction 1; qauto depth:1 use:Wt_Equiv ctrs:Equiv. Qed.
+
+Lemma Reds_inj_Equiv Γ a b A : Γ ⊢ a ⤳* b ∈ A -> Γ ⊢ a ≡ b ∈ A.
+Proof.
+  induction 1; hauto lq:on ctrs:Equiv use:Wt_Equiv, Red_inj_Equiv.
+Qed.
+
+Lemma morphing_wt_equiv
