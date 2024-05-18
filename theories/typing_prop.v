@@ -187,6 +187,15 @@ Proof.
   hauto lq:on ctrs:lookup unfold:ren_ok.
 Qed.
 
+Lemma weakening_equiv Γ a b A B i
+  (h0 : Γ ⊢ B ∈ (tUniv i))
+  (h1 : Γ ⊢ a ≡ b ∈ A) :
+  (B :: Γ) ⊢ (ren_tm shift a) ≡ ren_tm shift b ∈ (ren_tm shift A).
+Proof.
+  apply : renaming_equiv; eauto with wff.
+  hauto lq:on ctrs:lookup unfold:ren_ok.
+Qed.
+
 Lemma subst_ok_suc Γ Δ A j ρ (h : subst_ok ρ Γ Δ)
   (hh : Δ ⊢ A [ρ] ∈ tUniv j) :
   subst_ok (ρ >> ren_tm S) Γ (A [ρ] :: Δ).
@@ -253,22 +262,77 @@ Proof.
   - move => > ? ? _ * /=.
     apply : E_Abs; eauto.
     hauto l:on use:good_morphing_up, Wt_Pi_inv db:wff.
+  (* App *)
   - move => * /=. apply : E_App'; eauto; by asimpl.
+  (* Beta *)
   - move => > _ /= *. apply : E_Beta'; eauto.
     by asimpl.
     by asimpl.
     hauto lq:on use:good_morphing_up, Wt_Pi_inv db:wff.
+  (* Univ *)
   - hauto lq:on ctrs:Equiv.
+  (* Conv *)
   - hauto q:on ctrs:Equiv.
 Qed.
 
-Lemma subst_Syn Γ A a b B
-  (h0 : (A :: Γ) ⊢ b ∈ B)
-  (h1 : Γ ⊢ a ∈ A) :
-  Γ ⊢ (subst_tm (a..) b) ∈ (subst_tm (a..) B).
+Lemma morphing_wt ρ Δ:
+  (forall Γ a A,  Γ ⊢ a ∈ A ->
+    subst_ok ρ Γ Δ ->
+    ⊢ Δ ->
+    Δ ⊢ a[ρ] ∈ A[ρ]).
+Proof. sfirstorder use:morphing_Syn. Qed.
+
+Definition subst2_ok ρ0 ρ1 Γ Δ :=
+  forall i A, lookup i Γ A -> Δ ⊢ ρ0 i ≡ ρ1 i ∈ A [ ρ0 ].
+
+Lemma morphing2_Syn :
+  (forall Γ a A,  Γ ⊢ a ∈ A -> forall Δ ρ0 ρ1,
+    subst_ok ρ0 Γ Δ ->
+    subst_ok ρ1 Γ Δ ->
+    subst2_ok ρ0 ρ1 Γ Δ ->
+    ⊢ Δ ->
+    Δ ⊢ a[ρ0] ≡ a[ρ1] ∈ A[ρ0]) /\
+  (forall Γ a b A,  Γ ⊢ a ≡ b ∈ A -> forall Δ ρ0 ρ1,
+    subst_ok ρ0 Γ Δ ->
+    subst_ok ρ1 Γ Δ ->
+    subst2_ok ρ0 ρ1 Γ Δ ->
+    ⊢ Δ ->
+    Δ ⊢ a[ρ0] ≡ b[ρ1] ∈ A[ρ0]).
 Proof.
-  apply : morphing_Syn; eauto with wff.
-  inversion 1; subst.
-  - by asimpl.
-  - asimpl; eauto using T_Var with wff.
-Qed.
+  apply wt_mutual; rewrite /subst2_ok /=.
+  - sfirstorder.
+  - move => Γ i A B hA ihA hB ihB Δ ρ0 ρ1 hρ0 hρ1 hρ hΔ.
+    apply E_Pi; eauto with wff.
+    apply ihB=>//.
+    apply good_morphing_up with (k := i); eauto.
+    change (tUniv i) with (tUniv i)[ρ0].
+    hauto l:on use:morphing_wt.
+    apply good_morphing_up with (k := i); eauto.
+    change (tUniv i) with (tUniv i)[ρ0].
+    hauto l:on use:morphing_wt.
+
+
+
+
+Lemma Equiv_Wt Γ a b A : Γ ⊢ a ≡ b ∈ A -> Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A.
+Proof.
+  move => h. elim : Γ a b A / h.
+  - hauto lq:on ctrs:Wt.
+  - sfirstorder.
+  - sfirstorder.
+  - move => Γ i A0 B0 A1 B1 h0 [ih00 ih01] h1 [ih10 ih11] h.
+    split. hauto lq:on ctrs:Equiv, Wt.
+    apply T_Pi => //.
+    move /(morphing_wt var_tm (A1 :: Γ)) : ih11. asimpl.
+    apply; last by eauto with wff.
+    rewrite /subst_ok.
+    inversion 1; subst; asimpl.
+    eapply T_Conv with (A := A1 ⟨S⟩) (i := i); eauto.
+    hauto lq:on ctrs:Wt,lookup db:wff.
+    apply E_Sym. change (tUniv i) with (tUniv i)⟨S⟩.
+    by apply : weakening_equiv; eauto with wff.
+    change (var_tm (S n)) with (var_tm n)⟨S⟩.
+    apply weakening_wt with (i := i)=>//.
+    hauto lq:on ctrs:Wt db:wff.
+  - admit.
+  - move => *. split. hauto lq:on ctrs:Wt.

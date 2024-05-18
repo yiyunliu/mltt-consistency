@@ -134,17 +134,6 @@ Proof.
   hauto lq:on use:InterpExt_sym, PerTypeN_sym.
 Qed.
 
-Lemma Wt_Equiv Γ a A : Γ ⊢ a ∈ A -> Γ ⊢ a ≡ a ∈ A.
-Proof. induction 1; qauto depth:1 ctrs:Equiv. Qed.
-
-Lemma Red_inj_Equiv Γ a b A : Γ ⊢ a ⤳ b ∈ A -> Γ ⊢ a ≡ b ∈ A.
-Proof. induction 1; qauto depth:1 use:Wt_Equiv ctrs:Equiv. Qed.
-
-Lemma Reds_inj_Equiv Γ a b A : Γ ⊢ a ⤳* b ∈ A -> Γ ⊢ a ≡ b ∈ A.
-Proof.
-  induction 1; hauto lq:on ctrs:Equiv use:Wt_Equiv, Red_inj_Equiv.
-Qed.
-
 Definition wne Γ a A := exists v, ne a /\ Γ ⊢ a ⤳* v ∈ A.
 
 Definition wnEquiv Γ a b A := exists v0 v1, ne v0 /\ ne v1 /\ Γ ⊢ v0 ≡ v1 ∈ A /\ Γ ⊢ a ⤳* v0 ∈ A /\ Γ ⊢ b ⤳* v1 ∈ A.
