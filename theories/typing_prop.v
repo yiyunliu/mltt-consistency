@@ -475,6 +475,8 @@ Proof.
       * asimpl.
         have -> : A[ρ0 >> ren_tm S] = A[ρ0]⟨S⟩ by asimpl.
         apply E_Var.
+        (* Mutually proven with Equiv Wt? *)
+        (* Or adding subst_ok as premises? *)
         admit.
         (* hauto lq:on db:wff. *)
         by constructor.
@@ -497,15 +499,16 @@ Proof.
     (* have -> : B[b[ρ1] .: ρ0] = B[b..][ρ1] by asimpl. *)
     (* apply T_App. *)
   (* Conv *)
-  - move => Γ a A B i ha iha hE ihE Δ ρ0 *.
-    apply E_Conv with (A := A[ρ0]) (i := i); eauto.
-    sfirstorder use:morphing_equiv_univ.
-  (* Univ *)
-  - hauto lq:on ctrs:Equiv.
-  - sfirstorder.
-  - move => Γ a b A h ih Δ ρ0 ρ1 hρ0 hρ1 hρ hΔ.
-    apply E_Trans with (b := a[ρ0]).
-    + apply E_Sym.
-      hauto lq:on ctrs:Equiv.
-    +
 Admitted.
+(*   - move => Γ a A B i ha iha hE ihE Δ ρ0 *. *)
+(*     apply E_Conv with (A := A[ρ0]) (i := i); eauto. *)
+(*     sfirstorder use:morphing_equiv_univ. *)
+(*   (* Univ *) *)
+(*   - hauto lq:on ctrs:Equiv. *)
+(*   - sfirstorder. *)
+(*   - move => Γ a b A h ih Δ ρ0 ρ1 hρ0 hρ1 hρ hΔ. *)
+(*     apply E_Trans with (b := a[ρ0]). *)
+(*     + apply E_Sym. *)
+(*       hauto lq:on ctrs:Equiv. *)
+(*     + *)
+(* Admitted. *)

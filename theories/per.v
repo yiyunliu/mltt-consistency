@@ -148,6 +148,7 @@ Proof.
   by apply PerType_Ne.
 Qed.
 
+Don't use wnEquiv.
 Lemma neutral_interpext Γ i I A R
   (h :  ⟦ Γ ⊨  A ⟧ i ; I ↘ R) 
   (hI : forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) :
@@ -155,7 +156,10 @@ Lemma neutral_interpext Γ i I A R
 Proof.
   move : hI.
   elim : Γ i I A R / h.
-  - hauto q:on ctrs:Equiv use:Reds_inj_Equiv unfold:wne_coherent, wnEquiv.
+  - rewrite /wnEquiv /wne_coherent => Γ i I A hA neA hI b0 b1.
+    move => [v0][v1][hv0][hv1][he][ /Reds_inj_Equiv hr0] /Reds_inj_Equiv hr1.
+    move /E_Sym in hr1.
+    hauto lq:on ctrs:Equiv.
   - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI b0 b1 hb.
     rewrite /ProdSpace => ξ Δ hξ hΔ a0 a1 ha he.
     apply : ihFB; eauto.
@@ -170,7 +174,9 @@ Proof.
     (* renaming for equiv? *)
     apply : E_App.
     move : renaming_equiv hv hξ. repeat move/[apply] => //=.
-    apply=>//. 
+    apply=>//.
+    admit.
+    admit.
     (* Lemma needs to be mutually defined with escape *)
     admit.
     (* renaming for app? *)
