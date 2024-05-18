@@ -36,9 +36,11 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   (* -------------------- *)
   Γ ⊢ (tAbs A a) ∈ (tPi A B)
 
-| T_App Γ a A B b :
+| T_App Γ a A B b i :
   Γ ⊢ a ∈ (tPi A B) ->
   Γ ⊢ b ∈ A ->
+  Γ ⊢ A ∈ tUniv i ->
+  A :: Γ ⊢ B ∈ tUniv i ->
   (* -------------------- *)
   Γ ⊢ (tApp a b) ∈ (B [ b.. ])
 
@@ -87,10 +89,13 @@ with Equiv : context -> tm -> tm -> tm -> Prop :=
   (* -------------------- *)
   Γ ⊢ tAbs A0 a0 ≡ tAbs A1 a1 ∈ tPi A0 B
 
-| E_App Γ a0 b0 a1 b1 A B :
+| E_App Γ a0 b0 a1 b1 A B i :
   Γ ⊢ b0 ≡ b1 ∈ tPi A B ->
   Γ ⊢ a0 ≡ a1 ∈ A ->
-  Γ ⊢ tApp b1 a1 ∈ B[a0..] ->
+  Γ ⊢ A ∈ tUniv i ->
+  A :: Γ ⊢ B ∈ tUniv i ->
+  (* Γ ⊢ B[a0..] ≡ B[a1..] ∈ tUniv i -> *)
+  (* Γ ⊢ tApp b1 a1 ∈ B[a0..] -> *)
   (* ----------------- *)
   Γ ⊢ tApp b0 a0 ≡ tApp b1 a1 ∈ B[a0..]
 

@@ -1,12 +1,12 @@
 Require Import imports typing.
 
-Lemma Red_WtL Γ a b A (h : Γ ⊢ a ⤳ b ∈ A) : Γ ⊢ a ∈ A.
-Proof.
-  induction h; hauto lq:on ctrs:Wt.
-Qed.
+(* Lemma Red_WtL Γ a b A (h : Γ ⊢ a ⤳ b ∈ A) : Γ ⊢ a ∈ A. *)
+(* Proof. *)
+(*   induction h; hauto lq:on ctrs:Wt. *)
+(* Qed. *)
 
-Lemma Reds_Wt Γ a b A (h : Γ ⊢ a ⤳* b ∈ A) : Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A.
-Proof. induction h; sfirstorder use:Red_WtL. Qed.
+(* Lemma Reds_Wt Γ a b A (h : Γ ⊢ a ⤳* b ∈ A) : Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A. *)
+(* Proof. induction h; sfirstorder use:Red_WtL. Qed. *)
 
 Lemma here' : forall {A Γ T}, T = A ⟨shift⟩ ->  lookup 0 (A :: Γ) T.
 Proof. move => > ->. by apply here. Qed.
@@ -35,19 +35,22 @@ Proof.
   asimpl. apply : there'; eauto. by asimpl.
 Qed.
 
-Lemma T_App' Γ a A B0 B b :
+Lemma T_App' Γ i a A B0 B b :
   B0 = (subst_tm (b..) B) ->
   Γ ⊢ a ∈ (tPi A B) ->
   Γ ⊢ b ∈ A ->
+  Γ ⊢ A ∈ tUniv i ->
+  A :: Γ ⊢ B ∈ tUniv i ->
   (* -------------------- *)
   Γ ⊢ (tApp a b) ∈ B0.
 Proof. move =>> ->. apply T_App. Qed.
 
-Lemma E_App' Γ a0 b0 a1 b1 A B T:
+Lemma E_App' Γ a0 b0 a1 b1 A B T i :
   T = B[a0..] ->
   Γ ⊢ b0 ≡ b1 ∈ tPi A B ->
   Γ ⊢ a0 ≡ a1 ∈ A ->
-  Γ ⊢ tApp b1 a1 ∈ B[a0..] ->
+  Γ ⊢ A ∈ tUniv i ->
+  A :: Γ ⊢ B ∈ tUniv i ->
   (* ----------------- *)
   Γ ⊢ tApp b0 a0 ≡ tApp b1 a1 ∈ T.
 Proof. move =>> ->. apply E_App. Qed.
@@ -106,18 +109,17 @@ Proof.
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
   - move => > _.
     hauto q:on ctrs:Wt, Wff use:good_renaming_up, Wt_Pi_inv.
-  - move => * /=. apply : T_App'; eauto; by asimpl.
+  - move => * /=. apply : T_App'; eauto. by asimpl.
+    rewrite -/ren_tm. hauto q:on ctrs:Wt use:good_renaming_up db:wff.
   - hauto q:on ctrs:Wff,Equiv use:good_renaming_up.
   - move => Γ A0 A1 a0 a1 B i hA ihA hA0 ihA0 hPi ihPi ha iha Δ ξ hξ hΔ /=.
     apply E_Abs with (i := i); eauto.
     apply iha.
     hauto q:on ctrs:Wt,Wff,Equiv use:good_renaming_up, Wt_Pi_inv.
     hauto q:on db:wff.
-  - move => Γ a0 b0 a1 b1 A B hb ihb ha iha h ih Δ ξ hξ hΔ /=.
+  - move => Γ a0 b0 a1 b1 A B i hb ihb ha iha hA ihA hB ihB Δ ξ hξ hΔ /=.
     apply : E_App'; eauto. by asimpl.
-    rewrite -/ren_tm. asimpl.
-    have -> : B[a0 ⟨ξ⟩ .: ξ >> var_tm] = B[a0..]⟨ξ⟩ by asimpl.
-    by apply ih.
+    rewrite -/ren_tm. hauto q:on use:good_renaming_up ctrs:Wff.
   - move => > _ * /=. apply : E_Beta'; eauto. by asimpl. by asimpl.
     rewrite -/ren_tm.
     hauto lq:on ctrs:Wff use:good_renaming_up, Wt_Pi_inv.
@@ -262,7 +264,9 @@ Proof.
     apply : T_Abs; eauto.
     hauto q:on use:good_morphing_up, Wt_Pi_inv db:wff.
   (* App *)
-  - move => * /=. apply : T_App'; eauto; by asimpl.
+  - move => * /=. apply : T_App'; eauto. by asimpl.
+    rewrite -/subst_tm.
+    hauto q:on use:good_morphing_up db:wff.
   (* Conv *)
   - hauto q:on ctrs:Equiv,Wt.
   (* Univ *)
@@ -284,11 +288,9 @@ Proof.
     apply : E_Abs; eauto.
     hauto l:on use:good_morphing_up, Wt_Pi_inv db:wff.
   (* App *)
-  - move => Γ a0 b0 a1 b1 A B hb ihb ha iha hba ihba Δ ρ hρ hΔ /=.
+  - move => Γ a0 b0 a1 b1 A B i hb ihb ha iha hba ihba hA ihA Δ ρ hρ hΔ /=.
     apply : E_App'; eauto. by asimpl.
-    rewrite -/subst_tm. asimpl.
-    have -> : B[a0[ρ] .: ρ] = B[a0..][ρ] by asimpl.
-    sfirstorder.
+    rewrite -/subst_tm. hauto q:on use:good_morphing_up db:wff.
   (* Beta *)
   - move => > _ /= *. apply : E_Beta'; eauto.
     by asimpl.
@@ -402,18 +404,30 @@ Proof.
     (* morphing context *)
     sfirstorder use: ctx_morph.
     hauto lq:on ctrs:Equiv.
-  - hauto q:on ctrs:Wt.
+  - move => Γ a0 b0 a1 b1 A B i hb [ihb0 ihb1] ha [iha0 iha1] hA hB.
+    split; first by eauto using T_App.
+    apply T_Conv with (A := B[a1..]) (i := i);
+      first by eauto using T_App.
+    (* Need cong2 *)
+    admit.
   - move => Γ A B a b i hT hb ha.
+    move /Wt_Pi_inv : (hT) => [j][h0]h1 h2.
     split.
-    apply : T_App; eauto.
-    apply : T_Abs; eauto.
-    by eauto using subst_wt.
+    + eapply T_App with (i := j); eauto.
+      by apply : T_Abs; eauto.
+    + eauto using subst_wt.
   - hauto lq:on ctrs:Wt.
   - hauto lq:on ctrs:Wt.
-Qed.
+Admitted.
 
 Definition subst2_ok ρ0 ρ1 Γ Δ :=
   forall i A, lookup i Γ A -> Δ ⊢ ρ0 i ≡ ρ1 i ∈ A [ ρ0 ].
+
+(* Lemma subst2_lrefl ρ0 ρ1 Γ Δ : *)
+(*   subst2_ok ρ0 ρ1 Γ Δ -> subst_ok ρ0 Γ Δ. *)
+(* Proof. *)
+(*   hauto lq:on use:Wt_Equiv, Equiv_Wt unfold:subst2_ok, subst_ok. *)
+(* Qed. *)
 
 Lemma subst2_up ρ0 ρ1 k Γ Δ A
   (h : subst2_ok ρ0 ρ1 Γ Δ) :
@@ -435,54 +449,53 @@ Qed.
 
 Lemma morphing2_Syn :
   (forall Γ a A,  Γ ⊢ a ∈ A -> forall Δ ρ0 ρ1,
-    subst_ok ρ0 Γ Δ ->
-    subst_ok ρ1 Γ Δ ->
     subst2_ok ρ0 ρ1 Γ Δ ->
     ⊢ Δ ->
     Δ ⊢ a[ρ0] ≡ a[ρ1] ∈ A[ρ0]) /\
   (forall Γ a b A,  Γ ⊢ a ≡ b ∈ A -> forall Δ ρ0 ρ1,
-    subst_ok ρ0 Γ Δ ->
-    subst_ok ρ1 Γ Δ ->
     subst2_ok ρ0 ρ1 Γ Δ ->
     ⊢ Δ ->
-    Δ ⊢ a[ρ0] ≡ b[ρ1] ∈ A[ρ0]).
+  (* experimental version *)
+    Δ ⊢ a[ρ0] ≡ a[ρ1] ∈ A[ρ0] /\
+    Δ ⊢ b[ρ0] ≡ b[ρ1] ∈ A[ρ1]
+
+  (* the most "intuitive" def *)
+    (* Δ ⊢ a[ρ0] ≡ b[ρ1] ∈ A[ρ0] *)).
 Proof.
   apply wt_mutual; rewrite /subst2_ok /=.
   (* Var *)
   - sfirstorder.
   (* Pi *)
-  - move => Γ i A B hA ihA hB ihB Δ ρ0 ρ1 hρ0 hρ1 hρ hΔ.
-    have ? : Δ ⊢ A[ρ0] ∈ tUniv i by sfirstorder use:morphing_wt_univ.
+  - move => Γ i A B hA ihA hB ihB Δ ρ0 ρ1 hρ hΔ.
+    (* have ? : Δ ⊢ A[ρ0] ∈ tUniv i by sfirstorder use:morphing_wt_univ. *)
     apply E_Pi; eauto with wff.
     + apply ihB=>//.
-      * apply good_morphing_up with (k := i); eauto.
-      * rewrite /subst_ok.
-        move => i0 A0.
-        elim /lookup_inv_cons.
-        ** asimpl.
-           apply T_Conv with (A := A[ρ0]⟨S⟩) (i := i).
-           *** apply T_Var. apply Wff_cons with (i := i)=>//.
-               by constructor.
-           *** have -> : A[ρ1 >> ren_tm S] = A[ρ1]⟨S⟩ by asimpl.
-               apply : weakening_equiv_univ; eauto.
-        ** move => j B0 ? ? ?. subst. asimpl.
-           have -> : B0[ρ1 >> ren_tm S] = B0[ρ1]⟨S⟩ by asimpl.
-           qauto l:on use:weakening_wt.
-      * move => i0 A0.
-        elim /lookup_inv_cons.
-        ** asimpl.
-           have -> : A[ρ0 >> ren_tm S] = A[ρ0]⟨S⟩ by asimpl.
-           apply E_Var.
-           hauto lq:on db:wff.
-           by constructor.
-        ** move => j B0 ? ? ?. subst. asimpl.
-           have -> : B0[ρ0 >> ren_tm S] = B0[ρ0]⟨S⟩ by asimpl.
-           apply : weakening_equiv; eauto.
-      * hauto lq:on use:morphing_wt_univ db:wff.
+      move => i0 A0.
+      elim /lookup_inv_cons.
+      * asimpl.
+        have -> : A[ρ0 >> ren_tm S] = A[ρ0]⟨S⟩ by asimpl.
+        apply E_Var.
+        admit.
+        (* hauto lq:on db:wff. *)
+        by constructor.
+      * move => j B0 ? ? ?. subst. asimpl.
+        have -> : B0[ρ0 >> ren_tm S] = B0[ρ0]⟨S⟩ by asimpl.
+        apply : weakening_equiv; eauto.
+        admit.
+      * (* hauto lq:on use:morphing_wt_univ db:wff. *)
+        admit.
+    + admit.
   (* Abs *)
   - admit.
   (* App *)
-  - move => *. apply : E_App'; eauto. by asimpl.
+  - move => Γ a A B b i ha iha hb ihb hA ihA hB ihB Δ ρ0 ρ1 hρ hΔ.
+    asimpl.
+    eapply E_App' with (i := i); eauto. by asimpl.
+    admit.
+    (* have -> : B[b[ρ0] .: ρ0] = B[b..][ρ0] by asimpl. *)
+
+    (* have -> : B[b[ρ1] .: ρ0] = B[b..][ρ1] by asimpl. *)
+    (* apply T_App. *)
   (* Conv *)
   - move => Γ a A B i ha iha hE ihE Δ ρ0 *.
     apply E_Conv with (A := A[ρ0]) (i := i); eauto.
