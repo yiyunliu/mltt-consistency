@@ -196,6 +196,14 @@ Proof.
   hauto lq:on ctrs:lookup unfold:ren_ok.
 Qed.
 
+Lemma weakening_equiv_univ Γ a b j B i
+  (h0 : Γ ⊢ B ∈ (tUniv i))
+  (h1 : Γ ⊢ a ≡ b ∈ tUniv j) :
+  (B :: Γ) ⊢ (ren_tm shift a) ≡ ren_tm shift b ∈ tUniv j.
+Proof.
+  hauto lq:on use:weakening_equiv.
+Qed.
+
 Lemma subst_ok_suc Γ Δ A j ρ (h : subst_ok ρ Γ Δ)
   (hh : Δ ⊢ A [ρ] ∈ tUniv j) :
   subst_ok (ρ >> ren_tm S) Γ (A [ρ] :: Δ).
@@ -282,8 +290,57 @@ Lemma morphing_wt ρ Δ:
     Δ ⊢ a[ρ] ∈ A[ρ]).
 Proof. sfirstorder use:morphing_Syn. Qed.
 
+Lemma morphing_wt_univ ρ Δ:
+  (forall Γ a i,  Γ ⊢ a ∈ tUniv i ->
+    subst_ok ρ Γ Δ ->
+    ⊢ Δ ->
+    Δ ⊢ a[ρ] ∈ tUniv i).
+Proof. hauto lq:on use:morphing_wt. Qed.
+
+Lemma morphing_equiv ρ Δ:
+  (forall Γ a b A,  Γ ⊢ a ≡ b ∈ A ->
+    subst_ok ρ Γ Δ ->
+    ⊢ Δ ->
+    Δ ⊢ a[ρ] ≡ b[ρ] ∈ A[ρ]).
+Proof. sfirstorder use:morphing_Syn. Qed.
+
+Lemma morphing_equiv_univ ρ Δ :
+  (forall Γ a b i,  Γ ⊢ a ≡ b ∈ tUniv i->
+    subst_ok ρ Γ Δ ->
+    ⊢ Δ ->
+    Δ ⊢ a[ρ] ≡ b[ρ] ∈ tUniv i).
+Proof. hauto lq:on use:morphing_equiv. Qed.
+
 Definition subst2_ok ρ0 ρ1 Γ Δ :=
   forall i A, lookup i Γ A -> Δ ⊢ ρ0 i ≡ ρ1 i ∈ A [ ρ0 ].
+
+Lemma lookup_inv_cons i B Γ A (P : nat -> list tm -> tm -> Prop) :
+  P 0 Γ B⟨S⟩ ->
+  (forall j B, i = S j -> A = B⟨S⟩ -> lookup j Γ B -> P (S j) Γ A) ->
+  lookup i (B:: Γ) A -> P i Γ A.
+  move => h0 h1.
+  elim/lookup_inv.
+  - scongruence.
+  - hauto lq:on.
+Qed.
+
+Lemma subst2_up ρ0 ρ1 k Γ Δ A
+  (h : subst2_ok ρ0 ρ1 Γ Δ) :
+  Δ ⊢ A[ρ0] ∈ tUniv k ->
+  subst2_ok (up_tm_tm ρ0) (up_tm_tm ρ1) (A :: Γ) (A[ρ0] :: Δ).
+Proof.
+  rewrite /subst2_ok => h0 i A0.
+  elim /lookup_inv_cons. asimpl.
+  have -> : A[ρ0 >> ren_tm S] = A[ρ0]⟨S⟩ by asimpl.
+  apply E_Var.
+  hauto lq:on db:wff.
+  by constructor.
+  move => j B ? ? ?. subst.
+  asimpl.
+  have -> : B[ρ0 >> ren_tm S] = B[ρ0]⟨S⟩ by asimpl.
+  apply weakening_equiv with (i := k)=>//.
+  by apply h.
+Qed.
 
 Lemma morphing2_Syn :
   (forall Γ a A,  Γ ⊢ a ∈ A -> forall Δ ρ0 ρ1,
@@ -300,17 +357,54 @@ Lemma morphing2_Syn :
     Δ ⊢ a[ρ0] ≡ b[ρ1] ∈ A[ρ0]).
 Proof.
   apply wt_mutual; rewrite /subst2_ok /=.
+  (* Var *)
   - sfirstorder.
+  (* Pi *)
   - move => Γ i A B hA ihA hB ihB Δ ρ0 ρ1 hρ0 hρ1 hρ hΔ.
+    have ? : Δ ⊢ A[ρ0] ∈ tUniv i by sfirstorder use:morphing_wt_univ.
     apply E_Pi; eauto with wff.
-    apply ihB=>//.
-    apply good_morphing_up with (k := i); eauto.
-    change (tUniv i) with (tUniv i)[ρ0].
-    hauto l:on use:morphing_wt.
-    apply good_morphing_up with (k := i); eauto.
-    change (tUniv i) with (tUniv i)[ρ0].
-    hauto l:on use:morphing_wt.
-
+    + apply ihB=>//.
+      * apply good_morphing_up with (k := i); eauto.
+      * rewrite /subst_ok.
+        move => i0 A0.
+        elim /lookup_inv_cons.
+        ** asimpl.
+           apply T_Conv with (A := A[ρ0]⟨S⟩) (i := i).
+           *** apply T_Var. apply Wff_cons with (i := i)=>//.
+               by constructor.
+           *** have -> : A[ρ1 >> ren_tm S] = A[ρ1]⟨S⟩ by asimpl.
+               apply : weakening_equiv_univ; eauto.
+        ** move => j B0 ? ? ?. subst. asimpl.
+           have -> : B0[ρ1 >> ren_tm S] = B0[ρ1]⟨S⟩ by asimpl.
+           qauto l:on use:weakening_wt.
+      * move => i0 A0.
+        elim /lookup_inv_cons.
+        ** asimpl.
+           have -> : A[ρ0 >> ren_tm S] = A[ρ0]⟨S⟩ by asimpl.
+           apply E_Var.
+           hauto lq:on db:wff.
+           by constructor.
+        ** move => j B0 ? ? ?. subst. asimpl.
+           have -> : B0[ρ0 >> ren_tm S] = B0[ρ0]⟨S⟩ by asimpl.
+           apply : weakening_equiv; eauto.
+      * hauto lq:on use:morphing_wt_univ db:wff.
+  (* Abs *)
+  - admit.
+  (* App *)
+  - move => *. apply : E_App'; eauto. by asimpl.
+  (* Conv *)
+  - move => Γ a A B i ha iha hE ihE Δ ρ0 *.
+    apply E_Conv with (A := A[ρ0]) (i := i); eauto.
+    sfirstorder use:morphing_equiv_univ.
+  (* Univ *)
+  - hauto lq:on ctrs:Equiv.
+  - sfirstorder.
+  - move => Γ a b A h ih Δ ρ0 ρ1 hρ0 hρ1 hρ hΔ.
+    apply E_Trans with (b := a[ρ0]).
+    + apply E_Sym.
+      hauto lq:on ctrs:Equiv.
+    +
+Admitted.
 
 
 
@@ -336,3 +430,4 @@ Proof.
     hauto lq:on ctrs:Wt db:wff.
   - admit.
   - move => *. split. hauto lq:on ctrs:Wt.
+Admitted.
