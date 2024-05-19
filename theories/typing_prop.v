@@ -59,7 +59,7 @@ Lemma E_Beta' Γ A B a b i t T:
   T = B[a..] ->
   Γ ⊢ tPi A B ∈ tUniv i ->
   Γ ⊢ A ∈ tUniv i ->
-  (* A :: Γ ⊢ b ∈ B -> *)
+  A :: Γ ⊢ b ∈ B ->
   Γ ⊢ a ∈ A ->
   Γ ⊢ tApp (tAbs A b) a ≡ t ∈ T.
 Proof. move =>> -> ->. apply E_Beta. Qed.
@@ -111,7 +111,7 @@ Proof.
   - move => * /=. apply : T_App'; eauto. by asimpl.
     (* rewrite -/ren_tm. hauto q:on ctrs:Wt use:good_renaming_up db:wff. *)
   - hauto q:on ctrs:Wff,Equiv use:good_renaming_up.
-  - move => Γ A0 A1 a0 a1 B i hA ihA hA0 ihA0 hPi ihPi ha iha Δ ξ hξ hΔ /=.
+  - move => Γ A0 A1 a0 a1 B i hA ihA hA0 ihA0 hPi ihPi hPi' ihPi' ha iha Δ ξ hξ hΔ /=.
     apply E_Abs with (i := i); eauto.
     apply iha.
     hauto q:on ctrs:Wt,Wff,Equiv use:good_renaming_up, Wt_Pi_inv.
@@ -120,8 +120,8 @@ Proof.
     apply : E_App'; eauto. by asimpl.
     (* rewrite -/ren_tm. hauto q:on use:good_renaming_up ctrs:Wff. *)
   - move => > _ * /=. apply : E_Beta'; eauto. by asimpl. by asimpl.
-    (* rewrite -/ren_tm. *)
-    (* hauto lq:on ctrs:Wff use:good_renaming_up, Wt_Pi_inv. *)
+    rewrite -/ren_tm.
+    hauto lq:on ctrs:Wff use:good_renaming_up, Wt_Pi_inv.
 Qed.
 
 Lemma renaming_wt : forall Γ a A, Γ ⊢ a ∈ A -> forall Δ ξ,
@@ -287,10 +287,10 @@ Proof.
     apply : E_App'; eauto. by asimpl.
     (* rewrite -/subst_tm. hauto q:on use:good_morphing_up db:wff. *)
   (* Beta *)
-  - move => > _ /= *. apply : E_Beta'; eauto; by asimpl.
-    (* by asimpl. *)
-    (* by asimpl. *)
-    (* hauto lq:on use:good_morphing_up, Wt_Pi_inv db:wff. *)
+  - move => > _ /= *. apply : E_Beta'; eauto.
+    by asimpl.
+    by asimpl.
+    hauto lq:on use:good_morphing_up, Wt_Pi_inv db:wff.
   (* Univ *)
   - hauto lq:on ctrs:Equiv.
   (* Conv *)
@@ -371,6 +371,20 @@ Proof.
   - eauto with wff.
 Qed.
 
+Lemma regularity Γ a A : Γ ⊢ a ∈ A -> exists i, Γ ⊢ A ∈ tUniv i.
+Proof.
+  move => h.
+  elim : Γ a A / h.
+  - admit.
+  - sfirstorder ctrs:Wt.
+  - sfirstorder.
+  - move => Γ a A B b ha [i hPi] hb [j hA].
+    move /Wt_Pi_inv : hPi => [k][hk]hk'.
+    exists k. move : subst_wt hb hk'. repeat move /[apply]. apply.
+  - admit.
+  - qauto l:on ctrs:Wt.
+Admitted.
+
 Lemma Equiv_Wt Γ a b A : Γ ⊢ a ≡ b ∈ A -> Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A.
 Proof.
   move => h. elim : Γ a b A / h.
@@ -391,7 +405,7 @@ Proof.
     change (var_tm (S n)) with (var_tm n)⟨S⟩.
     apply weakening_wt with (i := i)=>//.
     hauto lq:on ctrs:Wt db:wff.
-  - move => Γ A0 A1 a0 a1 B i hA [ihA0 ihA1] h0 ha [iha0 iha1].
+  - move => Γ A0 A1 a0 a1 B i hA [ihA0 ihA1] h0 hPi hPi' ha [iha0 iha1].
     split.
     hauto lq:on ctrs:Wt.
     apply T_Conv with (A := tPi A1 B) (i := i).
@@ -399,17 +413,18 @@ Proof.
     (* morphing context *)
     sfirstorder use: ctx_morph.
     hauto lq:on ctrs:Equiv.
-  - move => Γ a0 b0 a1 b1 A B i hb [ihb0 ihb1] ha [iha0 iha1] hA hB.
+  - move => Γ a0 b0 a1 b1 A B hb [ihb0 ihb1]ha [iha0 iha1].
     split; first by eauto using T_App.
-    apply T_Conv with (A := B[a1..]) (i := i);
-      first by eauto using T_App.
+    (* Use regularity *)
+    (* apply T_Conv with (A := B[a1..]) (i := i); *)
+    (*   first by eauto using T_App. *)
     (* Need cong2 *)
     admit.
   - move => Γ A B a b i hT hb ha.
-    move /Wt_Pi_inv : (hT) => [j][h0]h1 h2.
+    move /Wt_Pi_inv : (hT) => [j][h0]h1.
     split.
-    + eapply T_App with (i := j); eauto.
-      by apply : T_Abs; eauto.
+    + eapply T_App; eauto.
+      apply : T_Abs; eauto.
     + eauto using subst_wt.
   - hauto lq:on ctrs:Wt.
   - hauto lq:on ctrs:Wt.
@@ -451,13 +466,14 @@ Lemma morphing2_Syn :
     subst2_ok ρ0 ρ1 Γ Δ ->
     ⊢ Δ ->
   (* experimental version *)
+    Δ ⊢ a[ρ0] ≡ b[ρ0] ∈ A[ρ0] /\
     Δ ⊢ a[ρ0] ≡ a[ρ1] ∈ A[ρ0] /\
-    Δ ⊢ b[ρ0] ≡ b[ρ1] ∈ A[ρ1]
+    Δ ⊢ b[ρ0] ≡ b[ρ1] ∈ A[ρ0]
 
   (* the most "intuitive" def *)
     (* Δ ⊢ a[ρ0] ≡ b[ρ1] ∈ A[ρ0] *)).
 Proof.
-  apply wt_mutual; rewrite /subst2_ok /=.
+  apply wt_mutual=> /=.
   (* Var *)
   - sfirstorder.
   (* Pi *)
@@ -484,27 +500,69 @@ Proof.
         admit.
     + admit.
   (* Abs *)
-  - admit.
-  (* App *)
-  - move => Γ a A B b i ha iha hb ihb hA ihA hB ihB Δ ρ0 ρ1 hρ hΔ.
-    asimpl.
-    eapply E_App' with (i := i); eauto. by asimpl.
+  - move => Γ A a B i hPi ihPi hA ihA ha iha Δ ρ0 ρ1 hρ hΔ.
+    move /ihPi /(_ hΔ) : (hρ) => h.
+    apply E_Abs with (i := i); eauto.
     admit.
-    (* have -> : B[b[ρ0] .: ρ0] = B[b..][ρ0] by asimpl. *)
-
-    (* have -> : B[b[ρ1] .: ρ0] = B[b..][ρ1] by asimpl. *)
-    (* apply T_App. *)
+    apply : E_Trans; eauto.
+    apply E_Pi.
+    admit.
+    admit.
+    admit.
+    apply iha.
+    apply : subst2_up; eauto.
+    admit.
+    admit.
+  (* App *)
+  - move => Γ a A B b i ha iha hb (* ihb hA ihA. hB ihB *) Δ ρ0 ρ1 hρ hΔ.
+    eapply E_App'; eauto. by asimpl.
   (* Conv *)
-Admitted.
-(*   - move => Γ a A B i ha iha hE ihE Δ ρ0 *. *)
-(*     apply E_Conv with (A := A[ρ0]) (i := i); eauto. *)
-(*     sfirstorder use:morphing_equiv_univ. *)
-(*   (* Univ *) *)
-(*   - hauto lq:on ctrs:Equiv. *)
-(*   - sfirstorder. *)
-(*   - move => Γ a b A h ih Δ ρ0 ρ1 hρ0 hρ1 hρ hΔ. *)
-(*     apply E_Trans with (b := a[ρ0]). *)
-(*     + apply E_Sym. *)
-(*       hauto lq:on ctrs:Equiv. *)
-(*     + *)
+  - move => Γ a A B i ha iha hE ihE Δ ρ0 ρ1 hρ hΔ.
+    apply E_Conv with (A := A[ρ0]) (i := i); eauto.
+    sfirstorder use:morphing_equiv_univ.
+  (* Univ *)
+  - hauto lq:on ctrs:Equiv.
+
+  (* Var *)
+  - hauto lq:on ctrs:Equiv, Wt unfold:subst2_ok.
+
+  (* Sym *)
+  - hauto l:on ctrs:Equiv.
+
+  (* Trans *)
+  - hauto l:on ctrs:Equiv.
+
+  (* Pi *)
+  - move => Γ i A0 B0 A1 B1 hA ihA hB ihB hA0 ihA0 Δ ρ0 ρ1 hρ hΔ.
+    repeat split.
+    apply E_Pi. hauto l:on.
+    eapply ihB. apply : subst2_up; eauto.
+    (* Need to be mutual with wt equiv *)
+    admit.
+    admit.
+    admit.
+    apply E_Pi. hauto l:on.
+    eapply ihB. apply : subst2_up; eauto.
+    admit.
+    admit.
+    admit.
+     apply E_Pi. hauto l:on.
+    eapply ihB.
+    (* Use context morph *)
+    admit.
+    admit.
+    admit.
+  (* Abs *)
+  - admit.
+  - move => Γ a0 b0 a1 b1 A B hb ihb ha iha Δ ρ0 ρ1 hρ hΔ.
+    repeat split.
+    apply : E_App';cycle 1; [hauto l:on | hauto l:on | by asimpl].
+    apply : E_App'; cycle 1; [hauto l:on | hauto l:on | by asimpl].
+    eapply E_Conv with (A := B[a1..][ρ0]).
+    apply : E_App'; cycle 1.
+    hauto l:on.
+    hauto l:on.
+    by asimpl.
+
+
 (* Admitted. *)
