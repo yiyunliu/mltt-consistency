@@ -1,12 +1,12 @@
 Require Import imports typing.
 
-(* Lemma Red_WtL Γ a b A (h : Γ ⊢ a ⤳ b ∈ A) : Γ ⊢ a ∈ A. *)
-(* Proof. *)
-(*   induction h; hauto lq:on ctrs:Wt. *)
-(* Qed. *)
+Lemma Red_WtL Γ a b A (h : Γ ⊢ a ⤳ b ∈ A) : Γ ⊢ a ∈ A.
+Proof.
+  induction h; hauto lq:on ctrs:Wt.
+Qed.
 
-(* Lemma Reds_Wt Γ a b A (h : Γ ⊢ a ⤳* b ∈ A) : Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A. *)
-(* Proof. induction h; sfirstorder use:Red_WtL. Qed. *)
+Lemma Reds_Wt Γ a b A (h : Γ ⊢ a ⤳* b ∈ A) : Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A.
+Proof. induction h; sfirstorder use:Red_WtL. Qed.
 
 Lemma here' : forall {A Γ T}, T = A ⟨shift⟩ ->  lookup 0 (A :: Γ) T.
 Proof. move => > ->. by apply here. Qed.
@@ -35,22 +35,21 @@ Proof.
   asimpl. apply : there'; eauto. by asimpl.
 Qed.
 
-Lemma T_App' Γ i a A B0 B b :
+Lemma T_App' Γ a A B0 B b :
   B0 = (subst_tm (b..) B) ->
   Γ ⊢ a ∈ (tPi A B) ->
   Γ ⊢ b ∈ A ->
-  Γ ⊢ A ∈ tUniv i ->
-  A :: Γ ⊢ B ∈ tUniv i ->
+  (* Γ ⊢ A ∈ tUniv i -> *)
+  (* A :: Γ ⊢ B ∈ tUniv i -> *)
   (* -------------------- *)
   Γ ⊢ (tApp a b) ∈ B0.
 Proof. move =>> ->. apply T_App. Qed.
 
-Lemma E_App' Γ a0 b0 a1 b1 A B T i :
+Lemma E_App' Γ a0 b0 a1 b1 A B T :
   T = B[a0..] ->
   Γ ⊢ b0 ≡ b1 ∈ tPi A B ->
   Γ ⊢ a0 ≡ a1 ∈ A ->
-  Γ ⊢ A ∈ tUniv i ->
-  A :: Γ ⊢ B ∈ tUniv i ->
+  (* A :: Γ ⊢ B ∈ tUniv i -> *)
   (* ----------------- *)
   Γ ⊢ tApp b0 a0 ≡ tApp b1 a1 ∈ T.
 Proof. move =>> ->. apply E_App. Qed.
@@ -60,7 +59,7 @@ Lemma E_Beta' Γ A B a b i t T:
   T = B[a..] ->
   Γ ⊢ tPi A B ∈ tUniv i ->
   Γ ⊢ A ∈ tUniv i ->
-  A :: Γ ⊢ b ∈ B ->
+  (* A :: Γ ⊢ b ∈ B -> *)
   Γ ⊢ a ∈ A ->
   Γ ⊢ tApp (tAbs A b) a ≡ t ∈ T.
 Proof. move =>> -> ->. apply E_Beta. Qed.
@@ -110,19 +109,19 @@ Proof.
   - move => > _.
     hauto q:on ctrs:Wt, Wff use:good_renaming_up, Wt_Pi_inv.
   - move => * /=. apply : T_App'; eauto. by asimpl.
-    rewrite -/ren_tm. hauto q:on ctrs:Wt use:good_renaming_up db:wff.
+    (* rewrite -/ren_tm. hauto q:on ctrs:Wt use:good_renaming_up db:wff. *)
   - hauto q:on ctrs:Wff,Equiv use:good_renaming_up.
   - move => Γ A0 A1 a0 a1 B i hA ihA hA0 ihA0 hPi ihPi ha iha Δ ξ hξ hΔ /=.
     apply E_Abs with (i := i); eauto.
     apply iha.
     hauto q:on ctrs:Wt,Wff,Equiv use:good_renaming_up, Wt_Pi_inv.
     hauto q:on db:wff.
-  - move => Γ a0 b0 a1 b1 A B i hb ihb ha iha hA ihA hB ihB Δ ξ hξ hΔ /=.
+  - move => Γ a0 b0 a1 b1 A B i hb ihb ha (* iha. hA ihA hB ihB *) Δ ξ hξ hΔ /=.
     apply : E_App'; eauto. by asimpl.
-    rewrite -/ren_tm. hauto q:on use:good_renaming_up ctrs:Wff.
+    (* rewrite -/ren_tm. hauto q:on use:good_renaming_up ctrs:Wff. *)
   - move => > _ * /=. apply : E_Beta'; eauto. by asimpl. by asimpl.
-    rewrite -/ren_tm.
-    hauto lq:on ctrs:Wff use:good_renaming_up, Wt_Pi_inv.
+    (* rewrite -/ren_tm. *)
+    (* hauto lq:on ctrs:Wff use:good_renaming_up, Wt_Pi_inv. *)
 Qed.
 
 Lemma renaming_wt : forall Γ a A, Γ ⊢ a ∈ A -> forall Δ ξ,
@@ -179,11 +178,7 @@ Lemma Wt_Equiv Γ a A : Γ ⊢ a ∈ A -> Γ ⊢ a ≡ a ∈ A.
 Proof. induction 1; hauto lq:on ctrs:Equiv, Wt. Qed.
 
 Lemma Red_inj_Equiv Γ a b A : Γ ⊢ a ⤳ b ∈ A -> Γ ⊢ a ≡ b ∈ A.
-Admitted.
-(* Proof. induction 1; try qauto depth:1 use:Wt_Equiv ctrs:Equiv. *)
-(*        apply : E_App; eauto using Wt_Equiv. *)
-(*        apply : T_App; eauto. *)
-(* Qed. *)
+Proof. induction 1; qauto depth:1 use:Wt_Equiv ctrs:Equiv. Qed.
 
 Lemma Reds_inj_Equiv Γ a b A : Γ ⊢ a ⤳* b ∈ A -> Γ ⊢ a ≡ b ∈ A.
 Proof.
@@ -265,8 +260,8 @@ Proof.
     hauto q:on use:good_morphing_up, Wt_Pi_inv db:wff.
   (* App *)
   - move => * /=. apply : T_App'; eauto. by asimpl.
-    rewrite -/subst_tm.
-    hauto q:on use:good_morphing_up db:wff.
+    (* rewrite -/subst_tm. *)
+    (* hauto q:on use:good_morphing_up db:wff. *)
   (* Conv *)
   - hauto q:on ctrs:Equiv,Wt.
   (* Univ *)
@@ -288,14 +283,14 @@ Proof.
     apply : E_Abs; eauto.
     hauto l:on use:good_morphing_up, Wt_Pi_inv db:wff.
   (* App *)
-  - move => Γ a0 b0 a1 b1 A B i hb ihb ha iha hba ihba hA ihA Δ ρ hρ hΔ /=.
+  - move => Γ a0 b0 a1 b1 A B i hb ihb ha (* iha hba ihba hA ihA *) Δ ρ hρ hΔ /=.
     apply : E_App'; eauto. by asimpl.
-    rewrite -/subst_tm. hauto q:on use:good_morphing_up db:wff.
+    (* rewrite -/subst_tm. hauto q:on use:good_morphing_up db:wff. *)
   (* Beta *)
-  - move => > _ /= *. apply : E_Beta'; eauto.
-    by asimpl.
-    by asimpl.
-    hauto lq:on use:good_morphing_up, Wt_Pi_inv db:wff.
+  - move => > _ /= *. apply : E_Beta'; eauto; by asimpl.
+    (* by asimpl. *)
+    (* by asimpl. *)
+    (* hauto lq:on use:good_morphing_up, Wt_Pi_inv db:wff. *)
   (* Univ *)
   - hauto lq:on ctrs:Equiv.
   (* Conv *)
@@ -423,11 +418,11 @@ Admitted.
 Definition subst2_ok ρ0 ρ1 Γ Δ :=
   forall i A, lookup i Γ A -> Δ ⊢ ρ0 i ≡ ρ1 i ∈ A [ ρ0 ].
 
-(* Lemma subst2_lrefl ρ0 ρ1 Γ Δ : *)
-(*   subst2_ok ρ0 ρ1 Γ Δ -> subst_ok ρ0 Γ Δ. *)
-(* Proof. *)
-(*   hauto lq:on use:Wt_Equiv, Equiv_Wt unfold:subst2_ok, subst_ok. *)
-(* Qed. *)
+Lemma subst2_lrefl ρ0 ρ1 Γ Δ :
+  subst2_ok ρ0 ρ1 Γ Δ -> subst_ok ρ0 Γ Δ.
+Proof.
+  hauto lq:on use:Wt_Equiv, Equiv_Wt unfold:subst2_ok, subst_ok.
+Qed.
 
 Lemma subst2_up ρ0 ρ1 k Γ Δ A
   (h : subst2_ok ρ0 ρ1 Γ Δ) :
@@ -477,6 +472,7 @@ Proof.
         apply E_Var.
         (* Mutually proven with Equiv Wt? *)
         (* Or adding subst_ok as premises? *)
+        (* Removable from Equiv *)
         admit.
         (* hauto lq:on db:wff. *)
         by constructor.

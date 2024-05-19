@@ -26,7 +26,8 @@ Definition tm_rel := tm -> tm -> Prop.
 
 Definition ProdSpace Γ (FA : context -> tm_rel) (FB : context -> tm -> tm_rel) (b0 b1 : tm) :=
   forall ξ Δ, ren_ok ξ Γ Δ ->  ⊢ Δ ->
-  forall a0 a1, FA Δ a0 a1 -> FB Δ a0 = FB Δ a1 -> FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a1).
+  forall a0 a1, FA Δ a0 a1 -> FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a0) /\
+  FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b0⟨ξ⟩ a1) /\ FB Δ a0 (tApp b1⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a1).
 
 Definition wne_coherent Γ A a b :=
   Γ ⊢ a ≡ b ∈ A.
@@ -100,7 +101,7 @@ Proof.
   move : ih.
   elim :  Γ i I A R /h.
   - hauto lq:on ctrs:Equiv.
-  - qauto l:on unfold:ProdSpace.
+  - hauto l:on unfold:ProdSpace.
   - sfirstorder.
   - sfirstorder.
 Qed.
@@ -136,19 +137,16 @@ Qed.
 
 Definition wne Γ a A := exists v, ne a /\ Γ ⊢ a ⤳* v ∈ A.
 
-Definition wnEquiv Γ a b A := exists v0 v1, ne v0 /\ ne v1 /\ Γ ⊢ v0 ≡ v1 ∈ A /\ Γ ⊢ a ⤳* v0 ∈ A /\ Γ ⊢ b ⤳* v1 ∈ A.
+Definition wnEquiv Γ a b A := ne a /\ ne b /\ Γ ⊢ a ≡ b ∈ A.
 
 Lemma neutral_pertype Γ i A B (h : wnEquiv Γ A B (tUniv i)) :
   forall I, Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I.
 Proof.
   rewrite /wnEquiv in h.
-  move : h => [v0][v1][hv0][hv1][hv][hA]hB.
   move => I.
-  apply : PerType_Step; eauto.
-  by apply PerType_Ne.
+  apply PerType_Ne; tauto.
 Qed.
 
-Don't use wnEquiv.
 Lemma neutral_interpext Γ i I A R
   (h :  ⟦ Γ ⊨  A ⟧ i ; I ↘ R) 
   (hI : forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) :
@@ -157,35 +155,38 @@ Proof.
   move : hI.
   elim : Γ i I A R / h.
   - rewrite /wnEquiv /wne_coherent => Γ i I A hA neA hI b0 b1.
-    move => [v0][v1][hv0][hv1][he][ /Reds_inj_Equiv hr0] /Reds_inj_Equiv hr1.
-    move /E_Sym in hr1.
-    hauto lq:on ctrs:Equiv.
+    sfirstorder use:E_Sym,E_Trans.
   - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI b0 b1 hb.
     rewrite /ProdSpace => ξ Δ hξ hΔ a0 a1 ha he.
     apply : ihFB; eauto.
     rewrite /wnEquiv in hb *.
-    move : hb => [v0][v1][hv0][hv1][hv][hbv0]hbv1.
-    exists (tApp (ren_tm ξ v0) a0), (tApp (ren_tm ξ v1) a1) => /=.
-    repeat split.
+    move : hb.
+    move => [?].
+    move => [?].
+    move => hb.
+    repeat split => //=.
     (* morphing *)
     (* renaming for ne *)
     hauto l:on use:ne_renaming.
     hauto l:on use:ne_renaming.
     (* renaming for equiv? *)
-    apply : E_App.
-    move : renaming_equiv hv hξ. repeat move/[apply] => //=.
+    apply E_App with (A := A⟨ξ⟩) (i := i).
+    move : renaming_equiv hb hξ. repeat move/[apply] => //=.
     apply=>//.
-    admit.
-    admit.
     (* Lemma needs to be mutually defined with escape *)
     admit.
     (* renaming for app? *)
+    apply : renaming_wt_univ; eauto.
+    (* need escape again *)
     admit.
+    apply renaming_wt_univ with (Γ := A::Γ).
+    (* yet another escape *)
+    admit.
+    hauto l:on use:good_renaming_up.
+  (* yet another escape *)
     admit.
   - hauto lq:on.
-  - move => Γ i I A0 A1 RA hA01 hA1 ihA1 hI.
-    move /(_ hI) in ihA1.
-    (* Use some sort of Conv rule? *)
+  - hauto lq:on ctrs:Equiv use:Red_inj_Equiv unfold:wnEquiv.
 Admitted.
 
 Lemma neutral_interpuniv Γ i A R (h :  ⟦ Γ ⊨  A ⟧ i ↘ R) :
@@ -225,10 +226,8 @@ Proof.
       apply hFA => //.
       apply ren_ok_S.
       rewrite /wnEquiv.
-      exists (var_tm 0), (var_tm 0). repeat split => //=.
+      repeat split => //.
       apply E_Var=>//. by constructor.
-      apply R_Refl. apply T_Var=>//. by constructor.
-      apply R_Refl. apply T_Var=>//. by constructor.
   - hauto lq:on ctrs:Wt.
   - sfirstorder use:Red_WtL.
 Qed.
