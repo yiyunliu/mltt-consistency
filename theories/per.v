@@ -26,8 +26,10 @@ Definition tm_rel := tm -> tm -> Prop.
 
 Definition ProdSpace Γ (FA : context -> tm_rel) (FB : context -> tm -> tm_rel) (b0 b1 : tm) :=
   forall ξ Δ, ren_ok ξ Γ Δ ->  ⊢ Δ ->
-  forall a0 a1, FA Δ a0 a1 -> FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a0) /\
-  FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b0⟨ξ⟩ a1) /\ FB Δ a0 (tApp b1⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a1).
+  forall a0 a1, FA Δ a0 a1 -> 
+  FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a0) /\
+  FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b0⟨ξ⟩ a1) /\ 
+  FB Δ a0 (tApp b1⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a1).
 
 Definition wne_coherent Γ A a b :=
   Γ ⊢ a ≡ b ∈ A.
@@ -147,28 +149,57 @@ Proof.
   apply PerType_Ne; tauto.
 Qed.
 
+(* InterpUnivN and PerTypeN are transitive and reflexive *)
+
+Lemma InterpExt_trans Γ i I A R
+  (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R)
+  (hsym : forall Γ j A B, j < i -> I Γ j A B -> I Γ j B A)
+  (htrans : forall Γ j A B C, j < i -> I Γ j A B -> I Γ j B C -> I Γ j A C) :
+  forall a b c, R a b -> R b c -> R a c.
+Proof.
+  move : hsym htrans.
+  elim : I A R /h;
+    hauto l:on ctrs:Equiv use:InterpExt_sym unfold:ProdSpace.
+Qed.
+
+Lemma InterpExt_refl Γ i I A R
+  (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R)
+  (hsym : forall Γ j A B, j < i -> I Γ j A B -> I Γ j B A)
+  (htrans : forall Γ j A B C, j < i -> I Γ j A B -> I Γ j B C -> I Γ j A C) :
+  forall a b, R a b -> R a a /\ R b b.
+Proof. hauto lq:on use:InterpExt_sym, InterpExt_trans. Qed.
+
 Lemma neutral_interpext Γ i I A R
   (h :  ⟦ Γ ⊨  A ⟧ i ; I ↘ R) 
   (hI : forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) :
-  forall b0 b1, wnEquiv Γ b0 b1 A -> R b0 b1.
+  (forall b0 b1, (wnEquiv Γ b0 b1 A -> R b0 b1) /\ (R b0 b1 -> Γ ⊢ b0 ≡ b1 ∈ A)).
 Proof.
   move : hI.
   elim : Γ i I A R / h.
-  - rewrite /wnEquiv /wne_coherent => Γ i I A hA neA hI b0 b1.
-    sfirstorder use:E_Sym,E_Trans.
-  - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI b0 b1 hb.
-    rewrite /ProdSpace => ξ Δ hξ hΔ a0 a1 ha he.
-    apply : ihFB; eauto.
-    rewrite /wnEquiv in hb *.
-    move : hb.
-    move => [?].
-    move => [?].
-    move => hb.
+  - sfirstorder use:E_Sym, E_Trans unfold:wnEquiv, wne_coherent.
+  - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI b0 b1.
+    split => [hb|].
+    + rewrite /ProdSpace => ξ Δ hξ hΔ a0 a1 ha.
+      rewrite /wnEquiv in hb.
+      move : hb => [hb0 [hb1 hb01]].
+      move : ihFB (hI) (hξ) (hΔ) (ha); (repeat move/[apply]) => ihFB.
+      repeat split.
+      * apply ihFB. rewrite /wnEquiv.
+        repeat split => //=.
+        hauto l:on use:ne_renaming.
+        hauto l:on use:ne_renaming.
+        apply E_App with (A := A⟨ξ⟩).
+        move : renaming_equiv hb01 hξ. repeat move/[apply] => //=.
+        apply=>//.
+        apply ihFA => //.
+        best use:
+      
+  
+    move /ihFB /(_ hΔ ha) : hξ.
     repeat split => //=.
     (* morphing *)
     (* renaming for ne *)
-    hauto l:on use:ne_renaming.
-    hauto l:on use:ne_renaming.
+    
     (* renaming for equiv? *)
     apply E_App with (A := A⟨ξ⟩) (i := i).
     move : renaming_equiv hb hξ. repeat move/[apply] => //=.
@@ -210,7 +241,7 @@ Qed.
 
 Lemma InterpExt_ty_escape Γ i I A R (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R) :
   (forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) ->
-  ⊢ Γ -> Γ ⊢ A ∈ tUniv i.
+  Γ ⊢ A ∈ tUniv i.
 Proof.
   elim : Γ i I A R / h => //.
   - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI hΓ [:hA].
@@ -644,24 +675,6 @@ Proof.
     + sfirstorder.
 Qed.
 
-(* InterpUnivN and PerTypeN are transitive and reflexive *)
-
-Lemma InterpExt_trans i I A R
-  (h : ⟦ A ⟧ i , I ↘ R)
-  (hsym : forall j A B, j < i -> I j A B -> I j B A)
-  (htrans : forall j A B C, j < i -> I j A B -> I j B C -> I j A C) :
-  forall a b c, R a b -> R b c -> R a c.
-Proof.
-  elim : A R /h;
-  hauto l:on use:InterpExt_sym unfold:ProdSpace.
-Qed.
-
-Lemma InterpExt_refl i I A R
-  (h : ⟦ A ⟧ i , I ↘ R)
-  (hsym : forall j A B, j < i -> I j A B -> I j B A)
-  (htrans : forall j A B C, j < i -> I j A B -> I j B C -> I j A C) :
-  forall a b, R a b -> R a a /\ R b b.
-Proof. hauto lq:on use:InterpExt_sym, InterpExt_trans. Qed.
 
 Lemma PerType_trans i I
   (hsym : forall A B, (⟦ A ⟧ ~ ⟦ B ⟧ i , I) -> (⟦ B ⟧ ~ ⟦ A ⟧ i , I))
