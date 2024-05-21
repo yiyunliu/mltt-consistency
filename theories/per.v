@@ -24,28 +24,33 @@ Proof. elim : a ξ => //=. Qed.
 
 Definition tm_rel := tm -> tm -> Prop.
 
-Definition ProdSpace Γ (FA : context -> tm_rel) (FB : context -> tm -> tm_rel) (b0 b1 : tm) :=
+Definition ProdSpace Γ (FA : context -> tm_rel) (FB : context -> tm -> tm_rel) (T : tm) (b0 b1 : tm) :=
+  Γ ⊢ b0 ∈ T /\
+  Γ ⊢ b1 ∈ T /\
+  Γ ⊢ b0 ≡ b1 ∈ T /\
   forall ξ Δ, ren_ok ξ Γ Δ ->  ⊢ Δ ->
-  forall a0 a1, FA Δ a0 a1 -> 
+  forall a0 a1, FA Δ a0 a1 ->
   FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a0) /\
-  FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b0⟨ξ⟩ a1) /\ 
+  FB Δ a0 (tApp b0⟨ξ⟩ a0) (tApp b0⟨ξ⟩ a1) /\
   FB Δ a0 (tApp b1⟨ξ⟩ a0) (tApp b1⟨ξ⟩ a1).
 
 Definition wne_coherent Γ A a b :=
-  Γ ⊢ a ≡ b ∈ A.
+  Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A /\ Γ ⊢ a ≡ b ∈ A.
 
 Reserved Notation "⟦ Γ ⊨ A ⟧ i ; I ↘ R" (at level 70, no associativity).
 Inductive InterpExt (Γ : context) (i : nat) (I : context -> nat -> tm_rel) : tm -> tm_rel -> Prop :=
-| InterpExt_Ne A : 
+| InterpExt_Ne A :
   Γ ⊢ A ∈ tUniv i ->
   ne A -> ⟦ Γ ⊨ A ⟧ i ; I ↘ wne_coherent Γ A
 | InterpExt_Fun A B FA FB :
+  Γ ⊢ A ∈ tUniv i ->
   (forall ξ Δ, ren_ok ξ Γ Δ -> ⊢ Δ ->
       ⟦ Δ ⊨ ren_tm ξ A ⟧ i ; I ↘ FA Δ) ->
   (forall ξ Δ, ren_ok ξ Γ Δ -> ⊢ Δ ->
           forall a0 a1, FA Δ a0 a1 -> ⟦ Δ ⊨ (ren_tm (upRen_tm_tm ξ) B)[a0..] ⟧ i ; I ↘ FB Δ a0) ->
-  ⟦ Γ ⊨ tPi A B ⟧ i ; I ↘ ProdSpace Γ FA FB
+  ⟦ Γ ⊨ tPi A B ⟧ i ; I ↘ ProdSpace Γ FA FB (tPi A B)
 | InterpExt_Univ j :
+  ⊢ Γ ->
   j < i ->
   ⟦ Γ ⊨ tUniv j ⟧ i ; I ↘ (I Γ j)
 | InterpExt_Step A0 A1 RA :
@@ -63,9 +68,9 @@ Inductive PerType (Γ : context) (i : nat) I : tm_rel :=
   Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I
 | PerType_Fun A0 A1 B0 B1 RA :
   (forall ξ Δ, ren_ok ξ Γ Δ -> ⊢ Δ -> Δ ⊨ ⟦ A0⟨ξ⟩ ⟧ ~ ⟦ A1⟨ξ⟩ ⟧ i ; I ) ->
-  (forall ξ Δ, ren_ok ξ Γ Δ -> ⊢ Δ -> 
-          ⟦ Δ ⊨ A0⟨ξ⟩ ⟧ i ; I ↘ RA -> 
-          ⟦ Δ ⊨ A1⟨ξ⟩ ⟧ i ; I ↘ RA -> 
+  (forall ξ Δ, ren_ok ξ Γ Δ -> ⊢ Δ ->
+          ⟦ Δ ⊨ A0⟨ξ⟩ ⟧ i ; I ↘ RA ->
+          ⟦ Δ ⊨ A1⟨ξ⟩ ⟧ i ; I ↘ RA ->
      forall a0 a1, RA a0 a1 -> Δ ⊨ ⟦ (ren_tm (upRen_tm_tm ξ) B0)[a0..] ⟧ ~ ⟦ (ren_tm (upRen_tm_tm ξ) B1)[a1..] ⟧ i ; I) ->
   Γ ⊨ ⟦ tPi A0 B0 ⟧ ~ ⟦ tPi A1 B1 ⟧ i ; I
 | PerType_Univ j :
@@ -73,8 +78,8 @@ Inductive PerType (Γ : context) (i : nat) I : tm_rel :=
   j < i ->
   Γ ⊨ ⟦ tUniv j ⟧ ~ ⟦ tUniv j ⟧ i ; I
 | PerType_Step A0 A1 B0 B1 :
-  Γ ⊢ A0 ⤳* A1 ∈ tUniv i -> 
-  Γ ⊢ B0 ⤳* B1 ∈ tUniv i -> 
+  Γ ⊢ A0 ⤳* A1 ∈ tUniv i ->
+  Γ ⊢ B0 ⤳* B1 ∈ tUniv i ->
   Γ ⊨ ⟦ A1 ⟧ ~ ⟦ B1 ⟧ i ; I ->
   Γ ⊨ ⟦ A0 ⟧ ~ ⟦ B0 ⟧ i ; I
 where "Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I" := (PerType Γ i I A B).
@@ -103,7 +108,7 @@ Proof.
   move : ih.
   elim :  Γ i I A R /h.
   - hauto lq:on ctrs:Equiv.
-  - hauto l:on unfold:ProdSpace.
+  - hauto l:on ctrs:Equiv unfold:ProdSpace.
   - sfirstorder.
   - sfirstorder.
 Qed.
@@ -130,7 +135,7 @@ Proof.
   apply PerType_sym; auto.
   hauto lq:on use:Compare_dec.lt_dec.
 Qed.
-  
+
 Lemma InterpUnivN_sym Γ i A R (h : ⟦ Γ ⊨ A ⟧ i ↘ R) :
   forall a b, R a b -> R b a.
 Proof.
@@ -139,7 +144,7 @@ Qed.
 
 Definition wne Γ a A := exists v, ne a /\ Γ ⊢ a ⤳* v ∈ A.
 
-Definition wnEquiv Γ a b A := ne a /\ ne b /\ Γ ⊢ a ≡ b ∈ A.
+Definition wnEquiv Γ a b A := ne a /\ ne b /\ Γ ⊢ a ∈ A /\ Γ ⊢ b ∈ A /\ Γ ⊢ a ≡ b ∈ A.
 
 Lemma neutral_pertype Γ i A B (h : wnEquiv Γ A B (tUniv i)) :
   forall I, Γ ⊨ ⟦ A ⟧ ~ ⟦ B ⟧ i ; I.
@@ -169,37 +174,99 @@ Lemma InterpExt_refl Γ i I A R
   forall a b, R a b -> R a a /\ R b b.
 Proof. hauto lq:on use:InterpExt_sym, InterpExt_trans. Qed.
 
+(* Lemma InterpExt_ty_escape Γ i I A R (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R) : *)
+(*   Γ ⊢ A ∈ tUniv i. *)
+(* Proof. *)
+(*   elim : Γ i I A R / h => //. *)
+(*   - hauto lq:on ctrs:Wt. *)
+(*   - sfirstorder use:Red_WtL. *)
+(* Qed. *)
+
+(* Lemma InterpExt_el_escape Γ i I A R (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R) : *)
+(*   (forall Γ j A B, j < i -> I Γ j A B -> Γ ⊢ A ≡ B ∈ tUniv j) -> *)
+(*   forall a b, R a b -> Γ ⊢ a ≡ b  ∈ A. *)
+(* Proof. *)
+(*   elim : Γ i I A R / h => //. *)
+(*   - sfirstorder. *)
+(*   - sfirstorder. *)
+(*   - hauto lq:on ctrs:Equiv, Wt use:Red_inj_Equiv. *)
+(* Qed. *)
+
 Lemma neutral_interpext Γ i I A R
-  (h :  ⟦ Γ ⊨  A ⟧ i ; I ↘ R) 
+  (h :  ⟦ Γ ⊨  A ⟧ i ; I ↘ R)
+  (hsym : forall Γ j A B, j < i -> I Γ j A B -> I Γ j B A)
+  (htrans : forall Γ j A B C, j < i -> I Γ j A B -> I Γ j B C -> I Γ j A C)
   (hI : forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) :
-  (forall b0 b1, (wnEquiv Γ b0 b1 A -> R b0 b1) /\ (R b0 b1 -> Γ ⊢ b0 ≡ b1 ∈ A)).
+  (forall b0 b1, (wnEquiv Γ b0 b1 A -> R b0 b1) /\ (R b0 b1 -> Γ ⊢ b0 ∈ A /\ Γ ⊢ b1 ∈ A /\ Γ ⊢ b0 ≡ b1 ∈ A /\ Γ ⊢ A ∈ tUniv i)).
 Proof.
-  move : hI.
+  move : hsym htrans hI.
   elim : Γ i I A R / h.
-  - sfirstorder use:E_Sym, E_Trans unfold:wnEquiv, wne_coherent.
-  - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI b0 b1.
+  - sfirstorder unfold:wnEquiv, wne_coherent.
+  - move => Γ i I A B FA FB hA hFA ihFA hFB ihFB hsym htrans hI b0 b1.
     split => [hb|].
-    + rewrite /ProdSpace => ξ Δ hξ hΔ a0 a1 ha.
+    + rewrite /ProdSpace.
+      split; first by sfirstorder.
+      split; first by sfirstorder.
+      split; first by sfirstorder.
+      move => ξ Δ hξ hΔ a0 a1 ha.
       rewrite /wnEquiv in hb.
       move : hb => [hb0 [hb1 hb01]].
-      move : ihFB (hI) (hξ) (hΔ) (ha); (repeat move/[apply]) => ihFB.
+      move : ihFB (hI) (hsym) (htrans) (hξ) (hΔ) (ha); (repeat move/[apply]) => ihFB.
       repeat split.
       * apply ihFB. rewrite /wnEquiv.
         repeat split => //=.
         hauto l:on use:ne_renaming.
         hauto l:on use:ne_renaming.
+        apply T_App with (A := A⟨ξ⟩).
+        change (tPi A ⟨ξ⟩ B ⟨upRen_tm_tm ξ⟩) with (tPi A B)⟨ξ⟩.
+        hauto l:on use:renaming_wt.
+        hauto l:on use:renaming_wt.
+        apply T_App with (A := A⟨ξ⟩).
+        change (tPi A ⟨ξ⟩ B ⟨upRen_tm_tm ξ⟩) with (tPi A B)⟨ξ⟩.
+        hauto l:on use:renaming_wt.
+        hauto l:on use:renaming_wt.
         apply E_App with (A := A⟨ξ⟩).
-        move : renaming_equiv hb01 hξ. repeat move/[apply] => //=.
-        apply=>//.
-        apply ihFA => //.
-        best use:
-      
-  
+        hauto lq:on use:renaming_equiv.
+        hauto q:on use:InterpExt_refl.
+      * apply ihFB. rewrite /wnEquiv.
+        repeat split => //=.
+        hauto l:on use:ne_renaming.
+        hauto l:on use:ne_renaming.
+        apply T_App with (A := A⟨ξ⟩).
+        change (tPi A ⟨ξ⟩ B ⟨upRen_tm_tm ξ⟩) with (tPi A B)⟨ξ⟩.
+        hauto l:on use:renaming_wt.
+        hauto l:on use:renaming_wt.
+        apply T_App with (A := A⟨ξ⟩).
+        change (tPi A ⟨ξ⟩ B ⟨upRen_tm_tm ξ⟩) with (tPi A B)⟨ξ⟩.
+        hauto l:on use:renaming_wt.
+        hauto l:on use:renaming_wt.
+        apply E_App with (A := A⟨ξ⟩).
+        hauto lq:on ctrs:Equiv use:renaming_equiv.
+        hauto q:on use:InterpExt_refl.
+      * apply ihFB. rewrite /wnEquiv.
+        repeat split => //=.
+        hauto l:on use:ne_renaming.
+        hauto l:on use:ne_renaming.
+        apply E_App with (A := A⟨ξ⟩).
+        hauto lq:on ctrs:Equiv use:renaming_equiv.
+        hauto q:on.
+    + rewrite /ProdSpace => h.
+      split. tauto.
+      apply T_Pi.
+      move /(_ S (A::Γ) ltac:(apply ren_ok_S) hΓ' (var_tm 0) (var_tm 0)) : ihFB.
+      asimpl. apply=>//.
+      apply : neutral_interpext; eauto.
+      apply hFA => //.
+      apply ren_ok_S.
+      rewrite /wnEquiv.
+      repeat split => //.
+      apply E_Var=>//. by constructor.
+best.
     move /ihFB /(_ hΔ ha) : hξ.
     repeat split => //=.
     (* morphing *)
     (* renaming for ne *)
-    
+
     (* renaming for equiv? *)
     apply E_App with (A := A⟨ξ⟩) (i := i).
     move : renaming_equiv hb hξ. repeat move/[apply] => //=.
@@ -228,7 +295,7 @@ Proof.
   move => *. simp PerTypeN.
   hauto lq:on use:neutral_pertype.
 Qed.
-  
+
 
 Lemma ren_ok_id Γ : ren_ok id Γ Γ.
 Proof. hauto lq:on unfold:ren_ok simp+:asimpl. Qed.
@@ -239,29 +306,6 @@ Proof.
   by constructor.
 Qed.
 
-Lemma InterpExt_ty_escape Γ i I A R (h : ⟦ Γ ⊨ A ⟧ i ; I ↘ R) :
-  (forall Γ j, j < i -> forall A B, wnEquiv Γ A B (tUniv j) -> I Γ j A B) ->
-  Γ ⊢ A ∈ tUniv i.
-Proof.
-  elim : Γ i I A R / h => //.
-  - move => Γ i I A B FA FB hFA ihFA hFB ihFB hI hΓ [:hA].
-    apply T_Pi.
-    + abstract : hA.
-      have -> : A = A⟨id⟩ by asimpl.
-      apply ihFA; eauto.
-      apply ren_ok_id.
-    + have hΓ' : ⊢ A :: Γ by hauto q:on ctrs:Wff.
-      move /(_ S (A::Γ) ltac:(apply ren_ok_S) hΓ' (var_tm 0) (var_tm 0)) : ihFB.
-      asimpl. apply=>//.
-      apply : neutral_interpext; eauto.
-      apply hFA => //.
-      apply ren_ok_S.
-      rewrite /wnEquiv.
-      repeat split => //.
-      apply E_Var=>//. by constructor.
-  - hauto lq:on ctrs:Wt.
-  - sfirstorder use:Red_WtL.
-Qed.
 
 (* Constructors *)
 
@@ -843,7 +887,7 @@ Proof.
   - hauto lq:on rew:off use:InterpUnivN_Univ_inv.
   - move => /[swap] ρ0 /[swap] ρ1 /[apply] h.
     exists (S i). exists (PerTypeN i).
-    have ? : i < S i by lia. 
+    have ? : i < S i by lia.
     repeat split; auto. simp PerTypeN.
     all: hauto lq:on ctrs:InterpExt, PerType.
 Qed.
@@ -870,7 +914,7 @@ Theorem soundness :
 Proof.
   apply wt_mutual.
   (* Var *)
-  1: { 
+  1: {
     move => Γ i A _ wf hscope ρ0 ρ1 hρ.
     case /(_ _ _ hscope) : wf => j hA.
     move /SemWt_Univ : hA => /(_ ρ0 ρ1 hρ) hA.
