@@ -82,10 +82,9 @@ with Equiv : context -> tm -> tm -> tm -> Prop :=
   Γ ⊢ tPi A0 B0 ≡ tPi A1 B1 ∈ tUniv i
 
 | E_Abs Γ A0 A1 a0 a1 B i :
-  Γ ⊢ A0 ≡ A1 ∈ tUniv i ->
   Γ ⊢ A0 ∈ tUniv i ->
+  Γ ⊢ A0 ≡ A1 ∈ tUniv i ->
   Γ ⊢ tPi A0 B ∈ tUniv i ->
-  Γ ⊢ tPi A1 B ∈ tUniv i ->
   A0 :: Γ ⊢ a0 ≡ a1 ∈ B ->
   (* -------------------- *)
   Γ ⊢ tAbs A0 a0 ≡ tAbs A1 a1 ∈ tPi A0 B
