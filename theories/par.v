@@ -13,7 +13,7 @@ Require Import imports.
    confluence for its reflexive-transitive closure "⇒*".
 
  *)
-Module Type join_sig
+Module Type par_sig
   (Import lattice : Lattice)
   (Import syntax : syntax_sig lattice).
 
@@ -61,6 +61,17 @@ Infix "⇒*" := (rtc Par) (at level 60, right associativity).
 
 Definition Coherent a0 a1 := (exists b, a0 ⇒* b /\ a1 ⇒* b).
 Infix "⇔" := Coherent (at level 70, no associativity).
+
+(* Derived inversion principle for "Par" that doesn't
+   generate free names with use. *)
+Derive Inversion Par_inv with (forall a b, a ⇒ b).
+
+End par_sig.
+
+Module par_facts
+  (Import lattice : Lattice)
+  (Import syntax : syntax_sig lattice)
+  (Import join : par_sig lattice syntax).
 
 (* ------------------------------------------------------------ *)
 
@@ -518,3 +529,5 @@ Proof.
   case : h => z [*].
   exists z. split; sfirstorder use:@rtc_transitive.
 Qed.
+
+End par_facts.
