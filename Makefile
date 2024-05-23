@@ -15,7 +15,7 @@ uninstall: $(COQMAKEFILE)
 
 $(SYNTAX_FILE) : syntax.sig
 	as2-exe -i syntax.sig -p UCoq > $(SYNTAX_FILE)
-	perl -i -pe 's/^(Hint|Instance)/#[export]$1/' $(SYNTAX_FILE)
+	perl gen_syntax.pl
 
 .PHONY: clean
 clean:
