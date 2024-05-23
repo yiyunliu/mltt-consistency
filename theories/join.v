@@ -13,6 +13,10 @@ Require Import imports.
    confluence for its reflexive-transitive closure "⇒*".
 
  *)
+Module Type join_sig
+  (Import lattice : Lattice)
+  (Import syntax : syntax_sig lattice).
+
 Reserved Infix "⇒" (at level 60, right associativity).
 Inductive Par : tm -> tm -> Prop :=
 | P_Var i :
@@ -21,25 +25,25 @@ Inductive Par : tm -> tm -> Prop :=
 | P_Univ n :
   (* -------- *)
   (tUniv n) ⇒ (tUniv n)
-| P_Pi A0 A1 B0 B1 :
+| P_Pi ℓ0 A0 A1 B0 B1 :
   (A0 ⇒ A1) ->
   (B0 ⇒ B1) ->
   (* --------------------- *)
-  (tPi A0 B0) ⇒ (tPi A1 B1)
-| P_Abs a0 a1 :
+  (tPi ℓ0 A0 B0) ⇒ (tPi ℓ0 A1 B1)
+| P_Abs ℓ0 a0 a1 :
   (a0 ⇒ a1) ->
   (* -------------------- *)
-  (tAbs a0) ⇒ (tAbs a1)
-| P_App a0 a1 b0 b1 :
+  (tAbs ℓ0 a0) ⇒ (tAbs ℓ0 a1)
+| P_App a0 a1 ℓ0 b0 b1 :
   (a0 ⇒ a1) ->
   (b0 ⇒ b1) ->
   (* ------------------------- *)
-  (tApp a0 b0) ⇒ (tApp a1 b1)
-| P_AppAbs a a0 b0 b1 :
+  (tApp a0 ℓ0 b0) ⇒ (tApp a1 ℓ0 b1)
+| P_AppAbs a a0 b0 b1 ℓ0 :
   (a ⇒ a0) ->
   (b0 ⇒ b1) ->
   (* ---------------------------- *)
-  (tApp (tAbs a) b0) ⇒ (a0 [b1..])
+  (tApp (tAbs ℓ0 a) ℓ0 b0) ⇒ (a0 [b1..])
 | P_Void :
   tVoid ⇒ tVoid
 | P_Absurd a b :
@@ -68,18 +72,18 @@ Proof. elim : a; hauto lq:on ctrs:Par. Qed.
 (* ------------------------------------------------------------ *)
 
 (* A top-level beta-reduction is a parallel reduction *)
-Lemma P_AppAbs_cbn (a b b0 : tm) :
+Lemma P_AppAbs_cbn (a b b0 : tm) ℓ0 :
   b0 = a [b..] ->
-  (tApp (tAbs a) b) ⇒ b0.
+  (tApp (tAbs ℓ0 a) ℓ0 b) ⇒ b0.
 Proof. hauto lq:on ctrs:Par use:Par_refl. Qed.
 
 (* convenience introduction form for P_AppAbs' *)
-Lemma P_AppAbs' a a0 b0 b b1 :
+Lemma P_AppAbs' a a0 b0 b b1 ℓ0 :
   b = a0 [b1..] ->
   (a ⇒ a0) ->
   (b0 ⇒ b1) ->
   (* ---------------------------- *)
-  (tApp (tAbs a) b0) ⇒ b.
+  (tApp (tAbs ℓ0 a) ℓ0 b0) ⇒ b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
 (* Lemma P_IndSuc' a0 a1 b0 b1 c0 c1 t : *)
@@ -162,7 +166,7 @@ Proof.
   elim : a b / h0; try solve [simpl; eauto with par].
   - qauto db:par use: (Par_morphing_lift_n 1).
   - qauto l:on db:par use:(Par_morphing_lift_n 1).
-  - move => a a0 b0 b1 h0 ih0 h1 ih1 σ0 σ h /=.
+  - move => a a0 b0 b1 ℓ0 h0 ih0 h1 ih1 σ0 σ h /=.
     apply P_AppAbs' with (a0 := a0 [up_tm_tm σ]) (b1 := b1 [σ]).
     by asimpl. hauto l:on unfold:Par_m use:Par_renaming inv:nat. eauto.
   (* - qauto db:par use:(Par_morphing_lift_n 2). *)
@@ -323,10 +327,10 @@ Qed.
 
 (* Inversion lemmas *)
 
-Lemma Pars_pi_inv A B C (h : (tPi A B) ⇒* C) :
-  exists A0 B0, C = tPi A0 B0 /\ (A ⇒* A0) /\ (B ⇒* B0).
+Lemma Pars_pi_inv A B ℓ0 C (h : (tPi ℓ0 A B) ⇒* C) :
+  exists A0 B0, C = tPi ℓ0 A0 B0 /\ (A ⇒* A0) /\ (B ⇒* B0).
 Proof.
-  move E : (tPi A B) h => T h.
+  move E : (tPi ℓ0 A B) h => T h.
   move : A B E.
   elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
 Qed.
@@ -437,16 +441,18 @@ Derive Inversion Par_inv with (forall a b, a ⇒ b).
 (* We want to show that Coherent is an equivalence relation. But,
    to show that it is transitive, we need to show that parallel
    reduction is confluent. *)
-
 (* Takahashi translation *)
 Function tstar (a : tm) :=
   match a with
   | var_tm i => a
   | tUniv _ => a
-  | tPi A B => tPi (tstar A) (tstar B)
-  | tAbs a => tAbs (tstar a)
-  | tApp (tAbs a) b =>  (tstar a) [(tstar b)..]
-  | tApp a b => tApp (tstar a) (tstar b)
+  | tPi ℓ0 A B => tPi ℓ0 (tstar A) (tstar B)
+  | tAbs ℓ0 a => tAbs ℓ0 (tstar a)
+  | tApp (tAbs ℓ0 a) ℓ1 b =>
+       if T_eqb ℓ0 ℓ1
+       then (tstar a) [(tstar b)..]
+       else tApp (tAbs ℓ0 (tstar a)) ℓ1 (tstar b)
+  | tApp a ℓ0 b => tApp (tstar a) ℓ0 (tstar b)
   (* | tZero => tZero *)
   (* | tSuc a => tSuc (tstar a) *)
   (* | tInd a b tZero => tstar a *)
@@ -467,7 +473,22 @@ Function tstar (a : tm) :=
 
 Lemma Par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
 Proof.
-  apply tstar_ind; hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
+  apply tstar_ind.
+  - hauto l:on inv:Par.
+  - hauto l:on inv:Par.
+  - hauto lq:on ctrs:Par inv:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - move => > ? /T_eqdec.
+    hauto lq:on use:Par_refl, Par_cong, Par_cong2 ctrs:Par inv:Par.
+  - move => b ℓ0 a0 ℓ1 b0 ? ? ? h0. subst.
+    move => ih0 ih1 b h1.
+    elim /Par_inv : h1=>//=.
+    + hauto lq:on ctrs:Par inv:Par.
+    + move => h2 a1 a2 b1 b2 ℓ2 h3 h4 [*]. subst.
+      case : T_eqdec h0 =>//.
+  - hauto lq:on ctrs:Par inv:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
 Qed.
 
 Lemma Par_confluent : diamond Par.

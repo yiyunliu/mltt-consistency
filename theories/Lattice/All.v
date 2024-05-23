@@ -10,9 +10,10 @@ From Ltac2 Require Ltac2.
     Declare Scope lattice_scope.
     Local Open Scope lattice_scope.
 
-    Parameter A : Set.
-    Parameter meet : A -> A -> A.
-    Parameter join : A -> A -> A.
+    Parameter T : Set.
+    Parameter meet : T -> T -> T.
+    Parameter join : T -> T -> T.
+    Parameter T_eqb : T -> T -> bool.
 
     Infix "∪" := join (at level 65) : lattice_scope.
     Infix "∩" := meet (at level 60) : lattice_scope.
@@ -27,6 +28,7 @@ From Ltac2 Require Ltac2.
     Axiom join_associative: forall a b c, (a ∪ b) ∪ c = a ∪ (b ∪ c).
     Axiom join_absorptive : forall a b, a ∪ (a ∩ b) = a.
     Axiom join_idempotent : forall a, a ∪ a = a.
+    Axiom T_eqdec : forall a b, Bool.reflect (a = b) (T_eqb a b).
   End Lattice.
 
   Module Properties (Import lattice : Lattice).
@@ -38,7 +40,7 @@ From Ltac2 Require Ltac2.
     Local Open Scope lattice_scope.
 
     Inductive lexp : Set :=
-    | Var : A -> lexp
+    | Var : T -> lexp
     | Meet : lexp -> lexp -> lexp
     | Join : lexp -> lexp -> lexp.
 
@@ -87,7 +89,7 @@ From Ltac2 Require Ltac2.
       e1 ⊆ e2 -> e2 ⊆ e3 -> e1 ⊆ e3.
     Proof. scongruence use: meet_associative. Qed.
 
-    Lemma leq_meet_iff (e1 e2 e3 : A) :
+    Lemma leq_meet_iff (e1 e2 e3 : T) :
       e1 ⊆ e2 ∩ e3 <-> e1 ⊆ e2 /\ e1 ⊆ e3.
     Proof.
       split.
@@ -104,7 +106,7 @@ From Ltac2 Require Ltac2.
       scongruence use: meet_associative, meet_idempotent, meet_commutative.
     Qed.
 
-    Lemma leq_join_iff (e1 e2 e3 : A) :
+    Lemma leq_join_iff (e1 e2 e3 : T) :
       e1 ∪ e2 ⊆ e3 <-> e1 ⊆ e3 /\ e2 ⊆ e3.
     Proof.
       split.
@@ -115,13 +117,13 @@ From Ltac2 Require Ltac2.
     Qed.
 
     (* The other direction is not true.... *)
-    Lemma leq_join_prime (e1 e2 e3 : A) :
+    Lemma leq_join_prime (e1 e2 e3 : T) :
       e1 ⊆ e2 \/ e1 ⊆ e3 -> e1 ⊆ e2 ∪ e3.
     Proof.
       sfirstorder use: meet_associative, leq_lat_leq_lat'_iff, join_commutative, join_associative, leq_join.
     Qed.
 
-    Lemma leq_meet_prime (e1 e2 e3 : A) :
+    Lemma leq_meet_prime (e1 e2 e3 : T) :
       e1 ⊆ e3 \/ e2 ⊆ e3 -> e1 ∩ e2 ⊆ e3.
     Proof. hauto use: meet_commutative, meet_associative. Qed.
 

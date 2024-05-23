@@ -1,9 +1,10 @@
 tm : Type
 nat : Type
+T : Type
 
-tAbs : (tm -> tm) -> tm
-tApp : tm -> tm -> tm
-tPi : tm -> (tm -> tm) -> tm
+tAbs : T -> (tm -> tm) -> tm
+tApp : tm -> T -> tm -> tm
+tPi : T -> tm -> (tm -> tm) -> tm
 tUniv : nat -> tm
 tVoid : tm
 tAbsurd : tm -> tm
