@@ -55,6 +55,7 @@ Module Type geq_sig
   Combined Scheme IEq_mutual from IEq_ind', GIEq_ind'.
 
   Derive Inversion IEq_inv with (forall Ξ ℓ a b, IEq Ξ ℓ a b).
+  Derive Inversion GIEq_inv with (forall Ξ ℓ ℓ0 a b, GIEq Ξ ℓ ℓ0 a b).
 
 End geq_sig.
 
@@ -66,6 +67,8 @@ Module geq_facts
 
   Module lprop :=  Lattice.All.Properties lattice.
   Import lprop.
+  Module solver  :=  Solver lattice.
+  Import solver.
 
   Lemma ieq_sym_mutual : forall Ξ ℓ,
       (forall A B, IEq Ξ ℓ A B -> IEq Ξ ℓ B A) /\
@@ -147,6 +150,40 @@ Proof.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:GIEq unfold:ieq_good_morphing.
+Qed.
+
+Lemma ieq_downgrade_mutual : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall ℓ0 c , IEq Ξ ℓ0 a c ->
+                     IEq Ξ (ℓ ∩ ℓ0) a b) /\
+      (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+                 forall ℓ1 c, GIEq Ξ ℓ1 ℓ0 a c ->
+                         GIEq Ξ (ℓ ∩ ℓ1) ℓ0 a b).
+Proof.
+  apply IEq_mutual; try qauto l:on inv:IEq,GIEq ctrs:IEq,GIEq.
+  (* Can be compressed if I can figure out how to make ssreflect
+  lemmas usable by automation *)
+  - move => Ξ ℓ i ℓ0 hi hℓ ℓ1 c h.
+    inversion h; subst.
+    apply : I_Var; eauto.
+    ltac2:(solve_lattice).
+    sfirstorder.
+  - move => Ξ ℓ ℓ0 A B ? h ih ℓ1 C.
+    elim /GIEq_inv => hc ℓ2 A0 B0 h2 h3 *; subst.
+    + apply ih in h3.
+      apply GI_Dist => //.
+      ltac2:(solve_lattice).
+      tauto.
+    + apply GI_InDist.
+      move => h3.
+      apply h2.
+      ltac2:(solve_lattice).
+      tauto.
+  - move => Ξ ℓ ℓ0 A B h ℓ1 C h2.
+    apply GI_InDist => ?.
+    apply h.
+    ltac2:(solve_lattice).
+    tauto.
 Qed.
 
 End geq_facts.

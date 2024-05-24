@@ -6,7 +6,7 @@ Module Type conv_sig
   (Import par : par_sig lattice syntax)
   (Import ieq : geq_sig lattice syntax).
 
-  Definition conv Ξ ℓ a b := exists c0 c1, a ⇒ c0 /\ b ⇒ c1 /\ IEq Ξ ℓ c0 c1.
+  Definition conv Ξ ℓ a b := exists c0 c1, a ⇒* c0 /\ b ⇒* c1 /\ IEq Ξ ℓ c0 c1.
 End conv_sig.
 
 Module Type conv_sig_facts
@@ -56,6 +56,16 @@ Proof.
       apply gieq_refl. sfirstorder.
   - hauto lq:on ctrs:IEq inv:Par use:Par_refl.
   - hauto l:on ctrs:Par use:Par_refl.
+Qed.
+
+Lemma simulation_star{ Ξ ℓ a b a'} (h : IEq Ξ ℓ a b) (h0 : a ⇒* a') :
+    exists b', b ⇒* b' /\ IEq Ξ ℓ a' b'.
+Proof.
+  move : b h.
+  elim : a a' / h0.
+  - sfirstorder.
+  - move => a a0 a1 ha ha0 ih b hab.
+    suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:rtc.
 Qed.
 
 End conv_sig_facts.
