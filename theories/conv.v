@@ -46,21 +46,16 @@ Proof.
       move => [? []].
       elim /Par_inv => // _ ℓ1 a0 a1 ? [? ? ?]. subst.
       elim /IEq_inv => // _ ℓ1 a0 a5 ?[? ?][? ?]. subst.
-      exists (a4[b4..]). split.
+      exists (a1[b4..]). split.
       by auto using Par_refl with par.
-      apply IEq_
-
-
-      exists (subst_tm (b3..) a5).
-      split.
-      * hauto q:on ctrs:Par.
-      * apply ieq_morphing with (Ξ := ℓ0 :: Ξ); eauto.
-        case => /= [|n /Arith_prebase.lt_S_n ?]; first by asimpl.
-        asimpl.
-        by apply gieq_refl.
-  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+      eapply ieq_morphing_mutual; eauto.
+      rewrite /ieq_good_morphing.
+      case => [|i]//=.
+      scongruence unfold:elookup.
+      move => ℓ1 ?.
+      apply gieq_refl. sfirstorder.
+  - hauto lq:on ctrs:IEq inv:Par use:Par_refl.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
-
 
 End conv_sig_facts.
