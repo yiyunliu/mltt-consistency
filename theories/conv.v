@@ -1,4 +1,5 @@
 Require Import imports par geq.
+From Hammer Require Import Hammer.
 
 Module Type conv_sig
   (Import lattice : Lattice)
@@ -58,7 +59,7 @@ Proof.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
 
-Lemma simulation_star{ Ξ ℓ a b a'} (h : IEq Ξ ℓ a b) (h0 : a ⇒* a') :
+Lemma simulation_star Ξ ℓ a b a' (h : IEq Ξ ℓ a b) (h0 : a ⇒* a') :
     exists b', b ⇒* b' /\ IEq Ξ ℓ a' b'.
 Proof.
   move : b h.
@@ -66,6 +67,26 @@ Proof.
   - sfirstorder.
   - move => a a0 a1 ha ha0 ih b hab.
     suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:rtc.
+Qed.
+
+Lemma conv_sym Ξ ℓ a b : conv Ξ ℓ a b -> conv Ξ ℓ b a.
+Proof.
+  strivial use: ieq_sym_mutual, I_Void unfold:conv.
+Qed.
+
+Lemma conv_trans Ξ ℓ a b c : conv Ξ ℓ a b -> conv Ξ ℓ b c -> conv Ξ ℓ a c.
+Proof.
+  rewrite /conv.
+  move => [a0 [b0 [h0 [h1 h2]]]].
+  move => [b1 [c0 [h3 [h4 h5]]]].
+  move : Pars_confluent (h1) (h3). repeat move/[apply].
+  move => [q [h6 h7]].
+  move /ieq_sym in h2.
+  move : simulation_star (h2) (h6). repeat move/[apply].
+  move => [p0][? ?].
+  move : simulation_star (h5) (h7). repeat move/[apply].
+  move => [p1][? ?].
+  exists p0, p1. hauto lq:on use:ieq_sym, ieq_trans, rtc_transitive.
 Qed.
 
 End conv_sig_facts.

@@ -77,6 +77,10 @@ Module geq_facts
     apply IEq_mutual; eauto with ieq.
   Qed.
 
+  Lemma ieq_sym : forall Ξ ℓ,
+      (forall A B, IEq Ξ ℓ A B -> IEq Ξ ℓ B A).
+  Proof. sfirstorder use:ieq_sym_mutual. Qed.
+
   Lemma ieq_trans_mutual : forall Ξ ℓ,
       (forall A B, IEq Ξ ℓ A B -> forall C, IEq Ξ ℓ B C -> IEq Ξ ℓ A C) /\
         (forall ℓ0 A B, GIEq Ξ ℓ ℓ0 A B -> forall C, GIEq Ξ ℓ ℓ0 B C -> GIEq Ξ ℓ ℓ0 A C).
@@ -184,6 +188,21 @@ Proof.
     apply h.
     ltac2:(solve_lattice).
     tauto.
+Qed.
+
+Lemma ieq_trans_heterogeneous Ξ ℓ ℓ0 a b c :
+  IEq Ξ ℓ a b ->
+  IEq Ξ ℓ0 b c ->
+  IEq Ξ (ℓ ∩ ℓ0) a c.
+Proof.
+  move => h0 h1.
+  apply ieq_trans with (B := b).
+  - apply ieq_sym_mutual.
+    apply ieq_sym_mutual in h0.
+    eapply ieq_downgrade_mutual; eauto.
+  - apply ieq_sym_mutual in h0.
+    rewrite meet_commutative.
+    eapply ieq_downgrade_mutual; eauto.
 Qed.
 
 End geq_facts.
