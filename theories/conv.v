@@ -17,7 +17,9 @@ Module Type conv_sig_facts
   (Import conv : conv_sig lattice syntax par ieq).
 
 Module pfacts := par_facts lattice syntax par.
+Module ifacts := geq_facts lattice syntax ieq.
 Import pfacts.
+Import ifacts.
 
 Lemma simulation : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
@@ -37,10 +39,18 @@ Proof.
   - move => Ξ ℓ a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 a'.
     elim /Par_inv => //.
     + hauto lq:on ctrs:Par, IEq.
-    + move => hp ? ? A a2 ? b2 h2 h3 [*]; subst.
-      case /ih1 : h3 => b3 [h30 h31].
-      case /ih0 : h2 => a3 [h40].
-      elim /IEq_inv => // ? ? A0 A1 a4 a5 h5 [] *; subst.
+    + move => hp a2 a3 b2 b3 ℓ1 h2 h3 [*]; subst.
+      case /ih1 : h3 => b4 [h30 h31].
+      elim /IEq_inv : h0 => // _ ℓ1 a0 a4 he [*]. subst.
+      have /ih0 : tAbs ℓ0 a2 ⇒ tAbs ℓ0 a3 by eauto with par.
+      move => [? []].
+      elim /Par_inv => // _ ℓ1 a0 a1 ? [? ? ?]. subst.
+      elim /IEq_inv => // _ ℓ1 a0 a5 ?[? ?][? ?]. subst.
+      exists (a4[b4..]). split.
+      by auto using Par_refl with par.
+      apply IEq_
+
+
       exists (subst_tm (b3..) a5).
       split.
       * hauto q:on ctrs:Par.

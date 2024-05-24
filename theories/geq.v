@@ -11,7 +11,7 @@ Module Type geq_sig
 
   Inductive IEq (Ξ : econtext) (ℓ : T) : tm -> tm -> Prop :=
   | I_Var i ℓ0 :
-    elookup i Ξ ℓ ->
+    elookup i Ξ ℓ0 ->
     ℓ0 ⊆ ℓ ->
     (* ------- *)
     IEq Ξ ℓ (var_tm i) (var_tm i)
@@ -54,6 +54,8 @@ Module Type geq_sig
 
   Combined Scheme IEq_mutual from IEq_ind', GIEq_ind'.
 
+  Derive Inversion IEq_inv with (forall Ξ ℓ a b, IEq Ξ ℓ a b).
+
 End geq_sig.
 
 
@@ -61,6 +63,9 @@ Module geq_facts
   (Import lattice : Lattice)
   (Import syntax : syntax_sig lattice)
   (Import geq : geq_sig lattice syntax).
+
+  Module lprop :=  Lattice.All.Properties lattice.
+  Import lprop.
 
   Lemma ieq_sym_mutual : forall Ξ ℓ,
       (forall A B, IEq Ξ ℓ A B -> IEq Ξ ℓ B A) /\
@@ -83,5 +88,65 @@ Module geq_facts
     IEq Ξ ℓ (tPi ℓ0 A B) (tPi ℓ0 A0 B0) ->
     IEq Ξ ℓ A A0 /\ IEq (ℓ0 :: Ξ) ℓ B B0.
   Proof. qauto l:on inv:IEq. Qed.
+
+  Definition ieq_good_renaming ξ (Ξ Δ : econtext) :=
+    (forall i ℓ0, elookup i Ξ ℓ0 -> elookup (ξ i) Δ ℓ0).
+
+  Definition ieq_weakening_helper : forall ℓ ξ (Ξ Δ : econtext),
+      ieq_good_renaming ξ Ξ Δ ->
+      ieq_good_renaming (upRen_tm_tm ξ) (ℓ :: Ξ) (ℓ :: Δ).
+  Proof.
+    move => ℓ0 ξ Ξ Δ h.
+    rewrite /ieq_good_renaming.
+    case => //.
+  Qed.
+
+  Lemma ieq_weakening_mutual : forall Ξ ℓ,
+      (forall a b, IEq Ξ ℓ a b ->
+              forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
+                     IEq Δ ℓ (ren_tm ξ a) (ren_tm ξ b)) /\
+        (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+                   forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
+                          GIEq Δ ℓ ℓ0 (ren_tm ξ a) (ren_tm ξ b)).
+  Proof.
+    apply IEq_mutual; try qauto l: on ctrs:IEq,GIEq use:ieq_weakening_helper unfold:ieq_good_renaming.
+    move => *; constructor; first by sfirstorder.
+  Qed.
+
+Definition ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ :=
+  forall i ℓ0, elookup i Ξ ℓ0 -> GIEq Δ ℓ ℓ0 (ξ0 i ) (ξ1 i).
+
+Lemma gieq_refl n Ξ ℓ ℓ0 :
+  elookup n Ξ ℓ0 ->
+  GIEq Ξ ℓ ℓ0 (var_tm n) (var_tm n).
+Proof.
+  case : (sub_eqdec ℓ0 ℓ); hauto lq:on ctrs:IEq, GIEq.
+Qed.
+
+Lemma ieq_morphing_helper ℓ ℓ0 ξ0 ξ1 Ξ Δ :
+  ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
+  ieq_good_morphing ℓ (up_tm_tm ξ0) (up_tm_tm ξ1) (ℓ0 :: Ξ) (ℓ0 :: Δ).
+Proof.
+  rewrite /ieq_good_morphing => h.
+  case => [|i] ℓ1 //=.
+  - sfirstorder use:gieq_refl.
+  - asimpl.
+    sfirstorder use:ieq_weakening_mutual unfold:ieq_good_renaming.
+Qed.
+
+Lemma ieq_morphing_mutual : forall Ξ ℓ,
+    (forall a b, IEq Ξ ℓ a b ->
+            forall ξ0 ξ1 Δ, ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
+            IEq Δ ℓ (subst_tm ξ0 a) (subst_tm ξ1 b)) /\
+    (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
+            forall ξ0 ξ1 Δ, ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
+            GIEq Δ ℓ ℓ0 (subst_tm ξ0 a) (subst_tm ξ1 b)).
+Proof.
+  apply IEq_mutual; try qauto ctrs:IEq,GIEq.
+  - hauto lq: on inv: GIEq lqb:on unfold:ieq_good_morphing.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+  - hauto lq:on ctrs:GIEq unfold:ieq_good_morphing.
+Qed.
 
 End geq_facts.

@@ -32,7 +32,9 @@ From Ltac2 Require Ltac2.
   End Lattice.
 
   Module Properties (Import lattice : Lattice).
-
+    Local Open Scope lattice_scope.
+    Lemma sub_eqdec : forall a b, Bool.reflect (a ⊆ b) (T_eqb (a ∩ b) a).
+    Proof. sfirstorder use:T_eqdec. Qed.
   End Properties.
 
   (** ** An incomplete solver for lattice formulas  *)
