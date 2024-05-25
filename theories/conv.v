@@ -7,7 +7,7 @@ Module Type conv_sig
   (Import par : par_sig lattice syntax)
   (Import ieq : geq_sig lattice syntax).
 
-  Definition conv Ξ ℓ a b := exists c0 c1, a ⇒* c0 /\ b ⇒* c1 /\ IEq Ξ ℓ c0 c1.
+  Definition conv Ξ a b := exists c0 c1 ℓ, a ⇒* c0 /\ b ⇒* c1 /\ IEq Ξ ℓ c0 c1.
 End conv_sig.
 
 Module conv_facts
@@ -69,16 +69,31 @@ Proof.
     suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:rtc.
 Qed.
 
-Lemma conv_sym Ξ ℓ a b : conv Ξ ℓ a b -> conv Ξ ℓ b a.
+Lemma conv_sym Ξ a b : conv Ξ a b -> conv Ξ b a.
 Proof.
   strivial use: ieq_sym_mutual, I_Void unfold:conv.
 Qed.
 
-Lemma conv_trans Ξ ℓ a b c : conv Ξ ℓ a b -> conv Ξ ℓ b c -> conv Ξ ℓ a c.
+Lemma ieq_trans_heterogeneous Ξ ℓ ℓ0 a b c :
+  IEq Ξ ℓ a b ->
+  IEq Ξ ℓ0 b c ->
+  IEq Ξ (ℓ ∩ ℓ0) a c.
+Proof.
+  move => h0 h1.
+  apply ieq_trans with (B := b).
+  - apply ieq_sym_mutual.
+    apply ieq_sym_mutual in h0.
+    eapply ieq_downgrade_mutual; eauto.
+  - apply ieq_sym_mutual in h0.
+    rewrite meet_commutative.
+    eapply ieq_downgrade_mutual; eauto.
+Qed.
+
+Lemma conv_trans Ξ a b c : conv Ξ a b -> conv Ξ b c -> conv Ξ a c.
 Proof.
   rewrite /conv.
-  move => [a0 [b0 [h0 [h1 h2]]]].
-  move => [b1 [c0 [h3 [h4 h5]]]].
+  move => [a0 [b0 [ℓ0 [h0 [h1 h2]]]]].
+  move => [b1 [c0 [ℓ1 [h3 [h4 h5]]]]].
   move : Pars_confluent (h1) (h3). repeat move/[apply].
   move => [q [h6 h7]].
   move /ieq_sym in h2.
@@ -86,7 +101,7 @@ Proof.
   move => [p0][? ?].
   move : simulation_star (h5) (h7). repeat move/[apply].
   move => [p1][? ?].
-  exists p0, p1. hauto lq:on use:ieq_sym, ieq_trans, rtc_transitive.
+  exists p0, p1. hauto lq:on use:ieq_sym, ieq_trans_heterogeneous, rtc_transitive.
 Qed.
 
 End conv_facts.
