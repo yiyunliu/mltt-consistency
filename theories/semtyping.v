@@ -418,6 +418,10 @@ Proof.
   - hauto q:on use:simulation ctrs:InterpExt.
 Qed.
 
+Lemma InterpUnivN_IEq Ξ i A PA (h : InterpUnivN Ξ i A PA) :
+  forall ℓ B, IEq Ξ ℓ A B ->
+  InterpUnivN Ξ i B PA.
+Proof. hauto q:on use:InterpExt_IEq rew:db:InterpUniv. Qed.
 
 (* ----- Improved inversion lemma for functions (Pi Inv Alt) ---------- *)
 
@@ -449,9 +453,11 @@ Lemma InterpUnivN_Conv Ξ i A B P (h : ⟦ Ξ ⊨ B ⟧ i ↘ P) :
   conv Ξ A B ->
   ⟦ Ξ ⊨ A ⟧ i ↘ P.
 Proof.
-  hauto l:on unfold:Coherent use:InterpUnivN_back_preservation_star, InterpUnivN_preservation_star.
+  rewrite /conv. move => [c0][c1][ℓ][h0][h1]h2.
+  have ? : ⟦ Ξ ⊨ c1 ⟧ i ↘ P by eauto using InterpUnivN_preservation_star.
+  have ? : ⟦ Ξ ⊨ c0 ⟧ i ↘ P by eauto using InterpUnivN_IEq, ifacts.ieq_sym.
+  hauto lq:on use:InterpUnivN_back_preservation_star.
 Qed.
-
 
 Lemma InterpUnivN_Fun_inv_nopf i A B P  (h : InterpUnivN i (tPi A B) P) :
   exists (PA : tm -> Prop),
