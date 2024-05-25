@@ -10,7 +10,7 @@ Module Type conv_sig
   Definition conv Ξ ℓ a b := exists c0 c1, a ⇒* c0 /\ b ⇒* c1 /\ IEq Ξ ℓ c0 c1.
 End conv_sig.
 
-Module Type conv_sig_facts
+Module conv_facts
   (Import lattice : Lattice)
   (Import syntax : syntax_sig lattice)
   (Import par : par_sig lattice syntax)
@@ -89,4 +89,4 @@ Proof.
   exists p0, p1. hauto lq:on use:ieq_sym, ieq_trans, rtc_transitive.
 Qed.
 
-End conv_sig_facts.
+End conv_facts.

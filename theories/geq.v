@@ -9,6 +9,34 @@ Module Type geq_sig
 
   Definition elookup i Ξ (ℓ : T) := nth_error Ξ i = Some ℓ.
 
+  Inductive IOk (Ξ : econtext) (ℓ : T) : tm -> Prop :=
+  | IO_Var i ℓ0 :
+    elookup i Ξ ℓ0 ->
+    ℓ0 ⊆ ℓ ->
+    (* ------- *)
+    IOk Ξ ℓ (var_tm i)
+  | IO_Univ i :
+    (* -------- *)
+    IOk Ξ ℓ (tUniv i)
+  | IO_Pi ℓ0 A B :
+    IOk Ξ ℓ A ->
+    IOk (ℓ0 :: Ξ) ℓ B ->
+    (* --------------------- *)
+    IOk Ξ ℓ (tPi ℓ0 A B)
+  | IO_Abs ℓ0 a :
+    IOk (ℓ0 :: Ξ) ℓ a ->
+    (* -------------------- *)
+    IOk Ξ ℓ (tAbs ℓ0 a)
+  | IO_App a ℓ0 b :
+    IOk Ξ ℓ a ->
+    IOk Ξ ℓ b ->
+    (* ------------------------- *)
+    IOk Ξ ℓ (tApp a ℓ0 b)
+  | IO_Void :
+    IOk Ξ ℓ tVoid
+  | IO_Absurd a:
+    IOk Ξ ℓ (tAbsurd a).
+
   Inductive IEq (Ξ : econtext) (ℓ : T) : tm -> tm -> Prop :=
   | I_Var i ℓ0 :
     elookup i Ξ ℓ0 ->
@@ -47,7 +75,7 @@ Module Type geq_sig
     (* -------------- *)
     GIEq Ξ ℓ ℓ0 A B.
 
-  #[export]Hint Constructors IEq GIEq : ieq.
+  #[export]Hint Constructors IOk IEq GIEq : ieq.
 
   Scheme IEq_ind' := Induction for IEq Sort Prop
       with GIEq_ind' := Induction for GIEq Sort Prop.
@@ -69,6 +97,34 @@ Module geq_facts
   Import lprop.
   Module solver  :=  Solver lattice.
   Import solver.
+
+  Lemma iok_subsumption Ξ ℓ a (h : IOk Ξ ℓ a) :
+    forall ℓ0, ℓ ⊆ ℓ0 -> IOk Ξ ℓ0 a.
+  Proof.
+    elim : Ξ ℓ a / h; eauto using leq_trans with ieq.
+  Qed.
+
+  Lemma iok_ieq Ξ ℓ a (h : IOk Ξ ℓ a) :
+    forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a a.
+  Proof.
+    elim : Ξ ℓ a / h; eauto using leq_trans with ieq.
+    (* App *)
+    - move => Ξ ℓ a ℓ0 b ha iha hb ihb ℓ1 ?.
+      apply I_App; eauto.
+      case : (sub_eqdec ℓ0 ℓ1) => //; hauto l:on ctrs:GIEq.
+  Qed.
+
+  Lemma ieq_gieq Ξ ℓ ℓ0 a (h : forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a a) :
+    GIEq Ξ ℓ0 ℓ a a.
+  Proof.
+    case : (sub_eqdec ℓ ℓ0).
+    - firstorder using GI_Dist.
+    - move /GI_InDist. apply.
+  Qed.
+
+  Lemma iok_gieq Ξ ℓ ℓ0 a (h : IOk Ξ ℓ a) :
+    GIEq Ξ ℓ0 ℓ a a.
+  Proof. sfirstorder use:iok_ieq, ieq_gieq. Qed.
 
   Lemma ieq_sym_mutual : forall Ξ ℓ,
       (forall A B, IEq Ξ ℓ A B -> IEq Ξ ℓ B A) /\
@@ -154,6 +210,20 @@ Proof.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:GIEq unfold:ieq_good_morphing.
+Qed.
+
+Lemma ieq_morphing_iok Ξ Δ ℓ a b (h : IEq Ξ ℓ a b) ρ
+  (hρ : forall i ℓ0, elookup i Ξ ℓ0 -> IOk Δ ℓ0 (ρ i)) :
+  IEq Δ ℓ a[ρ] b[ρ].
+Proof.
+  sfirstorder use:ieq_morphing_mutual, iok_gieq unfold:ieq_good_morphing.
+Qed.
+
+Lemma gieq_morphing_iok Ξ Δ ℓ ℓ0 a b (h : GIEq Ξ ℓ ℓ0 a b) ρ
+  (hρ : forall i ℓ0, elookup i Ξ ℓ0 -> IOk Δ ℓ0 (ρ i)) :
+  GIEq Δ ℓ ℓ0 a[ρ] b[ρ].
+Proof.
+  sfirstorder use:ieq_morphing_mutual, iok_gieq unfold:ieq_good_morphing.
 Qed.
 
 Lemma ieq_downgrade_mutual : forall Ξ ℓ,
