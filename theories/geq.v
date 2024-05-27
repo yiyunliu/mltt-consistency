@@ -29,7 +29,7 @@ Module Type geq_sig
     IOk Ξ ℓ (tAbs ℓ0 a)
   | IO_App a ℓ0 b :
     IOk Ξ ℓ a ->
-    IOk Ξ ℓ b ->
+    IOk Ξ ℓ0 b ->
     (* ------------------------- *)
     IOk Ξ ℓ (tApp a ℓ0 b)
   | IO_Void :

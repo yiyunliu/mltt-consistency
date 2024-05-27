@@ -22,6 +22,17 @@ Module ifacts := geq_facts lattice syntax ieq.
 Import pfacts.
 Import ifacts.
 
+Lemma iok_preservation Ξ ℓ a (h : IOk Ξ ℓ a) : forall b, a ⇒ b -> IOk Ξ ℓ b.
+Proof.
+  elim : Ξ ℓ a / h; try qauto inv:Par ctrs:IOk.
+  (* App *)
+  - move => Ξ ℓ a ℓ0 b ha iha hb ihb b0.
+    elim /Par_inv=>//.
+    + hauto lq:on ctrs:IOk.
+    + move => _ a0 a1 b1 b2 ℓ1 ha0 hb1 [*]. subst.
+      admit.
+Admitted.
+
 Lemma simulation : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
             forall a', Par a a' ->
