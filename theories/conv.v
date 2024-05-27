@@ -30,8 +30,10 @@ Proof.
     elim /Par_inv=>//.
     + hauto lq:on ctrs:IOk.
     + move => _ a0 a1 b1 b2 ℓ1 ha0 hb1 [*]. subst.
-      admit.
-Admitted.
+      apply : iok_subst; eauto.
+      have /iha : tAbs ℓ0 a0 ⇒ tAbs ℓ0 a1 by eauto with par.
+      by inversion 1.
+Qed.
 
 Lemma simulation : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->

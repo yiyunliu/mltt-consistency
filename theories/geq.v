@@ -104,6 +104,63 @@ Module geq_facts
     elim : Ξ ℓ a / h; eauto using leq_trans with ieq.
   Qed.
 
+  Definition iok_ren_ok ρ Ξ Δ := forall i ℓ, elookup i Ξ ℓ -> elookup (ρ i) Δ ℓ.
+
+  Lemma iok_ren_ok_suc ρ Ξ Δ (h : iok_ren_ok ρ Ξ Δ) :
+    forall ℓ0, iok_ren_ok (upRen_tm_tm ρ) (ℓ0 :: Ξ) (ℓ0 :: Δ).
+  Proof.
+    move => ℓ0.
+    rewrite /iok_ren_ok /elookup.
+    case=>//=.
+  Qed.
+
+  Lemma iok_renaming Ξ ℓ a (h : IOk Ξ ℓ a) :
+    forall Δ ρ, iok_ren_ok ρ Ξ Δ  ->
+           IOk Δ ℓ a⟨ρ⟩.
+  Proof.
+    elim : Ξ ℓ a / h;
+      hauto lq:on rew:off ctrs:IOk use:iok_ren_ok_suc
+                                         unfold:elookup, iok_ren_ok.
+  Qed.
+
+  Definition iok_subst_ok ρ Ξ Δ := forall i ℓ, elookup i Ξ ℓ -> IOk Δ ℓ (ρ i).
+  Lemma iok_subst_ok_suc ρ Ξ Δ (h : iok_subst_ok ρ Ξ Δ) :
+    forall ℓ0, iok_subst_ok (up_tm_tm ρ) (ℓ0 :: Ξ) (ℓ0 :: Δ).
+  Proof.
+    move => ℓ0.
+    rewrite /iok_subst_ok.
+    case=>//=.
+    - move => _ [<-].
+      apply : IO_Var.
+      rewrite /elookup //=.
+      by rewrite meet_idempotent.
+    - move => n ℓ ?.
+      asimpl. apply : iok_renaming; eauto.
+      sfirstorder.
+  Qed.
+
+  Lemma iok_morphing Ξ ℓ a (h : IOk Ξ ℓ a) :
+    forall Δ ρ, iok_subst_ok ρ Ξ Δ  ->
+           IOk Δ ℓ a[ρ].
+  Proof.
+    elim : Ξ ℓ a / h; hauto lq:on rew:off ctrs:IOk use:iok_subst_ok_suc, iok_subsumption unfold:iok_subst_ok, elookup.
+  Qed.
+
+  Lemma iok_subst Ξ ℓ ℓ0 a b (h : IOk Ξ ℓ0 a)
+    (h0 : IOk (ℓ0::Ξ) ℓ b) : IOk Ξ ℓ b[a..].
+  Proof.
+    apply : iok_morphing; eauto.
+    case.
+    - rewrite /elookup //=.
+      scongruence.
+    - move => n ℓ1. asimpl.
+      move => ?.
+      have : elookup n Ξ ℓ1 by sfirstorder.
+      move => h2.
+      apply : IO_Var; eauto.
+      by rewrite meet_idempotent.
+  Qed.
+
   Lemma iok_ieq Ξ ℓ a (h : IOk Ξ ℓ a) :
     forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a a.
   Proof.

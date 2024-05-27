@@ -57,6 +57,7 @@ Equations InterpUnivN (Ξ : econtext) (n : nat) : tm -> (T -> tm -> Prop) -> Pro
 Notation " ⟦ Ξ ⊨ A ⟧ i  ↘ S" := (InterpUnivN Ξ i A S)
                                   (at level 70, no associativity).
 
+
 Lemma InterpExt_Univ' i Ξ I j PF :
   PF = (fun ℓ A => IOk Ξ ℓ A /\  I j A) ->
   j < i ->
@@ -658,6 +659,8 @@ Proof.
   induction 1. sfirstorder use:InterpUnivN_back_clos.
   hauto lq:on use:iok_preservation, InterpUnivN_back_clos.
 Qed.
+
+
 
 (* (* ------------------------ adequacy ------------------------------- *) *)
 
