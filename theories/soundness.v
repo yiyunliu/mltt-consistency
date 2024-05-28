@@ -163,9 +163,8 @@ Proof.
     move /ih : (hρ) => {ih} [? [PA h1]].
     exists j, PA. split=>//.
     asimpl.
-    move /ρ_ok_forall : hρ l h1 => /[apply]/[apply].
-    (* Need subsumption *)
-    admit.
+    move /ρ_ok_forall : hρ l (h1) => /[apply]/[apply].
+    hauto lq:on use:InterpUnivN_subsumption.
   (* Pi *)
   - move => Γ i ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
     apply SemWt_Univ.
@@ -444,7 +443,13 @@ Proof.
   - apply SemWff_nil.
   (* Cons *)
   - eauto using SemWff_cons.
-Admitted.
+Qed.
+
+Lemma consistency ℓ a : ~ nil ⊢ a ; ℓ ∈ tVoid.
+  move /(proj1 soundness).
+  have := (ρ_ok_nil var_tm) => /[swap]/[apply].
+  sfirstorder use:InterpUnivN_Void_inv.
+Qed.
 
 (* Lemma mltt_normalizing Γ a A : Γ ⊢ a ∈ A -> wn a /\ wn A. *)
 (* Proof. *)

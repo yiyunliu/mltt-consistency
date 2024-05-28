@@ -268,6 +268,17 @@ Lemma InterpUnivN_back_preservation_star Ξ i A B P (h : ⟦ Ξ ⊨ B ⟧ i ↘ 
   ⟦ Ξ ⊨ A ⟧ i ↘ P.
 Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_back_preservation_star. Qed.
 
+Lemma InterpExt_subsumption Ξ i I A P (h : ⟦ Ξ ⊨ A ⟧ i ; I ↘ P) :
+  forall ℓ ℓ0 a, ℓ ⊆ ℓ0 -> P ℓ a -> P ℓ0 a.
+Proof.
+  elim : A P / h;
+    hauto lq:on use:ifacts.iok_subsumption unfold:ProdSpace.
+Qed.
+
+Lemma InterpUnivN_subsumption Ξ i A P : ⟦ Ξ ⊨ A ⟧ i ↘ P ->
+  forall ℓ ℓ0 a, ℓ ⊆ ℓ0 -> P ℓ a -> P ℓ0 a.
+Proof. simp InterpUnivN. apply InterpExt_subsumption. Qed.
+
 (* ---------------------------------------------------------- *)
 (* inversion lemmas for InterpExt. To invert the InterpExt
    judgment, we have to be careful about the step case. *)
