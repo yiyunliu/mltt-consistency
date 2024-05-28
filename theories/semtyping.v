@@ -39,6 +39,8 @@ Inductive InterpExt Ξ i (I : nat -> tm -> Prop) : tm -> (T -> tm -> Prop) -> Pr
 | InterpExt_Univ j :
   j < i ->
   InterpExt Ξ i I (tUniv j) (fun ℓ A => IOk Ξ ℓ A /\  I j A)
+| InterpExt_Void :
+  InterpExt Ξ i I tVoid (fun _ _ => False)
 | InterpExt_Step A A0 PA :
   (A ⇒ A0) ->
   InterpExt Ξ i I A0 PA ->
@@ -87,6 +89,7 @@ Proof.
     apply InterpExt_Univ' => //.
     case : Compare_dec.lt_dec => //.
   - hauto l:on ctrs:InterpExt.
+  - hauto l:on ctrs:InterpExt.
   (* - hauto l:on ctrs:InterpExt. *)
   (* - hauto l:on ctrs:InterpExt. *)
 Qed.
@@ -109,6 +112,7 @@ Proof.
   - hauto l:on ctrs:InterpExt.
   (* - hauto l:on ctrs:InterpExt. *)
   (* - hauto lq:on ctrs:InterpExt. *)
+  - hauto l:on ctrs:InterpExt.
 Qed.
 
 Lemma InterpUnivN_nolt Ξ i :
@@ -232,6 +236,7 @@ Proof.
   (*   move => a PB hPB0. *)
   (*   apply : ihPB; eauto. *)
   (*   sfirstorder use:Par_cong, Par_refl. *)
+  - inversion 1. sfirstorder.
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := Par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpExt.
@@ -295,6 +300,23 @@ Proof.
   elim : A P / h; hauto q:on rew:off inv:Par,tm.
 Qed.
 
+Lemma InterpExt_Void_inv Ξ i I P :
+  ⟦ Ξ ⊨ tVoid ⟧ i ; I ↘ P ->
+  P = (fun ℓ A => False).
+Proof.
+  move E : tVoid => A h.
+  move : E.
+  elim : A P / h; hauto q:on rew:off inv:Par,tm.
+Qed.
+
+Lemma InterpUnivN_Void Ξ i :
+  ⟦ Ξ ⊨ tVoid ⟧ i ↘ (fun _ _ => False).
+Proof. simp InterpUniv; apply InterpExt_Void. Qed.
+
+Lemma InterpUnivN_Void_inv Ξ i P:
+  ⟦ Ξ ⊨ tVoid ⟧ i ↘ P -> P = (fun _ _ => False).
+Proof. simp InterpUniv; apply InterpExt_Void_inv. Qed.
+
 (* Lemma InterpUnivN_Ne_inv i A P : *)
 (*   ne A -> *)
 (*   ⟦ A ⟧ i ↘ P -> *)
@@ -357,6 +379,7 @@ Proof.
     apply propositional_extensionality.
     hauto lq:on rew:off.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
+  - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Void_inv.
   - hauto l:on use:InterpExt_preservation.
 Qed.
 
@@ -397,6 +420,7 @@ Proof.
   - hauto lq:on.
   - sfirstorder.
   - sfirstorder.
+  - sfirstorder.
 Qed.
 
 Lemma InterpUniv_Ok Ξ i A PA :
@@ -419,6 +443,7 @@ Proof.
     move => n ℓ2 ?.
     apply : IO_Var; eauto.
     apply lattice.meet_idempotent.
+  - hauto lq:on inv:IEq ctrs:InterpExt.
   - hauto lq:on inv:IEq ctrs:InterpExt.
   - hauto q:on use:simulation ctrs:InterpExt.
 Qed.
@@ -639,6 +664,7 @@ Proof.
   - move => j h ℓ0 a b ha hr.
     suff : I j b -> I j a by tauto.
     firstorder.
+  - sfirstorder.
   - sfirstorder.
 Qed.
 

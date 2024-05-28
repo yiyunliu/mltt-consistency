@@ -85,6 +85,10 @@ Module Type geq_sig
   Derive Inversion IEq_inv with (forall Ξ ℓ a b, IEq Ξ ℓ a b).
   Derive Inversion GIEq_inv with (forall Ξ ℓ ℓ0 a b, GIEq Ξ ℓ ℓ0 a b).
 
+  Definition iok_ren_ok ρ Ξ Δ := forall i ℓ, elookup i Ξ ℓ -> elookup (ρ i) Δ ℓ.
+
+  Definition iok_subst_ok ρ Ξ Δ := forall i ℓ, elookup i Ξ ℓ -> IOk Δ ℓ (ρ i).
+
 End geq_sig.
 
 
@@ -104,8 +108,6 @@ Module geq_facts
     elim : Ξ ℓ a / h; eauto using leq_trans with ieq.
   Qed.
 
-  Definition iok_ren_ok ρ Ξ Δ := forall i ℓ, elookup i Ξ ℓ -> elookup (ρ i) Δ ℓ.
-
   Lemma iok_ren_ok_suc ρ Ξ Δ (h : iok_ren_ok ρ Ξ Δ) :
     forall ℓ0, iok_ren_ok (upRen_tm_tm ρ) (ℓ0 :: Ξ) (ℓ0 :: Δ).
   Proof.
@@ -123,7 +125,6 @@ Module geq_facts
                                          unfold:elookup, iok_ren_ok.
   Qed.
 
-  Definition iok_subst_ok ρ Ξ Δ := forall i ℓ, elookup i Ξ ℓ -> IOk Δ ℓ (ρ i).
   Lemma iok_subst_ok_suc ρ Ξ Δ (h : iok_subst_ok ρ Ξ Δ) :
     forall ℓ0, iok_subst_ok (up_tm_tm ρ) (ℓ0 :: Ξ) (ℓ0 :: Δ).
   Proof.
