@@ -13,13 +13,47 @@ Module pfacts := par_facts lattice syntax par.
 Import pfacts.
 
 (* Semantic substitution well-formedness *)
-Definition ρ_ok Γ Δ ρ := forall i ℓ A, lookup i Γ ℓ A -> forall m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA -> PA ℓ (ρ i).
+(* Try use the existential version of ρ_ok and then derive the universal version of ρ_ok as a lemma *)
+Definition ρ_ok Γ Δ ρ := forall i ℓ A, lookup i Γ ℓ A -> exists m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA /\ PA ℓ (ρ i).
+
+Lemma ρ_ok_forall Γ Δ ρ :
+  ρ_ok Γ Δ ρ -> forall i ℓ A, lookup i Γ ℓ A -> forall m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA -> PA ℓ (ρ i).
+Proof.
+  rewrite /ρ_ok => hρ.
+  move => i ℓ A + m PA hPA.
+  move /hρ => [m0][PA0][h0]h1.
+  by have -> : PA = PA0 by eauto using InterpUnivN_deterministic'.
+Qed.
 
 (* Semantic typing, written Γ ⊨ a : A in the paper *)
 Definition SemWt Γ ℓ a A := forall Δ ρ, ρ_ok Γ Δ ρ -> exists m PA, ( ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA)  /\ PA ℓ (a [ρ]).
 
 (* Semantic context wellformedness *)
 Definition SemWff Γ := forall i ℓ A, lookup i Γ ℓ A -> exists ℓ0 j, SemWt Γ ℓ0 A (tUniv j).
+
+Lemma lookup_elookup : forall  Γ (i : fin) (ℓ : T) (A : tm),
+      lookup i Γ ℓ A -> elookup i (c2e Γ) ℓ.
+Proof. induction 1; rewrite /elookup //=. Qed.
+
+Lemma elookup_lookup : forall  Γ (i : fin) (ℓ : T),
+    elookup i (c2e Γ) ℓ -> exists A, lookup i Γ ℓ A.
+Proof.
+  elim.
+  - rewrite /elookup //=; by case=>//=.
+  - move => [ℓ0 a] Γ ih [|i] ℓ /= h.
+    + rewrite /elookup //= in h. move : h => [?]. subst.
+      hauto l:on.
+    + hauto lq:on ctrs:lookup.
+Qed.
+
+(* TODO: Fix the order of the arguments of iok_subst_ok *)
+Lemma ρ_ok_iok Γ Δ ρ (h : ρ_ok Γ Δ ρ) :
+  iok_subst_ok ρ (c2e Γ) (c2e Δ).
+Proof.
+  rewrite /ρ_ok in h.
+  rewrite /iok_subst_ok.
+  hauto l:on use:InterpUniv_Ok, elookup_lookup.
+Qed.
 
 Lemma ρ_ok_nil ρ : ρ_ok nil nil ρ.
 Proof.  rewrite /ρ_ok. inversion 1; subst. Qed.
@@ -30,13 +64,15 @@ Lemma ρ_ok_cons i Γ Δ ℓ0 ρ a PA A :
   ρ_ok ((ℓ0, A) :: Γ) Δ (a .: ρ).
 Proof.
   move => h0 h1 h2.
-  rewrite /ρ_ok. inversion 1; subst.
-  - move => j PA0 hPA0.
-    asimpl in hPA0.
-    simpl in hPA0.
-    suff : PA = PA0 by congruence.
-    hauto l:on use:InterpUnivN_deterministic'.
-  - asimpl. hauto lq:on unfold:ρ_ok solve+:lia.
+  rewrite /ρ_ok. move => i0 ℓ A0.
+  elim /lookup_inv=>//=.
+  - move => _ ℓ1 A1 Γ0 ? [*]. subst.
+    exists i, PA.
+    asimpl.
+    tauto.
+  - move => ? n A1 Γ0 ℓ1 [ℓ2 B] ? ? [*]. subst.
+    asimpl.
+    sfirstorder.
 Qed.
 
 (* Well-formed substitutions are stable under renaming *)
@@ -47,9 +83,9 @@ Lemma ρ_ok_renaming Γ Ξ ρ :
     ρ_ok Γ Ξ (ξ >> ρ).
 Proof.
   move => Δ ξ hscope h1.
-  rewrite /ρ_ok => i ℓ A hi j PA.
+  rewrite /ρ_ok => i ℓ A hi.
   move /hscope: hi => ld.
-  move: (h1 _ _ _ ld j PA).
+  move /h1 : ld.
   by asimpl.
 Qed.
 
@@ -73,6 +109,11 @@ Lemma weakening_Sem Γ ℓ ℓ0 ℓ1 a A B i
 Proof.
   apply : renaming_SemWt; eauto.
   hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
+Qed.
+
+Lemma typing_iok Γ ℓ a A (h : Wt Γ ℓ a A) : IOk (c2e Γ) ℓ a.
+Proof.
+  elim : Γ ℓ a A / h; qauto use:lookup_elookup ctrs:IOk.
 Qed.
 
 (* Well-formed types have interpretations *)
@@ -120,31 +161,35 @@ Proof.
     move /ih : (l) {ih} => [ℓ1 [j ih]].
     rewrite SemWt_Univ in ih.
     move /ih : (hρ) => {ih} [? [PA h1]].
-    exists j, PA. split. auto.
-    move /hρ : h1 l => /[apply].
+    exists j, PA. split=>//.
     asimpl.
+    move /ρ_ok_forall : hρ l h1 => /[apply]/[apply].
     (* Need subsumption *)
     admit.
   (* Pi *)
-  - move => Γ i ℓ ℓ0 A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
+  - move => Γ i ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
     apply SemWt_Univ.
     move => Ξ ρ hρ.
     move /(_ Ξ ρ hρ) : h0; intros (? & PA & hPA).
     split.
-    + admit.
+    + have /typing_iok : Wt Γ ℓ (tPi ℓ0 A B) (tUniv i) by hauto lq:on ctrs:Wt.
+      move /ρ_ok_iok : hρ.
+      by move /cfacts.ifacts.iok_morphing /[apply].
     + eexists => //=.
       apply InterpUnivN_Fun_nopf; eauto.
       move => *; asimpl.
       hauto lq:on use:ρ_ok_cons.
   (* Abs *)
-  - move => Γ ℓ ℓ0 ℓ1 A b B i _ /SemWt_Univ hB _ hb Δ ρ hρ.
+  - move => Γ ℓ ℓ0 ℓ1 A b B i ? /SemWt_Univ hB ? hb Δ ρ hρ.
     move /(_ _ ρ hρ) : hB => /= [? [PPi hPPi]].
     exists i, PPi. split => //.
     move /InterpUnivN_Fun_inv_nopf : hPPi.
     move => [PA][?][hTot]?. subst.
     rewrite /ProdSpace.
     split.
-    + admit.
+    + have /typing_iok : Wt Γ ℓ (tAbs ℓ0 b) (tPi ℓ0 A B) by hauto lq:on ctrs:Wt.
+      move /ρ_ok_iok : hρ.
+      by move /cfacts.ifacts.iok_morphing /[apply].
     + move => a PB ha. asimpl => hPB.
     have : ρ_ok ((ℓ0, A) :: Γ) Δ (a .: ρ) by eauto using ρ_ok_cons.
     move /hb.
