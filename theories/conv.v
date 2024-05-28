@@ -117,4 +117,13 @@ Proof.
   exists p0, p1. hauto lq:on use:ieq_sym, ieq_trans_heterogeneous, rtc_transitive.
 Qed.
 
+Lemma conv_subst Ξ Δ ρ (h : iok_subst_ok ρ Ξ Δ) a b (h0 : conv Ξ a b) :
+  conv Δ a[ρ] b[ρ].
+Proof.
+  rewrite /conv in h0 *.
+  move : h0 => [c0][c1][ℓ][h0][h1]h2.
+  exists c0[ρ], c1[ρ] ,ℓ.
+  sfirstorder use:ieq_morphing_iok, Par_subst_star.
+Qed.
+
 End conv_facts.

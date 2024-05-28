@@ -186,18 +186,21 @@ Proof.
     move /InterpUnivN_Fun_inv_nopf : hPPi.
     move => [PA][?][hTot]?. subst.
     rewrite /ProdSpace.
+    move => [:habs].
     split.
-    + have /typing_iok : Wt Γ ℓ (tAbs ℓ0 b) (tPi ℓ0 A B) by hauto lq:on ctrs:Wt.
+    + abstract : habs.
+      have /typing_iok : Wt Γ ℓ (tAbs ℓ0 b) (tPi ℓ0 A B) by hauto lq:on ctrs:Wt.
       move /ρ_ok_iok : hρ.
       by move /cfacts.ifacts.iok_morphing /[apply].
     + move => a PB ha. asimpl => hPB.
-    have : ρ_ok ((ℓ0, A) :: Γ) Δ (a .: ρ) by eauto using ρ_ok_cons.
-    move /hb.
-    intros (m & PB0 & hPB0 & hPB0').
-    replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
-    apply : InterpUnivN_back_clos; eauto.
-    admit.
-    apply : P_AppAbs_cbn. by asimpl.
+      have : ρ_ok ((ℓ0, A) :: Γ) Δ (a .: ρ) by eauto using ρ_ok_cons.
+      move /hb.
+      intros (m & PB0 & hPB0 & hPB0').
+      replace PB0 with PB in * by hauto l:on use:InterpUnivN_deterministic'.
+      apply : InterpUnivN_back_clos; eauto.
+      have ? : IOk (c2e Δ) ℓ0 a by hauto l:on use:InterpUniv_Ok.
+      apply IO_App; auto.
+      apply : P_AppAbs_cbn. by asimpl.
   (* App *)
   - move => Γ ℓ ℓ0 f A B b _ ihf _ ihb Δ ρ hρ.
     rewrite /SemWt in ihf ihb.
@@ -212,9 +215,9 @@ Proof.
     asimpl. hauto lq:on.
   (* Conv *)
   - move => Γ ℓ ℓ0 a A B i _ hA _ /SemWt_Univ hB ? Δ ρ hρ.
+    move /ρ_ok_iok : (hρ) => ?.
     have hs : conv (c2e Δ) (subst_tm ρ A) (subst_tm ρ B)
-      by admit.
-      (* by hauto l:on use:Sub_morphing. *)
+      by hauto l:on use:cfacts.conv_subst.
     move /hB : (hρ) {hB}.
     move => [?][PB]hPB.
     move /hA : hρ {hA}.
@@ -311,7 +314,7 @@ Proof.
     rewrite SemWt_Univ.
     move => Ξ ρ hρ.
     split.
-    admit.
+    hauto l:on.
     eexists=>/=.
     apply : InterpUnivN_Univ. lia.
   (* (* Refl *) *)
