@@ -1,78 +1,85 @@
-Require Import join par_consistency semtyping normalform typing imports.
+Require Import conv par geq imports semtyping typing.
 
+Module soundness
+  (Import lattice : Lattice)
+  (Import syntax : syntax_sig lattice)
+  (Import par : par_sig lattice syntax)
+  (Import ieq : geq_sig lattice syntax)
+  (Import conv : conv_sig lattice syntax par ieq)
+  (Import typing : typing_sig lattice syntax par ieq conv)
+  (Import lr : lr_sig lattice syntax par ieq conv).
 (* Semantic substitution well-formedness *)
-Definition ρ_ok Γ ρ := forall i A, lookup i Γ A -> forall m PA, ⟦ A [ρ] ⟧ m ↘ PA -> PA (ρ i).
+Definition ρ_ok Γ Δ ρ := forall i ℓ A, lookup i Γ ℓ A -> forall m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA -> PA ℓ (ρ i).
 
 (* Semantic typing, written Γ ⊨ a : A in the paper *)
-Definition SemWt Γ a A := forall ρ, ρ_ok Γ ρ -> exists m PA, ( ⟦ A [ρ] ⟧ m ↘ PA)  /\ PA (a [ρ]).
-Notation "Γ ⊨ a ∈ A" := (SemWt Γ a A) (at level 70).
+Definition SemWt Γ ℓ a A := forall Δ ρ, ρ_ok Γ Δ ρ -> exists m PA, ( ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA)  /\ PA ℓ (a [ρ]).
 
 (* Semantic context wellformedness *)
-Definition SemWff Γ := forall i A, lookup i Γ A -> exists j, Γ ⊨ A ∈ tUniv j.
-Notation "⊨ Γ" := (SemWff Γ) (at level 70).
+Definition SemWff Γ := forall i ℓ A, lookup i Γ ℓ A -> exists ℓ0 j, SemWt Γ ℓ0 A (tUniv j).
 
-Lemma ρ_ok_nil ρ : ρ_ok nil ρ.
+Lemma ρ_ok_nil ρ : ρ_ok nil nil ρ.
 Proof.  rewrite /ρ_ok. inversion 1; subst. Qed.
 
-Lemma ρ_ok_cons i Γ ρ a PA A :
- ⟦ A [ρ] ⟧ i ↘ PA -> PA a ->
-  ρ_ok Γ ρ ->
-  ρ_ok (A :: Γ) (a .: ρ).
+Lemma ρ_ok_cons i Γ Δ ℓ0 ρ a PA A :
+ (⟦ c2e Δ ⊨ A [ρ] ⟧ i ↘ PA) -> PA ℓ0 a ->
+  ρ_ok Γ Δ ρ ->
+  ρ_ok ((ℓ0, A) :: Γ) Δ (a .: ρ).
 Proof.
   move => h0 h1 h2.
   rewrite /ρ_ok. inversion 1; subst.
   - move => j PA0 hPA0.
     asimpl in hPA0.
+    simpl in hPA0.
     suff : PA = PA0 by congruence.
     hauto l:on use:InterpUnivN_deterministic'.
   - asimpl. hauto lq:on unfold:ρ_ok solve+:lia.
 Qed.
 
 (* Well-formed substitutions are stable under renaming *)
-Lemma ρ_ok_renaming Γ ρ :
+Lemma ρ_ok_renaming Γ Ξ ρ :
   forall Δ ξ,
     lookup_good_renaming ξ Γ Δ ->
-    ρ_ok Δ ρ ->
-    ρ_ok Γ (ξ >> ρ).
+    ρ_ok Δ Ξ ρ ->
+    ρ_ok Γ Ξ (ξ >> ρ).
 Proof.
   move => Δ ξ hscope h1.
-  rewrite /ρ_ok => i A hi j PA.
-  move: (hscope _ _ hi) => ld.
-  move: (h1 _ _ ld j PA).
+  rewrite /ρ_ok => i ℓ A hi j PA.
+  move /hscope: hi => ld.
+  move: (h1 _ _ _ ld j PA).
   by asimpl.
 Qed.
 
 (* Typing is stable under renaming *)
-Lemma renaming_SemWt Γ a A :
-  (Γ ⊨ a ∈ A) ->
+Lemma renaming_SemWt Γ ℓ a A :
+  (SemWt Γ ℓ a A) ->
   forall Δ ξ,
     lookup_good_renaming ξ Γ Δ ->
-    Δ ⊨ a⟨ξ⟩ ∈ A⟨ξ⟩ .
+    SemWt Δ ℓ a⟨ξ⟩ A⟨ξ⟩ .
 Proof.
-  rewrite /SemWt => h Δ ξ hξ ρ hρ.
-  have hρ' : (ρ_ok Γ (ξ >> ρ)) by eauto using ρ_ok_renaming.
-  case /(_ _ hρ') : h => PA hPA.
+  rewrite /SemWt => h Δ ξ hξ Ξ ρ hρ.
+  have hρ' : (ρ_ok Γ Ξ (ξ >> ρ)) by eauto using ρ_ok_renaming.
+  case /(_ _ _ hρ') : h => PA hPA.
   exists PA. by asimpl.
 Qed.
 
-Lemma weakening_Sem Γ a A B i
-  (h0 : Γ ⊨ B ∈ tUniv i)
-  (h1 : Γ ⊨ a ∈ A) :
-   B :: Γ ⊨ a ⟨S⟩ ∈ A ⟨S⟩.
+Lemma weakening_Sem Γ ℓ ℓ0 ℓ1 a A B i
+  (h0 : SemWt Γ ℓ0 B (tUniv i))
+  (h1 : SemWt Γ ℓ a A) :
+   SemWt ((ℓ1, B) :: Γ) ℓ (a ⟨S⟩) (A ⟨S⟩).
 Proof.
   apply : renaming_SemWt; eauto.
   hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
 Qed.
 
 (* Well-formed types have interpretations *)
-Lemma SemWt_Univ Γ A i :
-  (Γ ⊨ A ∈ tUniv i) <->
-  forall ρ, ρ_ok Γ ρ -> exists S , ⟦ A[ρ] ⟧ i ↘ S.
+Lemma SemWt_Univ Γ ℓ A i :
+  (SemWt Γ ℓ A (tUniv i)) <->
+  forall Ξ ρ, ρ_ok Γ Ξ ρ -> IOk (c2e Ξ) ℓ A[ρ] /\ exists S , ⟦ c2e Ξ ⊨ A[ρ] ⟧ i ↘ S.
 Proof.
   rewrite /SemWt.
   split.
   - hauto lq:on rew:off use:InterpUnivN_Univ_inv.
-  - move => /[swap] ρ /[apply].
+  - move => /[swap] Δ /[swap]  ρ /[apply].
     case => PA hPA.
     exists (S i). eexists.
     split.
@@ -83,17 +90,17 @@ Qed.
 (* Structural laws for Semantic context wellformedness *)
 Lemma SemWff_nil : SemWff nil. inversion 1. Qed.
 
-Lemma SemWff_cons Γ A i :
-    ⊨ Γ ->
-    Γ ⊨ A ∈ tUniv i ->
+Lemma SemWff_cons Γ ℓ ℓ0 A i :
+    SemWff Γ ->
+    SemWt Γ ℓ A (tUniv i) ->
     (* -------------- *)
-    ⊨ A :: Γ.
+    SemWff ((ℓ0, A) :: Γ).
 Proof.
   move => h h0.
-  move => k h1. elim/lookup_inv.
+  move => k ℓ1 h1. elim/lookup_inv.
   - hauto q:on use:weakening_Sem.
-  - move => _ n A0 Γ0 B + ? []*. subst. move /h => [j ?].
-    exists j. change (tUniv j) with (tUniv j) ⟨S⟩.
+  - move => _ n A0 Γ0 ℓ2 B + ? []*. subst. move /h => [ℓ2 [j ?]].
+    exists ℓ2, j. change (tUniv j) with (tUniv j) ⟨S⟩.
     eauto using weakening_Sem.
 Qed.
 

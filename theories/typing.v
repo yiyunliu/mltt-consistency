@@ -158,3 +158,4 @@ Scheme wt_ind := Induction for Wt Sort Prop
     with wff_ind := Induction for Wff Sort Prop.
 
 Combined Scheme wt_mutual from wt_ind, wff_ind.
+End typing_sig.

@@ -399,6 +399,10 @@ Proof.
   - sfirstorder.
 Qed.
 
+Lemma InterpUniv_Ok Ξ i A PA :
+  InterpUnivN Ξ i A PA -> forall ℓ a, PA ℓ a -> IOk Ξ ℓ a.
+Proof. simp InterpUniv. apply InterpExt_Ok. Qed.
+
 Lemma InterpExt_IEq Ξ i I A PA (h : InterpExt Ξ i I A PA) :
   forall ℓ B, IEq Ξ ℓ A B ->
   InterpExt Ξ i I B PA.
@@ -832,3 +836,5 @@ Qed.
 
 (* Lemma InterpUnivN_Nat : ⟦ tNat ⟧ 0 ↘ (fun a => exists v, a ⇒* v /\ is_nat_val v). *)
 (* Proof. simp InterpUniv. apply InterpExt_Nat. Qed. *)
+
+End lr_sig.
