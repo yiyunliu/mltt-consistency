@@ -91,11 +91,11 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* ------------ *)
   Γ ⊢ tVoid ; ℓ ∈ tUniv i
 
-| T_Absurd Γ ℓ0 ℓ1 i a A :
+| T_Absurd Γ ℓ ℓ0 ℓ1 i a A :
   Γ ⊢ a ; ℓ0 ∈ tVoid  ->
   Γ ⊢ A ; ℓ1 ∈ tUniv i ->
   (* -------------- *)
-  Γ ⊢ a ; ℓ0 ∈ A
+  Γ ⊢ tAbsurd a ; ℓ ∈ A
 
 (* | T_Refl Γ a A: *)
 (*   ⊢ Γ -> *)
