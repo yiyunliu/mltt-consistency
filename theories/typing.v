@@ -97,27 +97,30 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* -------------- *)
   Γ ⊢ tAbsurd a ; ℓ ∈ A
 
-(* | T_Refl Γ a A: *)
-(*   ⊢ Γ -> *)
-(*   Γ ⊢ a ∈ A -> *)
-(*   (* ------ *) *)
-(*   Γ ⊢ tRefl ∈ (tEq a a A) *)
+| T_Refl Γ a ℓ0 A:
+  ⊢ Γ ->
+  Γ ⊢ a ; ℓ0 ∈ A ->
+  (* ------ *)
+  Γ ⊢ tRefl ∈ (tEq ℓ0 a a A)
 
-(* | T_Eq Γ a b A i j : *)
-(*   Γ ⊢ a ∈ A -> *)
-(*   Γ ⊢ b ∈ A -> *)
-(*   Γ ⊢ A ∈ (tUniv j) -> *)
-(*   (* ----------------------- *) *)
-(*   Γ ⊢ (tEq a b A) ∈ (tUniv i) *)
+| T_Eq Γ ℓ ℓ0 a b A i j :
+  ℓ0 ⊆ ℓ ->
+  Γ ⊢ a ; ℓ0 ∈ A ->
+  Γ ⊢ b ; ℓ0 ∈ A ->
+  Γ ⊢ A ; ℓ ∈ (tUniv j) ->
+  (* ----------------------- *)
+  Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ (tUniv i)
 
-(* | T_J Γ t a b p A i j C :  *)
-(*   Γ ⊢ a ∈  A -> *)
-(*   Γ ⊢ b ∈ A -> *)
-(*   Γ ⊢ A ∈ (tUniv j) -> *)
-(*   Γ ⊢ p ∈ (tEq a b A) -> *)
-(*   (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) -> *)
-(*   Γ ⊢ t ∈ (C [tRefl .: a ..]) -> *)
-(*   Γ ⊢ (tJ t a b p) ∈ (C [p .: b..]) *)
+| T_J Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1:
+  ℓp ⊆ ℓ ->
+  ℓ0 ⊆ ℓC ->
+  Γ ⊢ a ; ℓ1 ∈ A ->
+  Γ ⊢ b ; ℓ1 ∈ A ->
+  Γ ⊢ A ; ℓA ∈ (tUniv j) ->
+  Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) ->
+  ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓC ∈ (tUniv i) ->
+  Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
+  Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..])
 
 (* | T_Sig Γ i A B : *)
 (*   Γ ⊢ A ∈ (tUniv i) -> *)

@@ -69,6 +69,23 @@ Proof.
       move => ℓ1 ?.
       apply gieq_refl. sfirstorder.
   - hauto lq:on ctrs:IEq inv:Par use:Par_refl.
+  - move => Ξ ℓ ℓ0 a0 a1 b0 b1 A0 A1 ? ha iha hb ihb hc ihc ?.
+    elim /Par_inv=>// _ ? ? ? ? a2 b2 A2 + + + [*]. subst.
+    move /iha => {iha}?.
+    move /ihb => {ihb}?.
+    move /ihc => {ihc}?.
+    hauto lq:on ctrs:Par, IEq.
+  - move => Ξ ℓ C0 C1 t0 t1 p0 p1 ? ht ? hp q.
+    elim /Par_inv=>// _.
+    + move => ? C2  ? ? t2 p2 + + + [*]. subst.
+      move /ht => {}ht ?.
+      move /hp => {}hp.
+      move : ht => [t']?.
+      move : hp => [p']?.
+      exists (tJ C1 t' p').
+      hauto lq:on ctrs:IEq, Par use:Par_refl.
+    + move => ? t2 t3 + [*]. subst.
+      qauto l:on ctrs:Par, IEq inv:Par, IEq.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
 

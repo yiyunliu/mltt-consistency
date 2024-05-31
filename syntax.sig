@@ -8,3 +8,6 @@ tPi : T -> tm -> (tm -> tm) -> tm
 tUniv : nat -> tm
 tVoid : tm
 tAbsurd : tm -> tm
+tEq : T -> tm -> tm -> tm -> tm
+tJ : (tm -> tm -> tm) -> tm -> tm -> tm
+tRefl : tm

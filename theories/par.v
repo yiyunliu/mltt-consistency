@@ -44,12 +44,38 @@ Inductive Par : tm -> tm -> Prop :=
   (b0 ⇒ b1) ->
   (* ---------------------------- *)
   (tApp (tAbs ℓ0 a) ℓ0 b0) ⇒ (a0 [b1..])
+
 | P_Void :
   tVoid ⇒ tVoid
+
 | P_Absurd a b :
   a ⇒ b ->
   (* ---------- *)
   tAbsurd a ⇒ tAbsurd b
+
+| P_Refl :
+  (* ---------- *)
+  tRefl ⇒ tRefl
+
+| P_Eq ℓ0 a0 b0 A0 a1 b1 A1 :
+  (a0 ⇒ a1) ->
+  (b0 ⇒ b1) ->
+  (A0 ⇒ A1) ->
+  (* ---------- *)
+  (tEq ℓ0 a0 b0 A0) ⇒ (tEq ℓ0 a1 b1 A1)
+
+| P_J C0 C1 t0 p0 t1 p1 :
+  (t0 ⇒ t1) ->
+  (C0 ⇒ C1) ->
+  (p0 ⇒ p1) ->
+  (* ---------- *)
+  (tJ C0 t0 p0) ⇒ (tJ C1 t1 p1)
+
+| P_JRefl C t0 t1 :
+  (t0 ⇒ t1) ->
+  (* ---------- *)
+  (tJ C t0 tRefl) ⇒ t1
+
 where "A ⇒ B" := (Par A B).
 #[export]Hint Constructors Par : par.
 
@@ -174,12 +200,23 @@ Lemma Par_morphing a b (σ0 σ1 : fin -> tm)
 Proof.
   move => h0.
   move : σ0 σ1 h.
-  elim : a b / h0; try solve [simpl; eauto with par].
+  elim : a b / h0 .
+  - move => //=; eauto with par.
+  - move => //=; eauto with par.
   - qauto db:par use: (Par_morphing_lift_n 1).
   - qauto l:on db:par use:(Par_morphing_lift_n 1).
+  - simpl; eauto with par.
   - move => a a0 b0 b1 ℓ0 h0 ih0 h1 ih1 σ0 σ h /=.
     apply P_AppAbs' with (a0 := a0 [up_tm_tm σ]) (b1 := b1 [σ]).
     by asimpl. hauto l:on unfold:Par_m use:Par_renaming inv:nat. eauto.
+  - move => //=; eauto with par.
+  - move => //=; eauto with par.
+  - move => //=; eauto with par.
+  - move => //=; eauto with par.
+  - qauto db:par use: (Par_morphing_lift_n 2).
+  - qauto db:par use: (Par_morphing_lift_n 2).
+Qed.
+
   (* - qauto db:par use:(Par_morphing_lift_n 2). *)
   (* - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc σ0 σ1 hσ /=. *)
   (*   apply P_IndSuc' with *)
@@ -193,7 +230,6 @@ Proof.
   (*   apply P_LetPack' with (a1 := a1[σ1]) (b1 := b1[σ1]) (c1 := c1[up_tm_tm (up_tm_tm σ1)]); eauto. *)
   (*   by asimpl. *)
   (*   sfirstorder use:(Par_morphing_lift_n 2). *)
-Qed.
 
 Lemma Par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
   (σ0 ⇒ς σ1) ->
@@ -470,10 +506,10 @@ Function tstar (a : tm) :=
   (* | tInd a b (tSuc c) => (tstar b) [(tInd (tstar a) (tstar b) (tstar c)) .: (tstar c)  .. ] *)
   (* | tInd a b c => tInd (tstar a) (tstar b) (tstar c) *)
   (* | tNat => tNat *)
-  (* | tRefl => tRefl *)
-  (* | tEq a b A => tEq (tstar a) (tstar b) (tstar A) *)
-  (* | tJ t a b tRefl => tstar t *)
-  (* | tJ t a b p => tJ (tstar t) (tstar a) (tstar b) (tstar p) *)
+  | tRefl => tRefl
+  | tEq ℓ a b A => tEq ℓ (tstar a) (tstar b) (tstar A)
+  | tJ C t tRefl => tstar t
+  | tJ C t p => tJ (tstar C) (tstar t) (tstar p)
   (* | tLet (tPack a b) c => (tstar c)[(tstar b) .: (tstar a)..] *)
   (* | tLet a b => tLet (tstar a) (tstar b) *)
   (* | tSig A B => tSig (tstar A) (tstar B) *)
@@ -498,6 +534,10 @@ Proof.
     + move => h2 a1 a2 b1 b2 ℓ2 h3 h4 [*]. subst.
       case : T_eqdec h0 =>//.
   - hauto lq:on ctrs:Par inv:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
 Qed.

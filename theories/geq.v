@@ -35,7 +35,22 @@ Module Type geq_sig
   | IO_Void :
     IOk Ξ ℓ tVoid
   | IO_Absurd a:
-    IOk Ξ ℓ (tAbsurd a).
+    IOk Ξ ℓ (tAbsurd a)
+  | IO_Refl :
+    IOk Ξ ℓ tRefl
+  | IO_Eq ℓ0 a b A :
+    ℓ0 ⊆ ℓ ->
+    IOk Ξ ℓ0 a ->
+    IOk Ξ ℓ0 b ->
+    IOk Ξ ℓ A ->
+    (* -------------- *)
+    IOk Ξ ℓ (tEq ℓ0 a b A)
+  | IO_J C ℓp t p :
+    ℓp ⊆ ℓ ->
+    IOk Ξ ℓ t ->
+    IOk Ξ ℓp p ->
+    (* --------------- *)
+    IOk Ξ ℓ (tJ C t p).
 
   Inductive IEq (Ξ : econtext) (ℓ : T) : tm -> tm -> Prop :=
   | I_Var i ℓ0 :
@@ -64,6 +79,20 @@ Module Type geq_sig
     IEq Ξ ℓ tVoid tVoid
   | I_Absurd a b :
     IEq Ξ ℓ (tAbsurd a) (tAbsurd b)
+  | I_Refl :
+    IEq Ξ ℓ tRefl tRefl
+  | I_Eq ℓ0 a0 a1 b0 b1 A0 A1 :
+    ℓ0 ⊆ ℓ ->
+    IEq Ξ ℓ a0 a1 ->
+    IEq Ξ ℓ b0 b1 ->
+    IEq Ξ ℓ A0 A1 ->
+    (* -------------- *)
+    IEq Ξ ℓ (tEq ℓ0 a0 b0 A0) (tEq ℓ0 a1 b1 A1)
+  | I_J C0 C1 t0 t1 p0 p1 :
+    IEq Ξ ℓ t0 t1 ->
+    IEq Ξ ℓ p0 p1 ->
+    (* --------------- *)
+    IEq Ξ ℓ (tJ C0 t0 p0) (tJ C1 t1 p1)
   with GIEq (Ξ : econtext) (ℓ : T) : T -> tm -> tm -> Prop :=
   | GI_Dist ℓ0 A B :
     ℓ0 ⊆ ℓ ->
@@ -121,7 +150,7 @@ Module geq_facts
            IOk Δ ℓ a⟨ρ⟩.
   Proof.
     elim : Ξ ℓ a / h;
-      hauto lq:on rew:off ctrs:IOk use:iok_ren_ok_suc
+      hauto lq:on rew:off ctrs:IOk use:iok_ren_ok_suc, iok_subsumption
                                          unfold:elookup, iok_ren_ok.
   Qed.
 
@@ -170,6 +199,9 @@ Module geq_facts
     - move => Ξ ℓ a ℓ0 b ha iha hb ihb ℓ1 ?.
       apply I_App; eauto.
       case : (sub_eqdec ℓ0 ℓ1) => //; hauto l:on ctrs:GIEq.
+    - move => Ξ ℓ ℓ0 a b A hℓ ha iha hb ihb hA ihA ℓ1 hℓ'.
+      have : ℓ0 ⊆ ℓ1 by eauto using leq_trans.
+      hauto lq:on ctrs:IEq.
   Qed.
 
   Lemma ieq_gieq Ξ ℓ ℓ0 a (h : forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a a) :
@@ -300,6 +332,13 @@ Proof.
     apply : I_Var; eauto.
     ltac2:(solve_lattice).
     sfirstorder.
+  - move => Ξ ℓ ℓ0 a0 a1 b0 b1 A0 A1 ? ha iha hb ihb hA ihA ℓ1 ?.
+    elim /IEq_inv=>// _ ? ? a2 ? b2 ? A2 ? ? ? ? [*]. subst.
+    apply I_Eq.
+    + ltac2:(solve_lattice); tauto.
+    + sfirstorder.
+    + sfirstorder.
+    + sfirstorder.
   - move => Ξ ℓ ℓ0 A B ? h ih ℓ1 C.
     elim /GIEq_inv => hc ℓ2 A0 B0 h2 h3 *; subst.
     + apply ih in h3.
