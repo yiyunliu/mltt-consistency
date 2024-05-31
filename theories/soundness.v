@@ -439,6 +439,72 @@ Proof.
   - hauto lq:on ctrs:IOk use:InterpUnivN_Void, SemWt_Univ.
   (* Absurd *)
   - hauto lq:on use:InterpUnivN_Void_inv unfold:SemWt.
+  (* Refl *)
+  - move => Γ ℓ a ℓ0 A hΓ _ /typing_iok /cfacts.ifacts.iok_ieq.
+    rewrite /SemWt.
+    move => ha _ Δ ρ hρ.
+    do 2 eexists.
+    split => //=. apply (InterpUnivN_Eq _ 0).
+    simpl.
+    repeat split.
+    sfirstorder.
+    sfirstorder.
+    move /ρ_ok_iok : hρ.
+    move /(_ ℓ0 ltac:(by rewrite meet_idempotent)) : ha.
+    move /cfacts.ieq_iconv.
+    hauto lq:on use:cfacts.iconv_subst.
+  (* Eq *)
+  - move => Γ ℓ ℓ0 a b A i j hℓ ha iha hb ihb hA ihA.
+    rewrite SemWt_Univ.
+    move => Ξ ρ hρ.
+    split.
+    + have /typing_iok : Γ ⊢ tEq ℓ0 a b A ; ℓ ∈ tUniv i by hauto l:on use:T_Eq.
+      hauto lq:on ctrs:IEq use:cfacts.ifacts.iok_morphing, cfacts.iconv_subst, ρ_ok_iok.
+    + eexists => //=. apply InterpUnivN_Eq.
+  - move => Γ t a b p A i j C ℓ ℓp ℓA ℓC ℓ0 ℓ1 ? ?.
+    move => _ha ha _hb hb hA ihA _hp hp hC ihC _t ht.
+  (* (* J *) *)
+    (* - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht ρ hρ. *)
+    move => Δ ρ hρ.
+    move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
+    move  /InterpUnivN_Eq_inv : hPA hp => ->[?][?]?{PA}.
+    move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
+    exists k, PA.
+    split.
+  (*   move : hp. *)
+  (*   move =>[[hp hco] | ?]. *)
+  (*   + exists k, PA. *)
+  (*     split. *)
+  (*     * asimpl in hPA. *)
+  (*       apply : InterpUnivN_Coherent; eauto. *)
+  (*       rewrite /Coherent. *)
+  (*       case : hco => ab ?. *)
+  (*       exists (subst_tm (tRefl .: (ab .: ρ)) C). *)
+  (*       split. *)
+  (*       ** apply Pars_morphing_star; last by apply rtc_refl. *)
+  (*          apply good_Pars_morphing_ext2; *)
+  (*            hauto lq:on ctrs:rtc. *)
+  (*       ** apply Pars_morphing_star; last by apply rtc_refl. *)
+  (*          apply good_Pars_morphing_ext2. apply rtc_refl. *)
+  (*          tauto. apply rtc_refl. *)
+  (*     * asimpl. *)
+  (*       eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto. *)
+  (*       sfirstorder use: P_JRefl_star. *)
+  (*   + asimpl. *)
+  (*     move /(_ (subst_tm ρ p .: (subst_tm ρ b .: ρ))) : hC. *)
+  (*     case. *)
+  (*     * eapply ρ_ok_cons with (i := 0). *)
+  (*       asimpl. *)
+  (*       apply InterpUnivN_Eq; eauto. *)
+  (*       right. auto. *)
+  (*       move : hb (hρ). move/[apply]. *)
+  (*       move => [i0 [PA0 hb0]]. *)
+  (*       hauto l:on use:ρ_ok_cons. *)
+  (*     * move => PC hPC. *)
+  (*       exists i, PC. split; first tauto. *)
+  (*       qauto l:on use:adequacy,wne_j unfold:CR. *)
+  (* (* Sig *) *)
+
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)

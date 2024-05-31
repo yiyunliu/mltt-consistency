@@ -41,6 +41,8 @@ Inductive InterpExt Ξ i (I : nat -> tm -> Prop) : tm -> (T -> tm -> Prop) -> Pr
   InterpExt Ξ i I (tUniv j) (fun ℓ A => IOk Ξ ℓ A /\  I j A)
 | InterpExt_Void :
   InterpExt Ξ i I tVoid (fun _ _ => False)
+| InterpExt_Eq ℓ0 a b A :
+  InterpExt Ξ i I (tEq ℓ0 a b A) (fun ℓ p => IOk Ξ ℓ p /\ p ⇒* tRefl /\ iconv Ξ ℓ0 a b)
 | InterpExt_Step A A0 PA :
   (A ⇒ A0) ->
   InterpExt Ξ i I A0 PA ->
@@ -90,7 +92,7 @@ Proof.
     case : Compare_dec.lt_dec => //.
   - hauto l:on ctrs:InterpExt.
   - hauto l:on ctrs:InterpExt.
-  (* - hauto l:on ctrs:InterpExt. *)
+  - hauto l:on ctrs:InterpExt.
   (* - hauto l:on ctrs:InterpExt. *)
 Qed.
 
@@ -110,7 +112,7 @@ Proof.
     apply InterpExt_Univ' => //.
     case : Compare_dec.lt_dec => //.
   - hauto l:on ctrs:InterpExt.
-  (* - hauto l:on ctrs:InterpExt. *)
+  - hauto l:on ctrs:InterpExt.
   (* - hauto lq:on ctrs:InterpExt. *)
   - hauto l:on ctrs:InterpExt.
 Qed.
@@ -138,8 +140,8 @@ Proof.
   move : A B E.
   elim : T P / h => //.
   - hauto q:on inv:tm.
-  (* - hauto l:on. *)
-  - hauto lq:on rew:off inv:Par ctrs:InterpExt use:Par_subst.
+  - move => *. subst.
+    hauto lq:on rew:off inv:Par ctrs:InterpExt use:Par_subst.
 Qed.
 
 (* Lemma InterpExt_Sig_inv i I A B P *)
@@ -206,6 +208,11 @@ Qed.
 (* The logical relation is closed under parallel reduction,
    forwards and backwards. *)
 
+Lemma InterpExt_Eq' Ξ i I ℓ0 a b A P :
+  P = (fun ℓ p => IOk Ξ ℓ p /\ p ⇒* tRefl /\ iconv Ξ ℓ0 a b) ->
+  InterpExt Ξ i I (tEq ℓ0 a b A) P.
+Proof. move => > ->. apply InterpExt_Eq. Qed.
+
 Lemma InterpExt_preservation Ξ i I A B P (h : ⟦ Ξ ⊨ A ⟧ i ; I ↘ P) :
   (A ⇒ B) ->
   ⟦ Ξ ⊨ B ⟧ i ; I ↘ P.
@@ -237,6 +244,16 @@ Proof.
   (*   apply : ihPB; eauto. *)
   (*   sfirstorder use:Par_cong, Par_refl. *)
   - inversion 1. sfirstorder.
+  - move => ℓ0 a b A B.
+    elim /Par_inv => // _ ℓ1 ? ? ? a0 b0 A1 ? ? ?[*]. subst.
+    apply InterpExt_Eq'.
+    fext => ℓ p.
+    apply propositional_extensionality.
+    suff : IOk Ξ ℓ p -> (iconv Ξ ℓ0 a b <-> iconv Ξ ℓ0 a0 b0) by tauto.
+    move => h.
+    split.
+    + hauto lq:on use:iconv_par2.
+    + hauto q:on ctrs:rtc unfold:iconv .
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := Par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpExt.
@@ -320,9 +337,35 @@ Proof.
   elim : A P / h; hauto q:on rew:off inv:Par,tm.
 Qed.
 
+Lemma InterpExt_Eq_inv Ξ i I ℓ0 a b A P :
+  ⟦ Ξ ⊨ tEq ℓ0 a b A ⟧ i ; I ↘ P ->
+  P = (fun ℓ p => IOk Ξ ℓ p /\ p ⇒* tRefl /\ iconv Ξ ℓ0 a b).
+Proof.
+  move E : (tEq ℓ0 a b A) => T h.
+  move : ℓ0 a b A E.
+  elim : T P / h=>//.
+  - hauto lq:on.
+  - move => ? A0 S hA hS ihS ℓ0 a b A ?. subst.
+    elim /Par_inv : hA=>// _ ? ? ? ? a0 b0 A' ? ? ? [*]. subst.
+    specialize ihS with (1 := eq_refl). subst.
+    fext => ℓ p. apply propositional_extensionality.
+    split.
+    + hauto q:on ctrs:rtc unfold:iconv .
+    + hauto lq:on use:iconv_par2.
+Qed.
+
+Lemma InterpUnivN_Eq_inv Ξ i ℓ0 a b A P :
+  ⟦ Ξ ⊨ tEq ℓ0 a b A ⟧ i ↘ P ->
+  P = (fun ℓ p => IOk Ξ ℓ p /\ p ⇒* tRefl /\ iconv Ξ ℓ0 a b).
+Proof. simp InterpUniv; apply InterpExt_Eq_inv. Qed.
+
 Lemma InterpUnivN_Void Ξ i :
   ⟦ Ξ ⊨ tVoid ⟧ i ↘ (fun _ _ => False).
 Proof. simp InterpUniv; apply InterpExt_Void. Qed.
+
+Lemma InterpUnivN_Eq Ξ i ℓ0 a b A :
+  ⟦ Ξ ⊨ tEq ℓ0 a b A ⟧ i ↘ (fun ℓ p => IOk Ξ ℓ p /\ p ⇒* tRefl /\ iconv Ξ ℓ0 a b).
+Proof. simp InterpUniv; apply InterpExt_Eq. Qed.
 
 Lemma InterpUnivN_Void_inv Ξ i P:
   ⟦ Ξ ⊨ tVoid ⟧ i ↘ P -> P = (fun _ _ => False).
@@ -391,6 +434,7 @@ Proof.
     hauto lq:on rew:off.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Void_inv.
+  - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Eq_inv.
   - hauto l:on use:InterpExt_preservation.
 Qed.
 
@@ -432,6 +476,7 @@ Proof.
   - sfirstorder.
   - sfirstorder.
   - sfirstorder.
+  - sfirstorder.
 Qed.
 
 Lemma InterpUniv_Ok Ξ i A PA :
@@ -456,6 +501,12 @@ Proof.
     apply lattice.meet_idempotent.
   - hauto lq:on inv:IEq ctrs:InterpExt.
   - hauto lq:on inv:IEq ctrs:InterpExt.
+  - move => ℓ0 a b A ℓ B.
+    elim /IEq_inv=>//= _ ? ? a0 ? b0 ? A0 ? ha hb hA [*]. subst.
+    apply : InterpExt_Eq'.
+    fext => ℓ1 p. apply propositional_extensionality.
+    apply ieq_iconv in ha, hb, hA.
+    hauto lq:on rew:off use:iconv_trans_heterogeneous_leq, iconv_trans_heterogeneous_leq', iconv_sym.
   - hauto q:on use:simulation ctrs:InterpExt.
 Qed.
 
@@ -494,7 +545,7 @@ Lemma InterpUnivN_Conv Ξ i A B P (h : ⟦ Ξ ⊨ B ⟧ i ↘ P) :
   conv Ξ A B ->
   ⟦ Ξ ⊨ A ⟧ i ↘ P.
 Proof.
-  rewrite /conv. move => [c0][c1][ℓ][h0][h1]h2.
+  rewrite /conv. move => [ℓ][c0][c1][h0][h1]h2.
   have ? : ⟦ Ξ ⊨ c1 ⟧ i ↘ P by eauto using InterpUnivN_preservation_star.
   have ? : ⟦ Ξ ⊨ c0 ⟧ i ↘ P by eauto using InterpUnivN_IEq, ifacts.ieq_sym.
   hauto lq:on use:InterpUnivN_back_preservation_star.
@@ -676,6 +727,7 @@ Proof.
     suff : I j b -> I j a by tauto.
     firstorder.
   - sfirstorder.
+  - hauto lq:on ctrs:rtc.
   - sfirstorder.
 Qed.
 

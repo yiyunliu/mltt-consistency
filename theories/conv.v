@@ -7,7 +7,8 @@ Module Type conv_sig
   (Import par : par_sig lattice syntax)
   (Import ieq : geq_sig lattice syntax).
 
-  Definition conv Ξ a b := exists c0 c1 ℓ, a ⇒* c0 /\ b ⇒* c1 /\ IEq Ξ ℓ c0 c1.
+  Definition iconv Ξ ℓ a b := exists c0 c1, a ⇒* c0 /\ b ⇒* c1 /\ IEq Ξ ℓ c0 c1.
+  Definition conv Ξ a b := exists ℓ, iconv Ξ ℓ a b.
 End conv_sig.
 
 Module conv_facts
@@ -21,6 +22,9 @@ Module pfacts := par_facts lattice syntax par.
 Module ifacts := geq_facts lattice syntax ieq.
 Import pfacts.
 Import ifacts.
+
+Lemma ieq_iconv Ξ ℓ a b : IEq Ξ ℓ a b -> iconv Ξ ℓ a b.
+Proof. sfirstorder use:rtc_refl unfold:iconv. Qed.
 
 Lemma iok_preservation Ξ ℓ a (h : IOk Ξ ℓ a) : forall b, a ⇒ b -> IOk Ξ ℓ b.
 Proof.
@@ -99,10 +103,30 @@ Proof.
     suff : exists b0,Par b b0 /\ IEq Ξ ℓ a0 b0; hauto lq:on use:simulation ctrs:rtc.
 Qed.
 
+Lemma iconv_sym Ξ ℓ a b : iconv Ξ ℓ a b -> iconv Ξ ℓ b a.
+Proof. hauto lq:on use:ieq_sym_mutual unfold:conv, iconv. Qed.
+
 Lemma conv_sym Ξ a b : conv Ξ a b -> conv Ξ b a.
+Proof. hauto lq:on use:iconv_sym unfold:conv. Qed.
+
+Lemma iconv_par Ξ ℓ a b a0  :
+  iconv Ξ ℓ a b -> a ⇒ a0 -> iconv Ξ ℓ a0 b.
 Proof.
-  strivial use: ieq_sym_mutual, I_Void unfold:conv.
+  rewrite /iconv.
+  move => [c0][c1][h0][h1]h2 h3.
+  apply rtc_once in h3.
+  move : Pars_confluent (h0) (h3). repeat move/[apply].
+  move => [ca][h5]h6.
+  move : simulation_star (h2) (h5). repeat move/[apply].
+  move /ieq_sym in h2.
+  move => [c1' [h7 h8]].
+  exists ca, c1'.
+  hauto l:on use:rtc_transitive.
 Qed.
+
+Lemma iconv_par2 Ξ ℓ a b a0 b0 :
+  iconv Ξ ℓ a b -> a ⇒ a0 -> b ⇒ b0 -> iconv Ξ ℓ a0 b0.
+Proof. hauto lq:on use:iconv_par, iconv_sym. Qed.
 
 Lemma ieq_trans_heterogeneous Ξ ℓ ℓ0 a b c :
   IEq Ξ ℓ a b ->
@@ -119,11 +143,32 @@ Proof.
     eapply ieq_downgrade_mutual; eauto.
 Qed.
 
-Lemma conv_trans Ξ a b c : conv Ξ a b -> conv Ξ b c -> conv Ξ a c.
+Lemma ieq_trans_heterogeneous_leq Ξ ℓ ℓ0 a b c :
+  ℓ ⊆ ℓ0 ->
+  IEq Ξ ℓ a b ->
+  IEq Ξ ℓ0 b c ->
+  IEq Ξ ℓ a c.
 Proof.
-  rewrite /conv.
-  move => [a0 [b0 [ℓ0 [h0 [h1 h2]]]]].
-  move => [b1 [c0 [ℓ1 [h3 [h4 h5]]]]].
+  hauto l:on drew:off use:ieq_trans_heterogeneous, meet_commutative.
+Qed.
+
+Lemma ieq_trans_heterogeneous_leq' Ξ ℓ ℓ0 a b c :
+  ℓ ⊆ ℓ0 ->
+  IEq Ξ ℓ0 a b ->
+  IEq Ξ ℓ b c ->
+  IEq Ξ ℓ a c.
+Proof.
+  move => h.
+  move /ieq_trans_heterogeneous /[apply].
+  rewrite meet_commutative. congruence.
+Qed.
+
+Lemma iconv_trans_heterogeneous Ξ ℓ0 ℓ1 a b c :
+  iconv Ξ ℓ0 a b -> iconv Ξ ℓ1 b c -> iconv Ξ (ℓ0 ∩ ℓ1) a c.
+Proof.
+  rewrite /iconv.
+  move => [a0 [b0 [h0 [h1 h2]]]].
+  move => [b1 [c0 [h3 [h4 h5]]]].
   move : Pars_confluent (h1) (h3). repeat move/[apply].
   move => [q [h6 h7]].
   move /ieq_sym in h2.
@@ -131,16 +176,51 @@ Proof.
   move => [p0][? ?].
   move : simulation_star (h5) (h7). repeat move/[apply].
   move => [p1][? ?].
-  exists p0, p1. hauto lq:on use:ieq_sym, ieq_trans_heterogeneous, rtc_transitive.
+  exists p0, p1.  hauto lq:on use:ieq_sym, ieq_trans_heterogeneous, rtc_transitive.
+Qed.
+
+Lemma iconv_trans_heterogeneous_leq Ξ ℓ ℓ0 a b c :
+  ℓ ⊆ ℓ0 ->
+  iconv Ξ ℓ a b ->
+  iconv Ξ ℓ0 b c ->
+  iconv Ξ ℓ a c.
+Proof.
+  hauto l:on drew:off use:iconv_trans_heterogeneous, meet_commutative.
+Qed.
+
+Lemma iconv_trans_heterogeneous_leq' Ξ ℓ ℓ0 a b c :
+  ℓ ⊆ ℓ0 ->
+  iconv Ξ ℓ0 a b ->
+  iconv Ξ ℓ b c ->
+  iconv Ξ ℓ a c.
+Proof.
+  move => h.
+  move /iconv_trans_heterogeneous /[apply].
+  rewrite meet_commutative. congruence.
+Qed.
+
+Lemma iconv_trans Ξ ℓ a b c :
+  iconv Ξ ℓ a b -> iconv Ξ ℓ b c -> iconv Ξ ℓ a c.
+Proof.
+  hauto l:on use:iconv_trans_heterogeneous_leq, meet_idempotent.
+Qed.
+
+Lemma conv_trans Ξ a b c : conv Ξ a b -> conv Ξ b c -> conv Ξ a c.
+Proof.
+  hauto lq:on use:iconv_trans_heterogeneous unfold:conv.
+Qed.
+
+Lemma iconv_subst Ξ ℓ Δ ρ (h : iok_subst_ok ρ Ξ Δ) a b (h0 : iconv Ξ ℓ a b) :
+  iconv Δ ℓ a[ρ] b[ρ].
+Proof.
+  rewrite /iconv in h0 *.
+  move : h0 => [c0][c1][h0][h1]h2.
+  exists c0[ρ], c1[ρ].
+  sfirstorder use:ieq_morphing_iok, Par_subst_star.
 Qed.
 
 Lemma conv_subst Ξ Δ ρ (h : iok_subst_ok ρ Ξ Δ) a b (h0 : conv Ξ a b) :
   conv Δ a[ρ] b[ρ].
-Proof.
-  rewrite /conv in h0 *.
-  move : h0 => [c0][c1][ℓ][h0][h1]h2.
-  exists c0[ρ], c1[ρ] ,ℓ.
-  sfirstorder use:ieq_morphing_iok, Par_subst_star.
-Qed.
+Proof. hauto lq:on use:iconv_subst unfold:conv. Qed.
 
 End conv_facts.
