@@ -76,6 +76,30 @@ Inductive Par : tm -> tm -> Prop :=
   (* ---------- *)
   (tJ C t0 tRefl) ⇒ t1
 
+| P_Sig ℓ A0 A1 B0 B1 :
+  (A0 ⇒ A1) ->
+  (B0 ⇒ B1) ->
+  (* --------------------- *)
+  tSig ℓ A0 B0 ⇒ tSig ℓ A1 B1
+
+| P_Pack ℓ a0 a1 b0 b1 :
+  (a0 ⇒ a1) ->
+  (b0 ⇒ b1) ->
+  (* ------------------------- *)
+  (tPack ℓ a0 b0) ⇒ (tPack ℓ a1 b1)
+
+| P_Let ℓ0 ℓ1 a0 b0 a1 b1 :
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  (* --------------------- *)
+  tLet ℓ0 ℓ1 a0 b0 ⇒ tLet ℓ0 ℓ1 a1 b1
+
+| P_LetPack ℓ0 ℓ1 a0 b0 c0 a1 b1 c1 :
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  c0 ⇒ c1 ->
+  tLet ℓ0 ℓ1 (tPack ℓ0 a0 b0) c0 ⇒ c1[b1 .: a1 ..]
+
 where "A ⇒ B" := (Par A B).
 #[export]Hint Constructors Par : par.
 
@@ -123,6 +147,7 @@ Lemma P_AppAbs' a a0 b0 b b1 ℓ0 :
   (tApp (tAbs ℓ0 a) ℓ0 b0) ⇒ b.
 Proof. hauto lq:on use:P_AppAbs. Qed.
 
+
 (* Lemma P_IndSuc' a0 a1 b0 b1 c0 c1 t : *)
 (*   t = b1 [(tInd a1 b1 c1) .: c1 ..] -> *)
 (*   a0 ⇒ a1 -> *)
@@ -132,13 +157,13 @@ Proof. hauto lq:on use:P_AppAbs. Qed.
 (*   tInd a0 b0 (tSuc c0) ⇒ t. *)
 (* Proof. move => > ->. apply P_IndSuc. Qed. *)
 
-(* Lemma P_LetPack' a0 b0 c0 a1 b1 c1 t : *)
-(*   t = c1[b1 .: a1 ..] -> *)
-(*   a0 ⇒ a1 -> *)
-(*   b0 ⇒ b1 -> *)
-(*   c0 ⇒ c1 -> *)
-(*   tLet (tPack a0 b0) c0 ⇒ t. *)
-(* Proof. move => > ->. apply P_LetPack. Qed. *)
+Lemma P_LetPack' ℓ0 ℓ1 a0 b0 c0 a1 b1 c1 t :
+  t = c1[b1 .: a1 ..] ->
+  a0 ⇒ a1 ->
+  b0 ⇒ b1 ->
+  c0 ⇒ c1 ->
+  tLet ℓ0 ℓ1 (tPack ℓ0 a0 b0) c0 ⇒ t.
+Proof. move => > ->. apply P_LetPack. Qed.
 
 (* ------------------------------------------------------------ *)
 
@@ -154,8 +179,8 @@ Proof.
     apply : P_AppAbs'; eauto. by asimpl.
   (* - move => *. *)
   (*   apply : P_IndSuc'; eauto; by asimpl. *)
-  (* - move => *. *)
-  (*   apply : P_LetPack'; eauto; by asimpl. *)
+  - move => *.
+    apply : P_LetPack'; eauto; by asimpl.
 Qed.
 
 Lemma Pars_renaming a b (ξ : fin -> fin) :
@@ -215,6 +240,14 @@ Proof.
   - move => //=; eauto with par.
   - qauto db:par use: (Par_morphing_lift_n 2).
   - qauto db:par use: (Par_morphing_lift_n 2).
+  (* - hauto lq:on db:par use:(Par_morphing_lift_n 1). *)
+  - qauto db:par use:(Par_morphing_lift_n 1).
+  - qauto l:on ctrs:Par use:(Par_morphing_lift_n 2).
+  - qauto l:on ctrs:Par use:(Par_morphing_lift_n 2).
+  - move => ℓ0 ℓ1 a0 b0 c0 a1 b1 c1 ha iha hb ihb hc ihc σ0 σ1 hσ /=.
+    apply P_LetPack' with (a1 := a1[σ1]) (b1 := b1[σ1]) (c1 := c1[up_tm_tm (up_tm_tm σ1)]); eauto.
+    by asimpl.
+    sfirstorder use:(Par_morphing_lift_n 2).
 Qed.
 
   (* - qauto db:par use:(Par_morphing_lift_n 2). *)
@@ -222,13 +255,6 @@ Qed.
   (*   apply P_IndSuc' with *)
   (*     (b1 := b1[up_tm_tm_n 2 σ1]) (a1 := a1[σ1]) (c1 := c1[σ1]); *)
   (*     eauto => /=. by asimpl. *)
-  (*   sfirstorder use:(Par_morphing_lift_n 2). *)
-  (* - hauto lq:on db:par use:(Par_morphing_lift_n 1). *)
-  (* - qauto db:par use:(Par_morphing_lift_n 1). *)
-  (* - qauto l:on ctrs:Par use:(Par_morphing_lift_n 2). *)
-  (* - move => a0 b0 c0 a1 b1 c1 ha iha hb ihb hc ihc σ0 σ1 hσ /=. *)
-  (*   apply P_LetPack' with (a1 := a1[σ1]) (b1 := b1[σ1]) (c1 := c1[up_tm_tm (up_tm_tm σ1)]); eauto. *)
-  (*   by asimpl. *)
   (*   sfirstorder use:(Par_morphing_lift_n 2). *)
 
 Lemma Par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
@@ -510,10 +536,13 @@ Function tstar (a : tm) :=
   | tEq ℓ a b A => tEq ℓ (tstar a) (tstar b) (tstar A)
   | tJ C t tRefl => tstar t
   | tJ C t p => tJ (tstar C) (tstar t) (tstar p)
-  (* | tLet (tPack a b) c => (tstar c)[(tstar b) .: (tstar a)..] *)
-  (* | tLet a b => tLet (tstar a) (tstar b) *)
-  (* | tSig A B => tSig (tstar A) (tstar B) *)
-                    (* | tPack a b => tPack (tstar a) (tstar b) *)
+  | tLet ℓ0 ℓ1 (tPack ℓ2 a b) c =>
+      if T_eqb ℓ0 ℓ2
+      then (tstar c)[(tstar b) .: (tstar a)..]
+      else tLet ℓ0 ℓ1 (tPack ℓ2 (tstar a) (tstar b)) (tstar c)
+  | tLet ℓ0 ℓ1 a b => tLet ℓ0 ℓ1 (tstar a) (tstar b)
+  | tSig ℓ A B => tSig ℓ (tstar A) (tstar B)
+  | tPack ℓ a b => tPack ℓ (tstar a) (tstar b)
   | tVoid => tVoid
   | tAbsurd a => tAbsurd (tstar a)
   end.
@@ -538,6 +567,14 @@ Proof.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
+  - move => > ? /T_eqdec.
+    hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
+  - move => > ? ? ?. subst.
+    case : T_eqdec=>//.
+    hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
+  - hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
 Qed.
@@ -548,26 +585,6 @@ Proof. hauto lq:on use:Par_triangle unfold:diamond. Qed.
 Lemma Pars_confluent : confluent Par.
 Proof.
   sfirstorder use:Par_confluent, @diamond_confluent.
-Qed.
-
-(* Coherent is an equivalence relation *)
-
-Lemma Coherent_reflexive a :
-  Coherent a a.
-Proof. hauto l:on ctrs:rtc. Qed.
-
-Lemma Coherent_symmetric a b :
-  Coherent a b -> Coherent b a.
-Proof. sfirstorder. Qed.
-
-Lemma Coherent_transitive a b c :
-  Coherent a b -> Coherent b c -> Coherent a c.
-Proof.
-  have := Pars_confluent.
-  move => h [z0 [? h0]] [z1 [h1 ?]].
-  move /(_ b _ _ h0 h1) in h.
-  case : h => z [*].
-  exists z. split; sfirstorder use:@rtc_transitive.
 Qed.
 
 End par_facts.

@@ -19,7 +19,10 @@ Inductive tm  : Type :=
   | tAbsurd : ( tm   ) -> tm 
   | tEq : ( T   ) -> ( tm   ) -> ( tm   ) -> ( tm   ) -> tm 
   | tJ : ( tm   ) -> ( tm   ) -> ( tm   ) -> tm 
-  | tRefl : tm .
+  | tRefl : tm 
+  | tSig : ( T   ) -> ( tm   ) -> ( tm   ) -> tm 
+  | tPack : ( T   ) -> ( tm   ) -> ( tm   ) -> tm 
+  | tLet : ( T   ) -> ( T   ) -> ( tm   ) -> ( tm   ) -> tm .
 
 Lemma congr_tAbs  { s0 : T   } { s1 : tm   } { t0 : T   } { t1 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) : tAbs  s0 s1 = tAbs  t0 t1 .
 Proof. congruence. Qed.
@@ -48,6 +51,15 @@ Proof. congruence. Qed.
 Lemma congr_tRefl  : tRefl  = tRefl  .
 Proof. congruence. Qed.
 
+Lemma congr_tSig  { s0 : T   } { s1 : tm   } { s2 : tm   } { t0 : T   } { t1 : tm   } { t2 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) : tSig  s0 s1 s2 = tSig  t0 t1 t2 .
+Proof. congruence. Qed.
+
+Lemma congr_tPack  { s0 : T   } { s1 : tm   } { s2 : tm   } { t0 : T   } { t1 : tm   } { t2 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) : tPack  s0 s1 s2 = tPack  t0 t1 t2 .
+Proof. congruence. Qed.
+
+Lemma congr_tLet  { s0 : T   } { s1 : T   } { s2 : tm   } { s3 : tm   } { t0 : T   } { t1 : T   } { t2 : tm   } { t3 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) (H4 : s3 = t3) : tLet  s0 s1 s2 s3 = tLet  t0 t1 t2 t3 .
+Proof. congruence. Qed.
+
 Definition upRen_tm_tm   (xi : ( fin ) -> fin) : ( fin ) -> fin :=
   (up_ren) xi.
 
@@ -63,6 +75,9 @@ Fixpoint ren_tm   (xitm : ( fin ) -> fin) (s : tm ) : tm  :=
     | tEq  s0 s1 s2 s3 => tEq  ((fun x => x) s0) ((ren_tm xitm) s1) ((ren_tm xitm) s2) ((ren_tm xitm) s3)
     | tJ  s0 s1 s2 => tJ  ((ren_tm (upRen_tm_tm (upRen_tm_tm xitm))) s0) ((ren_tm xitm) s1) ((ren_tm xitm) s2)
     | tRefl   => tRefl 
+    | tSig  s0 s1 s2 => tSig  ((fun x => x) s0) ((ren_tm xitm) s1) ((ren_tm (upRen_tm_tm xitm)) s2)
+    | tPack  s0 s1 s2 => tPack  ((fun x => x) s0) ((ren_tm xitm) s1) ((ren_tm xitm) s2)
+    | tLet  s0 s1 s2 s3 => tLet  ((fun x => x) s0) ((fun x => x) s1) ((ren_tm xitm) s2) ((ren_tm (upRen_tm_tm (upRen_tm_tm xitm))) s3)
     end.
 
 Definition up_tm_tm   (sigma : ( fin ) -> tm ) : ( fin ) -> tm  :=
@@ -80,6 +95,9 @@ Fixpoint subst_tm   (sigmatm : ( fin ) -> tm ) (s : tm ) : tm  :=
     | tEq  s0 s1 s2 s3 => tEq  ((fun x => x) s0) ((subst_tm sigmatm) s1) ((subst_tm sigmatm) s2) ((subst_tm sigmatm) s3)
     | tJ  s0 s1 s2 => tJ  ((subst_tm (up_tm_tm (up_tm_tm sigmatm))) s0) ((subst_tm sigmatm) s1) ((subst_tm sigmatm) s2)
     | tRefl   => tRefl 
+    | tSig  s0 s1 s2 => tSig  ((fun x => x) s0) ((subst_tm sigmatm) s1) ((subst_tm (up_tm_tm sigmatm)) s2)
+    | tPack  s0 s1 s2 => tPack  ((fun x => x) s0) ((subst_tm sigmatm) s1) ((subst_tm sigmatm) s2)
+    | tLet  s0 s1 s2 s3 => tLet  ((fun x => x) s0) ((fun x => x) s1) ((subst_tm sigmatm) s2) ((subst_tm (up_tm_tm (up_tm_tm sigmatm))) s3)
     end.
 
 Definition upId_tm_tm  (sigma : ( fin ) -> tm ) (Eq : forall x, sigma x = (var_tm ) x) : forall x, (up_tm_tm sigma) x = (var_tm ) x :=
@@ -100,6 +118,9 @@ Fixpoint idSubst_tm  (sigmatm : ( fin ) -> tm ) (Eqtm : forall x, sigmatm x = (v
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm sigmatm Eqtm) s2) ((idSubst_tm sigmatm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((idSubst_tm (up_tm_tm (up_tm_tm sigmatm)) (upId_tm_tm (_) (upId_tm_tm (_) Eqtm))) s0) ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm sigmatm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm (up_tm_tm sigmatm) (upId_tm_tm (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm sigmatm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((idSubst_tm sigmatm Eqtm) s2) ((idSubst_tm (up_tm_tm (up_tm_tm sigmatm)) (upId_tm_tm (_) (upId_tm_tm (_) Eqtm))) s3)
     end.
 
 Definition upExtRen_tm_tm   (xi : ( fin ) -> fin) (zeta : ( fin ) -> fin) (Eq : forall x, xi x = zeta x) : forall x, (upRen_tm_tm xi) x = (upRen_tm_tm zeta) x :=
@@ -120,6 +141,9 @@ Fixpoint extRen_tm   (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (Eqtm : f
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm xitm zetatm Eqtm) s2) ((extRen_tm xitm zetatm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((extRen_tm (upRen_tm_tm (upRen_tm_tm xitm)) (upRen_tm_tm (upRen_tm_tm zetatm)) (upExtRen_tm_tm (_) (_) (upExtRen_tm_tm (_) (_) Eqtm))) s0) ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm xitm zetatm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upExtRen_tm_tm (_) (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm xitm zetatm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((extRen_tm xitm zetatm Eqtm) s2) ((extRen_tm (upRen_tm_tm (upRen_tm_tm xitm)) (upRen_tm_tm (upRen_tm_tm zetatm)) (upExtRen_tm_tm (_) (_) (upExtRen_tm_tm (_) (_) Eqtm))) s3)
     end.
 
 Definition upExt_tm_tm   (sigma : ( fin ) -> tm ) (tau : ( fin ) -> tm ) (Eq : forall x, sigma x = tau x) : forall x, (up_tm_tm sigma) x = (up_tm_tm tau) x :=
@@ -140,6 +164,9 @@ Fixpoint ext_tm   (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm ) (Eqtm : fo
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm sigmatm tautm Eqtm) s2) ((ext_tm sigmatm tautm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((ext_tm (up_tm_tm (up_tm_tm sigmatm)) (up_tm_tm (up_tm_tm tautm)) (upExt_tm_tm (_) (_) (upExt_tm_tm (_) (_) Eqtm))) s0) ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm sigmatm tautm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (upExt_tm_tm (_) (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm sigmatm tautm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((ext_tm sigmatm tautm Eqtm) s2) ((ext_tm (up_tm_tm (up_tm_tm sigmatm)) (up_tm_tm (up_tm_tm tautm)) (upExt_tm_tm (_) (_) (upExt_tm_tm (_) (_) Eqtm))) s3)
     end.
 
 Definition up_ren_ren_tm_tm    (xi : ( fin ) -> fin) (tau : ( fin ) -> fin) (theta : ( fin ) -> fin) (Eq : forall x, ((funcomp) tau xi) x = theta x) : forall x, ((funcomp) (upRen_tm_tm tau) (upRen_tm_tm xi)) x = (upRen_tm_tm theta) x :=
@@ -157,6 +184,9 @@ Fixpoint compRenRen_tm    (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (rho
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm xitm zetatm rhotm Eqtm) s2) ((compRenRen_tm xitm zetatm rhotm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((compRenRen_tm (upRen_tm_tm (upRen_tm_tm xitm)) (upRen_tm_tm (upRen_tm_tm zetatm)) (upRen_tm_tm (upRen_tm_tm rhotm)) (up_ren_ren (_) (_) (_) (up_ren_ren (_) (_) (_) Eqtm))) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm xitm zetatm rhotm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upRen_tm_tm rhotm) (up_ren_ren (_) (_) (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm xitm zetatm rhotm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((compRenRen_tm xitm zetatm rhotm Eqtm) s2) ((compRenRen_tm (upRen_tm_tm (upRen_tm_tm xitm)) (upRen_tm_tm (upRen_tm_tm zetatm)) (upRen_tm_tm (upRen_tm_tm rhotm)) (up_ren_ren (_) (_) (_) (up_ren_ren (_) (_) (_) Eqtm))) s3)
     end.
 
 Definition up_ren_subst_tm_tm    (xi : ( fin ) -> fin) (tau : ( fin ) -> tm ) (theta : ( fin ) -> tm ) (Eq : forall x, ((funcomp) tau xi) x = theta x) : forall x, ((funcomp) (up_tm_tm tau) (upRen_tm_tm xi)) x = (up_tm_tm theta) x :=
@@ -177,6 +207,9 @@ Fixpoint compRenSubst_tm    (xitm : ( fin ) -> fin) (tautm : ( fin ) -> tm ) (th
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm xitm tautm thetatm Eqtm) s2) ((compRenSubst_tm xitm tautm thetatm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((compRenSubst_tm (upRen_tm_tm (upRen_tm_tm xitm)) (up_tm_tm (up_tm_tm tautm)) (up_tm_tm (up_tm_tm thetatm)) (up_ren_subst_tm_tm (_) (_) (_) (up_ren_subst_tm_tm (_) (_) (_) Eqtm))) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm xitm tautm thetatm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm (upRen_tm_tm xitm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_ren_subst_tm_tm (_) (_) (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm xitm tautm thetatm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((compRenSubst_tm xitm tautm thetatm Eqtm) s2) ((compRenSubst_tm (upRen_tm_tm (upRen_tm_tm xitm)) (up_tm_tm (up_tm_tm tautm)) (up_tm_tm (up_tm_tm thetatm)) (up_ren_subst_tm_tm (_) (_) (_) (up_ren_subst_tm_tm (_) (_) (_) Eqtm))) s3)
     end.
 
 Definition up_subst_ren_tm_tm    (sigma : ( fin ) -> tm ) (zetatm : ( fin ) -> fin) (theta : ( fin ) -> tm ) (Eq : forall x, ((funcomp) (ren_tm zetatm) sigma) x = theta x) : forall x, ((funcomp) (ren_tm (upRen_tm_tm zetatm)) (up_tm_tm sigma)) x = (up_tm_tm theta) x :=
@@ -197,6 +230,9 @@ Fixpoint compSubstRen_tm    (sigmatm : ( fin ) -> tm ) (zetatm : ( fin ) -> fin)
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((compSubstRen_tm (up_tm_tm (up_tm_tm sigmatm)) (upRen_tm_tm (upRen_tm_tm zetatm)) (up_tm_tm (up_tm_tm thetatm)) (up_subst_ren_tm_tm (_) (_) (_) (up_subst_ren_tm_tm (_) (_) (_) Eqtm))) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm (up_tm_tm sigmatm) (upRen_tm_tm zetatm) (up_tm_tm thetatm) (up_subst_ren_tm_tm (_) (_) (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2) ((compSubstRen_tm (up_tm_tm (up_tm_tm sigmatm)) (upRen_tm_tm (upRen_tm_tm zetatm)) (up_tm_tm (up_tm_tm thetatm)) (up_subst_ren_tm_tm (_) (_) (_) (up_subst_ren_tm_tm (_) (_) (_) Eqtm))) s3)
     end.
 
 Definition up_subst_subst_tm_tm    (sigma : ( fin ) -> tm ) (tautm : ( fin ) -> tm ) (theta : ( fin ) -> tm ) (Eq : forall x, ((funcomp) (subst_tm tautm) sigma) x = theta x) : forall x, ((funcomp) (subst_tm (up_tm_tm tautm)) (up_tm_tm sigma)) x = (up_tm_tm theta) x :=
@@ -217,6 +253,9 @@ Fixpoint compSubstSubst_tm    (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm 
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((compSubstSubst_tm (up_tm_tm (up_tm_tm sigmatm)) (up_tm_tm (up_tm_tm tautm)) (up_tm_tm (up_tm_tm thetatm)) (up_subst_subst_tm_tm (_) (_) (_) (up_subst_subst_tm_tm (_) (_) (_) Eqtm))) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_subst_subst_tm_tm (_) (_) (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2) ((compSubstSubst_tm (up_tm_tm (up_tm_tm sigmatm)) (up_tm_tm (up_tm_tm tautm)) (up_tm_tm (up_tm_tm thetatm)) (up_subst_subst_tm_tm (_) (_) (_) (up_subst_subst_tm_tm (_) (_) (_) Eqtm))) s3)
     end.
 
 Definition rinstInst_up_tm_tm   (xi : ( fin ) -> fin) (sigma : ( fin ) -> tm ) (Eq : forall x, ((funcomp) (var_tm ) xi) x = sigma x) : forall x, ((funcomp) (var_tm ) (upRen_tm_tm xi)) x = (up_tm_tm sigma) x :=
@@ -237,6 +276,9 @@ Fixpoint rinst_inst_tm   (xitm : ( fin ) -> fin) (sigmatm : ( fin ) -> tm ) (Eqt
     | tEq  s0 s1 s2 s3 => congr_tEq eq_refl ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm xitm sigmatm Eqtm) s2) ((rinst_inst_tm xitm sigmatm Eqtm) s3)
     | tJ  s0 s1 s2 => congr_tJ ((rinst_inst_tm (upRen_tm_tm (upRen_tm_tm xitm)) (up_tm_tm (up_tm_tm sigmatm)) (rinstInst_up_tm_tm (_) (_) (rinstInst_up_tm_tm (_) (_) Eqtm))) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm xitm sigmatm Eqtm) s2)
     | tRefl   => congr_tRefl 
+    | tSig  s0 s1 s2 => congr_tSig eq_refl ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm (upRen_tm_tm xitm) (up_tm_tm sigmatm) (rinstInst_up_tm_tm (_) (_) Eqtm)) s2)
+    | tPack  s0 s1 s2 => congr_tPack eq_refl ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm xitm sigmatm Eqtm) s2)
+    | tLet  s0 s1 s2 s3 => congr_tLet eq_refl eq_refl ((rinst_inst_tm xitm sigmatm Eqtm) s2) ((rinst_inst_tm (upRen_tm_tm (upRen_tm_tm xitm)) (up_tm_tm (up_tm_tm sigmatm)) (rinstInst_up_tm_tm (_) (_) (rinstInst_up_tm_tm (_) (_) Eqtm))) s3)
     end.
 
 Lemma rinstInst_tm   (xitm : ( fin ) -> fin) : ren_tm xitm = subst_tm ((funcomp) (var_tm ) xitm) .
@@ -279,6 +321,12 @@ Lemma renRen'_tm    (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) : (funcomp
 Proof. exact ((FunctionalExtensionality.functional_extensionality _ _ ) (fun n => renRen_tm xitm zetatm n)). Qed.
 
 End tm.
+
+
+
+
+
+
 
 
 

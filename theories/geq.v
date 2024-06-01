@@ -50,7 +50,26 @@ Module Type geq_sig
     IOk Ξ ℓ t ->
     IOk Ξ ℓp p ->
     (* --------------- *)
-    IOk Ξ ℓ (tJ C t p).
+    IOk Ξ ℓ (tJ C t p)
+
+  | IO_Sig ℓ0 A B :
+    IOk Ξ ℓ A ->
+    IOk (ℓ0 :: Ξ) ℓ B ->
+    (* --------------- *)
+    IOk Ξ ℓ (tSig ℓ0 A B)
+
+  | IO_Pack ℓ0 a b :
+    IOk Ξ ℓ0 a ->
+    IOk Ξ ℓ b ->
+    (* --------------- *)
+    IOk Ξ ℓ (tPack ℓ0 a b)
+
+  | IO_Let ℓ0 ℓ1 a b :
+    ℓ1 ⊆ ℓ ->
+    IOk Ξ ℓ1 a ->
+    IOk (ℓ1::ℓ0::Ξ) ℓ b ->
+    (* -------------------- *)
+    IOk Ξ ℓ (tLet ℓ0 ℓ1 a b).
 
   Inductive IEq (Ξ : econtext) (ℓ : T) : tm -> tm -> Prop :=
   | I_Var i ℓ0 :
@@ -93,6 +112,24 @@ Module Type geq_sig
     IEq Ξ ℓ p0 p1 ->
     (* --------------- *)
     IEq Ξ ℓ (tJ C0 t0 p0) (tJ C1 t1 p1)
+  | I_Sig ℓ0 A0 B0 A1 B1 :
+    IEq Ξ ℓ A0 A1 ->
+    IEq (ℓ0 :: Ξ) ℓ B0 B1 ->
+    (* --------------- *)
+    IEq Ξ ℓ (tSig ℓ0 A0 B0) (tSig ℓ0 A1 B1)
+
+  | I_Pack ℓ0 a0 b0 a1 b1 :
+    GIEq Ξ ℓ ℓ0 a0 a1 ->
+    IEq Ξ ℓ b0 b1 ->
+    (* --------------- *)
+    IEq Ξ ℓ (tPack ℓ0 a0 b0) (tPack ℓ0 a1 b1)
+
+  | I_Let ℓ0 ℓ1 a0 b0 a1 b1 :
+    IEq Ξ ℓ a0 a1 ->
+    IEq (ℓ1::ℓ0::Ξ) ℓ b0 b1 ->
+    (* -------------------- *)
+    IEq Ξ ℓ (tLet ℓ0 ℓ1 a0 b0) (tLet ℓ0 ℓ1 a1 b1)
+
   with GIEq (Ξ : econtext) (ℓ : T) : T -> tm -> tm -> Prop :=
   | GI_Dist ℓ0 A B :
     ℓ0 ⊆ ℓ ->
@@ -150,8 +187,8 @@ Module geq_facts
            IOk Δ ℓ a⟨ρ⟩.
   Proof.
     elim : Ξ ℓ a / h;
-      hauto lq:on rew:off ctrs:IOk use:iok_ren_ok_suc, iok_subsumption
-                                         unfold:elookup, iok_ren_ok.
+      try hauto lq:on rew:off ctrs:IOk use:iok_ren_ok_suc, iok_subsumption
+                                                             unfold:elookup, iok_ren_ok.
   Qed.
 
   Lemma iok_subst_ok_suc ρ Ξ Δ (h : iok_subst_ok ρ Ξ Δ) :
