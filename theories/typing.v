@@ -111,14 +111,14 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* ----------------------- *)
   Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ (tUniv i)
 
-| T_J Γ t a b p A i j C ℓ ℓp ℓA ℓC ℓ0 ℓ1:
+(* Refactor the equality to include the grade for the term *)
+| T_J Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1:
   ℓp ⊆ ℓ ->
-  ℓ0 ⊆ ℓC ->
   Γ ⊢ a ; ℓ1 ∈ A ->
   Γ ⊢ b ; ℓ1 ∈ A ->
   Γ ⊢ A ; ℓA ∈ (tUniv j) ->
   Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) ->
-  ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓC ∈ (tUniv i) ->
+  ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) ->
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
   Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..])
 

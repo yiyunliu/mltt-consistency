@@ -447,20 +447,20 @@ Proof. hauto lq:on rew:off inv:rtc use:Pars_univ_inv. Qed.
 (*   (tInd a b c  ⇒* t). *)
 (* Proof. move => > <-. apply P_IndSuc_star. Qed. *)
 
-(* Lemma P_JRefl_star t a b p : *)
-(*   (p ⇒* tRefl)  -> *)
-(*   ((tJ t a b p) ⇒* t). *)
-(* Proof. *)
-(*   move E : tRefl => v h. *)
-(*   move : E. *)
-(*   elim : p v / h. *)
-(*   - move => *. subst. *)
-(*     apply rtc_once. apply P_JRefl. apply Par_refl. *)
-(*   - move => x y z h0 h1 ih ?; subst. *)
-(*     move /(_ ltac:(done)) in ih. *)
-(*     apply : rtc_l; eauto. *)
-(*     apply P_J; sfirstorder use:Par_refl. *)
-(* Qed. *)
+Lemma P_JRefl_star C t p :
+  (p ⇒* tRefl)  ->
+  ((tJ C t p) ⇒* t).
+Proof.
+  move E : tRefl => v h.
+  move : E.
+  elim : p v / h.
+  - move => *. subst.
+    apply rtc_once. apply P_JRefl. apply Par_refl.
+  - move => x y z h0 h1 ih ?; subst.
+    move /(_ ltac:(done)) in ih.
+    apply : rtc_l; eauto.
+    apply P_J; sfirstorder use:Par_refl.
+Qed.
 
 (* Lemma P_LetPack_star t a b c : *)
 (*   t ⇒* tPack a b -> *)

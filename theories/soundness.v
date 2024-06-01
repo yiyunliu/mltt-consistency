@@ -12,6 +12,9 @@ Module soundness
 Module pfacts := par_facts lattice syntax par.
 Import pfacts.
 
+Module lfacts := Lattice.All.Properties lattice.
+Import lfacts.
+
 (* Semantic substitution well-formedness *)
 (* Try use the existential version of ρ_ok and then derive the universal version of ρ_ok as a lemma *)
 Definition ρ_ok Γ Δ ρ := forall i ℓ A, lookup i Γ ℓ A -> exists m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA /\ PA ℓ (ρ i).
@@ -461,48 +464,57 @@ Proof.
     + have /typing_iok : Γ ⊢ tEq ℓ0 a b A ; ℓ ∈ tUniv i by hauto l:on use:T_Eq.
       hauto lq:on ctrs:IEq use:cfacts.ifacts.iok_morphing, cfacts.iconv_subst, ρ_ok_iok.
     + eexists => //=. apply InterpUnivN_Eq.
-  - move => Γ t a b p A i j C ℓ ℓp ℓA ℓC ℓ0 ℓ1 ? ?.
+  - move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ?.
     move => _ha ha _hb hb hA ihA _hp hp hC ihC _t ht.
   (* (* J *) *)
     (* - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht ρ hρ. *)
     move => Δ ρ hρ.
     move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
-    move  /InterpUnivN_Eq_inv : hPA hp => ->[?][?]?{PA}.
+    move  /InterpUnivN_Eq_inv : hPA hp => ->[?][?]hab{PA}.
     move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
     exists k, PA.
     split.
-  (*   move : hp. *)
-  (*   move =>[[hp hco] | ?]. *)
-  (*   + exists k, PA. *)
-  (*     split. *)
-  (*     * asimpl in hPA. *)
-  (*       apply : InterpUnivN_Coherent; eauto. *)
-  (*       rewrite /Coherent. *)
-  (*       case : hco => ab ?. *)
-  (*       exists (subst_tm (tRefl .: (ab .: ρ)) C). *)
-  (*       split. *)
-  (*       ** apply Pars_morphing_star; last by apply rtc_refl. *)
-  (*          apply good_Pars_morphing_ext2; *)
-  (*            hauto lq:on ctrs:rtc. *)
-  (*       ** apply Pars_morphing_star; last by apply rtc_refl. *)
-  (*          apply good_Pars_morphing_ext2. apply rtc_refl. *)
-  (*          tauto. apply rtc_refl. *)
-  (*     * asimpl. *)
-  (*       eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto. *)
-  (*       sfirstorder use: P_JRefl_star. *)
-  (*   + asimpl. *)
-  (*     move /(_ (subst_tm ρ p .: (subst_tm ρ b .: ρ))) : hC. *)
-  (*     case. *)
-  (*     * eapply ρ_ok_cons with (i := 0). *)
-  (*       asimpl. *)
-  (*       apply InterpUnivN_Eq; eauto. *)
-  (*       right. auto. *)
-  (*       move : hb (hρ). move/[apply]. *)
-  (*       move => [i0 [PA0 hb0]]. *)
-  (*       hauto l:on use:ρ_ok_cons. *)
-  (*     * move => PC hPC. *)
-  (*       exists i, PC. split; first tauto. *)
-  (*       qauto l:on use:adequacy,wne_j unfold:CR. *)
+    + move : hPA. asimpl.
+      move /InterpUnivN_Conv. apply.
+      rewrite /conv.
+      move /typing_iok in hC.
+      exists ℓ0.
+      rewrite /iconv in hab *.
+      move : hab => [a'][b']hab.
+      exists C[tRefl .: (b' .: ρ)], C[tRefl .: (a' .: ρ)].
+      repeat split.
+      * apply : Pars_morphing_star; auto using rtc_refl.
+        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
+      * apply : Pars_morphing_star; auto using rtc_refl.
+        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
+      * simpl in hC.
+        move /cfacts.ifacts.iok_ieq  : hC => /[dup] hC.
+        move  /(_ ℓ0 ltac:(by rewrite meet_idempotent)) /(proj1 (cfacts.ifacts.ieq_morphing_mutual _ _)).
+        apply.
+        rewrite /cfacts.ifacts.ieq_good_morphing.
+        rewrite /elookup.
+        case => //=.
+        ** move => ℓ2 [*]. subst.
+           apply cfacts.ifacts.ieq_gieq.
+           hauto lq:on ctrs:IEq.
+        ** case => ℓ2 //=.
+           *** move => [?]. subst.
+               case : (sub_eqdec ℓ2 ℓ0).
+               move => ?.
+               apply GI_Dist=>//.
+               apply cfacts.ifacts.ieq_sym_mutual. tauto.
+               move => ?. apply GI_InDist=>//.
+           *** suff : iok_subst_ok ρ (c2e Γ) (c2e Δ).
+               rewrite /iok_subst_ok.
+               rewrite /elookup.
+               sauto lq:on rew:off use:cfacts.ifacts.iok_gieq.
+               hauto l:on use:ρ_ok_iok.
+    + asimpl.
+      eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
+      apply : IO_J; eauto.
+      move /typing_iok : _t.
+      hauto lq:on use:ρ_ok_iok, cfacts.ifacts.iok_morphing.
+      sfirstorder use: P_JRefl_star.
   (* (* Sig *) *)
 
   (* Nil *)
@@ -516,6 +528,8 @@ Lemma consistency ℓ a : ~ nil ⊢ a ; ℓ ∈ tVoid.
   have := (ρ_ok_nil var_tm) => /[swap]/[apply].
   sfirstorder use:InterpUnivN_Void_inv.
 Qed.
+
+Print Assumptions consistency.
 
 (* Lemma mltt_normalizing Γ a A : Γ ⊢ a ∈ A -> wn a /\ wn A. *)
 (* Proof. *)

@@ -204,8 +204,8 @@ Module geq_facts
       hauto lq:on ctrs:IEq.
   Qed.
 
-  Lemma ieq_gieq Ξ ℓ ℓ0 a (h : forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a a) :
-    GIEq Ξ ℓ0 ℓ a a.
+  Lemma ieq_gieq Ξ ℓ ℓ0 a b (h : forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a b) :
+    GIEq Ξ ℓ0 ℓ a b.
   Proof.
     case : (sub_eqdec ℓ ℓ0).
     - firstorder using GI_Dist.
