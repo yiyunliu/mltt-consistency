@@ -187,8 +187,7 @@ Module geq_facts
            IOk Δ ℓ a⟨ρ⟩.
   Proof.
     elim : Ξ ℓ a / h;
-      try hauto lq:on rew:off ctrs:IOk use:iok_ren_ok_suc, iok_subsumption
-                                                             unfold:elookup, iok_ren_ok.
+      qauto l:on ctrs:IOk use:IO_Let use:iok_ren_ok_suc, iok_subsumption unfold:elookup, iok_ren_ok.
   Qed.
 
   Lemma iok_subst_ok_suc ρ Ξ Δ (h : iok_subst_ok ρ Ξ Δ) :
@@ -210,7 +209,7 @@ Module geq_facts
     forall Δ ρ, iok_subst_ok ρ Ξ Δ  ->
            IOk Δ ℓ a[ρ].
   Proof.
-    elim : Ξ ℓ a / h; hauto lq:on rew:off ctrs:IOk use:iok_subst_ok_suc, iok_subsumption unfold:iok_subst_ok, elookup.
+    elim : Ξ ℓ a / h; qauto l:on ctrs:IOk use:iok_subst_ok_suc, iok_subsumption unfold:iok_subst_ok, elookup.
   Qed.
 
   Lemma iok_subst Ξ ℓ ℓ0 a b (h : IOk Ξ ℓ0 a)
@@ -239,6 +238,9 @@ Module geq_facts
     - move => Ξ ℓ ℓ0 a b A hℓ ha iha hb ihb hA ihA ℓ1 hℓ'.
       have : ℓ0 ⊆ ℓ1 by eauto using leq_trans.
       hauto lq:on ctrs:IEq.
+    - move => Ξ ℓ ℓ0 a b ha iha hb ihb ℓ1 ?.
+      apply I_Pack; eauto.
+      case : (sub_eqdec ℓ0 ℓ1) => //; hauto l:on ctrs:GIEq.
   Qed.
 
   Lemma ieq_gieq Ξ ℓ ℓ0 a b (h : forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a b) :
@@ -336,8 +338,11 @@ Proof.
   - hauto lq: on inv: GIEq lqb:on unfold:ieq_good_morphing.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
+  (* TODO: generalize ieq morphing helper *)
+  - admit.
   - hauto lq:on ctrs:GIEq unfold:ieq_good_morphing.
-Qed.
+Admitted.
 
 Lemma ieq_morphing_iok Ξ Δ ℓ a b (h : IEq Ξ ℓ a b) ρ
   (hρ : forall i ℓ0, elookup i Ξ ℓ0 -> IOk Δ ℓ0 (ρ i)) :
