@@ -17,6 +17,10 @@ Definition ProdSpace Ξ ℓ0 (PA : T -> tm -> Prop) (PF : tm -> (T -> tm -> Prop
   IOk Ξ ℓ b /\
   forall a PB, PA ℓ0 a -> PF a PB -> PB ℓ (tApp b ℓ0 a).
 
+Definition SumSpace Ξ ℓ0 (PA : T -> tm -> Prop) (PF : tm -> (T -> tm -> Prop) -> Prop)ℓ (t : tm) :=
+  IOk Ξ ℓ t /\
+  exists a b, t ⇒* tPack ℓ0 a b /\ PA ℓ0 a /\ (forall PB, PF a PB -> PB ℓ b).
+
 (* Logical Relation:
 
   InterpUnivN i A P  holds when
@@ -43,6 +47,11 @@ Inductive InterpExt Ξ i (I : nat -> tm -> Prop) : tm -> (T -> tm -> Prop) -> Pr
   InterpExt Ξ i I tVoid (fun _ _ => False)
 | InterpExt_Eq ℓ0 a b A :
   InterpExt Ξ i I (tEq ℓ0 a b A) (fun ℓ p => IOk Ξ ℓ p /\ p ⇒* tRefl /\ iconv Ξ ℓ0 a b)
+| InterpExt_Sig ℓ0 A B PA PF :
+  InterpExt Ξ i I A PA ->
+  (forall a, PA ℓ0 a -> exists PB, PF a PB) ->
+  (forall a PB, PA ℓ0 a -> PF a PB -> InterpExt Ξ i I B[a..] PB) ->
+  InterpExt Ξ i I (tSig ℓ0 A B) (SumSpace Ξ ℓ0 PA PF)
 | InterpExt_Step A A0 PA :
   (A ⇒ A0) ->
   InterpExt Ξ i I A0 PA ->
