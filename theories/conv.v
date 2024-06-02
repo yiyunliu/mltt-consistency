@@ -37,6 +37,19 @@ Proof.
       apply : iok_subst; eauto.
       have /iha : tAbs ℓ0 a0 ⇒ tAbs ℓ0 a1 by eauto with par.
       by inversion 1.
+  (* Let *)
+  - move => Ξ ℓ ℓ0 ℓ1 a b ? ha iha hb ihb ?.
+    elim /Par_inv=>//_.
+    + hauto lq:on ctrs:IOk.
+    + move => ? ℓ2 a0 b0 c0 a1 b1 c1 ? ? ? [*]. subst.
+      apply : iok_morphing; eauto.
+      rewrite /iok_subst_ok.
+      have /iha {}iha  : tPack ℓ0 a0 b0 ⇒ tPack ℓ0 a1 b1 by eauto with par. inversion iha.
+      case; rewrite /elookup //=.
+      * scongruence.
+      * case => /=.
+        scongruence.
+        sfirstorder use:meet_idempotent,IO_Var.
 Qed.
 
 Lemma simulation : forall Ξ ℓ,
@@ -89,7 +102,35 @@ Proof.
       exists (tJ C1 t' p').
       hauto lq:on ctrs:IEq, Par use:Par_refl.
     + move => ? t2 t3 + [*]. subst.
-      qauto l:on ctrs:Par, IEq inv:Par, IEq.
+      have ? : p1 = tRefl by qauto l:on inv:IEq. subst.
+      hauto l:on ctrs:Par, IEq.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - hauto lq:on ctrs:IEq, Par inv:Par, IEq.
+  - move => Ξ ℓ ℓ0 ℓ1 a0 b0 a1 b1 ha iha hb ihb a'.
+    elim /Par_inv => //= _.
+    + hauto lq:on ctrs:IEq, Par.
+    + move => ? ? a2 b2 c0 a3 b3 c1 ? ? hbc [*]. subst.
+      elim /IEq_inv : ha=>//= hp ℓ2 a0 b4 a4 b5 ? ? [*]. subst.
+      have /iha : tPack ℓ0 a2 b2 ⇒ tPack ℓ0 a3 b3 by auto using P_Pack.
+      move => [b'][hp'].
+      elim /IEq_inv=>//= _ ℓ2 a0 b4 a1 b6 ? ? [*]. subst.
+      move /ihb : hbc.
+      have {hp}[? ?] : a4 ⇒ a1 /\ b5 ⇒ b6 by inversion hp'.
+      move => [b'][?]?.
+      exists (b'[b6.:a1..]).
+      split. by eauto using P_LetPack.
+      eapply ieq_morphing_mutual; eauto.
+      case => [|i]//=.
+      * rewrite /elookup => //=.
+        move => ℓ2 [*]. subst.
+        case : (lprop.sub_eqdec ℓ2 ℓ) => ?;
+               by eauto with ieq.
+      * move => ℓ2.
+        rewrite /elookup//=.
+        case : i=>[|i]//=.
+        scongruence.
+        case : (lprop.sub_eqdec ℓ2 ℓ) => ?;
+               by eauto with ieq.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
 

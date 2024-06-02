@@ -326,6 +326,11 @@ Proof.
     sfirstorder use:ieq_weakening_mutual unfold:ieq_good_renaming.
 Qed.
 
+Lemma ieq_morphing_helper2 ℓ ℓ0 ℓ1 ξ0 ξ1 Ξ Δ :
+  ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
+  ieq_good_morphing ℓ (up_tm_tm (up_tm_tm ξ0)) (up_tm_tm (up_tm_tm ξ1)) (ℓ1 :: (ℓ0 :: Ξ)) (ℓ1 :: (ℓ0 :: Δ)).
+Proof. hauto lq:on use:ieq_morphing_helper. Qed.
+
 Lemma ieq_morphing_mutual : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
             forall ξ0 ξ1 Δ, ieq_good_morphing ℓ ξ0 ξ1 Ξ Δ ->
@@ -339,10 +344,9 @@ Proof.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
   - hauto lq:on ctrs:IEq use:ieq_morphing_helper.
-  (* TODO: generalize ieq morphing helper *)
-  - admit.
+  - hauto lq:on ctrs:IEq use:ieq_morphing_helper2.
   - hauto lq:on ctrs:GIEq unfold:ieq_good_morphing.
-Admitted.
+Qed.
 
 Lemma ieq_morphing_iok Ξ Δ ℓ a b (h : IEq Ξ ℓ a b) ρ
   (hρ : forall i ℓ0, elookup i Ξ ℓ0 -> IOk Δ ℓ0 (ρ i)) :
