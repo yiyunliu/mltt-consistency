@@ -617,6 +617,13 @@ Proof.
     + sfirstorder.
 Qed.
 
+Lemma InterpUnivN_Sig_inv_nopf Ξ i ℓ0 A B P  (h : InterpUnivN Ξ i (tSig ℓ0 A B) P) :
+  exists (PA : T -> tm -> Prop),
+     ⟦ Ξ ⊨ A ⟧ i ↘ PA /\
+    (forall a, PA ℓ0 a -> exists PB, ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB) /\
+      P = SumSpace Ξ ℓ0 PA (fun a PB => ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB).
+Proof. hauto l:on use:InterpExt_Sig_inv_nopf rew:db:InterpUniv. Qed.
+
 Lemma InterpUnivN_Univ_inv Ξ i j P :
   ⟦ Ξ ⊨ tUniv j ⟧ i ↘ P ->
   P = (fun ℓ0 A => IOk Ξ ℓ0 A /\ exists PA, InterpUnivN Ξ j A PA) /\ j < i.

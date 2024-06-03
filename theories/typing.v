@@ -122,7 +122,7 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
   Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..])
 
-| T_Sig Γ ℓ i ℓ0 A B :
+| T_Sig Γ i ℓ ℓ0 A B :
   Γ ⊢ A ; ℓ ∈ (tUniv i) ->
   ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i) ->
   (* --------------------- *)

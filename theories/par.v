@@ -488,20 +488,20 @@ Proof.
     apply P_J; sfirstorder use:Par_refl.
 Qed.
 
-(* Lemma P_LetPack_star t a b c : *)
-(*   t ⇒* tPack a b -> *)
-(*   tLet t c ⇒* c[b .: a ..]. *)
-(* Proof. *)
-(*   move E : (tPack a b) => v h. *)
-(*   move : a b c E. *)
-(*   elim:t v/h. *)
-(*   - move => *. subst. *)
-(*     apply rtc_once. apply P_LetPack; apply Par_refl. *)
-(*   - move => t0 t ? h0 h1 ih a b c ?. subst. *)
-(*     specialize ih with (1 := eq_refl). *)
-(*     apply : rtc_l; eauto. *)
-(*     apply P_Let=>//. apply Par_refl. *)
-(* Qed. *)
+Lemma P_LetPack_star t ℓ0 ℓ1 a b c :
+  t ⇒* tPack ℓ0 a b ->
+  tLet ℓ0 ℓ1 t c ⇒* c[b .: a ..].
+Proof.
+  move E : (tPack ℓ0 a b) => v h.
+  move : a b c E.
+  elim:t v/h.
+  - move => *. subst.
+    apply rtc_once. apply P_LetPack; apply Par_refl.
+  - move => t0 t ? h0 h1 ih a b c ?. subst.
+    specialize ih with (1 := eq_refl).
+    apply : rtc_l; eauto.
+    apply P_Let=>//. apply Par_refl.
+Qed.
 
 (* ------------------------------------------------------------ *)
 

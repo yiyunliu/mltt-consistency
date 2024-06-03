@@ -152,6 +152,11 @@ Proof.
     eauto using weakening_Sem.
 Qed.
 
+Lemma wt_ρ_ok_morphing_iok Γ Δ ρ ℓ a A (h : Γ ⊢ a ; ℓ ∈ A) (h0 : ρ_ok Γ Δ ρ) : IOk (c2e Δ) ℓ a[ρ].
+Proof.
+  eauto using cfacts.ifacts.iok_morphing, typing_iok, ρ_ok_iok.
+Qed.
+
 (* Fundamental theorem: Syntactic typing implies semantic typing *)
 Theorem soundness :
   (forall Γ ℓ a A, Wt Γ ℓ a A -> SemWt Γ ℓ a A) /\
@@ -191,9 +196,8 @@ Proof.
     move => [:habs].
     split.
     + abstract : habs.
-      have /typing_iok : Wt Γ ℓ (tAbs ℓ0 b) (tPi ℓ0 A B) by hauto lq:on ctrs:Wt.
-      move /ρ_ok_iok : hρ.
-      by move /cfacts.ifacts.iok_morphing /[apply].
+      suff : Wt Γ ℓ (tAbs ℓ0 b) (tPi ℓ0 A B) by hauto lq:on use:wt_ρ_ok_morphing_iok.
+      qauto l:on ctrs:Wt.
     + move => a PB ha. asimpl => hPB.
       have : ρ_ok ((ℓ0, A) :: Γ) Δ (a .: ρ) by eauto using ρ_ok_cons.
       move /hb.
@@ -515,8 +519,88 @@ Proof.
       move /typing_iok : _t.
       hauto lq:on use:ρ_ok_iok, cfacts.ifacts.iok_morphing.
       sfirstorder use: P_JRefl_star.
-  (* (* Sig *) *)
-
+  (* Sig *)
+  - move => Γ i ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
+    apply SemWt_Univ.
+    move => Ξ ρ hρ.
+    move /(_ Ξ ρ hρ) : h0; intros (? & PA & hPA).
+    split.
+    + have /typing_iok : Wt Γ ℓ (tSig ℓ0 A B) (tUniv i) by hauto lq:on ctrs:Wt.
+      move /ρ_ok_iok : hρ.
+      by move /cfacts.ifacts.iok_morphing /[apply].
+    + eexists => //=.
+      apply InterpUnivN_Sig_nopf; eauto.
+      move => *; asimpl.
+      hauto lq:on use:ρ_ok_cons.
+  (* Pack *)
+  - move => Γ ℓ ℓ0 a A b B ℓT i _ ha _ hb _ /SemWt_Univ hB Δ ρ hρ.
+    move /ha : (hρ) => [m][PA][ha0]ha1.
+    move /hb : (hρ) => [m0][PB][hb0]hb1.
+    move /hB : (hρ) => [hS'][S]/=hS.
+    exists i, S => /=.
+    split => //.
+    move /InterpUnivN_Sig_inv_nopf : hS => [PA0][hPA0][hPB0]?. subst.
+    rewrite /SumSpace.
+    split => //.
+    qauto l:on use:InterpUniv_Ok, IO_Pack.
+    do 2 eexists. split; first by apply rtc_refl.
+    have ? : PA = PA0 by eauto using InterpUnivN_deterministic'. subst.
+    split => // PB0. asimpl.
+    move /hPB0 :ha1.
+    move => [PB1]. asimpl => *.
+    asimpl in hb0.
+    have [*] : PB = PB1 /\ PB0 = PB1 by  eauto using InterpUnivN_deterministic'.
+    congruence.
+  (* Let *)
+  - move => Γ ℓ ℓp ℓ0 t b ℓA ℓB ℓC A B C i ? ? ? ? ? ? ? ht ? hb ? /SemWt_Univ hC Δ ρ hρ.
+    move /ht : (hρ) {ht} => [m][PA][/= /[dup] hSig /InterpUnivN_Sig_inv_nopf].
+    move => [PA0][h0][h1]?. subst.
+    rewrite /SumSpace.
+    case => ?.
+    + move => [a0][b0][h2][h3]h4.
+      have : ρ_ok ((ℓp , tSig ℓ0 A B) :: Γ) Δ ((tPack ℓ0 a0 b0) .: ρ).
+      {
+        apply : ρ_ok_cons; eauto.
+        rewrite /SumSpace.
+        split; last by hauto l:on use:InterpUnivN_Sig_nopf.
+        hauto q:on ctrs:IOk use:InterpUniv_Ok.
+      }
+      move /hC => [?][S] hS {hC}.
+      exists i, S. split=>//.
+      asimpl.
+      move /InterpUnivN_back_preservation_star : (hS). apply.
+      qauto l:on use:Pars_morphing_star,good_Pars_morphing_ext ctrs:rtc.
+      apply : InterpUnivN_back_clos_star; eauto.
+      * suff : exists A, Wt Γ ℓ (tLet ℓ0 ℓp t b) A by hauto lq:on use:wt_ρ_ok_morphing_iok.
+        hauto q:on ctrs:Wt.
+      * apply P_LetPack_star; eauto.
+      * asimpl.
+        have ?: ρ_ok ((ℓ0, A) :: Γ) Δ (a0 .: ρ) by eauto using ρ_ok_cons.
+        move /h1 : (h3) => [PB] /[dup] hPB.
+        move /h4 => ?.
+        asimpl in hPB.
+        have : ρ_ok ((ℓp, B) :: (ℓ0, A) :: Γ) Δ (b0 .: (a0 .: ρ)) by eauto using ρ_ok_cons.
+        move /hb => [m0][PA]. asimpl. move => [hPA] hPA0.
+        by have <- : PA = S by eauto using InterpUnivN_deterministic'.
+    (* + move => h. *)
+    (*   have /hC : ρ_ok (tSig A B :: Γ) (t[ρ] .: ρ) by *)
+    (*     apply : ρ_ok_cons; hauto lq:on use:adequacy. *)
+    (*   move => [S hS]. *)
+    (*   exists i, S. asimpl; split => //. *)
+    (*   set a := (X in S X). *)
+    (*   suff : wne a by hauto q:on use:adequacy. *)
+    (*   subst a. *)
+    (*   apply wne_let=>//. *)
+    (*   have hz : wne (var_tm 0) by hauto lq:on ctrs:rtc. *)
+    (*   have hz' : PA0 (var_tm 0) by move : h0 hz; clear; hauto lq:on use:adequacy unfold:CR. *)
+    (*   apply wn_antirenaming with (ξ := var_zero .: (var_zero .: id)). *)
+    (*   asimpl. *)
+    (*   have hρ' : ρ_ok (A :: Γ) (var_tm 0 .: ρ) by eauto using ρ_ok_cons. *)
+    (*   move /h1 : hz' => [PB /ltac:(asimpl) hPB]. *)
+    (*   have hz'' : PB (var_tm 0) by move : hPB hz; clear; hauto lq:on use:adequacy unfold:CR. *)
+    (*   have : ρ_ok (B :: A :: Γ) (var_tm 0 .: (var_tm 0 .: ρ)) by eauto using ρ_ok_cons. *)
+    (*   move /hb. clear. *)
+    (*   hauto l:on use:adequacy unfold:CR. *)
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)
@@ -528,8 +612,6 @@ Lemma consistency ℓ a : ~ nil ⊢ a ; ℓ ∈ tVoid.
   have := (ρ_ok_nil var_tm) => /[swap]/[apply].
   sfirstorder use:InterpUnivN_Void_inv.
 Qed.
-
-Print Assumptions consistency.
 
 (* Lemma mltt_normalizing Γ a A : Γ ⊢ a ∈ A -> wn a /\ wn A. *)
 (* Proof. *)
