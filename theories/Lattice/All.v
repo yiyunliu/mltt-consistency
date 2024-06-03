@@ -6,10 +6,10 @@ From Equations Require Import Equations.
 From Hammer Require Import Tactics.
 From Ltac2 Require Ltac2.
 
-  Module Type Lattice.
-    Declare Scope lattice_scope.
-    Local Open Scope lattice_scope.
+Declare Scope lattice_scope.
+Local Open Scope lattice_scope.
 
+  Module Type Lattice.
     Parameter T : Set.
     Parameter meet : T -> T -> T.
     Parameter join : T -> T -> T.

@@ -810,3 +810,4 @@ Qed.
 (*   move /InterpUnivN_Eq_inv => [->]_[[_/Coherent_consistent]|[v[/Pars_scope]]]//. *)
 (*   asimpl. move /(_ 0 h). move/ne_scope/[apply]. lia. *)
 (* Qed. *)
+End soundness.
