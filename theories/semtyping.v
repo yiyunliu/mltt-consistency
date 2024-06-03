@@ -102,7 +102,7 @@ Proof.
   - hauto l:on ctrs:InterpExt.
   - hauto l:on ctrs:InterpExt.
   - hauto l:on ctrs:InterpExt.
-  (* - hauto l:on ctrs:InterpExt. *)
+  - hauto l:on ctrs:InterpExt.
 Qed.
 
 Lemma InterpExt_lt_redundant2 Ξ i I A PA
@@ -122,7 +122,7 @@ Proof.
     case : Compare_dec.lt_dec => //.
   - hauto l:on ctrs:InterpExt.
   - hauto l:on ctrs:InterpExt.
-  (* - hauto lq:on ctrs:InterpExt. *)
+  - hauto lq:on ctrs:InterpExt.
   - hauto l:on ctrs:InterpExt.
 Qed.
 
@@ -153,22 +153,21 @@ Proof.
     hauto lq:on rew:off inv:Par ctrs:InterpExt use:Par_subst.
 Qed.
 
-(* Lemma InterpExt_Sig_inv i I A B P *)
-(*   (h :  ⟦ tSig A B ⟧ i , I ↘ P) : *)
-(*   exists (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop), *)
-(*      ⟦ A ⟧ i , I ↘ PA /\ *)
-(*     (forall a, PA a -> exists PB, PF a PB) /\ *)
-(*     (forall a PB, PF a PB -> ⟦ B[a..] ⟧ i , I ↘ PB) /\ *)
-(*     P = SumSpace PA PF. *)
-(* Proof. *)
-(*   move E : (tSig A B) h => T h. *)
-(*   move : A B E. *)
-(*   elim : T P / h => //. *)
-(*   - hauto q:on inv:tm. *)
-(*   - hauto l:on. *)
-(*   - move => *; subst. *)
-(*     hauto lq:on inv:Par ctrs:InterpExt use:Par_subst. *)
-(* Qed. *)
+Lemma InterpExt_Sig_inv Ξ i I ℓ0 A B P
+  (h :  ⟦ Ξ ⊨ tSig ℓ0 A B ⟧ i ; I ↘ P) :
+  exists PA PF,
+     ⟦ Ξ ⊨ A ⟧ i ; I ↘ PA /\
+    (forall a, PA ℓ0 a -> exists PB, PF a PB) /\
+    (forall a PB, PA ℓ0 a -> PF a PB -> ⟦ Ξ ⊨ B[a..] ⟧ i ; I ↘ PB) /\
+    P = SumSpace Ξ ℓ0 PA PF.
+Proof.
+  move E : (tSig ℓ0 A B) h => T h.
+  move : ℓ0 A B E.
+  elim : T P / h => //.
+  - hauto l:on.
+  - move => *; subst.
+    hauto lq:on inv:Par ctrs:InterpExt use:Par_subst.
+Qed.
 
 (* For all of the proofs about InterpUnivN below, we need to
    do them in two steps. Once for InterpExt, and then tie the
@@ -185,13 +184,13 @@ Proof.
   hauto l:on ctrs:InterpExt rew:db:InterpUniv.
 Qed.
 
-(* Lemma InterpUnivN_Sig_nopf i A B PA : *)
-(*   ⟦ A ⟧ i ↘ PA -> *)
-(*   (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ i ↘ PB) -> *)
-(*   ⟦ tSig A B ⟧ i ↘ (SumSpace PA (fun a PB => ⟦ B[a..] ⟧ i ↘ PB)). *)
-(* Proof. *)
-(*   hauto l:on ctrs:InterpExt rew:db:InterpUniv. *)
-(* Qed. *)
+Lemma InterpUnivN_Sig_nopf Ξ i ℓ0 A B PA :
+  ⟦ Ξ ⊨ A ⟧ i ↘ PA ->
+  (forall a, PA ℓ0 a -> exists PB, ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB) ->
+  ⟦ Ξ ⊨ tSig ℓ0 A B ⟧ i ↘ (SumSpace Ξ ℓ0 PA (fun a PB => ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB)).
+Proof.
+  hauto l:on ctrs:InterpExt rew:db:InterpUniv.
+Qed.
 
 (* --------------- relation is cumulative ----------------- *)
 
@@ -263,6 +262,13 @@ Proof.
     split.
     + hauto lq:on use:iconv_par2.
     + hauto q:on ctrs:rtc unfold:iconv .
+  - move => ℓ0 A B PA PF hPA ihPA hPB hPB' ihPB T hT.
+    elim /Par_inv :  hT => //.
+    move => hPar ℓ1 A0 A1 B0 B1 h0 h1 [? ? ?] ?; subst.
+    apply InterpExt_Sig; auto.
+    move => a PB ha hPB0.
+    apply : ihPB; eauto.
+    sfirstorder use:Par_cong, Par_refl.
   - move => A B P h0 h1 ih1 C hC.
     have [D [h2 h3]] := Par_confluent _ _ _ h0 hC.
     hauto lq:on ctrs:InterpExt.
@@ -444,6 +450,14 @@ Proof.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Void_inv.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Eq_inv.
+  - move => ℓ0 A B PA PF hPA ihPA hPB hPB' ihPB P hP.
+    move /InterpExt_Sig_inv : hP.
+    intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.
+    have ? : PA0 = PA by sfirstorder. subst.
+    rewrite /SumSpace.
+    fext => ℓ t.
+    apply propositional_extensionality.
+    hauto lq:on rew:off.
   - hauto l:on use:InterpExt_preservation.
 Qed.
 
@@ -486,6 +500,7 @@ Proof.
   - sfirstorder.
   - sfirstorder.
   - sfirstorder.
+  - hauto lq:on.
 Qed.
 
 Lemma InterpUniv_Ok Ξ i A PA :
@@ -516,6 +531,15 @@ Proof.
     fext => ℓ1 p. apply propositional_extensionality.
     apply ieq_iconv in ha, hb, hA.
     hauto lq:on rew:off use:iconv_trans_heterogeneous_leq, iconv_trans_heterogeneous_leq', iconv_sym.
+  - move => ℓ0 A B PA PF hPA ihPA hTot hRes ihPF ℓ1 T.
+    elim /IEq_inv=>// _ ? A0 A1 B0 B1 h0 h1 [*]. subst.
+    apply InterpExt_Sig; eauto.
+    move => a PB hPF ha.
+    apply : ihPF; eauto.
+    apply:ifacts.ieq_morphing_iok; eauto.
+    case => //=. move => ℓ2. rewrite /elookup //=.
+    hauto l:on use:InterpExt_Ok.
+    sfirstorder use:meet_idempotent, IO_Var unfold:elookup.
   - hauto q:on use:simulation ctrs:InterpExt.
 Qed.
 
@@ -569,38 +593,29 @@ Proof.
   qauto use:InterpExt_Fun_inv_nopf l:on rew:db:InterpUniv.
 Qed.
 
-(* Lemma InterpExt_Sig_inv_nopf i I A B P  (h : InterpExt i I (tSig A B) P) : *)
-(*   exists (PA : tm -> Prop), *)
-(*      ⟦ A ⟧ i , I ↘ PA /\ *)
-(*     (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ i , I ↘ PB) /\ *)
-(*       P = SumSpace PA (fun a PB => ⟦ B[a..] ⟧ i , I ↘ PB). *)
-(* Proof. *)
-(*   move /InterpExt_Sig_inv : h. intros (PA & PF & hPA & hPF & hPF' & ?); subst. *)
-(*   exists PA. repeat split => //. *)
-(*   - sfirstorder. *)
-(*   - fext => b. *)
-(*     apply propositional_extensionality. *)
-(*     split. *)
-(*     + rewrite /SumSpace. *)
-(*       move => []; last by tauto. *)
-(*       move => [a][b0][h0][+]h1. *)
-(*       move/[dup] => ? /hPF. *)
-(*       move => [PB]hPB. *)
-(*       left. *)
-(*       exists a, b0. (repeat split)=>// PB0 ?. *)
-(*       suff : PB0 = PB by hauto lq:on. *)
-(*       eauto using InterpExt_deterministic. *)
-(*     + sfirstorder. *)
-(* Qed. *)
-
-(* Lemma InterpUnivN_Sig_inv_nopf i A B P  (h : InterpUnivN i (tSig A B) P) : *)
-(*   exists (PA : tm -> Prop), *)
-(*     ⟦ A ⟧ i ↘ PA /\ *)
-(*     (forall a, PA a -> exists PB, ⟦ B[a..] ⟧ i ↘ PB) /\ *)
-(*       P = SumSpace PA (fun a PB => ⟦ B[a..] ⟧ i ↘ PB). *)
-(* Proof. *)
-(*   qauto use:InterpExt_Sig_inv_nopf l:on rew:db:InterpUniv. *)
-(* Qed. *)
+Lemma InterpExt_Sig_inv_nopf Ξ i I ℓ0 A B P  (h : InterpExt Ξ i I (tSig ℓ0 A B) P) :
+  exists (PA : T -> tm -> Prop),
+     ⟦ Ξ ⊨ A ⟧ i ; I ↘ PA /\
+    (forall a, PA ℓ0 a -> exists PB, ⟦ Ξ ⊨ B[a..] ⟧ i ; I ↘ PB) /\
+      P = SumSpace Ξ ℓ0 PA (fun a PB => ⟦ Ξ ⊨ B[a..] ⟧ i ; I ↘ PB).
+Proof.
+  move /InterpExt_Sig_inv : h. intros (PA & PF & hPA & hPF & hPF' & ?); subst.
+  exists PA. repeat split => //.
+  - sfirstorder.
+  - fext => ℓ b.
+    apply propositional_extensionality.
+    rewrite /SumSpace.
+    have : forall (P Q0 Q1 : Prop), (Q0 <-> Q1) -> ((P /\ Q0 <-> P /\ Q1)) by tauto.
+    apply.
+    split.
+    + move => [a][b0][h0][+]h1.
+      move/[dup] => ? /hPF.
+      move => [PB]hPB.
+      exists a, b0. (repeat split)=>// PB0 ?.
+      suff : PB0 = PB by hauto lq:on.
+      eauto using InterpExt_deterministic.
+    + sfirstorder.
+Qed.
 
 Lemma InterpUnivN_Univ_inv Ξ i j P :
   ⟦ Ξ ⊨ tUniv j ⟧ i ↘ P ->
@@ -737,6 +752,7 @@ Proof.
     firstorder.
   - sfirstorder.
   - hauto lq:on ctrs:rtc.
+  - hauto lq:on ctrs:InterpExt, rtc unfold:SumSpace.
   - sfirstorder.
 Qed.
 
