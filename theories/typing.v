@@ -122,27 +122,28 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
   Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..])
 
-(* | T_Sig Γ i A B : *)
-(*   Γ ⊢ A ∈ (tUniv i) -> *)
-(*   (A :: Γ) ⊢ B ∈ (tUniv i) -> *)
-(*   (* --------------------- *) *)
-(*   Γ ⊢ (tSig A B) ∈ (tUniv i) *)
+| T_Sig Γ ℓ i ℓ0 A B :
+  Γ ⊢ A ; ℓ ∈ (tUniv i) ->
+  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i) ->
+  (* --------------------- *)
+  Γ ⊢ (tSig ℓ0 A B) ; ℓ ∈ (tUniv i)
 
-(* | T_Pack Γ a A b B i : *)
-(*   Γ ⊢ a ∈ A -> *)
-(*   Γ ⊢ b ∈ B[a..] -> *)
-(*   Γ ⊢ tSig A B ∈ tUniv i -> *)
-(*   (* -------------------- *) *)
-(*   Γ ⊢ tPack a b ∈ tSig A B *)
+| T_Pack Γ ℓ ℓ0 a A b B ℓT i :
+  Γ ⊢ a ; ℓ0 ∈ A ->
+  Γ ⊢ b ; ℓ ∈ B[a..] ->
+  Γ ⊢ tSig ℓ0 A B ; ℓT ∈ tUniv i ->
+  (* -------------------- *)
+  Γ ⊢ tPack ℓ0 a b ; ℓ ∈ tSig ℓ0 A B
 
-(* | T_Let Γ a b A B C i j : *)
-(*   Γ ⊢ A ∈ tUniv j -> *)
-(*   A :: Γ ⊢ B ∈ tUniv j -> *)
-(*   Γ ⊢ a ∈ tSig A B -> *)
-(*   B :: A :: Γ ⊢ b ∈ C[(tPack (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] -> *)
-(*   tSig A B :: Γ ⊢ C ∈ tUniv i -> *)
-(*   (* ----------------------- *) *)
-(*   Γ ⊢ tLet a b ∈ C[a ..] *)
+| T_Let Γ ℓ ℓp ℓ0 a b ℓA ℓB ℓC A B C i j :
+  ℓp ⊆ ℓ ->
+  Γ ⊢ A ; ℓA ∈ tUniv j ->
+  (ℓ0, A) :: Γ ⊢ B ; ℓB ∈ tUniv j ->
+  Γ ⊢ a ; ℓp ∈ tSig ℓ0 A B ->
+  (ℓp, B) :: (ℓ0, A) :: Γ ⊢ b ; ℓ ∈ C[(tPack ℓ0 (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] ->
+  (ℓp, tSig ℓ0 A B) :: Γ ⊢ C ; ℓC ∈ tUniv i ->
+  (* ----------------------- *)
+  Γ ⊢ tLet ℓ0 ℓp a b ; ℓ ∈ C[a ..]
 
 with Wff : context -> Prop :=
 | Wff_nil :
