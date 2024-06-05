@@ -1,4 +1,4 @@
-Require Import conv par geq imports semtyping typing.
+Require Import conv par geq imports semtyping typing typing_conv.
 
 Module soundness
   (Import lattice : Lattice)
@@ -14,6 +14,9 @@ Import pfacts.
 
 Module lfacts := Lattice.All.Properties lattice.
 Import lfacts.
+
+Module tcfacts := typing_conv_facts lattice syntax par ieq conv typing.
+Import tcfacts.
 
 (* Semantic substitution well-formedness *)
 (* Try use the existential version of ρ_ok and then derive the universal version of ρ_ok as a lemma *)
@@ -33,21 +36,6 @@ Definition SemWt Γ ℓ a A := forall Δ ρ, ρ_ok Γ Δ ρ -> exists m PA, ( �
 
 (* Semantic context wellformedness *)
 Definition SemWff Γ := forall i ℓ A, lookup i Γ ℓ A -> exists ℓ0 j, SemWt Γ ℓ0 A (tUniv j).
-
-Lemma lookup_elookup : forall  Γ (i : fin) (ℓ : T) (A : tm),
-      lookup i Γ ℓ A -> elookup i (c2e Γ) ℓ.
-Proof. induction 1; rewrite /elookup //=. Qed.
-
-Lemma elookup_lookup : forall  Γ (i : fin) (ℓ : T),
-    elookup i (c2e Γ) ℓ -> exists A, lookup i Γ ℓ A.
-Proof.
-  elim.
-  - rewrite /elookup //=; by case=>//=.
-  - move => [ℓ0 a] Γ ih [|i] ℓ /= h.
-    + rewrite /elookup //= in h. move : h => [?]. subst.
-      hauto l:on.
-    + hauto lq:on ctrs:lookup.
-Qed.
 
 (* TODO: Fix the order of the arguments of iok_subst_ok *)
 Lemma ρ_ok_iok Γ Δ ρ (h : ρ_ok Γ Δ ρ) :
@@ -112,11 +100,6 @@ Lemma weakening_Sem Γ ℓ ℓ0 ℓ1 a A B i
 Proof.
   apply : renaming_SemWt; eauto.
   hauto lq:on ctrs:lookup unfold:lookup_good_renaming.
-Qed.
-
-Lemma typing_iok Γ ℓ a A (h : Wt Γ ℓ a A) : IOk (c2e Γ) ℓ a.
-Proof.
-  elim : Γ ℓ a A / h; qauto use:lookup_elookup ctrs:IOk.
 Qed.
 
 (* Well-formed types have interpretations *)

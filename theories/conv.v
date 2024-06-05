@@ -264,4 +264,7 @@ Lemma conv_subst Ξ Δ ρ (h : iok_subst_ok ρ Ξ Δ) a b (h0 : conv Ξ a b) :
   conv Δ a[ρ] b[ρ].
 Proof. hauto lq:on use:iconv_subst unfold:conv. Qed.
 
+Lemma ieq_conv Ξ ℓ a b : IEq Ξ ℓ a b -> conv Ξ a b.
+Proof. rewrite /conv; eauto using ieq_iconv. Qed.
+
 End conv_facts.
