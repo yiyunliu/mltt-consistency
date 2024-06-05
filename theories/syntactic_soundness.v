@@ -154,57 +154,51 @@ Proof.
     hauto l:on ctrs:Wt use:typing_conv.
 Qed.
 
-Lemma Wt_Pi_Univ_inv Γ A B i (h : Γ ⊢ (tPi A B) ∈ (tUniv i)) :
-  Γ ⊢ A ∈ (tUniv i) /\
-  (A :: Γ) ⊢ B ∈ (tUniv i).
+Lemma Wt_Pi_Univ_inv Γ ℓ ℓ0 A B i (h : Γ ⊢ (tPi ℓ0 A B) ; ℓ ∈ (tUniv i)) :
+  Γ ⊢ A ; ℓ ∈ (tUniv i) /\
+  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i).
 Proof.
   move /Wt_Pi_inv : h.
-  move => [j][hA][hB][h1][k]h2.
-  have ? : j <= i by hauto l:on use:Sub_univ_inj.
-  split.
-  hauto lq:on ctrs:Wt.
-  have : A :: Γ ⊢ tUniv i ∈ tUniv (S i) by hauto lq:on ctrs:Wt db:wff.
-  hauto lq:on ctrs:Wt.
+  move => [j][hA][hB][h1][ℓ1][k]h2.
+  have ? : j = i by hauto l:on use:cfacts.conv_univ_inj. subst.
+  split=>//.
 Qed.
 
-Lemma Wt_Abs_inv Γ a T (h : Γ ⊢ (tAbs a) ∈ T) :
-  exists A B i, Γ ⊢ (tPi A B) ∈ (tUniv i) /\
-         (A :: Γ) ⊢ a ∈ B /\
-         tPi A B <: T /\
-         exists i, (Γ ⊢ T ∈ (tUniv i)).
+Lemma Wt_Abs_inv Γ ℓ ℓ0 a T (h : Γ ⊢ (tAbs ℓ0 a) ; ℓ ∈ T) :
+  exists ℓ1 A B i, Γ ⊢ (tPi ℓ0 A B) ; ℓ1 ∈ (tUniv i) /\
+         ((ℓ0, A) :: Γ) ⊢ a ; ℓ ∈ B /\
+         conv (c2e Γ) (tPi ℓ0 A B) T /\
+         exists ℓ i, (Γ ⊢ T ; ℓ ∈ (tUniv i)).
 Proof.
-  move E : (tAbs a) h => a0 h.
+  move E : (tAbs ℓ0 a) h => a0 h.
   move : a E.
-  elim : Γ a0 T / h => //.
-  - hauto lq:on use:Sub_reflexive.
-  - hauto lq:on use:Sub_transitive.
+  elim : Γ ℓ a0 T / h => //.
+  - hauto lq:on rew:off use:typing_conv.
+  - hauto lq:on use:cfacts.conv_trans.
 Qed.
 
-Lemma Wt_Sig_Univ_inv Γ A B i (h : Γ ⊢ (tSig A B) ∈ (tUniv i)) :
-  Γ ⊢ A ∈ (tUniv i) /\
-  (A :: Γ) ⊢ B ∈ (tUniv i).
+Lemma Wt_Sig_Univ_inv Γ ℓ ℓ0 A B i (h : Γ ⊢ (tSig ℓ0 A B) ; ℓ ∈ (tUniv i)) :
+  Γ ⊢ A ; ℓ ∈ (tUniv i) /\
+  ((ℓ0, A) :: Γ) ⊢ B; ℓ ∈ (tUniv i).
 Proof.
   move /Wt_Sig_inv : h.
-  move => [j][hA][hB][h1][k]h2.
-  have ? : j <= i by hauto lq:on use:Sub_univ_inj.
-  split.
-  hauto lq:on ctrs:Wt.
-  have : A :: Γ ⊢ tUniv i ∈ tUniv (S i) by hauto lq:on ctrs:Wt db:wff.
-  hauto lq:on ctrs:Wt.
+  move => [j][hA][hB][h1][ℓ1][k]h2.
+  have ? : j = i by hauto lq:on use:cfacts.conv_univ_inj. subst.
+  sfirstorder.
 Qed.
 
-Lemma Wt_Pack_inv Γ a b T (h : Γ ⊢ tPack a b ∈ T) :
-  exists A B i, Γ ⊢ a ∈ A /\
-    Γ ⊢ b ∈ B[a..] /\
-    Γ ⊢ tSig A B ∈ tUniv i /\
-    tSig A B <: T /\
-    exists j, (Γ ⊢ T ∈ tUniv j).
+Lemma Wt_Pack_inv Γ ℓ ℓ0 a b T (h : Γ ⊢ tPack ℓ0 a b ; ℓ ∈ T) :
+  exists ℓT A B i, Γ ⊢ a ; ℓ0 ∈ A /\
+    Γ ⊢ b ; ℓ ∈ B[a..] /\
+    Γ ⊢ tSig ℓ0 A B ; ℓT ∈ tUniv i /\
+    conv (c2e Γ) (tSig ℓ0 A B) T /\
+    exists ℓ j, (Γ ⊢ T ; ℓ ∈ tUniv j).
 Proof.
-  move E : (tPack a b) h => p h.
+  move E : (tPack ℓ0 a b) h => p h.
   move : a b E.
-  elim : Γ p T / h => //.
-  - hauto lq:on use:Sub_transitive.
-  - hauto lq:on use:Sub_reflexive.
+  elim : Γ ℓ p T / h => //.
+  - hauto lq:on use:cfacts.conv_trans.
+  - hauto lq:on use:typing_conv.
 Qed.
 
 (* -------------------------------------------------- *)
@@ -214,15 +208,16 @@ Lemma renaming_Syn_helper ξ a b C :
 Proof. by asimpl. Qed.
 
 Lemma renaming_Syn
-  Γ a A (h : Γ ⊢ a ∈ A) : forall Δ ξ,
+  Γ ℓ a A (h : Γ ⊢ a ; ℓ ∈ A) : forall Δ ξ,
     lookup_good_renaming ξ Γ Δ ->
-    ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ∈ A⟨ξ⟩.
+    ⊢ Δ ->  Δ ⊢ a⟨ξ⟩ ; ℓ ∈ A⟨ξ⟩.
 Proof.
-  elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:lookup_good_renaming.
+  elim : Γ ℓ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:lookup_good_renaming.
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
   - move => * /=. apply : T_App'; eauto; by asimpl.
-  - qauto l:on ctrs:Wt use:Sub_renaming.
+  - (* qauto l:on ctrs:Wt use:conv_renaming. *)
+    admit.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
     apply  T_Ind' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
     + by asimpl.

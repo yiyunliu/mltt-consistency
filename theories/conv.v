@@ -267,4 +267,9 @@ Proof. hauto lq:on use:iconv_subst unfold:conv. Qed.
 Lemma ieq_conv Ξ ℓ a b : IEq Ξ ℓ a b -> conv Ξ a b.
 Proof. rewrite /conv; eauto using ieq_iconv. Qed.
 
+Lemma conv_univ_inj Ξ i j : conv Ξ (tUniv i) (tUniv j) -> i = j.
+Proof.
+  hauto l:on dep:on use:Pars_univ_inv inv:IEq unfold:conv, iconv.
+Qed.
+
 End conv_facts.
