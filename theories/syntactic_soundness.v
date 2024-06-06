@@ -70,12 +70,14 @@ Lemma T_App' Γ ℓ ℓ0 a A B b T :
   Γ ⊢ (tApp a ℓ0 b) ; ℓ ∈ T.
 Proof. move =>> ->. apply T_App. Qed.
 
-Lemma T_J'  Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 T :
+Lemma T_J'  Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 T :
   T = (C [p .: b..]) ->
   ℓp ⊆ ℓ ->
+  ℓ0 ⊆ ℓT ->
   Γ ⊢ a ; ℓ1 ∈ A ->
   Γ ⊢ b ; ℓ1 ∈ A ->
-  Γ ⊢ A ; ℓA ∈ (tUniv j) ->
+  Γ ⊢ A ; ℓT ∈ (tUniv j) ->
+  Γ ⊢ a ; ℓ0 ∈ A ->
   Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) ->
   ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) ->
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
@@ -214,10 +216,34 @@ Lemma renaming_Syn
 Proof.
   elim : Γ ℓ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:lookup_good_renaming.
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
-  - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
+  - move => * //=.
+    apply : T_Abs; eauto.
+    hauto q:on use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
+  (* App *)
   - move => * /=. apply : T_App'; eauto; by asimpl.
-  - (* qauto l:on ctrs:Wt use:conv_renaming. *)
-    admit.
+  (* Pi *)
+  - qauto l:on ctrs:Wt use:cfacts.conv_renaming, lookup_good_renaming_iok_subst_ok.
+  (* J *)
+  - move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ? ? ha iha hb ihb hA ihA hEq ihEq  hp  ihp hC ihC ht iht Δ ξ hξ hΔ /=.
+    rewrite -renaming_Syn_helper.
+    eapply T_J; eauto.
+    + apply ihC.
+      * move /good_renaming_up in hξ.
+        move /(_ ℓ1 A) in hξ.
+        move /good_renaming_up in hξ.
+        move /(_ ℓp (tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A))) in hξ.
+        by asimpl in hξ.
+      * move => [:hwff].
+        apply : Wff_cons; first by (abstract : hwff; hauto q:on ctrs:Wff).
+        apply T_Eq with (i := 0) (j:= j);eauto.  asimpl.
+        sfirstorder use:good_renaming_suc.
+        apply : T_Var=>//. constructor.
+        constructor.
+        sfirstorder use:good_renaming_suc.
+        apply :T_Var; sfirstorder ctrs:Wt.
+        asimpl.
+        sfirstorder use:good_renaming_suc.
+    + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
     apply  T_Ind' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
     + by asimpl.
@@ -245,24 +271,6 @@ Proof.
       * have ? : ⊢ tNat :: Δ by hauto lq:on ctrs:Wt db:wff.
         eauto using good_renaming_up with wff.
     + auto.
-  - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
-             ihp hC ihC ht iht Δ ξ hξ hΔ /=.
-    rewrite -renaming_Syn_helper.
-    eapply T_J; try qauto ctrs:Wt.
-    + apply ihC.
-      * move /good_renaming_up in hξ.
-        move /(_ A) in hξ.
-        move /good_renaming_up in hξ.
-        move /(_ (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A))) in hξ.
-        by asimpl in hξ.
-      * move => [:hwff].
-        apply : Wff_cons; first by (abstract : hwff; hauto q:on ctrs:Wff).
-        eapply T_Eq with (i := 0).  asimpl.
-        sfirstorder use:good_renaming_suc.
-        apply :T_Var; sfirstorder ctrs:Wt.
-        asimpl.
-        sfirstorder use:good_renaming_suc.
-    + move : iht hξ hΔ. repeat move/[apply]. by asimpl.
   - hauto lq:on ctrs:Wt, Wff use:good_renaming_up, Wt_Sig_Univ_inv.
   - move => Γ a A b B i hA ihA hB ihB hS ihS Δ ξ hξ hΔ /=.
     eapply T_Pack' with (B0 := B[a..] ⟨ξ⟩); eauto. by asimpl.

@@ -281,27 +281,24 @@ Module geq_facts
     IEq Ξ ℓ A A0 /\ IEq (ℓ0 :: Ξ) ℓ B B0.
   Proof. qauto l:on inv:IEq. Qed.
 
-  Definition ieq_good_renaming ξ (Ξ Δ : econtext) :=
-    (forall i ℓ0, elookup i Ξ ℓ0 -> elookup (ξ i) Δ ℓ0).
-
   Definition ieq_weakening_helper : forall ℓ ξ (Ξ Δ : econtext),
-      ieq_good_renaming ξ Ξ Δ ->
-      ieq_good_renaming (upRen_tm_tm ξ) (ℓ :: Ξ) (ℓ :: Δ).
+      iok_ren_ok ξ Ξ Δ ->
+      iok_ren_ok (upRen_tm_tm ξ) (ℓ :: Ξ) (ℓ :: Δ).
   Proof.
     move => ℓ0 ξ Ξ Δ h.
-    rewrite /ieq_good_renaming.
+    rewrite /iok_ren_ok.
     case => //.
   Qed.
 
   Lemma ieq_weakening_mutual : forall Ξ ℓ,
       (forall a b, IEq Ξ ℓ a b ->
-              forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
+              forall ξ Δ, iok_ren_ok ξ Ξ Δ ->
                      IEq Δ ℓ (ren_tm ξ a) (ren_tm ξ b)) /\
         (forall ℓ0 a b, GIEq Ξ ℓ ℓ0 a b ->
-                   forall ξ Δ, ieq_good_renaming ξ Ξ Δ ->
+                   forall ξ Δ, iok_ren_ok ξ Ξ Δ ->
                           GIEq Δ ℓ ℓ0 (ren_tm ξ a) (ren_tm ξ b)).
   Proof.
-    apply IEq_mutual; try qauto l: on ctrs:IEq,GIEq use:ieq_weakening_helper unfold:ieq_good_renaming.
+    apply IEq_mutual; try qauto l: on ctrs:IEq,GIEq use:ieq_weakening_helper unfold:iok_ren_ok.
     move => *; constructor; first by sfirstorder.
   Qed.
 
@@ -323,7 +320,7 @@ Proof.
   case => [|i] ℓ1 //=.
   - sfirstorder use:gieq_refl.
   - asimpl.
-    sfirstorder use:ieq_weakening_mutual unfold:ieq_good_renaming.
+    sfirstorder use:ieq_weakening_mutual unfold:iok_ren_ok.
 Qed.
 
 Lemma ieq_morphing_helper2 ℓ ℓ0 ℓ1 ξ0 ξ1 Ξ Δ :

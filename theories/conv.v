@@ -272,4 +272,19 @@ Proof.
   hauto l:on dep:on use:Pars_univ_inv inv:IEq unfold:conv, iconv.
 Qed.
 
+Lemma iconv_renaming : forall Ξ ℓ a b,
+    iconv Ξ ℓ a b ->
+    forall ξ Δ, iok_ren_ok ξ Ξ Δ ->
+                   iconv Δ ℓ (ren_tm ξ a) (ren_tm ξ b).
+Proof.
+  hauto lq:on use:Pars_renaming, ieq_weakening_mutual unfold:iconv.
+Qed.
+
+Lemma conv_renaming : forall Ξ a b,
+    conv Ξ a b ->
+    forall ξ Δ, iok_ren_ok ξ Ξ Δ ->
+                   conv Δ (ren_tm ξ a) (ren_tm ξ b).
+Proof. hauto lq:on use:iconv_renaming unfold:conv. Qed.
+
+
 End conv_facts.

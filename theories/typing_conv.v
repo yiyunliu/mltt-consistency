@@ -44,4 +44,12 @@ Proof.
   by move /typing_iok /iok_ieq /(_ ℓ ltac:(by rewrite meet_idempotent)) /ieq_conv : h.
 Qed.
 
+Lemma lookup_good_renaming_iok_subst_ok ξ Γ Δ :
+  lookup_good_renaming ξ Γ Δ ->
+  iok_ren_ok ξ (c2e Γ) (c2e Δ).
+Proof.
+  rewrite /lookup_good_renaming /iok_ren_ok.
+  hauto lq:on use:lookup_elookup, elookup_lookup.
+Qed.
+
 End typing_conv_facts.
