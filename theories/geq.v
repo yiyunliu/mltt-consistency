@@ -40,8 +40,8 @@ Module Type geq_sig
     IOk Ξ ℓ tRefl
   | IO_Eq ℓ0 a b A :
     ℓ0 ⊆ ℓ ->
-    IOk Ξ ℓ0 a ->
-    IOk Ξ ℓ0 b ->
+    IOk Ξ ℓ a ->
+    IOk Ξ ℓ b ->
     IOk Ξ ℓ A ->
     (* -------------- *)
     IOk Ξ ℓ (tEq ℓ0 a b A)
@@ -171,7 +171,7 @@ Module geq_facts
   Lemma iok_subsumption Ξ ℓ a (h : IOk Ξ ℓ a) :
     forall ℓ0, ℓ ⊆ ℓ0 -> IOk Ξ ℓ0 a.
   Proof.
-    elim : Ξ ℓ a / h; eauto using leq_trans with ieq.
+    elim : Ξ ℓ a / h; hauto lq:on ctrs:IOk use:leq_trans.
   Qed.
 
   Lemma iok_ren_ok_suc ρ Ξ Δ (h : iok_ren_ok ρ Ξ Δ) :

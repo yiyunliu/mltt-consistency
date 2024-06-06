@@ -105,8 +105,8 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
 
 | T_Eq Γ ℓ ℓ0 a b A i j :
   ℓ0 ⊆ ℓ ->
-  Γ ⊢ a ; ℓ0 ∈ A ->
-  Γ ⊢ b ; ℓ0 ∈ A ->
+  Γ ⊢ a ; ℓ ∈ A ->
+  Γ ⊢ b ; ℓ ∈ A ->
   Γ ⊢ A ; ℓ ∈ (tUniv j) ->
   (* ----------------------- *)
   Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ (tUniv i)
@@ -114,13 +114,13 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
 (* Refactor the equality to include the grade for the term *)
 | T_J Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1:
   ℓp ⊆ ℓ ->
-  ℓ0 ⊆ ℓT ->
   Γ ⊢ a ; ℓ1 ∈ A ->
   Γ ⊢ b ; ℓ1 ∈ A ->
   Γ ⊢ A ; ℓT ∈ (tUniv j) ->
-  Γ ⊢ a ; ℓ0 ∈ A ->
+  (* Γ ⊢ a ; ℓ0 ∈ A -> *)
   Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) ->
   (* plug in a to show the admissibility lemma  *)
+  (* note the usage of var 0 in the eq type *)
   ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) ->
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
   Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..])
@@ -138,13 +138,13 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* -------------------- *)
   Γ ⊢ tPack ℓ0 a b ; ℓ ∈ tSig ℓ0 A B
 
-| T_Let Γ ℓ ℓp ℓ0 a b ℓA ℓB ℓC A B C i j :
+| T_Let Γ ℓ ℓp ℓ0 a b ℓT A B C i j :
   ℓp ⊆ ℓ ->
-  Γ ⊢ A ; ℓA ∈ tUniv j ->
-  (ℓ0, A) :: Γ ⊢ B ; ℓB ∈ tUniv j ->
+  Γ ⊢ A ; ℓT ∈ tUniv j ->
+  (ℓ0, A) :: Γ ⊢ B ; ℓT ∈ tUniv j ->
   Γ ⊢ a ; ℓp ∈ tSig ℓ0 A B ->
   (ℓp, B) :: (ℓ0, A) :: Γ ⊢ b ; ℓ ∈ C[(tPack ℓ0 (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] ->
-  (ℓp, tSig ℓ0 A B) :: Γ ⊢ C ; ℓC ∈ tUniv i ->
+  (ℓp, tSig ℓ0 A B) :: Γ ⊢ C ; ℓT ∈ tUniv i ->
   (* ----------------------- *)
   Γ ⊢ tLet ℓ0 ℓp a b ; ℓ ∈ C[a ..]
 
@@ -160,6 +160,7 @@ with Wff : context -> Prop :=
 where 
   "Γ ⊢ a ; ℓ ∈ A" := (Wt Γ ℓ a A) and "⊢ Γ" := (Wff Γ).
 
+#[export]Hint Constructors Wt Wff : wt.
 
 Scheme wt_ind := Induction for Wt Sort Prop
     with wff_ind := Induction for Wff Sort Prop.

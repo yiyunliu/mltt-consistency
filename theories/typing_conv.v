@@ -36,7 +36,7 @@ Qed.
 
 Lemma typing_iok Γ ℓ a A (h : Wt Γ ℓ a A) : IOk (c2e Γ) ℓ a.
 Proof.
-  elim : Γ ℓ a A / h; qauto use:lookup_elookup ctrs:IOk.
+  elim : Γ ℓ a A / h; try qauto use:lookup_elookup ctrs:IOk.
 Qed.
 
 Lemma typing_conv Γ ℓ a A (h : Wt Γ ℓ a A) : conv (c2e Γ) a a.
