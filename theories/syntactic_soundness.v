@@ -440,60 +440,65 @@ Proof.
     + hauto q:on ctrs:Wt, tm use:good_morphing_up, Wff_cons.
 Qed.
 
-Lemma subst_Syn Γ A a b B
-  (h0 : (A :: Γ) ⊢ b ∈ B)
-  (h1 : Γ ⊢ a ∈ A) :
-  Γ ⊢ (subst_tm (a..) b) ∈ (subst_tm (a..) B).
+Lemma subst_Syn Γ ℓ ℓ0 A a b B
+  (h0 : ((ℓ0, A) :: Γ) ⊢ b ; ℓ ∈ B)
+  (h1 : Γ ⊢ a ; ℓ0 ∈ A) :
+  Γ ⊢ (subst_tm (a..) b) ; ℓ ∈ (subst_tm (a..) B).
 Proof.
   apply : morphing_Syn; eauto with wff.
   inversion 1; subst.
   - by asimpl.
-  - asimpl; eauto using T_Var with wff.
+  - asimpl;
+      hauto lq:on rew:off use:T_Var db:wff solve+:(by solve_lattice).
 Qed.
 
-Lemma subst_Syn_Univ Γ A a b i :
-  (A :: Γ) ⊢ b ∈ tUniv i ->
-  Γ ⊢ a ∈ A ->
-  Γ ⊢ b[a..] ∈ tUniv i.
+Lemma subst_Syn_Univ Γ ℓ ℓ0 A a b i :
+  ((ℓ0, A) :: Γ) ⊢ b ; ℓ ∈ tUniv i ->
+  Γ ⊢ a ; ℓ0 ∈ A ->
+  Γ ⊢ b[a..] ; ℓ ∈ tUniv i.
 Proof.
   change (tUniv i) with (tUniv i)[a..].
   apply subst_Syn.
 Qed.
 
-Lemma Wff_lookup : forall Γ i A,
-    ⊢ Γ -> lookup i Γ A -> exists j, Γ ⊢ A ∈ tUniv j.
+Lemma Wff_lookup : forall Γ i ℓ0 A,
+    ⊢ Γ -> lookup i Γ ℓ0 A -> exists ℓ j, Γ ⊢ A; ℓ ∈ tUniv j.
 Proof.
-  move => Γ + + h.
+  move => Γ + + + h.
   elim : Γ / h.
   - inversion 1.
-  - move => Γ A i h ih h0.
-    move => i0 A0.
+  - move => Γ ℓ0 ℓ A i h ih h0.
+    move => i0 ℓ1 A0.
     elim /lookup_inv.
     + hauto l:on inv:lookup use:weakening_Syn.
-    + move => h1 n A1 Γ0 B + ? []*. subst.
-      move /ih => [j ?].
-      exists j. apply : weakening_Syn'; eauto. done.
+    + move => _ n A1 Γ0 ℓ2 B + ? []*. subst.
+      move /ih => [ℓ2 [j ?]].
+      exists ℓ2, j. apply : weakening_Syn'; eauto. done.
 Qed.
 
-Lemma Wt_regularity Γ a A
-  (h : Γ ⊢ a ∈ A) :
-  exists i, Γ ⊢ A ∈ (tUniv i).
+Lemma Wt_regularity Γ ℓ a A
+  (h : Γ ⊢ a ; ℓ ∈ A) :
+  exists ℓ0 i, Γ ⊢ A ; ℓ0 ∈ (tUniv i).
 Proof.
-  elim: Γ a A/h; try qauto ctrs:Wt depth:2.
-  - apply Wff_lookup.
+  elim: Γ ℓ a A/h; try qauto ctrs:Wt depth:2.
+  - sfirstorder use:Wff_lookup.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
-  - eauto using subst_Syn_Univ.
   - hauto lq:on ctrs:Wt db:wff.
-  - move => Γ t a b p A i j C ha iha hb ihb hA ihA hp ihp hC ihC ht iht.
-    exists i. change (tUniv i) with (subst_tm (p .: b..) (tUniv i)).
+  - hauto lq:on ctrs:Wt db:wff.
+  - move => Γ _ a ℓ0 A hΓ ha [ℓA [i hA]].
+    exists (ℓ0 ∪ ℓA), 0.
+    hauto use:T_Eq lq:on use:subsumption solve+:(by solve_lattice).
+  - hauto lq:on ctrs:Wt db:wff.
+  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ? ha iha hb ihb hA ihA hp ihp hC ihC ht iht.
+    exists ℓ0, i. change (tUniv i) with (subst_tm (p .: b..) (tUniv i)).
     apply : morphing_Syn; eauto with wff.
-    move => k A0.
+    move => k ℓA A0.
     elim /lookup_inv.
     + move => ? > ? [] *. subst. by asimpl.
-    + move => _ n A1 Γ0 B + ? [] *. subst. simpl.
+    + move => _ n A1 Γ0 ℓ2 B + ? [] *. subst. simpl.
       inversion 1; subst.
       * by asimpl.
-      * asimpl. eauto using T_Var with wff.
+      * asimpl. apply : T_Var; eauto with wff. solve_lattice.
   - eauto using subst_Syn_Univ.
 Qed.
 
