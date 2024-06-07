@@ -545,49 +545,65 @@ Qed.
 (*     + eauto using subst_Syn_Univ. *)
 (* Qed. *)
 
-Lemma Wt_Eq_inv Γ a b A U (h : Γ ⊢ (tEq a b A) ∈ U) :
-  Γ ⊢ a ∈ A /\
-  Γ ⊢ b ∈ A /\
+Lemma Wt_Eq_inv Γ ℓ0 ℓ a b A U (h : Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ U) :
+  ℓ0 ⊆ ℓ /\
+  Γ ⊢ a ; ℓ ∈ A /\
+  Γ ⊢ b ; ℓ ∈ A /\
   (exists q,
-  Γ ⊢ A ∈ (tUniv q)) /\
-  (exists i, Sub (tUniv i) U) /\ exists j, Γ ⊢ U ∈ (tUniv j).
+  Γ ⊢ A ; ℓ ∈ (tUniv q)) /\
+  (exists i, conv (c2e Γ) (tUniv i) U) /\ exists ℓ j, Γ ⊢ U ; ℓ ∈ (tUniv j).
 Proof.
-  move E : (tEq a b A) h => T h.
-  move : a b A E.
-  elim :  Γ T U / h => //.
-  - hauto l:on use:Sub_transitive.
-  - hauto l:on use:T_Univ, Sub_reflexive db:wff.
+  move E : (tEq ℓ0 a b A) h => T h.
+  move : a b A ℓ0 E.
+  elim :  Γ ℓ T U / h => //.
+  - hauto l:on use:cfacts.conv_trans.
+  - hauto q:on use:T_Univ, typing_conv db:wff.
 Qed.
 
-Lemma Wt_Let_inv Γ a b T (h : Γ ⊢ tLet a b ∈ T) :
-  exists i j A B C,
-    Γ ⊢ A ∈ tUniv j /\
-    A :: Γ ⊢ B ∈ tUniv j /\
-    Γ ⊢ a ∈ tSig A B /\
-    B :: A :: Γ ⊢ b ∈ C[(tPack (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] /\
-    tSig A B :: Γ ⊢ C ∈ tUniv i /\
-    C[a..] <: T /\
-    (exists i, Γ ⊢ T ∈ tUniv i).
+Lemma Wt_Let_inv Γ ℓ ℓ0 ℓ1 a b T (h : Γ ⊢ tLet ℓ0 ℓ1 a b ; ℓ ∈ T) :
+  ℓ1 ⊆ ℓ /\
+  exists i j ℓT A B C,
+    Γ ⊢ A ; ℓT ∈ tUniv j /\
+    (ℓ0, A) :: Γ ⊢ B ; ℓT ∈ tUniv j /\
+    Γ ⊢ a ; ℓ ∈ tSig ℓ0 A B /\
+    (ℓ1, B) :: (ℓ0, A) :: Γ ⊢ b ; ℓ ∈ C[(tPack ℓ0 (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] /\
+    (ℓ1, tSig ℓ0 A B) :: Γ ⊢ C ; ℓT ∈ tUniv i /\
+    conv (c2e Γ) C[a..] T /\
+    (exists ℓ i, Γ ⊢ T ; ℓ ∈ tUniv i).
 Proof.
-  move E : (tLet a b) h => a0 h.
-  move : a b E.
-  elim : Γ a0 T / h => //.
-  - move => Γ a0 T U i ha0 ih0 hU _ hSub a b E.
-    destruct (ih0 a b E) as (j & k & A & B & C & hA & hB & ha & hb & hC & hCoherent & hT).
-    exists j, k. (* not sure why these need to be explicit for CoqHammer to work *)
-    hauto l:on use:Sub_transitive.
-  - move => *.
-    hauto q:on use:subst_Syn, Sub_reflexive.
+  move E : (tLet ℓ0 ℓ1 a b) h => a0 h.
+  move : ℓ0 ℓ1 a b E.
+  elim : Γ ℓ a0 T / h => //.
+  - move => Γ ℓ ℓ0 a0 T U i ha0 ih0 hU _ hSub ℓ1 ℓ2 a b E. subst.
+    specialize ih0 with (1 := eq_refl).
+    move : ih0; intros (? & j & k & ℓT & A & B & C & hA & hB & ha & hb & hC & hCoherent & hT).
+    split => //.
+    exists j, k, ℓT, A,B,C.
+    hauto l:on use:cfacts.conv_trans.
+  - move => Γ ℓ ℓp ℓ0 a b ℓT A B C i j ? hA _ hB _ ha _ hb _ hC _.
+    move => ? ? ? ? [*]. subst.
+    split => //.
+    exists i, j, ℓT, A , B,C.
+    have /Wt_regularity Cwf : Γ ⊢ tLet ℓ0 ℓp a b ; ℓ ∈ C[a..] by eauto using T_Let.
+    repeat split => //.
+    + eauto using subsumption.
+    + sfirstorder use:typing_conv.
 Qed.
 
 (* ------------------------------------------------- *)
 (* Simpler forms of typing rules *)
-
-Lemma T_Eq_simpl Γ a b A i :
-  Γ ⊢ a ∈ A ->
-  Γ ⊢ b ∈ A ->
-  Γ ⊢ (tEq a b A) ∈ (tUniv i).
-Proof. hauto lq:on use:T_Eq, Wt_regularity. Qed.
+Lemma T_Eq_simpl Γ ℓ ℓ0 a b A i :
+  ℓ0 ⊆ ℓ ->
+  Γ ⊢ a ; ℓ ∈ A ->
+  Γ ⊢ b ; ℓ ∈ A ->
+  exists ℓ1, ℓ0 ⊆ ℓ1 /\ Γ ⊢ (tEq ℓ0 a b A) ; ℓ1 ∈ (tUniv i).
+Proof.
+  move => ? ha /[dup] hb /Wt_regularity.
+  move => [ℓ1][i0]hA.
+  exists (ℓ ∪ ℓ0 ∪ ℓ1).
+  split; first by solve_lattice.
+  hauto q:on use:subsumption, T_Eq solve+:(solve_lattice).
+Qed.
 
 Lemma T_J_simpl Γ t a b p A C i
   (h : Γ ⊢ p ∈ (tEq a b A)) :
