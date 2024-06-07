@@ -535,7 +535,7 @@ Proof.
     have [*] : PB = PB1 /\ PB0 = PB1 by  eauto using InterpUnivN_deterministic'.
     congruence.
   (* Let *)
-  - move => Γ ℓ ℓp ℓ0 t b ℓA ℓB ℓC A B C i ? ? ? ? ? ? ? ht ? hb ? /SemWt_Univ hC Δ ρ hρ.
+  - move => Γ ℓ ℓp ℓ0 t b ℓT A B C i ?  ? ? ? ? ? ? ht ? hb ? /SemWt_Univ hC Δ ρ hρ.
     move /ht : (hρ) {ht} => [m][PA][/= /[dup] hSig /InterpUnivN_Sig_inv_nopf].
     move => [PA0][h0][h1]?. subst.
     rewrite /SumSpace.
