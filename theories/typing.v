@@ -32,11 +32,11 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* ------ *)
   Γ ⊢ (var_tm i) ; ℓ ∈ A
 
-| T_Pi Γ i ℓ ℓ0 A B :
+| T_Pi Γ i j ℓ ℓ0 A B :
   Γ ⊢ A ; ℓ ∈ (tUniv i) ->
-  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i) ->
+  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv j) ->
   (* --------------------- *)
-  Γ ⊢ (tPi ℓ0 A B) ; ℓ ∈ (tUniv i)
+  Γ ⊢ (tPi ℓ0 A B) ; ℓ ∈ (tUniv (max i j))
 
 | T_Abs Γ ℓ ℓ0 ℓ1 A a B i :
   Γ ⊢ (tPi ℓ0 A B) ; ℓ1 ∈ (tUniv i) ->
@@ -125,11 +125,11 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
   Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..])
 
-| T_Sig Γ i ℓ ℓ0 A B :
+| T_Sig Γ i j ℓ ℓ0 A B :
   Γ ⊢ A ; ℓ ∈ (tUniv i) ->
-  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i) ->
+  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv j) ->
   (* --------------------- *)
-  Γ ⊢ (tSig ℓ0 A B) ; ℓ ∈ (tUniv i)
+  Γ ⊢ (tSig ℓ0 A B) ; ℓ ∈ (tUniv (max i j))
 
 | T_Pack Γ ℓ ℓ0 a A b B ℓT i :
   Γ ⊢ a ; ℓ0 ∈ A ->

@@ -157,18 +157,19 @@ Proof.
     move /ρ_ok_forall : hρ l (h1) => /[apply]/[apply].
     hauto lq:on use:InterpUnivN_subsumption.
   (* Pi *)
-  - move => Γ i ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
+  - move => Γ i j ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
     apply SemWt_Univ.
     move => Ξ ρ hρ.
     move /(_ Ξ ρ hρ) : h0; intros (? & PA & hPA).
     split.
-    + have /typing_iok : Wt Γ ℓ (tPi ℓ0 A B) (tUniv i) by hauto lq:on ctrs:Wt.
+    + have /typing_iok : Wt Γ ℓ (tPi ℓ0 A B) (tUniv (max i j)) by hauto lq:on ctrs:Wt.
       move /ρ_ok_iok : hρ.
       by move /cfacts.ifacts.iok_morphing /[apply].
     + eexists => //=.
-      apply InterpUnivN_Fun_nopf; eauto.
+      apply InterpUnivN_Fun_nopf.
+      move /InterpUnivN_cumulative : hPA. apply. lia.
       move => *; asimpl.
-      hauto lq:on use:ρ_ok_cons.
+      hauto lq:on use:ρ_ok_cons, InterpUnivN_cumulative solve+:(lia).
   (* Abs *)
   - move => Γ ℓ ℓ0 ℓ1 A b B i ? /SemWt_Univ hB ? hb Δ ρ hρ.
     move /(_ _ ρ hρ) : hB => /= [? [PPi hPPi]].
@@ -503,18 +504,19 @@ Proof.
       hauto lq:on use:ρ_ok_iok, cfacts.ifacts.iok_morphing.
       sfirstorder use: P_JRefl_star.
   (* Sig *)
-  - move => Γ i ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
+  - move => Γ i j ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
     apply SemWt_Univ.
     move => Ξ ρ hρ.
     move /(_ Ξ ρ hρ) : h0; intros (? & PA & hPA).
     split.
-    + have /typing_iok : Wt Γ ℓ (tSig ℓ0 A B) (tUniv i) by hauto lq:on ctrs:Wt.
+    + have /typing_iok : Wt Γ ℓ (tSig ℓ0 A B) (tUniv (max i j)) by hauto lq:on ctrs:Wt.
       move /ρ_ok_iok : hρ.
       by move /cfacts.ifacts.iok_morphing /[apply].
     + eexists => //=.
       apply InterpUnivN_Sig_nopf; eauto.
+      hauto lq:on use:InterpUnivN_cumulative solve+:lia.
       move => *; asimpl.
-      hauto lq:on use:ρ_ok_cons.
+      hauto lq:on use:ρ_ok_cons,InterpUnivN_cumulative solve+:lia.
   (* Pack *)
   - move => Γ ℓ ℓ0 a A b B ℓT i _ ha _ hb _ /SemWt_Univ hB Δ ρ hρ.
     move /ha : (hρ) => [m][PA][ha0]ha1.

@@ -128,42 +128,45 @@ Proof.
 Qed.
 
 Lemma Wt_Pi_inv Γ ℓ ℓ0 A B U (h : Γ ⊢ tPi ℓ0 A B ; ℓ ∈ U) :
-  exists i, Γ ⊢ A ; ℓ ∈ (tUniv i) /\
-         ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i) /\
-         conv (c2e Γ) (tUniv i) U /\
+  exists i j, Γ ⊢ A ; ℓ ∈ (tUniv i) /\
+         ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv j) /\
+         conv (c2e Γ) (tUniv (max i j)) U /\
          exists ℓ i, Γ ⊢ U ; ℓ ∈ (tUniv i).
 Proof.
   move E : (tPi ℓ0 A B) h => T h.
   move : A B E.
   elim :  Γ ℓ T U / h => //.
-  - move => Γ i ℓ ℓ1 A B hA _ hB _ ? ? [*]. subst.
-    eexists. repeat split; eauto using Wt_Univ.
+  - move => Γ i j ℓ ℓ1 A B hA _ hB _ ? ? [*]. subst.
+    do 2 eexists. repeat split; eauto using Wt_Univ.
     hauto l:on ctrs:Wt use:typing_conv.
   - hauto lq:on rew:off use:cfacts.conv_trans.
 Qed.
 
 Lemma Wt_Sig_inv Γ ℓ ℓ0 A B U (h : Γ ⊢ (tSig ℓ0 A B) ; ℓ ∈ U) :
-  exists i, Γ ⊢ A ; ℓ ∈ (tUniv i) /\
-         ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i) /\
-         conv (c2e Γ) (tUniv i) U /\
+  exists i j, Γ ⊢ A ; ℓ ∈ (tUniv i) /\
+         ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv j) /\
+         conv (c2e Γ) (tUniv (max i j)) U /\
          exists ℓ i, Γ ⊢ U ; ℓ ∈ (tUniv i).
 Proof.
   move E : (tSig ℓ0 A B) h => T h.
   move : A B E.
   elim : Γ ℓ T U / h => //.
   - hauto lq:on rew:off use:cfacts.conv_trans.
-  - move => Γ i ℓ ℓ1 A B hA _ hB _ ? ? [*]. subst.
-    eexists. repeat split; eauto using Wt_Univ.
+  - move => Γ i j ℓ ℓ1 A B hA _ hB _ ? ? [*]. subst.
+    exists i, j. repeat split; eauto using Wt_Univ.
     hauto l:on ctrs:Wt use:typing_conv.
 Qed.
 
-Lemma Wt_Pi_Univ_inv Γ ℓ ℓ0 A B i (h : Γ ⊢ (tPi ℓ0 A B) ; ℓ ∈ (tUniv i)) :
+Lemma Wt_Pi_Univ_inv Γ ℓ ℓ0 A B n (h : Γ ⊢ (tPi ℓ0 A B) ; ℓ ∈ (tUniv n)) :
+  exists i j,
+  n = max i j /\
   Γ ⊢ A ; ℓ ∈ (tUniv i) /\
-  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv i).
+  ((ℓ0, A) :: Γ) ⊢ B ; ℓ ∈ (tUniv j).
 Proof.
   move /Wt_Pi_inv : h.
-  move => [j][hA][hB][h1][ℓ1][k]h2.
-  have ? : j = i by hauto l:on use:cfacts.conv_univ_inj. subst.
+  move => [i][j][hA][hB][h1][ℓ1][k]h2.
+  exists i, j.
+  have ? : n = max i j by hauto l:on use:cfacts.conv_univ_inj. subst.
   split=>//.
 Qed.
 
@@ -180,13 +183,15 @@ Proof.
   - hauto lq:on use:cfacts.conv_trans.
 Qed.
 
-Lemma Wt_Sig_Univ_inv Γ ℓ ℓ0 A B i (h : Γ ⊢ (tSig ℓ0 A B) ; ℓ ∈ (tUniv i)) :
+Lemma Wt_Sig_Univ_inv Γ ℓ ℓ0 A B n (h : Γ ⊢ (tSig ℓ0 A B) ; ℓ ∈ (tUniv n)) :
+  exists i j,
+  n = max i j /\
   Γ ⊢ A ; ℓ ∈ (tUniv i) /\
-  ((ℓ0, A) :: Γ) ⊢ B; ℓ ∈ (tUniv i).
+  ((ℓ0, A) :: Γ) ⊢ B; ℓ ∈ (tUniv j).
 Proof.
   move /Wt_Sig_inv : h.
-  move => [j][hA][hB][h1][ℓ1][k]h2.
-  have ? : j = i by hauto lq:on use:cfacts.conv_univ_inj. subst.
+  move => [i][j][hA][hB][h1][ℓ1][k]h2.
+  have ? : n = max i j by hauto lq:on use:cfacts.conv_univ_inj. subst.
   sfirstorder.
 Qed.
 
@@ -228,9 +233,11 @@ Proof.
   elim : Γ ℓ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:lookup_good_renaming.
   (* Pi *)
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
-  - move => * //=.
+  - move => Γ ℓ ℓ0 ℓ1 A a B i hPi ihPi ha iha Δ ξ hξ hΔ //=.
     apply : T_Abs; eauto.
-    hauto q:on use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
+    move : ihPi (hξ) (hΔ) => /[apply]/[apply]/=/Wt_Pi_Univ_inv.
+    move => [k0][k1][?][h0]h1. subst.
+    hauto l:on use:good_renaming_up db:wff.
   (* App *)
   - move => * /=. apply : T_App'; eauto; by asimpl.
   (* Pi *)
@@ -370,9 +377,11 @@ Proof.
     apply T_Pi; eauto.
     hauto q:on use:good_morphing_up db:wff.
   (* Abs *)
-  - move => *.
+  - move => Γ ℓ ℓ0 ℓ1 A a B i hPi ihPi ha iha Δ ξ hξ hΔ /=.
     apply : T_Abs; eauto.
-    hauto q:on use:good_morphing_up, Wt_Pi_Univ_inv db:wff.
+    move : ihPi (hξ) (hΔ); repeat move/[apply].
+    rewrite/=. move /Wt_Pi_Univ_inv.
+    hauto lq:on use:good_morphing_up db:wff.
   (* App *)
   - move => * /=. apply : T_App'; eauto; by asimpl.
   (* Conv *)
@@ -482,6 +491,7 @@ Lemma Wt_regularity Γ ℓ a A
 Proof.
   elim: Γ ℓ a A/h; try qauto ctrs:Wt depth:2.
   - sfirstorder use:Wff_lookup.
+  - hauto lq:on ctrs:Wt db:wff.
   - hauto q:on use:subst_Syn, Wt_Pi_Univ_inv.
   - hauto lq:on ctrs:Wt db:wff.
   - hauto lq:on ctrs:Wt db:wff.
@@ -499,7 +509,8 @@ Proof.
       inversion 1; subst.
       * by asimpl.
       * asimpl. apply : T_Var; eauto with wff. solve_lattice.
-  - eauto using subst_Syn_Univ.
+  - hauto lq:on ctrs:Wt db:wff.
+ - eauto using subst_Syn_Univ.
 Qed.
 
 Lemma Wt_App_inv Γ ℓ ℓ0 b a T (h : Γ ⊢ (tApp b ℓ0 a) ; ℓ ∈ T) :
@@ -605,36 +616,31 @@ Proof.
   hauto q:on use:subsumption, T_Eq solve+:(solve_lattice).
 Qed.
 
-Lemma T_J_simpl Γ t a b p A C i
-  (h : Γ ⊢ p ∈ (tEq a b A)) :
-  (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) ->
-  Γ ⊢ t ∈ (subst_tm (tRefl .: a ..) C) ->
-  Γ ⊢ (tJ t a b p) ∈ (subst_tm (p .: b..) C).
+Lemma T_J_simpl Γ t a b p A i C ℓ ℓp ℓ0 ℓ1:
+  ℓp ⊆ ℓ ->
+  Γ ⊢ a ; ℓ1 ∈ A ->
+  Γ ⊢ b ; ℓ1 ∈ A ->
+  Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) ->
+  ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) ->
+  Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
+  Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..]).
 Proof.
-  case /Wt_regularity : (h) => j /Wt_Eq_inv ?.
-  have [? ?] : exists i, Γ ⊢ A ∈ (tUniv i)
-      by sfirstorder use:Wt_regularity ctrs:Wt.
-       hauto l:on use:T_J.
+  move=> ? /[dup] /Wt_regularity.
+  sfirstorder use:T_J.
 Qed.
 
-Lemma T_Abs_simple Γ A a B :
-  A :: Γ ⊢ a ∈ B ->
+Lemma T_Abs_simple Γ ℓ ℓ0 A a B :
+  (ℓ0, A) :: Γ ⊢ a ; ℓ ∈ B ->
   (* -------------------- *)
-  Γ ⊢ tAbs a ∈ tPi A B.
+  Γ ⊢ tAbs ℓ0 a ; ℓ ∈ tPi ℓ0 A B.
 Proof.
   move => h.
-  have hΓ : ⊢ A :: Γ by sfirstorder use:Wt_Wff.
+  have hΓ : ⊢ (ℓ0, A) :: Γ by sfirstorder use:Wt_Wff.
   have hΓ' : ⊢ Γ by inversion hΓ.
-  have [i hA] : exists i, Γ ⊢ A ∈ tUniv i by hauto lq:on inv:Wff.
-  have [j hB] : exists j, A::Γ ⊢ B ∈ tUniv j by sfirstorder use:Wt_regularity.
-  apply T_Abs with (i := max i j)=>//.
-  have : Γ ⊢ tUniv (Nat.max i j) ∈ tUniv (S (Nat.max i j))
-    by qauto l:on ctrs:Wt.
-  have : A::Γ ⊢ tUniv (Nat.max i j) ∈ tUniv (S (Nat.max i j))
-    by qauto l:on ctrs:Wt.
-  have ? : i <= Nat.max i j  by lia.
-  have ? : j <= Nat.max i j  by lia.
-  hauto lq:on ctrs:Sub1 use:Sub1_Sub, T_Conv, T_Pi.
+  have [ℓA [i hA]] : exists ℓ i, Γ ⊢ A ; ℓ ∈ tUniv i by hauto lq:on inv:Wff.
+  have [ℓB [j hB]] : exists ℓ j, (ℓ0, A)::Γ ⊢ B ; ℓ ∈ tUniv j by sfirstorder use:Wt_regularity.
+  apply T_Abs with (ℓ1 := ℓA ∪ ℓB) (i := max i j)=>//.
+  hauto lq:on use:subsumption, T_Pi solve+:(by solve_lattice).
 Qed.
 
 Lemma Wt_J_inv Γ t a b p U (h : Γ ⊢ (tJ t a b p) ∈ U) :
