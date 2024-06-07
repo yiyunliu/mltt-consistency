@@ -502,40 +502,48 @@ Proof.
   - eauto using subst_Syn_Univ.
 Qed.
 
-Lemma Wt_App_inv Γ b a T (h : Γ ⊢ (tApp b a) ∈ T) :
-  exists A B, Γ ⊢ b ∈ tPi A B /\
-         Γ ⊢ a ∈ A /\
-         subst_tm (a..) B <: T /\
-         exists i, Γ ⊢ T ∈ tUniv i.
+Lemma Wt_App_inv Γ ℓ ℓ0 b a T (h : Γ ⊢ (tApp b ℓ0 a) ; ℓ ∈ T) :
+  exists A B, Γ ⊢ b ; ℓ ∈ tPi ℓ0 A B /\
+         Γ ⊢ a ; ℓ0 ∈ A /\
+         conv (c2e Γ) B[a..]  T /\
+         exists ℓ i, Γ ⊢ T; ℓ ∈ tUniv i.
 Proof.
-  move E : (tApp b a) h => ba h.
+  move E : (tApp b ℓ0 a) h => ba h.
   move : b a E.
-  elim : Γ ba T /h => //.
-  - move => Γ a A B b h0 _ h1 _ ? ? [] *; subst.
+  elim : Γ ℓ ba T /h => //.
+  - move => Γ ℓ ℓ1 a A B b h0 _ h1 _ ? ? [] *; subst.
     exists A, B; repeat split => //.
-    + apply Sub_morphing. apply Sub_reflexive.
-    + qauto ctrs:Wt use:Wt_Pi_Univ_inv, subst_Syn_Univ, Wt_regularity.
-  - hauto lq:on rew:off use:Sub_transitive.
+    + apply cfacts.conv_subst with (Ξ := ℓ1 :: c2e Γ).
+      * case.
+        rewrite /elookup //=. hauto lq:on use:typing_iok.
+        move => n ℓ0 ?.
+        have : elookup n (c2e Γ) ℓ0 by sfirstorder unfold:elookup.
+        asimpl. sfirstorder use:meet_idempotent, IO_Var.
+      * move /Wt_regularity : h0.
+        move => [ℓ0][i]/Wt_Pi_Univ_inv.
+        sfirstorder use:typing_conv.
+    + hauto lq:on ctrs:Wt use:Wt_Pi_Univ_inv, subst_Syn_Univ, Wt_regularity.
+  - hauto lq:on rew:off use:cfacts.conv_trans.
 Qed.
 
-Lemma Wt_Ind_inv Γ a b c T (h : Γ ⊢ (tInd a b c) ∈ T) :
-  exists A, Γ ⊢ a ∈ A[tZero..] /\
-       A :: tNat :: Γ ⊢ b ∈ A [tSuc (var_tm 0) .: S >> var_tm]⟨S⟩  /\
-         Γ ⊢ c ∈ tNat /\
-         A[c..] <: T /\
-         (exists j, tNat :: Γ ⊢ A ∈ tUniv j) /\
-         exists i, Γ ⊢ T ∈ tUniv i.
-Proof.
-  move E : (tInd a b c) h => a0 h.
-  move : a b c E.
-  elim : Γ a0 T / h => //.
-  - hauto lq:on rew:off use:Sub_transitive.
-  - move => Γ a b c A i hA _ ha _ hb _ hc _ ? ? ?[*]. subst.
-    exists A. repeat split=>//.
-    + apply Sub_reflexive.
-    + eauto using subst_Syn_Univ.
-    + eauto using subst_Syn_Univ.
-Qed.
+(* Lemma Wt_Ind_inv Γ a b c T (h : Γ ⊢ (tInd a b c) ∈ T) : *)
+(*   exists A, Γ ⊢ a ∈ A[tZero..] /\ *)
+(*        A :: tNat :: Γ ⊢ b ∈ A [tSuc (var_tm 0) .: S >> var_tm]⟨S⟩  /\ *)
+(*          Γ ⊢ c ∈ tNat /\ *)
+(*          A[c..] <: T /\ *)
+(*          (exists j, tNat :: Γ ⊢ A ∈ tUniv j) /\ *)
+(*          exists i, Γ ⊢ T ∈ tUniv i. *)
+(* Proof. *)
+(*   move E : (tInd a b c) h => a0 h. *)
+(*   move : a b c E. *)
+(*   elim : Γ a0 T / h => //. *)
+(*   - hauto lq:on rew:off use:Sub_transitive. *)
+(*   - move => Γ a b c A i hA _ ha _ hb _ hc _ ? ? ?[*]. subst. *)
+(*     exists A. repeat split=>//. *)
+(*     + apply Sub_reflexive. *)
+(*     + eauto using subst_Syn_Univ. *)
+(*     + eauto using subst_Syn_Univ. *)
+(* Qed. *)
 
 Lemma Wt_Eq_inv Γ a b A U (h : Γ ⊢ (tEq a b A) ∈ U) :
   Γ ⊢ a ∈ A /\
