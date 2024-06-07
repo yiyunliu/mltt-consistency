@@ -643,52 +643,54 @@ Proof.
   hauto lq:on use:subsumption, T_Pi solve+:(by solve_lattice).
 Qed.
 
-Lemma Wt_J_inv Γ t a b p U (h : Γ ⊢ (tJ t a b p) ∈ U) :
-  exists A C i,
-    Γ ⊢ p ∈ (tEq a b A) /\
-    Γ ⊢ a ∈ A /\
-    Γ ⊢ b ∈A /\
-    (exists j, Γ ⊢ A ∈ (tUniv j)) /\
-    (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) /\
-    Γ ⊢ t ∈ (subst_tm (tRefl .: a ..) C) /\
-    C[p .: b..] <: U /\
-    exists j, Γ ⊢ U ∈ (tUniv j).
+Lemma Wt_J_inv Γ ℓ C t p U (h : Γ ⊢ (tJ C t p) ; ℓ ∈ U) :
+  exists ℓp ℓT ℓ0 ℓ1 a b A i,
+    ℓp ⊆ ℓ /\
+    Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) /\
+    Γ ⊢ a ; ℓ1 ∈ A /\
+    Γ ⊢ b ; ℓ1 ∈A /\
+    (exists j, Γ ⊢ A ; ℓT ∈ (tUniv j)) /\
+    ((ℓp , tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) /\
+    Γ ⊢ t ; ℓ ∈ C[tRefl .: a..] /\
+    conv (c2e Γ) C[p .: b..]  U /\
+    exists ℓ j, Γ ⊢ U ; ℓ ∈ (tUniv j).
 Proof.
-  move E : (tJ t a b p) h => T h.
-  move : t a b p E.
-  elim :  Γ T U / h => //.
-  - hauto lq:on rew:off use:Sub_transitive.
-  - move => Γ t a b p A i j C ha _ hb _ hA _ hp _ hC _ ht _ ? ? ? ? [] *; subst.
-    exists A, C, i. repeat split => //.
+  move E : (tJ C t p) h => T h.
+  move : C t p E.
+  elim :  Γ ℓ T U / h => //.
+  - hauto lq:on rew:off use:cfacts.conv_trans.
+  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ? ha _ hb _ hA _ hp _ hC _ ht _ ? ? ?  [] *; subst.
+    have /Wt_regularity ? : Γ ⊢ tJ C t p ; ℓ ∈ C[p.:b..] by eauto using T_J.
+    exists ℓp, ℓT, ℓ0, ℓ1, a, b, A, i. repeat split => //.
     sfirstorder.
-    sfirstorder use:Sub_reflexive.
-    have ? : Γ ⊢ (tJ t a b p) ∈ (subst_tm (p .: b..) C) by hauto l:on use:T_J.
-    sfirstorder ctrs:Wt use:Wt_regularity.
+    sfirstorder use:typing_conv.
 Qed.
 
-Lemma preservation_helper A0 A1 i j Γ a A :
-  (A0 :: Γ) ⊢ a ∈ A ->
-  Γ ⊢ A0 ∈ (tUniv i) ->
-  Γ ⊢ A1 ∈ (tUniv j) ->
-  A1 <: A0 ->
-  (A1 :: Γ) ⊢ a ∈ A.
+Lemma preservation_helper ℓ ℓ0 ℓ1 A0 A1 i Γ a A :
+  ((ℓ0, A0) :: Γ) ⊢ a ; ℓ ∈ A ->
+  Γ ⊢ A1 ; ℓ1 ∈ (tUniv i) ->
+  conv (c2e Γ) A1 A0 ->
+  ((ℓ0, A1) :: Γ) ⊢ a ; ℓ ∈ A.
 Proof.
-  move => h0 h1 h2 h3.
-  replace a with (subst_tm ids a); last by asimpl.
-  replace A with (subst_tm ids A); last by asimpl.
-  apply morphing_Syn with (Γ := A0 :: Γ).
+  move => h0 h1 h2.
+  have [j [ℓ2 h3]] : exists j ℓ2, Γ ⊢ A0 ; ℓ2 ∈ tUniv j by
+    move /Wt_Wff in h0; hauto lq:on inv:Wff.
+  have -> : a = subst_tm ids a by asimpl.
+  have -> : A = subst_tm ids A by asimpl.
+  apply morphing_Syn with (Γ := (ℓ0, A0) :: Γ).
   - done.
-  - move => k h. elim/lookup_inv.
-    + move => ? A2 Γ0 ? [] *. subst. asimpl.
-      apply T_Conv with (A := ren_tm shift A1) (i := i).
-      * apply T_Var; hauto l:on db:wff.
-      * change (tUniv i) with (ren_tm shift (tUniv i)).
-        apply weakening_Syn with (i := j) => //.
-      * hauto lq:on use:Sub_renaming.
-    + move => _ n A2 Γ0 B ? ? [] *. subst. asimpl.
+  - move => k ℓ3 h. elim/lookup_inv => _.
+    + move => ℓ4 A2 Γ0 ? [] *. subst. asimpl.
+      eapply T_Conv with (A := ren_tm shift A1) (i := j).
+      * apply : T_Var; hauto l:on use:meet_idempotent db:wff.
+      * change (tUniv j) with (ren_tm shift (tUniv j)).
+        eapply weakening_Syn with (i := i) => //; eauto.
+      * simpl.
+        apply cfacts.conv_renaming with (Ξ := c2e Γ)=>//.
+    + move => n A2 Γ0 ℓ4 B ? ? [] *. subst. asimpl.
       change (var_tm (S n)) with (ren_tm shift (var_tm n)).
-      apply weakening_Syn with (i := j) => //.
-      apply T_Var; hauto lq:on db:wff.
+      eapply weakening_Syn with (i := i) => //; eauto.
+      apply : T_Var; hauto use:meet_idempotent lq:on db:wff.
   - eauto with wff.
 Qed.
 
