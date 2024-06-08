@@ -604,15 +604,13 @@ Qed.
 (* ------------------------------------------------- *)
 (* Simpler forms of typing rules *)
 Lemma T_Eq_simpl Γ ℓ ℓ0 a b A i :
-  ℓ0 ⊆ ℓ ->
   Γ ⊢ a ; ℓ ∈ A ->
   Γ ⊢ b ; ℓ ∈ A ->
-  exists ℓ1, ℓ0 ⊆ ℓ1 /\ Γ ⊢ (tEq ℓ0 a b A) ; ℓ1 ∈ (tUniv i).
+  exists ℓ1, Γ ⊢ (tEq ℓ0 a b A) ; ℓ1 ∈ (tUniv i).
 Proof.
-  move => ? ha /[dup] hb /Wt_regularity.
+  move => ha /[dup] hb /Wt_regularity.
   move => [ℓ1][i0]hA.
   exists (ℓ ∪ ℓ0 ∪ ℓ1).
-  split; first by solve_lattice.
   hauto q:on use:subsumption, T_Eq solve+:(solve_lattice).
 Qed.
 
@@ -694,77 +692,102 @@ Proof.
   - eauto with wff.
 Qed.
 
-Lemma preservation_helper2 A0 A1 B0 B1 i j k l Γ a A :
-  (B0 :: A0 :: Γ) ⊢ a ∈ A ->
-  Γ ⊢ A0 ∈ tUniv i ->
-  Γ ⊢ A1 ∈ tUniv j ->
-  A0 :: Γ ⊢ B0 ∈ tUniv k ->
-  A1 :: Γ ⊢ B1 ∈ tUniv l ->
-  A1 <: A0 -> B1 <: B0 ->
-  (B1 :: A1 :: Γ ⊢ a ∈ A).
+Lemma preservation_helper2 ℓ ℓ0 ℓ1 ℓA1 ℓB1 A0 A1  B0 B1 j l Γ a A :
+  ((ℓ0, B0) :: (ℓ1, A0) :: Γ) ⊢ a ; ℓ ∈ A ->
+  (* Γ ⊢ A0 ∈ tUniv i -> *)
+  Γ ⊢ A1 ; ℓA1  ∈ tUniv j ->
+  (* (ℓ1, A0) :: Γ ⊢ B0 ; ℓ∈ tUniv k -> *)
+  (ℓ1, A1) :: Γ ⊢ B1 ; ℓB1 ∈ tUniv l ->
+  conv (c2e Γ) A1 A0 -> conv (ℓ1 :: c2e Γ) B1 B0 ->
+  ((ℓ0, B1) :: (ℓ1, A1) :: Γ ⊢ a ; ℓ ∈ A).
 Proof.
-  move => ha hA0 hA1 hB0 hB1 hSubA hSubB.
-  replace a with (a[ids]); last by asimpl.
-  replace A with (A[ids]); last by asimpl.
-  apply morphing_Syn with (Γ := B0 :: A0 :: Γ);
+  move => ha hA1 hB1 hSubA hSubB.
+  have [i [ℓA0 hA0]] : exists i ℓ, Γ ⊢ A0 ; ℓ ∈ tUniv i by
+    move /Wt_Wff in ha; hauto lq:on inv:Wff.
+  have [k [ℓB0 hB0]] : exists i ℓ, (ℓ1, A0)::Γ ⊢ B0 ; ℓ ∈ tUniv i by
+    move /Wt_Wff in ha; hauto lq:on inv:Wff.
+  have -> : a = (a[ids]) by asimpl.
+  have -> : A = (A[ids]) by asimpl.
+  apply morphing_Syn with (Γ := (ℓ0, B0) :: (ℓ1, A0) :: Γ);
     auto; last by eauto with wff.
-  move => m C. elim /lookup_inv.
-  - move => lookm B0' Γ' _ E _. inversion E. asimpl.
-    apply T_Conv with (A := B1 ⟨S⟩) (i := k).
-    + apply T_Var; hauto lq:on ctrs:lookup db:wff.
-    + eapply weakening_Syn' with (A := tUniv k); eauto.
+
+  move => m ℓ2 C. elim /lookup_inv.
+  - move => lookm ℓ3 B0' Γ' ? [*]. subst.
+    apply T_Conv with (A := B1 ⟨S⟩) (i := k) (ℓ0 := ℓB0).
+    + apply : T_Var; hauto lq:on use:meet_idempotent ctrs:lookup db:wff.
+    + asimpl.
+      eapply weakening_Syn' with (A := tUniv k); eauto.
       eapply preservation_helper; eauto.
-    + apply Sub_renaming; auto.
-  - move => lookm n C' Γ' B' lookn _ E _. asimpl.
+    + asimpl => /=.
+      eapply cfacts.conv_renaming; eauto.
+      rewrite /iok_ren_ok.
+      sfirstorder inv:nat.
+  - move => lookm n C' Γ' ℓ3 B' lookn ? [*]. subst.  asimpl.
     elim /lookup_inv : lookn.
-    + move => lookn A0' Γ'' _ E' _. subst. inversion E.
-      apply T_Conv with (A := A1 ⟨S⟩ ⟨S⟩) (i := i).
-      * apply T_Var; hauto lq:on ctrs:lookup db:wff.
+    + move => lookn A0' Γ'' ? E' [*]. subst.
+      apply T_Conv with (A := A1 ⟨S⟩ ⟨S⟩) (i := i) (ℓ0 := ℓA0).
+      * apply : T_Var; hauto lq:on use:meet_idempotent ctrs:lookup db:wff.
       * repeat eapply weakening_Syn' with (A := tUniv i); eauto.
-      * repeat apply Sub_renaming; auto.
-    + move => *. apply T_Var; hauto lq:on ctrs:lookup db:wff.
+      * apply cfacts.conv_renaming with (Ξ := ℓ2 :: c2e Γ); eauto.
+        apply cfacts.conv_renaming with (Ξ := c2e Γ); eauto.
+        rewrite /iok_ren_ok.
+        sfirstorder inv:nat.
+        sfirstorder inv:nat unfold:elookup.
+    + move => *. apply : T_Var; hauto lq:on use:meet_idempotent ctrs:lookup db:wff.
 Qed.
 
-Lemma T_Refl' Γ a0 a1 A
+Lemma T_Refl' Γ ℓ ℓ0 a0 a1 A
   (hΓ : ⊢ Γ)
   (h : a0 ⇒ a1) :
-  Γ ⊢ a0 ∈ A ->
-  Γ ⊢ a1 ∈ A ->
-  Γ ⊢ tRefl ∈ (tEq a0 a1 A).
+  Γ ⊢ a0 ; ℓ0 ∈ A ->
+  Γ ⊢ a1 ; ℓ0 ∈ A ->
+  Γ ⊢ tRefl ; ℓ ∈ (tEq ℓ0 a0 a1 A).
 Proof.
-  move => *.
-  apply T_Conv with (A := tEq a0 a0 A) (i := 0).
+  move => ha0 ha1.
+  Check T_Eq_simpl.
+  move : T_Eq_simpl (ha0) (ha1) => /[apply]/[apply] /(_ ℓ0 0). move => [ℓ1 ?].
+  eapply T_Conv with (A := tEq ℓ0 a0 a0 A) (i := 0).
   - by apply T_Refl.
-  - by apply T_Eq_simpl.
-  - hauto lq:on use:P_Eq,Par_refl, Par_Sub.
+  - eauto.
+  - rewrite /conv.
+    exists ℓ1. rewrite/iconv.
+    exists (tEq ℓ0 a0 a1 A),(tEq ℓ0 a0 a1 A).
+    repeat split; eauto using rtc_refl, rtc_once, cfacts.pfacts.Par_refl with par.
+    apply iok_ieq with (ℓ := ℓ1); last by solve_lattice.
+    eauto using typing_iok.
 Qed.
 
-Lemma Wt_Refl_inv Γ T (h : Γ ⊢ tRefl ∈ T) :
-  exists a A, Γ ⊢ tRefl ∈ (tEq a a A)  /\
-         Γ ⊢ a ∈ A /\
-         tEq a a A <: T /\ exists i, Γ ⊢ T ∈ (tUniv i).
+Lemma Wt_Refl_inv Γ ℓ T (h : Γ ⊢ tRefl ; ℓ ∈ T) :
+  exists ℓ0 a A, Γ ⊢ tRefl ; ℓ ∈ (tEq ℓ0 a a A)  /\
+         Γ ⊢ a ; ℓ0 ∈ A /\
+         conv (c2e Γ) (tEq ℓ0 a a A) T /\ exists ℓ i, Γ ⊢ T ; ℓ ∈ (tUniv i).
 Proof.
   move E : tRefl h => p h.
   move : E.
-  elim : p T / h=>//.
-  - hauto lq:on rew:off use:Sub_transitive.
-  - hauto lq:on ctrs:Wt use:T_Eq_simpl, Sub_reflexive.
+  elim : Γ ℓ p T / h=>//.
+  - hauto lq:on rew:off use:cfacts.conv_trans.
+  - move => Γ ℓ a ℓ0 A hΓ ha _ _.
+    have : exists ℓ, Γ ⊢ tEq ℓ0 a a A ; ℓ ∈ tUniv 0 by eauto using T_Eq_simpl.
+    move => [ℓ1 ?].
+    exists ℓ0, a , A. sfirstorder use:T_Refl, typing_conv.
 Qed.
 
-Lemma Wt_Suc_inv Γ a T (h : Γ ⊢ tSuc a ∈ T) :
-  Γ ⊢ a ∈ tNat /\
-  tNat <: T /\ exists i, Γ ⊢ T ∈ tUniv i.
-Proof.
-  move E : (tSuc a) h => a0 h.
-  move : a E.
-  elim : Γ a0 T / h=>//.
-  - hauto lq:on rew:off use:Sub_transitive.
-  - hauto lq:on ctrs:Wt use:T_Nat, Sub_reflexive.
-Qed.
+(* Lemma Wt_Suc_inv Γ a T (h : Γ ⊢ tSuc a ∈ T) : *)
+(*   Γ ⊢ a ∈ tNat /\ *)
+(*   tNat <: T /\ exists i, Γ ⊢ T ∈ tUniv i. *)
+(* Proof. *)
+(*   move E : (tSuc a) h => a0 h. *)
+(*   move : a E. *)
+(*   elim : Γ a0 T / h=>//. *)
+(*   - hauto lq:on rew:off use:Sub_transitive. *)
+(*   - hauto lq:on ctrs:Wt use:T_Nat, Sub_reflexive. *)
+(* Qed. *)
 
-Lemma Wt_Refl_Coherent Γ a b A (h : Γ ⊢ tRefl ∈ (tEq a b A)) :
-  Coherent a b.
+Lemma Wt_Refl_Coherent Γ ℓ ℓ0 a b A (h : Γ ⊢ tRefl ; ℓ ∈ (tEq ℓ0 a b A)) :
+  iconv (c2e Γ) ℓ0 a b.
 Proof.
+  move /Wt_Refl_inv : h.
+  move => [ℓ1][a0][A0][h0][h1][h2][ℓ2][i]h3.
   qauto l:on use:Wt_Refl_inv, Sub_eq_inj, Coherent_transitive, Coherent_symmetric.
 Qed.
 
