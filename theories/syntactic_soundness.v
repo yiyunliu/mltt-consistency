@@ -816,21 +816,23 @@ Proof.
   - move => ℓ0 a0 a1 h0 ih0 Γ ℓ A /Wt_Abs_inv.
     intros (ℓ1 & A1 & B & i & hPi & ha0 & hCoherent & ℓ2 & j & hA).
     case /Wt_Pi_Univ_inv : hPi => k [l [? [hA0 hB]]]. subst.
-    eapply T_Conv with (A := tPi ℓ0 A1 B) (i := j) => //.
-    apply : T_Abs.
-    + qauto l:on ctrs:Wt use:preservation_helper, Par_Sub.
-    + qauto l:on ctrs:Wt use:preservation_helper, Par_Sub.
-  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_App_inv.
-    intros (A0 & B & hPi & hb0 & hCoherent & i & hA).
+    apply T_Conv with (A := tPi ℓ0 A1 B) (i := j) (ℓ0 := ℓ2) => //.
+    apply T_Abs_simple => //.
+    apply : preservation_helper; eauto.
+    sfirstorder use:typing_conv.
+  - move => a0 a1 ℓ0 b0 b1 h0 ih0 h1 ih1 Γ ℓ A /Wt_App_inv.
+    intros (A0 & B & hPi & hb0 & hCoherent & ℓ1 & i & hA).
     eapply T_Conv with (A := subst_tm (b1..) B); eauto.
     apply : T_App; eauto.
-    apply : Sub_transitive; eauto.
-    have : B[b0..] ⇒ B[b1..]; last by hauto l:on use:Par_Sub.
-    apply Par_morphing; last by apply Par_refl.
-    hauto q:on unfold:Par_m ctrs:Par inv:nat simp:asimpl.
-  - move => a a0 b0 b1 haa0 iha hbb0 ihb Γ A0 /Wt_App_inv.
-    intros (A1 & B & ha & hb0 & hCoherent & i & hA0).
-    have /Wt_Abs_inv := ha; intros (A & B0 & k & hPi & ha0 & hCoherent' & j & hPi').
+    apply : cfacts.conv_trans; eauto.
+    have : B[b0..] ⇒ B[b1..].
+    apply cfacts.pfacts.Par_morphing; last by apply cfacts.pfacts.Par_refl.
+    hauto q:on unfold:cfacts.pfacts.Par_m ctrs:Par inv:nat simp:asimpl.
+    have : exists ℓ i, Γ ⊢ B[b0..] ; ℓ ∈ tUniv i by qauto l:on use:T_App, Wt_regularity.
+    hauto lq:on use:cfacts.iconv_par, typing_conv.
+  - move => a a0 b0 b1 ℓ0 haa0 iha hbb0 ihb Γ ℓ A0 /Wt_App_inv.
+    intros (A1 & B & ha & hb0 & hCoherent & ℓ1 & i & hA0).
+    have /Wt_Abs_inv := ha; intros (A & B0 & k & hPi & ha0 & hCoherent' & ℓ2 & j & iP & hPi').
     case /Sub_pi_inj : hCoherent' => *.
     case /Wt_Pi_Univ_inv : hPi => *.
     move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
