@@ -408,13 +408,13 @@ Proof.
   elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
 Qed.
 
-(* Lemma Pars_eq_inv a b A C (h : (tEq a b A) ⇒* C) : *)
-(*   exists a0 b0 A0, C = tEq a0 b0 A0 /\ a ⇒* a0 /\ b ⇒* b0 /\ A ⇒* A0. *)
-(* Proof. *)
-(*   move E : (tEq a b A) h => T h. *)
-(*   move : a b A E. *)
-(*   elim : T C / h; hecrush inv:Par ctrs:Par, rtc. *)
-(* Qed. *)
+Lemma Pars_eq_inv ℓ a b A C (h : (tEq ℓ a b A) ⇒* C) :
+  exists a0 b0 A0, C = tEq ℓ a0 b0 A0 /\ a ⇒* a0 /\ b ⇒* b0 /\ A ⇒* A0.
+Proof.
+  move E : (tEq ℓ a b A) h => T h.
+  move : ℓ a b A E.
+  elim : T C / h; hecrush inv:Par ctrs:Par, rtc.
+Qed.
 
 Lemma Pars_univ_inv i A (h : (tUniv i) ⇒* A) :
   A = tUniv i.

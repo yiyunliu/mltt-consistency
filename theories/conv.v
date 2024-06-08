@@ -52,6 +52,9 @@ Proof.
         sfirstorder use:meet_idempotent,IO_Var.
 Qed.
 
+Lemma iok_preservation_star Ξ ℓ a (h : IOk Ξ ℓ a) : forall b, a ⇒* b -> IOk Ξ ℓ b.
+Proof. induction 1; sfirstorder use:iok_preservation. Qed.
+
 Lemma simulation : forall Ξ ℓ,
     (forall a b, IEq Ξ ℓ a b ->
             forall a', Par a a' ->
@@ -270,6 +273,30 @@ Proof. rewrite /conv; eauto using ieq_iconv. Qed.
 Lemma conv_univ_inj Ξ i j : conv Ξ (tUniv i) (tUniv j) -> i = j.
 Proof.
   hauto l:on dep:on use:Pars_univ_inv inv:IEq unfold:conv, iconv.
+Qed.
+
+Lemma conv_eq_inj Ξ ℓ0 a0 b0 A0 ℓ1 a1 b1 A1 : conv Ξ (tEq ℓ0 a0 b0 A0) (tEq ℓ1 a1 b1 A1) -> ℓ0 = ℓ1 /\ exists ℓ, ℓ0 ⊆ ℓ /\ iconv Ξ ℓ a0 a1 /\ iconv Ξ ℓ b0 b1 /\  iconv Ξ ℓ A0 A1.
+Proof.
+  rewrite /conv/iconv.
+  move => [ℓ][c0][c1][h0][h1]h2.
+  move /Pars_eq_inv : h0 => [a0'][b0'][A0'][?][h3][h4]h5. subst.
+  move /Pars_eq_inv : h1 => [a1'][b1'][A1'][?][h6][h7]h8. subst.
+  elim /IEq_inv : h2 => // _ ℓ2 a2 a3 b2 b3 A2 A3 ? ? ? ? [? ? ? ?][? ? ? ?]. subst.
+  split => //.
+  exists ℓ. sfirstorder.
+Qed.
+
+Lemma iconv_iok_downgrade Ξ ℓ0 ℓ1 a b :
+  IOk Ξ ℓ0 a -> iconv Ξ ℓ1 a b -> iconv Ξ (ℓ0 ∩ ℓ1) a b.
+Proof.
+  rewrite /iconv.
+  move => ha [a'][b'][h0][h1]h2.
+  exists a', b'.
+  repeat split => //.
+  suff /iok_ieq /(_ ℓ0) /(_ ltac:(by rewrite meet_idempotent)) : IOk Ξ ℓ0 a'.
+  rewrite meet_commutative.
+  sfirstorder use:ieq_downgrade_mutual.
+  eauto using iok_preservation_star.
 Qed.
 
 Lemma iconv_renaming : forall Ξ ℓ a b,

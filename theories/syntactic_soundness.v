@@ -769,7 +769,8 @@ Proof.
   - move => Γ ℓ a ℓ0 A hΓ ha _ _.
     have : exists ℓ, Γ ⊢ tEq ℓ0 a a A ; ℓ ∈ tUniv 0 by eauto using T_Eq_simpl.
     move => [ℓ1 ?].
-    exists ℓ0, a , A. sfirstorder use:T_Refl, typing_conv.
+    exists ℓ0, a , A.
+    sfirstorder use:T_Refl, typing_conv.
 Qed.
 
 (* Lemma Wt_Suc_inv Γ a T (h : Γ ⊢ tSuc a ∈ T) : *)
@@ -788,23 +789,35 @@ Lemma Wt_Refl_Coherent Γ ℓ ℓ0 a b A (h : Γ ⊢ tRefl ; ℓ ∈ (tEq ℓ0 a
 Proof.
   move /Wt_Refl_inv : h.
   move => [ℓ1][a0][A0][h0][h1][h2][ℓ2][i]h3.
-  qauto l:on use:Wt_Refl_inv, Sub_eq_inj, Coherent_transitive, Coherent_symmetric.
+  move /cfacts.conv_eq_inj : h2.
+  move => [?][ℓ3][?][ha][hb]hA. subst.
+  move /typing_iok in h1.
+  have : iconv (c2e Γ) (ℓ0 ∩ ℓ3) a0 a
+    by eauto using meet_commutative, cfacts.iconv_iok_downgrade.
+  have : iconv (c2e Γ) (ℓ0 ∩ ℓ3) a0 b
+    by eauto using meet_commutative, cfacts.iconv_iok_downgrade.
+  qauto l:on use:cfacts.iconv_sym, cfacts.iconv_trans.
 Qed.
 
-Lemma subject_reduction a b (h : a ⇒ b) : forall Γ A,
-    Γ ⊢ a ∈ A -> Γ ⊢ b ∈ A.
+Lemma subject_reduction a b (h : a ⇒ b) : forall Γ ℓ A,
+    Γ ⊢ a ; ℓ ∈ A -> Γ ⊢ b ; ℓ ∈ A.
 Proof.
   elim : a b /h => //.
-  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Pi_inv.
-    intros (i & hA0 & hAB0 & hACoherent & j & hA).
+  - move => ℓ0 A0 A1 B0 B1 h0 ih0 h1 ih1 Γ ℓ A /Wt_Pi_inv.
+    intros (i & j & hA0 & hAB0 & hACoherent & ℓ1 & k & hA).
     have ? : ⊢ Γ by eauto with wff.
-    apply T_Conv with (A := tUniv i) (i := j) => //.
-    qauto l:on ctrs:Wt use:preservation_helper, Par_Sub.
-  - move => a0 a1 h0 ih0 Γ A /Wt_Abs_inv.
-    intros (A1 & B & i & hPi & ha0 & hCoherent & j & hA).
-    case /Wt_Pi_Univ_inv : hPi => hA0 hB.
-    apply T_Conv with (A := tPi A1 B) (i := j) => //.
-    apply T_Abs with (i := i).
+    eapply T_Conv with  (A := tUniv (max i j))  => //.
+    apply T_Pi => //; eauto.
+    apply : preservation_helper; eauto.
+    move /typing_conv : hA0.
+    rewrite /conv.
+    hauto lq:on use:cfacts.iconv_par.
+    by eauto.
+  - move => ℓ0 a0 a1 h0 ih0 Γ ℓ A /Wt_Abs_inv.
+    intros (ℓ1 & A1 & B & i & hPi & ha0 & hCoherent & ℓ2 & j & hA).
+    case /Wt_Pi_Univ_inv : hPi => k [l [? [hA0 hB]]]. subst.
+    eapply T_Conv with (A := tPi ℓ0 A1 B) (i := j) => //.
+    apply : T_Abs.
     + qauto l:on ctrs:Wt use:preservation_helper, Par_Sub.
     + qauto l:on ctrs:Wt use:preservation_helper, Par_Sub.
   - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_App_inv.
