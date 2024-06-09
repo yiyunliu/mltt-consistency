@@ -1026,32 +1026,45 @@ Proof.
       rewrite /conv.
       hauto l:on use:cfacts.iconv_par.
   (* LetPack *)
-  - move => a0 b0 c0 a1 b1 c1 h0 ih0 h1 ih1 h2 ih2 Γ A /Wt_Let_inv.
-    intros (i & j & A0 & B0 & C & hA0 & hB0 & hPack & hc0 & hC & hCoherent & k & hA).
+  - move => ℓ0 ℓ1 a0 b0 c0 a1 b1 c1 h0 ih0 h1 ih1 h2 ih2 Γ ℓ A /Wt_Let_inv.
+    intros (? & i & j & ℓT  & A0 & B0 & C & hA0 & hB0 & hPack & hc0 & hC & hCoherent & ℓ2 & k & hA).
     move /Wt_Pack_inv : hPack.
-    intros (A1 & B1 & l & ha0 & hb0 & hSig & hSub & _).
-    move /Wt_Sig_Univ_inv : hSig => [hA1 hB1].
-    move /Sub_sig_inj : hSub => [hSubA hSubB].
+    intros (ℓT0 & A1 & B1 & l & ha0 & hb0 & hSig & hSub & _).
+    move /Wt_Sig_Univ_inv : hSig => [m][n][?][hA1] hB1. subst.
+    move /cfacts.conv_sig_inj : hSub => [? [hSubA hSubB]].
     apply ih0 in ha0.
     apply ih1 in hb0.
     apply ih2 in hc0.
-    have hb1 : Γ ⊢ b1 ∈ B1[a1..]. {
-      apply T_Conv with (A := B1[a0..]) (i := l); auto.
-      + change (tUniv l) with (tUniv l)[a1..].
+    have hb1 : Γ ⊢ b1 ; ℓ1 ∈ B1[a1..]. {
+      eapply T_Conv with (A := B1[a0..]) (i := n); eauto.
+      + change (tUniv n) with (tUniv n)[a1..].
         eapply subst_Syn with (a := a1); eauto.
-      + hauto lq:on use:Par_cong, Par_refl, Par_Sub.
+      + move /Wt_regularity : hb0.
+        move => [ℓ3][i0].
+        move /typing_conv.
+        have : B1[a0..] ⇒ B1[a1..] by sfirstorder use:Par_refl, Par_cong.
+        rewrite /conv.
+        hauto lq:on use:cfacts.iconv_par, cfacts.iconv_sym.
     }
-    eapply T_Conv with (A := C[(tPack a1 b1)..]); eauto.
-    + have -> : C[(tPack a1 b1)..] = C[tPack (var_tm 1) (var_tm 0) .: shift >> shift >> var_tm][b1 .: a1..]
+    eapply T_Conv with (A := C[(tPack ℓ0 a1 b1)..]); eauto.
+    + have -> : C[(tPack ℓ0 a1 b1)..] = C[tPack ℓ0 (var_tm 1) (var_tm 0) .: shift >> shift >> var_tm][b1 .: a1..]
         by asimpl.
       eapply preservation_helper2 with
         (A0 := A0) (A1 := A1) (B0 := B0) (B1 := B1) in hc0; eauto.
       move : morphing_Syn hc0. move /[apply].
       apply; last by hauto lq:on db:wff.
-      move => m D. elim/lookup_inv.
+      move => p ℓp D. elim/lookup_inv.
       * move => *. asimpl. scongruence.
-      * inversion 2; asimpl;
-        hauto lq:on ctrs:Wt db:wff.
-    + eapply Sub_transitive; eauto.
-      sauto lq:on use:Par_cong, Par_refl, Par_Sub.
+      * move => _ n0 A2 Γ0 ℓ3 B h ? [*]. subst.
+        asimpl.
+        inversion h; subst.
+        asimpl. sfirstorder.
+        asimpl. apply : T_Var;eauto with wff.
+        solve_lattice.
+    + eapply cfacts.conv_trans; eauto.
+      have : conv (c2e Γ) C[(tPack ℓ0 a0 b0)..] C[(tPack ℓ0 a0 b0)..]
+        by hauto lq:on ctrs:Par use:cfacts.conv_sym, cfacts.conv_trans.
+      have ? : tPack ℓ0 a0 b0 ⇒ tPack ℓ0 a1 b1 by eauto with par.
+      have : C[(tPack ℓ0 a0 b0)..] ⇒ C[(tPack ℓ0 a1 b1)..] by eauto using Par_refl, Par_cong.
+      hauto lq:on use:cfacts.iconv_par unfold:conv.
 Qed.
