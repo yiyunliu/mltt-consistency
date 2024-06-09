@@ -968,19 +968,42 @@ Proof.
     apply iht.
     move : T_Conv ht0. move/[apply]. apply; eauto.
     apply : cfacts.conv_trans;eauto.
-    (* have ? : Coherent a b by eauto using Wt_Refl_Coherent. *)
-    (* have : C[tRefl .: a..] ⇔ C[tRefl .: b..]; last by hauto l:on use:Coherent_Sub. *)
-    (* replace (subst_tm (tRefl .: a..) C) *)
-    (*   with (subst_tm (a..)(subst_tm (tRefl..) C)); last by asimpl. *)
-    (* replace (subst_tm (tRefl .: b..) C) *)
-    (*   with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl. *)
-  (* apply Coherent_cong. apply Coherent_reflexive. auto. *)
-    admit.
-  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Sig_inv.
-    intros (i & hA0 & hB0 & hACoherent & j & hA).
+    exists ℓ0.
+    move /typing_iok : hC =>/=.
+    move /Wt_Refl_Coherent : hp0.
+    rewrite /iconv.
+    move => [a'][b'][h0][h1]h2.
+    move => hC.
+    exists C[tRefl .: a'..], C[tRefl .: b'..].
+    repeat split => //.
+    + apply : cfacts.pfacts.Pars_morphing_star; eauto using rtc_refl.
+      apply : cfacts.pfacts.good_Pars_morphing_ext2; eauto using rtc_refl.
+    + apply : cfacts.pfacts.Pars_morphing_star; eauto using rtc_refl.
+      apply : cfacts.pfacts.good_Pars_morphing_ext2; eauto using rtc_refl.
+    + move /iok_ieq /(_ ℓ0 ltac:(by rewrite meet_idempotent)) in hC.
+      eapply ieq_morphing_mutual; eauto.
+      rewrite /ieq_good_morphing.
+      case.
+      * hauto lq:on ctrs:IEq, GIEq use:ieq_gieq unfold:elookup.
+      * move => n ℓ3 h.
+        have {}h: elookup n (ℓ1 :: c2e Γ) ℓ3 by sfirstorder unfold:elookup. simpl.
+        case: n h; first by hauto q:on ctrs:IEq, GIEq use:ieq_gieq unfold:elookup.
+        move => n h.
+        have {}h: elookup n (c2e Γ) ℓ3 by sfirstorder unfold:elookup.
+        asimpl.
+        apply ieq_gieq. eauto with ieq.
+  (* Sig *)
+  - move => ℓ0 A0 A1 B0 B1 h0 ih0 h1 ih1 Γ ℓ A /Wt_Sig_inv.
+    intros (i & j & hA0 & hAB0 & hACoherent & ℓ1 & k & hA).
     have ? : ⊢ Γ by eauto with wff.
-    apply T_Conv with (A := tUniv i) (i := j) => //.
-    hauto q:on ctrs:Wt use:preservation_helper, Par_Sub.
+    eapply T_Conv with  (A := tUniv (max i j))  => //.
+    apply T_Sig => //; eauto.
+    apply : preservation_helper; eauto.
+    move /typing_conv : hA0.
+    rewrite /conv.
+    hauto lq:on use:cfacts.iconv_par.
+    by eauto.
+  (* Pack *)
   - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_Pack_inv.
     intros (A0 & B0 & i & ha & hb & hSig & hCoherent & j & hA).
     apply T_Conv with (A := tSig A0 B0) (i := j) => //.
@@ -991,6 +1014,7 @@ Proof.
     change (tUniv i) with (tUniv i)[a1..].
     eapply subst_Syn; eauto.
     apply Wt_Sig_Univ_inv => //.
+  (* Let *)
   - move => a0 b0 a1 b1 h0 ih0 h1 ih1 Γ A /Wt_Let_inv.
     intros (i & j & A0 & B0 & C & hA0 & hB0 & ha & hb & hC & hCoherent & k & hA).
     apply T_Conv with (A := C[a1..]) (i := k) => //.
