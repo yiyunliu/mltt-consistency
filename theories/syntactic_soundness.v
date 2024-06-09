@@ -25,6 +25,8 @@ Import tcfacts.
 Module solver := Solver lattice.
 Import solver.
 
+Import pfacts.
+
 (* -------------------------------------------------- *)
 
 Lemma here' : forall ℓ0 A Γ T, T = A ⟨shift⟩ ->  lookup 0 ((ℓ0, A) :: Γ) ℓ0 T.
@@ -577,7 +579,7 @@ Lemma Wt_Let_inv Γ ℓ ℓ0 ℓ1 a b T (h : Γ ⊢ tLet ℓ0 ℓ1 a b ; ℓ ∈
   exists i j ℓT A B C,
     Γ ⊢ A ; ℓT ∈ tUniv j /\
     (ℓ0, A) :: Γ ⊢ B ; ℓT ∈ tUniv j /\
-    Γ ⊢ a ; ℓ ∈ tSig ℓ0 A B /\
+    Γ ⊢ a ; ℓ1 ∈ tSig ℓ0 A B /\
     (ℓ1, B) :: (ℓ0, A) :: Γ ⊢ b ; ℓ ∈ C[(tPack ℓ0 (var_tm 1) (var_tm 0)) .: (shift >> shift >> var_tm)] /\
     (ℓ1, tSig ℓ0 A B) :: Γ ⊢ C ; ℓT ∈ tUniv i /\
     conv (c2e Γ) C[a..] T /\
@@ -598,8 +600,7 @@ Proof.
     exists i, j, ℓT, A , B,C.
     have /Wt_regularity Cwf : Γ ⊢ tLet ℓ0 ℓp a b ; ℓ ∈ C[a..] by eauto using T_Let.
     repeat split => //.
-    + eauto using subsumption.
-    + sfirstorder use:typing_conv.
+    sfirstorder use:typing_conv.
 Qed.
 
 (* ------------------------------------------------- *)
@@ -1004,25 +1005,27 @@ Proof.
     hauto lq:on use:cfacts.iconv_par.
     by eauto.
   (* Pack *)
-  - move => a0 a1 b0 b1 h0 ih0 h1 ih1 Γ A /Wt_Pack_inv.
-    intros (A0 & B0 & i & ha & hb & hSig & hCoherent & j & hA).
-    apply T_Conv with (A := tSig A0 B0) (i := j) => //.
+  - move => ℓ0 a0 a1 b0 b1 h0 ih0 h1 ih1 Γ ℓ A /Wt_Pack_inv.
+    intros (ℓT & A0 & B0 & i & ha & hb & hSig & hCoherent & (ℓ1 & j & hA)).
+    apply T_Conv with (A := tSig ℓ0 A0 B0) (i := j) (ℓ0 := ℓ1) => //.
     eapply T_Pack; eauto.
     apply ih1.
-    have ? : B0[a0..] <: B0[a1..] by hauto lq:on use:Par_cong, Par_refl, Par_Sub.
-    apply T_Conv with (A := B0[a0..]) (i := i) => //.
-    change (tUniv i) with (tUniv i)[a1..].
-    eapply subst_Syn; eauto.
-    apply Wt_Sig_Univ_inv => //.
+    have ? : B0[a0..] ⇒ B0[a1..] by hauto lq:on use:Par_cong, Par_refl.
+    move /Wt_Sig_Univ_inv : hSig.
+    move => [i0][j0][?][h2]h3. subst.
+    eapply T_Par with (ℓ0 := ℓT) (i := j0); eauto.
+    eapply subst_Syn_Univ; eauto.
   (* Let *)
-  - move => a0 b0 a1 b1 h0 ih0 h1 ih1 Γ A /Wt_Let_inv.
-    intros (i & j & A0 & B0 & C & hA0 & hB0 & ha & hb & hC & hCoherent & k & hA).
-    apply T_Conv with (A := C[a1..]) (i := k) => //.
+  - move => ℓ0 ℓ1 a0 b0 a1 b1 h0 ih0 h1 ih1 Γ ℓ A /Wt_Let_inv.
+    intros (? & i & j & ℓT& A0 & B0 & C & hA0 & hB0 & ha & hb & hC & hCoherent & ℓ2 & k & hA).
+    apply T_Conv with (A := C[a1..]) (i := k) (ℓ0 := ℓ2)  => //.
     + eapply T_Let' with (j := j); eauto.
-    + apply : Sub_transitive; eauto.
-      hauto lq:on drew:off
-        use:Sub_transitive, Coherent_Sub, Coherent_cong,
-            Coherent_reflexive, Coherent_symmetric, Par_Coherent.
+    + apply : cfacts.conv_trans; eauto.
+      have : conv (c2e Γ) C[a0..] C[a0..] by eauto using cfacts.conv_trans, cfacts.conv_sym.
+      have : C[a0..] ⇒ C[a1..] by sfirstorder use:Par_cong, Par_refl.
+      rewrite /conv.
+      hauto l:on use:cfacts.iconv_par.
+  (* LetPack *)
   - move => a0 b0 c0 a1 b1 c1 h0 ih0 h1 ih1 h2 ih2 Γ A /Wt_Let_inv.
     intros (i & j & A0 & B0 & C & hA0 & hB0 & hPack & hc0 & hC & hCoherent & k & hA).
     move /Wt_Pack_inv : hPack.
@@ -1051,81 +1054,4 @@ Proof.
         hauto lq:on ctrs:Wt db:wff.
     + eapply Sub_transitive; eauto.
       sauto lq:on use:Par_cong, Par_refl, Par_Sub.
-Qed.
-
-(* ----------------------------------------------- *)
-Definition is_value (a : tm) :=
-  match a with
-  | tPi A B => true
-  | tAbs a => true
-  | tNat => true
-  | tSuc _ => true
-  | tZero => true
-  | tInd a b c => false
-  | tApp a b => false
-  | tUniv _ => true
-  | tRefl => true
-  | tJ _ _ _ _ => false
-  | tEq _ _ _ => true
-  | tSig _ _ => true
-  | tPack _ _ => true
-  | tLet _ _ => false
-  | var_tm _ => false
-  end.
-
-Definition head_inhab (a : tm) : head :=
-  match a with
-  | tAbs _ => hPi
-  | tSuc _ => hNat
-  | tZero => hNat
-  | tRefl => hEq
-  | tPi _ _ => hUniv
-  | tEq _ _ _ => hUniv
-  | tUniv _ => hUniv
-  | tNat => hUniv
-  | tSig _ _ => hUniv
-  | tPack _ _ => hSig
-  | _ => hBot
-  end.
-
-Lemma wt_winv Γ A T (h : Γ ⊢ A ∈ T) :
-  ~~ (head_inhab A \≤ hBot) ->
-  exists B, tm_to_head B = head_inhab A /\ B <: T.
-Proof.
-  elim : Γ A T / h => //=; solve [sfirstorder use:Sub_reflexive | hauto lq:on use:Sub_reflexive, Sub_transitive].
-Qed.
-
-Lemma bot_is_bot a : hBot \≤ a.
-Proof. case : a => //. Qed.
-
-Lemma hleq_bot a : a \≤ hBot -> a = hBot.
-Proof. auto using bot_is_bot, hleq_antisym. Qed.
-
-Lemma wt_wrong_hf_contra Γ a A (h : Γ ⊢ a ∈ A) :
-  (head_inhab a \≤ tm_to_head A) || (tm_to_head A \≤ head_inhab a).
-Proof.
-  case E : (head_inhab a \≤ hBot)=>//; qauto l:on use:wt_winv, Sub_consistent, hleq_bot.
-Qed.
-
-(* Canonical forms lemmas *)
-Definition canon_prop (U : tm) (a : tm) : Prop :=
-  is_value a ->
-  match U with
-  | tPi A B => exists a0, a = tAbs a0
-  | tEq _ _ _ => a = tRefl
-  | tNat => a = tZero \/ exists b, a = tSuc b
-  | _ => True
-  end.
-
-Lemma wt_canon a U :
-  nil ⊢ a ∈ U -> canon_prop U a.
-Proof.
-  move /wt_wrong_hf_contra; hauto drew:off ctrs:tm inv:tm unfold:canon_prop.
-Qed.
-
-Lemma wt_progress a A (h :nil ⊢ a ∈ A) : is_value a \/ exists a0, a ⇒ a0.
-Proof.
-  move E : nil h => Γ h.
-  move : E.
-  elim: Γ a A/h; hauto l:on use:wt_canon, Par_refl.
 Qed.
