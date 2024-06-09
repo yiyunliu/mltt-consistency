@@ -431,7 +431,7 @@ Proof.
   (* Absurd *)
   - hauto lq:on use:InterpUnivN_Void_inv unfold:SemWt.
   (* Refl *)
-  - move => Γ ℓ a ℓ0 A hΓ _ /typing_iok /cfacts.ifacts.iok_ieq.
+  - move => Γ ℓ a ℓ0 ℓ1 A hΓ _ ? /typing_iok /cfacts.ifacts.iok_ieq.
     rewrite /SemWt.
     move => ha _ Δ ρ hρ.
     do 2 eexists.
@@ -441,9 +441,11 @@ Proof.
     sfirstorder.
     sfirstorder.
     move /ρ_ok_iok : hρ.
-    move /(_ ℓ0 ltac:(by rewrite meet_idempotent)) : ha.
+    move /(_ ℓ1 ltac:(by rewrite meet_idempotent)) : ha.
     move /cfacts.ieq_iconv.
-    hauto lq:on use:cfacts.iconv_subst.
+    move /cfacts.iconv_subst => /[apply].
+  (* hauto lq:on use:cfacts.iconv_subst. *)
+    admit.
   (* Eq *)
   - move => Γ ℓ ℓ0 a b A i j hℓ ha iha hb ihb hA ihA.
     rewrite SemWt_Univ.
@@ -452,10 +454,9 @@ Proof.
     + have /typing_iok : Γ ⊢ tEq ℓ0 a b A ; ℓ ∈ tUniv i by hauto l:on use:T_Eq.
       hauto lq:on ctrs:IEq use:cfacts.ifacts.iok_morphing, cfacts.iconv_subst, ρ_ok_iok.
     + eexists => //=. apply InterpUnivN_Eq.
+  (* J *)
   - move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ?.
     move => _ha ha _hb hb hA ihA _hp hp hC ihC _t ht.
-  (* (* J *) *)
-    (* - move => Γ t a b p A i j C _ ha _ hb _ _ _ hp _ /SemWt_Univ hC _ ht ρ hρ. *)
     move => Δ ρ hρ.
     move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
     move  /InterpUnivN_Eq_inv : hPA hp => ->[?][?]hab{PA}.

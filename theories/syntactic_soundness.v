@@ -799,10 +799,41 @@ Proof.
   qauto l:on use:cfacts.iconv_sym, cfacts.iconv_trans.
 Qed.
 
+Lemma Wt_Absurd_inv Γ ℓ a A (h : Γ ⊢ tAbsurd a ; ℓ ∈ A) :
+  exists ℓ0 ℓ1 B i, Γ ⊢ a ; ℓ0 ∈ tVoid /\ Γ ⊢ B ; ℓ1 ∈ tUniv i /\
+  conv (c2e Γ) B A /\ exists ℓ i, Γ ⊢ A ; ℓ ∈ tUniv i.
+Proof.
+  move E : (tAbsurd a) h => t h.
+  move : a E.
+  elim : Γ ℓ t A / h=>//.
+  - hauto lq:on use:cfacts.conv_trans.
+  - hauto lq:on use:typing_conv.
+Qed.
+
+Lemma T_Par Γ ℓ ℓ0 a A B i :
+  Γ ⊢ a ; ℓ ∈ A ->
+  Γ ⊢ B ; ℓ0 ∈ (tUniv i) ->
+  A ⇒ B ->
+  (* ----------- *)
+  Γ ⊢ a ; ℓ ∈ B.
+Proof.
+  move => h0 h1 h2.
+  suff : iconv (c2e Γ) ℓ0 A B by hauto q:on use:T_Conv unfold:conv.
+  rewrite /iconv.
+  exists B, B.
+  repeat split.
+  by move : h2; apply rtc_once.
+  by apply rtc_refl.
+  apply : iok_ieq;
+    [ eauto using typing_iok
+    | solve_lattice].
+Qed.
+
 Lemma subject_reduction a b (h : a ⇒ b) : forall Γ ℓ A,
     Γ ⊢ a ; ℓ ∈ A -> Γ ⊢ b ; ℓ ∈ A.
 Proof.
   elim : a b /h => //.
+  (* Pi *)
   - move => ℓ0 A0 A1 B0 B1 h0 ih0 h1 ih1 Γ ℓ A /Wt_Pi_inv.
     intros (i & j & hA0 & hAB0 & hACoherent & ℓ1 & k & hA).
     have ? : ⊢ Γ by eauto with wff.
@@ -813,6 +844,7 @@ Proof.
     rewrite /conv.
     hauto lq:on use:cfacts.iconv_par.
     by eauto.
+  (* Abs *)
   - move => ℓ0 a0 a1 h0 ih0 Γ ℓ A /Wt_Abs_inv.
     intros (ℓ1 & A1 & B & i & hPi & ha0 & hCoherent & ℓ2 & j & hA).
     case /Wt_Pi_Univ_inv : hPi => k [l [? [hA0 hB]]]. subst.
@@ -830,63 +862,94 @@ Proof.
     hauto q:on unfold:cfacts.pfacts.Par_m ctrs:Par inv:nat simp:asimpl.
     have : exists ℓ i, Γ ⊢ B[b0..] ; ℓ ∈ tUniv i by qauto l:on use:T_App, Wt_regularity.
     hauto lq:on use:cfacts.iconv_par, typing_conv.
+  (* AppAbs *)
   - move => a a0 b0 b1 ℓ0 haa0 iha hbb0 ihb Γ ℓ A0 /Wt_App_inv.
     intros (A1 & B & ha & hb0 & hCoherent & ℓ1 & i & hA0).
-    have /Wt_Abs_inv := ha; intros (A & B0 & k & hPi & ha0 & hCoherent' & ℓ2 & j & iP & hPi').
-    case /Sub_pi_inj : hCoherent' => *.
-    case /Wt_Pi_Univ_inv : hPi => *.
-    move /Wt_regularity : ha => [i0 /Wt_Pi_Univ_inv] [hA1 hB].
+    have /Wt_Abs_inv := ha; intros (ℓ2 & A & B0 & k & hPi & ha0 & hCoherent' & ℓ3 & j & hPi').
+    case /cfacts.conv_pi_inj : hCoherent' => ? [hh hh']. subst.
+    case /Wt_Pi_Univ_inv : hPi => [p [p0 [? [? ?]]]]. subst.
+    move /Wt_regularity : ha => [ℓ4 [i0 /Wt_Pi_Univ_inv]] [iA [iB [? [hA1 hB]]]]. subst.
+    have hbok : IOk (c2e Γ) ℓ0 b0 by eauto using typing_iok.
     move /ihb in hb0.
     eapply T_Conv with (A := subst_tm (b1..) B0); eauto.
     + apply : subst_Syn; eauto.
-      eapply T_Conv with (A := A1); eauto.
-    + apply : Sub_transitive; eauto.
-      apply Sub_transitive with (B := B0[b0..]).
-      have : B0[b0..] ⇒ B0[b1..]; last by hauto l:on use:Par_Sub.
-      sfirstorder use:Par_cong, Par_refl.
-      hauto l:on use:Sub_morphing.
-  - move => a b h ih Γ A /Wt_Suc_inv.
-    move => [h0][h1][i]h2.
+      qauto l:on use:T_Conv, cfacts.conv_sym.
+    + apply : cfacts.conv_trans; eauto.
+      move : hh'.
+      move /cfacts.conv_subst.
+      move /(_ (c2e Γ) (b0..)) => ?.
+      have ? : B0[b0..] ⇒ B0[b1..] by sfirstorder use:pfacts.Par_cong, pfacts.Par_refl.
+      have : iok_subst_ok b0.. (ℓ0 :: c2e Γ) (c2e Γ); last by
+        hauto lq:on use:cfacts.iconv_par.
+      rewrite /iok_subst_ok.
+      case. rewrite/elookup//=. scongruence.
+      move => n ℓ5 ?.
+      have : elookup n (c2e Γ) ℓ5 by sfirstorder.
+      move /IO_Var. apply. solve_lattice.
+  (* Suc *)
+  (* - move => a b h ih Γ ℓ A /Wt_Suc_inv. *)
+  (*   move => [h0][h1][i]h2. *)
+  (*   apply : T_Conv; eauto. *)
+  (*   have : ⊢ Γ by eauto with wff. *)
+  (*   have : Γ ⊢ b ∈ tNat by auto. *)
+  (*   apply T_Suc. *)
+  (* - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_Ind_inv. *)
+  (*   move => [A0][ha0][hb0][hc0][hC][[i hA0]][j hAj]. *)
+  (*   apply : T_Conv. apply T_Ind with (i := i); eauto. eauto. *)
+  (*   apply : Sub_transitive; eauto. *)
+  (*   have : A0[c0..] ⇒ A0[c1..]; last by hauto l:on use:Par_Sub. *)
+  (*   sfirstorder use:Par_cong, Par_refl. *)
+  (* - qauto l:on use:Wt_Ind_inv ctrs:Wt. *)
+  (* - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_Ind_inv. *)
+  (*   move => [A0][ha0][hb0][hc0][hA0][[j hA0']][i hA']. *)
+  (*   apply : T_Conv; eauto. *)
+  (*   have : A0[(tSuc c1)..] <: A0[(tSuc c0)..]. *)
+  (*   apply Par_Sub. *)
+  (*   apply Par_morphing. case => //=; hauto l:on ctrs:Par. apply Par_refl. *)
+  (*   move/T_Conv. apply. *)
+  (*   have /morphing_Syn /(_ Γ (tInd a1 b1 c1 .: c1..))  := ihb _ _ hb0. *)
+  (*   asimpl. apply; eauto with wff. *)
+  (*   rewrite /lookup_good_morphing. *)
+  (*   have ? : Γ ⊢ c0 ∈ tNat by hauto l:on use:Wt_Suc_inv. *)
+  (*   move => i0 A1. elim/lookup_inv => _. *)
+  (*   + move => A2 Γ0 ? []*. subst. *)
+  (*     asimpl. *)
+  (*     apply : T_Ind; eauto. *)
+  (*   + move => n A2 Γ0 B + ? [*]. subst. *)
+  (*     elim/lookup_inv => _. *)
+  (*     move => A1 Γ0 ? [*]. subst. by asimpl; auto. *)
+  (*     move => n0 A1 Γ0 B ? ? [*]. subst. *)
+  (*     asimpl.  hauto lq:on ctrs:Wt db:wff. *)
+  (*   + eauto using subst_Syn_Univ. *)
+  - hauto q:on use:T_Absurd, T_Conv, Wt_Absurd_inv.
+  - move => ℓ0 a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ ℓ A /Wt_Eq_inv.
+    intros (? & ha0' & hb0' & (q & hA0') & (i & eq) & (ℓ1 & j & hA)).
+    eapply T_Conv with (A := (tUniv i)) (i := j); eauto.
+    hauto q:on use:T_Par, T_Eq.
+  - move => C0 C1 t0 p0 t1 p1 ht iht hC ihC hp ihp Γ ℓ U /Wt_J_inv.
+    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & ? & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (ℓ2 & j & hU)).
+    have ? : ⊢ Γ by eauto with wff.
+    have ? : C0[p0.:b..] ⇒C1[p1.:b..] by
+      sfirstorder use:cfacts.pfacts.Par_cong2, cfacts.pfacts.Par_refl.
+    have : conv (c2e Γ) C1[p1.:b..] U by qauto l:on use:cfacts.iconv_par.
     apply : T_Conv; eauto.
-    have : ⊢ Γ by eauto with wff.
-    have : Γ ⊢ b ∈ tNat by auto.
-    apply T_Suc.
-  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_Ind_inv.
-    move => [A0][ha0][hb0][hc0][hC][[i hA0]][j hAj].
-    apply : T_Conv. apply T_Ind with (i := i); eauto. eauto.
-    apply : Sub_transitive; eauto.
-    have : A0[c0..] ⇒ A0[c1..]; last by hauto l:on use:Par_Sub.
-    sfirstorder use:Par_cong, Par_refl.
-  - qauto l:on use:Wt_Ind_inv ctrs:Wt.
-  - move => a0 a1 b0 b1 c0 c1 ha iha hb ihb hc ihc Γ A /Wt_Ind_inv.
-    move => [A0][ha0][hb0][hc0][hA0][[j hA0']][i hA'].
-    apply : T_Conv; eauto.
-    have : A0[(tSuc c1)..] <: A0[(tSuc c0)..].
-    apply Par_Sub.
-    apply Par_morphing. case => //=; hauto l:on ctrs:Par. apply Par_refl.
-    move/T_Conv. apply.
-    have /morphing_Syn /(_ Γ (tInd a1 b1 c1 .: c1..))  := ihb _ _ hb0.
-    asimpl. apply; eauto with wff.
+    eapply T_J_simpl with (a := a) (A := A) (ℓ0 := ℓ0) (ℓp := ℓp) (ℓ1 := ℓ1); eauto.
+    move /Wt_regularity : (ht0) => [ℓq][iq]?.
+    have : C0[tRefl .: a..] ⇒ C1[tRefl .: a..]
+      by sfirstorder use:cfacts.pfacts.Par_subst.
+    move /T_Par.
+    apply; eauto.
+    move /ihC : hC0.
+    move /(morphing_Syn) /(_ Γ (tRefl.:a..)).
+    asimpl.
+    apply; eauto with wff.
     rewrite /lookup_good_morphing.
-    have ? : Γ ⊢ c0 ∈ tNat by hauto l:on use:Wt_Suc_inv.
-    move => i0 A1. elim/lookup_inv => _.
-    + move => A2 Γ0 ? []*. subst.
-      asimpl.
-      apply : T_Ind; eauto.
-    + move => n A2 Γ0 B + ? [*]. subst.
-      elim/lookup_inv => _.
-      move => A1 Γ0 ? [*]. subst. by asimpl; auto.
-      move => n0 A1 Γ0 B ? ? [*]. subst.
-      asimpl.  hauto lq:on ctrs:Wt db:wff.
-    + eauto using subst_Syn_Univ.
-  - move => a0 b0 A0 a1 b1 A1 ha0 iha0 ha1 iha1 hA0 ihA0 Γ A /Wt_Eq_inv.
-    intros (ha0' & hb0' & (q & hA0') & (i & eq) & (j & hA)).
-    apply T_Conv with (A := (tUniv i)) (i := j); eauto.
-    apply T_Eq_simpl;
-      hauto lq:on rew:off ctrs:Wt use:Par_Sub.
-  - move => t0 a0 b0 p0 t1 a1 b1 p1 ht iht ha iha hb ihb hp ihp Γ U /Wt_J_inv.
-    intros (A & C & i & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (j & hU)).
-    have ? : (tEq a0 b0 A ⇒ tEq a1 b1 A) by hauto lq:on ctrs:Par use:Par_refl.
+    move => i0 ℓ3 A0.
+    elim /lookup_inv=>// _.
+    + move => ℓ4 A1 Γ0 ? [*]. subst => //=.
+      asimpl. apply : T_Refl=>//.
+
+    have ? : (tEq ℓ0 a0 b0 A ⇒ tEq ℓ0 a1 b1 A) by hauto lq:on ctrs:Par use:pfacts.Par_refl.
     have ? : Coherent (tEq a0 b0 A) (tEq a1 b1 A) by hauto l:on use:@rtc_once.
     apply T_Conv with (A := subst_tm (p1 .: b1..) C) (i := j) => //.
     apply T_J_simpl with (A := A) (i := i).

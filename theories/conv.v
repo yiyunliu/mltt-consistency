@@ -275,6 +275,48 @@ Proof.
   hauto l:on dep:on use:Pars_univ_inv inv:IEq unfold:conv, iconv.
 Qed.
 
+Lemma iconv_pi_inj Ξ ℓ ℓ0 A0 B0 ℓ1 A1 B1 :
+  iconv Ξ ℓ (tPi ℓ0 A0 B0) (tPi ℓ1 A1 B1) ->
+  ℓ0 = ℓ1 /\
+  iconv Ξ ℓ A0 A1 /\
+  iconv (ℓ0 :: Ξ) ℓ B0 B1.
+Proof.
+  rewrite /iconv.
+  move => [c0][c1][hPi0][hPi1]heq.
+  move /Pars_pi_inv : hPi0 => [A0'][B0'][h0][h1]h2.
+  move /Pars_pi_inv : hPi1 => [A1'][B1'][h3][h4]h5.
+  subst.
+  hauto lq:on inv:IEq.
+Qed.
+
+Lemma iconv_sig_inj Ξ ℓ ℓ0 A0 B0 ℓ1 A1 B1 :
+  iconv Ξ ℓ (tSig ℓ0 A0 B0) (tSig ℓ1 A1 B1) ->
+  ℓ0 = ℓ1 /\
+  iconv Ξ ℓ A0 A1 /\
+  iconv (ℓ0 :: Ξ) ℓ B0 B1.
+Proof.
+  rewrite /iconv.
+  move => [c0][c1][hPi0][hPi1]heq.
+  move /Pars_sig_inv : hPi0 => [A0'][B0'][h0][h1]h2.
+  move /Pars_sig_inv : hPi1 => [A1'][B1'][h3][h4]h5.
+  subst.
+  hauto lq:on inv:IEq.
+Qed.
+
+Lemma conv_pi_inj Ξ ℓ0 A0 B0 ℓ1 A1 B1 :
+  conv Ξ (tPi ℓ0 A0 B0) (tPi ℓ1 A1 B1) ->
+  ℓ0 = ℓ1 /\
+  conv Ξ A0 A1 /\
+  conv (ℓ0 :: Ξ) B0 B1.
+Proof. rewrite/conv; hauto lq:on use:iconv_pi_inj. Qed.
+
+Lemma conv_sig_inj Ξ ℓ0 A0 B0 ℓ1 A1 B1 :
+  conv Ξ (tSig ℓ0 A0 B0) (tSig ℓ1 A1 B1) ->
+  ℓ0 = ℓ1 /\
+  conv Ξ A0 A1 /\
+  conv (ℓ0 :: Ξ) B0 B1.
+Proof. rewrite/conv; hauto lq:on use:iconv_sig_inj. Qed.
+
 Lemma conv_eq_inj Ξ ℓ0 a0 b0 A0 ℓ1 a1 b1 A1 : conv Ξ (tEq ℓ0 a0 b0 A0) (tEq ℓ1 a1 b1 A1) -> ℓ0 = ℓ1 /\ exists ℓ, ℓ0 ⊆ ℓ /\ iconv Ξ ℓ a0 a1 /\ iconv Ξ ℓ b0 b1 /\  iconv Ξ ℓ A0 A1.
 Proof.
   rewrite /conv/iconv.
