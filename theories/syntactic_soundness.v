@@ -75,6 +75,7 @@ Proof. move =>> ->. apply T_App. Qed.
 
 Lemma T_J'  Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 T :
   T = (C [p .: b..]) ->
+  ℓ1 ⊆ ℓ0 ->
   ℓp ⊆ ℓ ->
   Γ ⊢ a ; ℓ1 ∈ A ->
   Γ ⊢ b ; ℓ1 ∈ A ->
@@ -243,9 +244,9 @@ Proof.
   (* Pi *)
   - qauto l:on ctrs:Wt use:cfacts.conv_renaming, lookup_good_renaming_iok_subst_ok.
   (* J *)
-  - move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ? ha iha hb ihb hA ihA hp  ihp hC ihC ht iht Δ ξ hξ hΔ /=.
+  - move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 hle0 hle1 ha iha hb ihb hA ihA hp  ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     rewrite -renaming_Syn_helper.
-    eapply T_J; eauto.
+    eapply T_J with (ℓ0 := ℓ0) (ℓ1 := ℓ1) (ℓp := ℓp); eauto.
     + apply ihC.
       * move /good_renaming_up in hξ.
         move /(_ ℓ1 A) in hξ.
@@ -401,12 +402,12 @@ Proof.
   (*     move : hw. asimpl. by substify. *)
   (*   + auto. *)
   (* J *)
-  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ?
+  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ? ?
              ha iha hb ihb hA ihA  hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     have ? : Wt Δ ℓ1 (subst_tm ξ a) (subst_tm ξ A) by hauto l:on.
     have hwff : Wff ((ℓ1, subst_tm ξ A) :: Δ) by eauto using Wff_cons.
-    eapply T_J' with (i := i) (C := (subst_tm (up_tm_tm (up_tm_tm ξ)) C)) (b := b [ξ]); eauto; first by asimpl.
+    eapply T_J' with (ℓ0 := ℓ0) (ℓp := ℓp) (i := i) (C := (subst_tm (up_tm_tm (up_tm_tm ξ)) C)) (b := b [ξ]); eauto; first by asimpl.
     + move => [:hwteq].
       apply ihC.
       * move : ihA (hξ) (hΔ); repeat move/[apply].
@@ -615,6 +616,7 @@ Proof.
 Qed.
 
 Lemma T_J_simpl Γ t a b p A i C ℓ ℓp ℓ0 ℓ1:
+  ℓ1 ⊆ ℓ0 ->
   ℓp ⊆ ℓ ->
   Γ ⊢ a ; ℓ1 ∈ A ->
   Γ ⊢ b ; ℓ1 ∈ A ->
@@ -623,7 +625,7 @@ Lemma T_J_simpl Γ t a b p A i C ℓ ℓp ℓ0 ℓ1:
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
   Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..]).
 Proof.
-  move=> ? /[dup] /Wt_regularity.
+  move=> ? ? /[dup] /Wt_regularity.
   sfirstorder use:T_J.
 Qed.
 
@@ -643,6 +645,7 @@ Qed.
 
 Lemma Wt_J_inv Γ ℓ C t p U (h : Γ ⊢ (tJ C t p) ; ℓ ∈ U) :
   exists ℓp ℓT ℓ0 ℓ1 a b A i,
+    ℓ1 ⊆ ℓ0 /\
     ℓp ⊆ ℓ /\
     Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) /\
     Γ ⊢ a ; ℓ1 ∈ A /\
@@ -656,8 +659,12 @@ Proof.
   move E : (tJ C t p) h => T h.
   move : C t p E.
   elim :  Γ ℓ T U / h => //.
-  - hauto lq:on rew:off use:cfacts.conv_trans.
-  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ? ha _ hb _ hA _ hp _ hC _ ht _ ? ? ?  [] *; subst.
+  - move => Γ ℓ ℓB a A B i ha iha hB _ hAB.
+    move => C t p ?. subst.
+    specialize iha with (1 := eq_refl).
+    move : iha => [ℓp][ℓT][ℓ0][ℓ1]?.
+    exists ℓp, ℓT, ℓ0, ℓ1. hauto lq:on rew:off use:cfacts.conv_trans.
+  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ? ? ha _ hb _ hA _ hp _ hC _ ht _ ? ? ?  [] *; subst.
     have /Wt_regularity ? : Γ ⊢ tJ C t p ; ℓ ∈ C[p.:b..] by eauto using T_J.
     exists ℓp, ℓT, ℓ0, ℓ1, a, b, A, i. repeat split => //.
     sfirstorder.
@@ -927,7 +934,7 @@ Proof.
     eapply T_Conv with (A := (tUniv i)) (i := j); eauto.
     hauto q:on use:T_Par, T_Eq.
   - move => C0 C1 t0 p0 t1 p1 ht iht hC ihC hp ihp Γ ℓ U /Wt_J_inv.
-    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & ? & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (ℓ2 & j & hU)).
+    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & ? & ? & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (ℓ2 & j & hU)).
     have ? : ⊢ Γ by eauto with wff.
     have ? : C0[p0.:b..] ⇒C1[p1.:b..] by
       sfirstorder use:cfacts.pfacts.Par_cong2, cfacts.pfacts.Par_refl.
@@ -947,47 +954,28 @@ Proof.
     move => i0 ℓ3 A0.
     elim /lookup_inv=>// _.
     + move => ℓ4 A1 Γ0 ? [*]. subst => //=.
-      asimpl. apply : T_Refl=>//.
-
-    have ? : (tEq ℓ0 a0 b0 A ⇒ tEq ℓ0 a1 b1 A) by hauto lq:on ctrs:Par use:pfacts.Par_refl.
-    have ? : Coherent (tEq a0 b0 A) (tEq a1 b1 A) by hauto l:on use:@rtc_once.
-    apply T_Conv with (A := subst_tm (p1 .: b1..) C) (i := j) => //.
-    apply T_J_simpl with (A := A) (i := i).
-    + hauto lq:on use:T_Eq_simpl, T_Conv, Par_Sub.
-    + eapply preservation_helper with (i := 0) (j := 0); eauto.
-      * hauto drew:off ctrs:Wt,lookup use:T_Eq_simpl, weakening_Syn' db:wff.
-      * hauto drew:off ctrs:Wt,lookup use:T_Eq_simpl, weakening_Syn' db:wff.
-      * hauto lq:on use:Par_Sub, P_Eq, Par_renaming, Par_refl.
-    + apply T_Conv with (A := subst_tm (tRefl .: a0..) C) (i := i);auto.
-      * move : morphing_Syn hC0. move/[apply].
-        move /(_ Γ (tRefl .: a1..)).
-        move => [:hwff].
-        asimpl. apply; last by (abstract : hwff; eauto using Wt_Wff).
-        move => l h. elim/lookup_inv.
-        ** move => _ A0 Γ0 ? [] *. subst=>/=. asimpl.
-           apply T_Refl'; eauto.
-        ** move => _. inversion 1; subst;
-             asimpl; hauto q:on ctrs:Wt.
-      * have : C[tRefl .: a0..] ⇒ C[tRefl .: a1..] by
-          apply Par_morphing; hauto lq:on unfold:Par_m use:Par_refl inv:nat.
-        hauto l:on use:Par_Sub.
-    + apply : Sub_transitive; eauto.
-      have : C[p0 .: b0..] ⇔ C[p1 .: b1..]; last by hauto l:on use:Coherent_Sub.
-      apply Par_Coherent.
-      apply Par_morphing; last by apply Par_refl.
-      hauto lq:on unfold:Par_m inv:nat use:Par_refl.
-  - move => t0 a b t1 ht iht Γ U /Wt_J_inv.
-    intros (A & C & i & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (k & hU')).
+      asimpl. apply : T_Refl=>//. eauto using subsumption.
+    + move => n A1 Γ0 ℓ4 B h ? [*]. subst => /=.
+      asimpl.
+      elim /lookup_inv : h => _.
+      * move => v A0 Γ0 ? [*]; subst.
+        asimpl. by eauto using subsumption.
+      * move => n0 A0 Γ0 ℓ4 B ? ? [*]. subst.
+        asimpl. apply : T_Var; eauto. solve_lattice.
+  (* JRefl *)
+  - move => C t0 t1 ht iht Γ ℓ U /Wt_J_inv.
+    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & ? & ? & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (ℓ2 & k & hU')).
     apply iht.
     move : T_Conv ht0. move/[apply]. apply; eauto.
-    apply : Sub_transitive;eauto.
-    have ? : Coherent a b by eauto using Wt_Refl_Coherent.
-    have : C[tRefl .: a..] ⇔ C[tRefl .: b..]; last by hauto l:on use:Coherent_Sub.
-    replace (subst_tm (tRefl .: a..) C)
-      with (subst_tm (a..)(subst_tm (tRefl..) C)); last by asimpl.
-    replace (subst_tm (tRefl .: b..) C)
-      with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl.
-    apply Coherent_cong. apply Coherent_reflexive. auto.
+    apply : cfacts.conv_trans;eauto.
+    (* have ? : Coherent a b by eauto using Wt_Refl_Coherent. *)
+    (* have : C[tRefl .: a..] ⇔ C[tRefl .: b..]; last by hauto l:on use:Coherent_Sub. *)
+    (* replace (subst_tm (tRefl .: a..) C) *)
+    (*   with (subst_tm (a..)(subst_tm (tRefl..) C)); last by asimpl. *)
+    (* replace (subst_tm (tRefl .: b..) C) *)
+    (*   with (subst_tm (b..)(subst_tm (tRefl..) C)); last by asimpl. *)
+  (* apply Coherent_cong. apply Coherent_reflexive. auto. *)
+    admit.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Sig_inv.
     intros (i & hA0 & hB0 & hACoherent & j & hA).
     have ? : ⊢ Γ by eauto with wff.

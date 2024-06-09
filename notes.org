@@ -2,3 +2,6 @@
 * Equality annotations
 * Semantic interpretaion of the equality type
 a ~l0 b : a ~l b for some l0 <= l?
+
+Perhaps alternatively:
+a ~l0 b : means is the upper bound of how fine the equality is

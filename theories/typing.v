@@ -97,17 +97,16 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* -------------- *)
   Γ ⊢ tAbsurd a ; ℓ ∈ A
 
-| T_Refl Γ ℓ a ℓ0 ℓ1 A:
+| T_Refl Γ ℓ a ℓ0 A:
   ⊢ Γ ->
-  ℓ0 ⊆ ℓ1 -> 
-  Γ ⊢ a ; ℓ1 ∈ A ->
+  Γ ⊢ a ; ℓ0 ∈ A ->
   (* ------ *)
   Γ ⊢ tRefl ; ℓ ∈ (tEq ℓ0 a a A)
 
 | T_Eq Γ ℓ ℓ0 a b A i j :
   ℓ0 ⊆ ℓ ->
-  Γ ⊢ a ; ℓ0 ∈ A ->
-  Γ ⊢ b ; ℓ0 ∈ A ->
+  Γ ⊢ a ; ℓ ∈ A ->
+  Γ ⊢ b ; ℓ ∈ A ->
   Γ ⊢ A ; ℓ ∈ (tUniv j) ->
   (* ----------------------- *)
   Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ (tUniv i)
