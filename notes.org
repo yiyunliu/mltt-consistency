@@ -1,0 +1,4 @@
+* Equality: IEq or GIEq?
+* Equality annotations
+* Semantic interpretaion of the equality type
+a ~l0 b : a ~l b for some l0 <= l?
