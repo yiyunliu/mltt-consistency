@@ -106,14 +106,15 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
 
 | T_Eq Γ ℓ ℓ0 a b A i j :
   ℓ0 ⊆ ℓ ->
-  Γ ⊢ a ; ℓ ∈ A ->
-  Γ ⊢ b ; ℓ ∈ A ->
+  Γ ⊢ a ; ℓ0 ∈ A ->
+  Γ ⊢ b ; ℓ0 ∈ A ->
   Γ ⊢ A ; ℓ ∈ (tUniv j) ->
   (* ----------------------- *)
   Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ (tUniv i)
 
 (* Refactor the equality to include the grade for the term *)
 | T_J Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1:
+  ℓ1 ⊆ ℓ0 ->
   ℓp ⊆ ℓ ->
   Γ ⊢ a ; ℓ1 ∈ A ->
   Γ ⊢ b ; ℓ1 ∈ A ->
