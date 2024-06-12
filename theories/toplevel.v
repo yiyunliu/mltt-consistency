@@ -1,4 +1,4 @@
-Require Import conv par geq imports semtyping typing soundness.
+Require Import conv par geq imports semtyping typing soundness preservation.
 
 Module MkAll
   (Import lattice : Lattice).
@@ -28,6 +28,8 @@ Module MkAll
   End lr.
 
   Module soundness := soundness lattice syntax par ieq conv typing lr.
+
+  Module preservation := preservation lattice syntax par ieq conv typing.
 End MkAll.
 
 Module nat_lattice <: Lattice.
@@ -77,3 +79,4 @@ End nat_lattice.
 Module dcoi_with_nat_lattice := MkAll nat_lattice.
 
 Print Assumptions dcoi_with_nat_lattice.soundness.consistency.
+Print Assumptions dcoi_with_nat_lattice.preservation.subject_reduction.

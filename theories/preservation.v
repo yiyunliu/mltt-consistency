@@ -216,17 +216,12 @@ Lemma subsumption Γ ℓ a A (h : Γ ⊢ a ; ℓ ∈ A) :
   forall ℓ', ℓ ⊆ ℓ' -> Γ ⊢ a ; ℓ' ∈ A.
 Proof.
   elim : Γ ℓ a A / h; eauto 5 using solver.leq_trans with wt.
-  (* tEq *)
-  qauto l:on ctrs:Wt, Wff use:solver.leq_trans.
 Qed.
 (* -------------------------------------------------- *)
 
 Lemma renaming_Syn_helper ξ a b C :
   subst_tm (a ⟨ξ⟩ .: (b⟨ξ⟩)..) (ren_tm (upRen_tm_tm (upRen_tm_tm ξ)) C) = ren_tm ξ (subst_tm (a .: b ..) C).
 Proof. by asimpl. Qed.
-
-Local Ltac solve_lattice :=
-  ltac2:(solve_lattice); try rewrite !meet_idempotent; tauto.
 
 Lemma renaming_Syn
   Γ ℓ a A (h : Γ ⊢ a ; ℓ ∈ A) : forall Δ ξ,
@@ -424,6 +419,7 @@ Proof.
         hauto lq:on use:good_morphing_suc.
         solve_lattice.
 
+        apply : subsumption; eauto.
         apply : T_Var; eauto.
         apply here'. by asimpl.
         solve_lattice.
@@ -561,8 +557,8 @@ Qed.
 
 Lemma Wt_Eq_inv Γ ℓ0 ℓ a b A U (h : Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ U) :
   ℓ0 ⊆ ℓ /\
-  Γ ⊢ a ; ℓ ∈ A /\
-  Γ ⊢ b ; ℓ ∈ A /\
+  Γ ⊢ a ; ℓ0 ∈ A /\
+  Γ ⊢ b ; ℓ0 ∈ A /\
   (exists q,
   Γ ⊢ A ; ℓ ∈ (tUniv q)) /\
   (exists i, conv (c2e Γ) (tUniv i) U) /\ exists ℓ j, Γ ⊢ U ; ℓ ∈ (tUniv j).
@@ -605,14 +601,14 @@ Qed.
 
 (* ------------------------------------------------- *)
 (* Simpler forms of typing rules *)
-Lemma T_Eq_simpl Γ ℓ ℓ0 a b A i :
-  Γ ⊢ a ; ℓ ∈ A ->
-  Γ ⊢ b ; ℓ ∈ A ->
+Lemma T_Eq_simpl Γ ℓ0 a b A i :
+  Γ ⊢ a ; ℓ0 ∈ A ->
+  Γ ⊢ b ; ℓ0 ∈ A ->
   exists ℓ1, Γ ⊢ (tEq ℓ0 a b A) ; ℓ1 ∈ (tUniv i).
 Proof.
   move => ha /[dup] hb /Wt_regularity.
   move => [ℓ1][i0]hA.
-  exists (ℓ ∪ ℓ0 ∪ ℓ1).
+  exists (ℓ0 ∪ ℓ1).
   hauto q:on use:subsumption, T_Eq solve+:(solve_lattice).
 Qed.
 
@@ -753,7 +749,7 @@ Lemma T_Refl' Γ ℓ ℓ0 a0 a1 A
 Proof.
   move => ha0 ha1.
   Check T_Eq_simpl.
-  move : T_Eq_simpl (ha0) (ha1) => /[apply]/[apply] /(_ ℓ0 0). move => [ℓ1 ?].
+  move : T_Eq_simpl (ha0) (ha1) => /[apply]/[apply] /(_ 0). move => [ℓ1 ?].
   eapply T_Conv with (A := tEq ℓ0 a0 a0 A) (i := 0).
   - by apply T_Refl.
   - eauto.
@@ -1068,3 +1064,5 @@ Proof.
       have : C[(tPack ℓ0 a0 b0)..] ⇒ C[(tPack ℓ0 a1 b1)..] by eauto using Par_refl, Par_cong.
       hauto lq:on use:cfacts.iconv_par unfold:conv.
 Qed.
+
+End preservation.

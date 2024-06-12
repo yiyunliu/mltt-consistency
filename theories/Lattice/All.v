@@ -223,4 +223,6 @@ Local Open Scope lattice_scope.
 
     Ltac2 Notation "solve_lattice" := solve_lattice ().
 
+    Ltac solve_lattice :=
+      ltac2:(solve_lattice); try rewrite !meet_idempotent; tauto.
   End Solver.

@@ -40,8 +40,8 @@ Module Type geq_sig
     IOk Ξ ℓ tRefl
   | IO_Eq ℓ0 a b A :
     ℓ0 ⊆ ℓ ->
-    IOk Ξ ℓ a ->
-    IOk Ξ ℓ b ->
+    IOk Ξ ℓ0 a ->
+    IOk Ξ ℓ0 b ->
     IOk Ξ ℓ A ->
     (* -------------- *)
     IOk Ξ ℓ (tEq ℓ0 a b A)
@@ -243,6 +243,11 @@ Module geq_facts
       case : (sub_eqdec ℓ0 ℓ1) => //; hauto l:on ctrs:GIEq.
   Qed.
 
+  Lemma elookup_deterministic : forall Ξ i ℓ0 ℓ1,
+      elookup i Ξ ℓ0 ->
+      elookup i Ξ ℓ1 ->
+      ℓ0 = ℓ1.
+  Proof. rewrite/elookup =>//. congruence. Qed.
 
   Lemma ieq_downgrade_mutual : forall Ξ ℓ,
       (forall a b, IEq Ξ ℓ a b ->
@@ -253,36 +258,14 @@ Module geq_facts
                            GIEq Ξ (ℓ ∩ ℓ1) ℓ0 a b).
   Proof.
     apply IEq_mutual; try qauto l:on inv:IEq,GIEq ctrs:IEq,GIEq.
-    (* Can be compressed if I can figure out how to make ssreflect
-  lemmas usable by automation *)
     - move => Ξ ℓ i ℓ0 hi hℓ ℓ1 c h.
       inversion h; subst.
       apply : I_Var; eauto.
-      ltac2:(solve_lattice).
-      sfirstorder.
-    - move => Ξ ℓ ℓ0 a0 a1 b0 b1 A0 A1 ? ha iha hb ihb hA ihA ℓ1 ?.
-      elim /IEq_inv=>// _ ? ? a2 ? b2 ? A2 ? ? ? ? [*]. subst.
-      apply I_Eq.
-      + ltac2:(solve_lattice); tauto.
-      + sfirstorder.
-      + sfirstorder.
-      + sfirstorder.
-    - move => Ξ ℓ ℓ0 A B ? h ih ℓ1 C.
-      elim /GIEq_inv => hc ℓ2 A0 B0 h2 h3 *; subst.
-      + apply ih in h3.
-        apply GI_Dist => //.
-        ltac2:(solve_lattice).
-        tauto.
-      + apply GI_InDist.
-        move => h3.
-        apply h2.
-        ltac2:(solve_lattice).
-        tauto.
-    - move => Ξ ℓ ℓ0 A B h ℓ1 C h2.
-      apply GI_InDist => ?.
-      apply h.
-      ltac2:(solve_lattice).
-      tauto.
+      have ? : ℓ0 = ℓ2 by eauto using elookup_deterministic. subst.
+      solve_lattice.
+    - hauto lq:on rew:off inv:IEq ctrs:IEq solve+:solve_lattice.
+    - hauto q:on inv:GIEq ctrs:GIEq solve+:solve_lattice.
+    - hauto lq:on use:GI_InDist solve+:(solve_lattice).
   Qed.
 
   Lemma ieq_gieq Ξ ℓ ℓ0 a b (h : forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a b) :

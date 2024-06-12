@@ -105,8 +105,8 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
 
 | T_Eq Γ ℓ ℓ0 a b A i j :
   ℓ0 ⊆ ℓ ->
-  Γ ⊢ a ; ℓ ∈ A ->
-  Γ ⊢ b ; ℓ ∈ A ->
+  Γ ⊢ a ; ℓ0 ∈ A ->
+  Γ ⊢ b ; ℓ0 ∈ A ->
   Γ ⊢ A ; ℓ ∈ (tUniv j) ->
   (* ----------------------- *)
   Γ ⊢ (tEq ℓ0 a b A) ; ℓ ∈ (tUniv i)
