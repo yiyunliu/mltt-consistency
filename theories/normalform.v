@@ -1,9 +1,11 @@
 Require Import syntax par imports.
 
-Module normalform_sig
+Module Type normalform_sig
   (Import lattice : Lattice)
   (Import syntax : syntax_sig lattice)
   (Import par : par_sig lattice syntax).
+
+Module pf := par_facts lattice syntax par.
 
 (* Identifying neutral (ne) and normal (nf) terms *)
 Fixpoint ne (a : tm) : bool :=
@@ -57,6 +59,14 @@ with nf (a : tm) : bool :=
 (* Terms that are weakly normalizing to a neutral or normal form. *)
 Definition wn (a : tm) := exists b, a ⇒* b /\ nf b.
 Definition wne (a : tm) := exists b, a ⇒* b /\ ne b.
+
+End normalform_sig.
+
+Module normalform_fact
+  (Import lattice : Lattice)
+  (Import syntax : syntax_sig lattice)
+  (Import par : par_sig lattice syntax)
+  (Import normalform : normalform_sig lattice syntax par).
 
 (* All neutral terms are normal forms *)
 Lemma ne_nf (a : tm) : ne a -> nf a.
@@ -201,9 +211,9 @@ Qed.
 
 #[local]Ltac solve_s_rec :=
   move => *; eapply rtc_l; eauto;
-  hauto lq:on ctrs:Par use:Par_refl.
+  hauto lq:on ctrs:Par use:pf.Par_refl.
 
-Lemma S_AppLR (a a0 b b0 : tm) :
+Lemma S_AppLR ℓ0 (a a0 b b0 : tm) :
   a ⇒* a0 ->
   b ⇒* b0 ->
   (tApp a ℓ0 b) ⇒* (tApp a0 ℓ0 b0).
@@ -217,46 +227,40 @@ Proof.
   - solve_s_rec.
 Qed.
 
-Lemma S_Ind a0 a1 : forall b0 b1 c0 c1,
-    a0 ⇒* a1 ->
-    b0 ⇒* b1 ->
-    c0 ⇒* c1 ->
-    (tInd a0 b0 c0) ⇒* (tInd a1 b1 c1).
-Proof.
-  move => + + + + h.
-  elim : a0 a1 /h.
-  - move => + b0 b1 + + h.
-    elim : b0 b1 /h.
-    + move => + + c0 c1 h.
-      elim : c0 c1 /h.
-      * auto using rtc_refl.
-      * solve_s_rec.
-    + solve_s_rec.
-  - solve_s_rec.
-Qed.
+(* Lemma S_Ind a0 a1 : forall b0 b1 c0 c1, *)
+(*     a0 ⇒* a1 -> *)
+(*     b0 ⇒* b1 -> *)
+(*     c0 ⇒* c1 -> *)
+(*     (tInd a0 b0 c0) ⇒* (tInd a1 b1 c1). *)
+(* Proof. *)
+(*   move => + + + + h. *)
+(*   elim : a0 a1 /h. *)
+(*   - move => + b0 b1 + + h. *)
+(*     elim : b0 b1 /h. *)
+(*     + move => + + c0 c1 h. *)
+(*       elim : c0 c1 /h. *)
+(*       * auto using rtc_refl. *)
+(*       * solve_s_rec. *)
+(*     + solve_s_rec. *)
+(*   - solve_s_rec. *)
+(* Qed. *)
 
-Lemma S_J t0 t1 : forall a0 a1 b0 b1 p0 p1,
+Lemma S_J t0 t1 : forall p0 p1,
     t0 ⇒* t1 ->
-    a0 ⇒* a1 ->
-    b0 ⇒* b1 ->
     p0 ⇒* p1 ->
-    (tJ t0 a0 b0 p0) ⇒* (tJ t1 a1 b1 p1).
+    (tJ t0 p0) ⇒* (tJ t1 p1).
 Proof.
-  move => + + + + + + h.
+  move => + + h.
   elim : t0 t1 /h; last by solve_s_rec.
-  move => + a0 a1 + +  + + h.
-  elim : a0 a1 /h; last by solve_s_rec.
-  move => + + b0 b1 + + h.
-  elim : b0 b1 /h; last by solve_s_rec.
-  move => + + + p0 p1 h.
-  elim : p0 p1 / h; last by solve_s_rec.
+  move => ? p0 p1 h.
+  elim : p0 p1 /h; last by solve_s_rec.
   auto using rtc_refl.
 Qed.
 
-Lemma S_Let a0 a1 : forall b0 b1,
+Lemma S_Let ℓ0 ℓ1 a0 a1 : forall b0 b1,
     a0 ⇒* a1 ->
     b0 ⇒* b1 ->
-    tLet a0 b0 ⇒* tLet a1 b1.
+    tLet ℓ0 ℓ1 a0 b0 ⇒* tLet ℓ0 ℓ1 a1 b1.
 Proof.
   move => + + h.
   elim : a0 a1 /h; last by solve_s_rec.
@@ -265,10 +269,10 @@ Proof.
   auto using rtc_refl.
 Qed.
 
-Lemma S_Pi (a a0 b b0 : tm) :
+Lemma S_Pi ℓ0 (a a0 b b0 : tm) :
   a ⇒* a0 ->
   b ⇒* b0 ->
-  (tPi a b) ⇒* (tPi a0 b0).
+  (tPi ℓ0 a b) ⇒* (tPi ℓ0 a0 b0).
 Proof.
   move => h.
   move : b b0.
@@ -280,10 +284,10 @@ Proof.
   - solve_s_rec.
 Qed.
 
-Lemma S_Sig (a a0 b b0 : tm) :
+Lemma S_Sig ℓ0 (a a0 b b0 : tm) :
   a ⇒* a0 ->
   b ⇒* b0 ->
-  (tSig a b) ⇒* (tSig a0 b0).
+  (tSig ℓ0 a b) ⇒* (tSig ℓ0 a0 b0).
 Proof.
   move => h.
   move : b b0.
@@ -295,16 +299,16 @@ Proof.
   - solve_s_rec.
 Qed.
 
-Lemma S_Abs (a b : tm)
+Lemma S_Abs ℓ0 (a b : tm)
   (h : a ⇒* b) :
-  (tAbs a) ⇒* (tAbs b).
+  (tAbs ℓ0 a) ⇒* (tAbs ℓ0 b).
 Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
 
-Lemma S_Eq a0 a1 b0 b1 A0 A1 :
+Lemma S_Eq ℓ0 a0 a1 b0 b1 A0 A1 :
   a0 ⇒* a1 ->
   b0 ⇒* b1 ->
   A0 ⇒* A1 ->
-  (tEq a0 b0 A0) ⇒* (tEq a1 b1 A1).
+  (tEq ℓ0 a0 b0 A0) ⇒* (tEq ℓ0 a1 b1 A1).
 Proof.
   move => h.
   move : b0 b1 A0 A1.
@@ -319,26 +323,24 @@ Proof.
   - solve_s_rec.
 Qed.
 
-Lemma S_Pack (a b a0 b0 : tm) :
+Lemma S_Pack ℓ0 (a b a0 b0 : tm) :
   a ⇒* a0 ->
   b ⇒* b0 ->
-  (tPack a b) ⇒* (tPack a0 b0).
+  (tPack ℓ0 a b) ⇒* (tPack ℓ0 a0 b0).
 Proof.
   move => h.
   move : b b0.
-  elim : a a0/h.
-  - move => + b b0 h.
-    elim : b b0/h.
-    + auto using rtc_refl.
-    + solve_s_rec.
-  - solve_s_rec.
+  elim : a a0/h; last by solve_s_rec.
+  move => ? b b0 h.
+  elim : b b0/h; last by solve_s_rec.
+  auto using rtc_refl.
 Qed.
 
-Lemma S_Suc a b (h : a ⇒* b) : tSuc a ⇒* tSuc b.
-Proof.
-  elim : a b / h; last by solve_s_rec.
-  move => ?; apply rtc_refl.
-Qed.
+(* Lemma S_Suc a b (h : a ⇒* b) : tSuc a ⇒* tSuc b. *)
+(* Proof. *)
+(*   elim : a b / h; last by solve_s_rec. *)
+(*   move => ?; apply rtc_refl. *)
+(* Qed. *)
 
 (* ------------------------------------------------------ *)
 
@@ -346,70 +348,70 @@ Qed.
    and weakly normal compositionally. *)
 
 Lemma wne_j (t a b p : tm) :
-  wn t -> wn a -> wn b -> wne p -> wne (tJ t a b p).
+  wn t -> wne p -> wne (tJ t p).
 Proof.
-  move => [t0 [? ?]] [a0 [? ?]] [b0 [? ?]] [p0 [? ?]].
-  exists (tJ t0 a0 b0 p0).
+  move => [t0 [? ?]] [p0 [? ?]].
+  exists (tJ t0 p0).
   hauto lq:on b:on use:S_J.
 Qed.
 
-Lemma wne_ind (a b c : tm) :
-  wn a -> wn b -> wne c -> wne (tInd a b c).
-Proof.
-  move => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]].
-  exists (tInd a0 b0 c0).
-  qauto l:on use:S_Ind b:on.
-Qed.
+(* Lemma wne_ind (a b c : tm) : *)
+(*   wn a -> wn b -> wne c -> wne (tInd a b c). *)
+(* Proof. *)
+(*   move => [a0 [? ?]] [b0 [? ?]] [c0 [? ?]]. *)
+(*   exists (tInd a0 b0 c0). *)
+(*   qauto l:on use:S_Ind b:on. *)
+(* Qed. *)
 
-Lemma wne_app (a b : tm) :
-  wne a -> wn b -> wne (tApp a b).
+Lemma wne_app ℓ0 (a b : tm) :
+  wne a -> wn b -> wne (tApp a ℓ0 b).
 Proof.
   move => [a0 [? ?]] [b0 [? ?]].
-  exists (tApp a0 b0).
+  exists (tApp a0 ℓ0 b0).
   hauto b:on use:S_AppLR.
 Qed.
 
-Lemma wne_let (a b : tm) :
-  wne a -> wn b -> wne (tLet a b).
+Lemma wne_let ℓ0 ℓ1 (a b : tm) :
+  wne a -> wn b -> wne (tLet ℓ0 ℓ1 a b).
 Proof.
   move => [a0 [? ?]] [b0 [? ?]].
-  exists (tLet a0 b0).
+  exists (tLet ℓ0 ℓ1 a0 b0).
   hauto b:on use:S_Let.
 Qed.
 
-Lemma wn_abs (a : tm) (h : wn a) : wn (tAbs a).
+Lemma wn_abs ℓ0 (a : tm) (h : wn a) : wn (tAbs ℓ0 a).
 Proof.
   move : h => [v [? ?]].
-  exists (tAbs v).
+  exists (tAbs ℓ0 v).
   eauto using S_Abs.
 Qed.
 
-Lemma wn_pi A B : wn A -> wn B -> wn (tPi A B).
+Lemma wn_pi ℓ0 A B : wn A -> wn B -> wn (tPi ℓ0 A B).
 Proof.
   move => [A0 [? ?]] [B0 [? ?]].
-  exists (tPi A0 B0).
+  exists (tPi ℓ0 A0 B0).
   hauto lqb:on use:S_Pi.
 Qed.
 
-Lemma wn_sig A B : wn A -> wn B -> wn (tSig A B).
+Lemma wn_sig ℓ0 A B : wn A -> wn B -> wn (tSig ℓ0 A B).
 Proof.
   move => [A0 [? ?]] [B0 [? ?]].
-  exists (tSig A0 B0).
+  exists (tSig ℓ0 A0 B0).
   hauto lqb:on use:S_Sig.
 Qed.
 
-Lemma wn_pack A B : wn A -> wn B -> wn (tPack A B).
+Lemma wn_pack ℓ0 A B : wn A -> wn B -> wn (tPack ℓ0 A B).
 Proof.
   move => [A0 [? ?]] [B0 [? ?]].
-  exists (tPack A0 B0).
+  exists (tPack ℓ0 A0 B0).
   hauto lqb:on use:S_Pack.
 Qed.
 
-Lemma wn_eq a b A : wn a -> wn b -> wn A -> wn (tEq a b A).
+Lemma wn_eq ℓ0 a b A : wn a -> wn b -> wn A -> wn (tEq ℓ0 a b A).
 Proof.
   rewrite /wn.
   move => [va [? ?]] [vb [? ?]] [vA [? ?]].
-  exists (tEq va vb vA).
+  exists (tEq ℓ0 va vb vA).
   split.
   - by apply S_Eq.
   - hauto lqb:on.
@@ -421,11 +423,11 @@ Qed.
    inversion principle for terms with normal forms. If a term applied to a
    variable is normal, then the term itself is normal. *)
 
-Lemma ext_wn (a : tm) i :
-    wn (tApp a (var_tm i)) ->
+Lemma ext_wn ℓ0 (a : tm) i :
+    wn (tApp a ℓ0 (var_tm i)) ->
     wn a.
 Proof.
-  move E : (tApp a (var_tm i)) => a0 [v [hr hv]].
+  move E : (tApp a ℓ0 (var_tm i)) => a0 [v [hr hv]].
   move : a E.
   move : hv.
   elim : a0 v / hr.
@@ -433,15 +435,17 @@ Proof.
   - move => a0 a1 a2 hr0 hr1 ih hnfa2.
     move /(_ hnfa2) in ih.
     move => a.
-    case : a0 hr0=>// => b0 b1.
+    case : a0 hr0=>// => b0 ℓ b1.
     elim /Par_inv=>//.
     + hauto q:on inv:Par ctrs:rtc b:on.
-    + move => ? a0 a3 b2 b3 ? ? [? ?] ? [? ?]. subst.
+    + move => ? a0 a3 b2 b3 ℓ1 ? ? [? ? ?] ? [? ? ?]. subst.
       have ? : b3 = var_tm i by hauto lq:on inv:Par. subst.
-      suff : wn (tAbs a3) by hauto lq:on ctrs:Par, rtc unfold:wn.
+      suff : wn (tAbs ℓ a3) by hauto lq:on ctrs:Par, rtc unfold:wn.
       have : wn (subst_tm ((var_tm i) ..) a3) by sfirstorder.
       replace (subst_tm ((var_tm i) ..) a3) with (ren_tm (i..) a3).
       move /wn_antirenaming.
       by apply : wn_abs.
       substify. by asimpl.
 Qed.
+
+End normalform_fact.
