@@ -12,43 +12,47 @@ Fixpoint ne (a : tm) : bool :=
   | tApp a ℓ0 b => ne a && nf b
   | tAbs _ _ => false
   | tPi _ A B => false
-  | tJ C t p => nf t && nf a && nf b && ne p
+  | tJ t p => nf t &&  ne p
   | tUniv _ => false
-  | tZero => false
-  | tSuc _ => false
-  | tInd a b c => nf a && nf b && ne c
-  | tNat => false
-  | tEq a b A => false
+  (* | tZero => false *)
+  (* | tSuc _ => false *)
+  (* | tInd a b c => nf a && nf b && ne c *)
+  (* | tNat => false *)
+  | tEq _ _ _ _ => false
   | tRefl => false
-  | tSig A B => false
-  | tPack a b => false
-  | tLet a b => ne a && nf b
+  | tSig _ _ _ => false
+  | tPack _ _ _ => false
+  | tLet _ _ a b => ne a && nf b
+  | tVoid => false
+  | tAbsurd a => ne a
   end
 with nf (a : tm) : bool :=
   match a with
   | var_tm _ => true
-  | tApp a b => ne a && nf b
-  | tAbs a => nf a
-  | tPi A B => nf A && nf B
-  | tJ t a b p => nf t && nf a && nf b && ne p
+  | tApp a ℓ0 b => ne a && nf b
+  | tAbs _ a => nf a
+  | tPi _ A B => nf A && nf B
+  | tJ t p => nf t && ne p
   | tUniv _ => true
-  | tZero => true
-  | tSuc a => nf a
-  | tInd a b c => nf a && nf b && ne c
-  | tNat => true
-  | tEq a b A => nf a && nf b && nf A
+  (* | tZero => true *)
+  (* | tSuc a => nf a *)
+  (* | tInd a b c => nf a && nf b && ne c *)
+  (* | tNat => true *)
+  | tEq _ a b A => nf a && nf b && nf A
   | tRefl => true
-  | tSig A B => nf A && nf B
-  | tPack a b => nf a && nf b
-  | tLet a b => ne a && nf b
+  | tSig _ A B => nf A && nf B
+  | tPack _ a b => nf a && nf b
+  | tLet _ _ a b => ne a && nf b
+  | tVoid => true
+  | tAbsurd a => ne a
   end.
 
-Function is_nat_val (a : tm) : bool :=
-  match a with
-  | tZero => true
-  | tSuc a => is_nat_val a
-  | _ => ne a
-  end.
+(* Function is_nat_val (a : tm) : bool := *)
+(*   match a with *)
+(*   | tZero => true *)
+(*   | tSuc a => is_nat_val a *)
+(*   | _ => ne a *)
+(*   end. *)
 
 (* Terms that are weakly normalizing to a neutral or normal form. *)
 Definition wn (a : tm) := exists b, a ⇒* b /\ nf b.
@@ -66,12 +70,12 @@ Proof. sfirstorder use:ne_nf. Qed.
 Lemma nf_wn v : nf v -> wn v.
 Proof. sfirstorder ctrs:rtc. Qed.
 
-(* natural number values are normal *)
-Lemma nat_val_nf v : is_nat_val v -> nf v.
-Proof. elim : v =>//=. Qed.
+(* (* natural number values are normal *) *)
+(* Lemma nat_val_nf v : is_nat_val v -> nf v. *)
+(* Proof. elim : v =>//=. Qed. *)
 
-Lemma ne_nat_val v : ne v -> is_nat_val v.
-Proof. elim : v =>//=. Qed.
+(* Lemma ne_nat_val v : ne v -> is_nat_val v. *)
+(* Proof. elim : v =>//=. Qed. *)
 
 (* Neutral and normal forms are stable under renaming *)
 Lemma ne_nf_renaming (a : tm) :
@@ -99,7 +103,7 @@ Lemma ne_preservation : forall a b, (a ⇒ b) -> ne a -> ne b.
 Proof. sfirstorder use:nf_ne_preservation b:on. Qed.
 
 Create HintDb nfne.
-#[export]Hint Resolve ne_nat_val nf_wn nat_val_nf ne_nf wne_wn ne_preservation nf_preservation : nfne.
+#[export]Hint Resolve (* ne_nat_val *) nf_wn (* nat_val_nf *) ne_nf wne_wn ne_preservation nf_preservation : nfne.
 
 
 (* ------------------ antirenaming ------------------------- *)
@@ -114,13 +118,13 @@ Proof.
   elim : a0 b0 / h.
   - move => + []//. eauto with par.
   - move => + []//. eauto with par.
-  - move => A0 A1 B0 B1 h0 ih0 h1 ih1 [] // /=.
+  - move => ℓ0 A0 A1 B0 B1 h0 ih0 h1 ih1 [] // /=.
     hauto lq:on ctrs:Par.
-  - move => a0 a1 h ih [] // a ξ [] ?.
+  - move => ℓ0 a0 a1 h ih [] // ℓ1 a ξ [] ?.
     hauto lq:on ctrs:Par.
-  - move => a0 a1 b0 b1  + + + + []//.
+  - move => a0 a1 ℓ0 b0 b1  + + + + []//.
     hauto q:on ctrs:Par.
-  - move => a a0 b0- b1 ha iha hb ihb []// []// t t0 ξ [] *. subst.
+  - move => a a0 b0 b1 ℓ0 ha iha hb ihb []// []// ℓ1 t t0 t1 ξ [] *. subst.
     specialize iha with (1 := eq_refl).
     specialize ihb with (1 := eq_refl).
     move : iha => [a [? ?]]. subst.
@@ -131,38 +135,35 @@ Proof.
   - hauto q:on ctrs:Par inv:tm.
   - move => + + + + []//=.
     qauto l:on ctrs:Par.
+  - hauto q:on inv:tm ctrs:Par.
   - move => > ++++++ [] //.
     hauto q:on ctrs:Par.
-  - move => a0 a1 b h0 ih0 []// a2 b1 c1 ξ.
-    case => ? ? hz. subst.
-    specialize ih0 with (1 := eq_refl).
-    have {hz}-> : c1 = tZero by hauto q:on inv:tm.
-    hauto lq:on ctrs:Par.
-  - move => ? a1 ? b1 ? c1 ha iha hb ihb hc ihc []// a0 b0 c0 ξ [? ?]. subst.
-    case : c0 => // c0 [?]. subst.
-    specialize iha with (1 := eq_refl).
-    specialize ihb with (1 := eq_refl).
-    specialize ihc with (1 := eq_refl).
-    move : iha => [a2 [iha ?]].
-    move : ihb => [b2 [ihb ?]].
-    move : ihc => [c2 [ihc ?]]. subst.
-    exists (b2[(tInd a2 b2 c2) .: c2 ..]).
-    split; [by auto with par | by asimpl].
-  - hauto q:on ctrs:Par inv:tm.
+  (* - move => a0 a1 b h0 ih0 []// a2 b1 c1 ξ. *)
+  (*   case => ? ? hz. subst. *)
+  (*   specialize ih0 with (1 := eq_refl). *)
+  (*   have {hz}-> : c1 = tZero by hauto q:on inv:tm. *)
+  (*   hauto lq:on ctrs:Par. *)
+  (* - move => ? a1 ? b1 ? c1 ha iha hb ihb hc ihc []// a0 b0 c0 ξ [? ?]. subst. *)
+  (*   case : c0 => // c0 [?]. subst. *)
+  (*   specialize iha with (1 := eq_refl). *)
+  (*   specialize ihb with (1 := eq_refl). *)
+  (*   specialize ihc with (1 := eq_refl). *)
+  (*   move : iha => [a2 [iha ?]]. *)
+  (*   move : ihb => [b2 [ihb ?]]. *)
+  (*   move : ihc => [c2 [ihc ?]]. subst. *)
+  (*   exists (b2[(tInd a2 b2 c2) .: c2 ..]). *)
+  (*   split; [by auto with par | by asimpl]. *)
+  (* - hauto q:on ctrs:Par inv:tm. *)
   - hauto inv:tm q:on ctrs:Par.
-  - move => a0 b0 A0 a1 b1 A1 h ih h0 ih0 h1 ih1 []//.
+  - move => t0 t1 h0 h1 []// t []// ξ [?]. subst.
     hauto q:on ctrs:Par.
-  - move => t0 a0 b0 p0 t1 a1 b1 p1 ++++++++[]//.
+  - move => > + + + + []//.
     hauto q:on ctrs:Par.
-  - move => t0 a b t1 ++[]//+++[]//.
+  - move => > + + + + []//.
     hauto q:on ctrs:Par.
-  - move => > + + + + []//=.
-    hauto lq:on ctrs:Par.
-  - move => > + + + + []//=.
-    hauto lq:on ctrs:Par.
-  - move => > + + + + []//=.
-    hauto lq:on ctrs:Par.
-  - move => ? ? ? a1 b1 c1 > ha iha hb ihb hc ihc []//= []//= a0 b0 c0 ξ [*]. subst.
+  - move => > + + + + []//.
+    hauto q:on ctrs:Par.
+  - move => ℓ0 ℓ1 ? ? ? a1 b1 c1 ha iha hb ihb hc ihc []//= ℓ2 ℓ3 []//= ℓ4 a0 b0 c0 ξ [*]. subst.
     specialize iha with (1 := eq_refl).
     specialize ihb with (1 := eq_refl).
     specialize ihc with (1 := eq_refl).
@@ -205,7 +206,7 @@ Qed.
 Lemma S_AppLR (a a0 b b0 : tm) :
   a ⇒* a0 ->
   b ⇒* b0 ->
-  (tApp a b) ⇒* (tApp a0 b0).
+  (tApp a ℓ0 b) ⇒* (tApp a0 ℓ0 b0).
 Proof.
   move => h. move :  b b0.
   elim : a a0 / h.
