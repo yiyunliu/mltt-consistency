@@ -64,17 +64,16 @@ Inductive Par : tm -> tm -> Prop :=
   (* ---------- *)
   (tEq ℓ0 a0 b0 A0) ⇒ (tEq ℓ0 a1 b1 A1)
 
-| P_J C0 C1 t0 p0 t1 p1 :
+| P_J t0 p0 t1 p1 :
   (t0 ⇒ t1) ->
-  (C0 ⇒ C1) ->
   (p0 ⇒ p1) ->
   (* ---------- *)
-  (tJ C0 t0 p0) ⇒ (tJ C1 t1 p1)
+  (tJ t0 p0) ⇒ (tJ t1 p1)
 
-| P_JRefl C t0 t1 :
+| P_JRefl t0 t1 :
   (t0 ⇒ t1) ->
   (* ---------- *)
-  (tJ C t0 tRefl) ⇒ t1
+  (tJ t0 tRefl) ⇒ t1
 
 | P_Sig ℓ A0 A1 B0 B1 :
   (A0 ⇒ A1) ->
@@ -106,11 +105,6 @@ where "A ⇒ B" := (Par A B).
 (* The reflexive, transitive closure of parallel reduction. *)
 
 Infix "⇒*" := (rtc Par) (at level 60, right associativity).
-
-(* Two types are Coherent when they reduce to a common type. *)
-
-Definition Coherent a0 a1 := (exists b, a0 ⇒* b /\ a1 ⇒* b).
-Infix "⇔" := Coherent (at level 70, no associativity).
 
 (* Derived inversion principle for "Par" that doesn't
    generate free names with use. *)
@@ -271,18 +265,6 @@ Qed.
 
 (* Parallel reduction is contained in Coherent *)
 
-Lemma Par_Coherent a b :
-  (a ⇒ b) -> Coherent a b.
-Proof. hauto lq:on use:@rtc_once, @rtc_refl. Qed.
-
-Lemma Coherent_morphing a0 a1 (h : Coherent a0 a1) (σ0 σ1 : fin -> tm) :
-  (σ0 ⇒ς σ1) ->
-  Coherent (a0[σ0]) (a1[σ1]).
-Proof.
-  hauto l:on use:Par_morphing_star, Par_refl,
-    Par_Coherent unfold:Coherent, Par_m.
-Qed.
-
 Lemma Pars_morphing a b (σ0 σ1 : fin -> tm)
   (h : σ0 ⇒ς* σ1) :
   (a ⇒ b) ->
@@ -305,14 +287,6 @@ Proof.
   - move => x y z /[swap] _.
     move : Pars_morphing (rtc_refl Par_m σ0); repeat move /[apply].
     apply rtc_transitive.
-Qed.
-
-Lemma Coherent_morphing_star a b σ0 σ1
-  (h : Coherent_m σ0 σ1)
-  (h0 : Coherent a b) :
-  Coherent (a[σ0]) (b[σ1]).
-Proof.
-  hauto q:on use:Pars_morphing_star unfold:Coherent.
 Qed.
 
 (* These two lemmas allow us to create substitutions
@@ -352,11 +326,6 @@ Lemma Par_subst_star a0 a1 (h : a0 ⇒* a1) (σ : fin -> tm) :
   (a0 [σ]) ⇒* (a1 [σ]).
 Proof. hauto l:on use:Par_morphing_star, Par_refl unfold:Par_m. Qed.
 
-Lemma Coherent_subst_star a0 a1 (h : Coherent a0 a1) (σ : fin -> tm) :
-  Coherent (a0[σ]) (a1 [σ]).
-Proof. hauto lq:on use:Coherent_morphing, Par_refl unfold:Par_m. Qed.
-
-
 (* The relations are also closed under single substitution  *)
 Lemma Par_cong a0 a1 b0 b1 (h : a0 ⇒ a1) (h1 : b0 ⇒ b1) :
   (a0 [b0..] ⇒ a1 [b1..]).
@@ -383,18 +352,6 @@ Proof.
     apply rtc_transitive with (y := b..).
     sauto lq:on unfold:Par_m inv:nat use:Par_refl use:good_Pars_morphing_ext.
 Qed.
-
-Lemma Coherent_cong a0 a1 b0 b1
-  (h : Coherent a0 a1)
-  (h1 : Coherent b0 b1) :
-  Coherent (a0 [b0..]) (a1 [b1..]).
-Proof.
-  apply Coherent_morphing_star=>//.
-  sfirstorder use:Coherent_cong_helper.
-Qed.
-
-
-
 
 (* ------------------------------------------------------------ *)
 
@@ -470,9 +427,9 @@ Qed.
 (*   (tInd a b c  ⇒* t). *)
 (* Proof. move => > <-. apply P_IndSuc_star. Qed. *)
 
-Lemma P_JRefl_star C t p :
+Lemma P_JRefl_star t p :
   (p ⇒* tRefl)  ->
-  ((tJ C t p) ⇒* t).
+  ((tJ t p) ⇒* t).
 Proof.
   move E : tRefl => v h.
   move : E.
@@ -531,8 +488,8 @@ Function tstar (a : tm) :=
   (* | tNat => tNat *)
   | tRefl => tRefl
   | tEq ℓ a b A => tEq ℓ (tstar a) (tstar b) (tstar A)
-  | tJ C t tRefl => tstar t
-  | tJ C t p => tJ (tstar C) (tstar t) (tstar p)
+  | tJ t tRefl => tstar t
+  | tJ t p => tJ (tstar t) (tstar p)
   | tLet ℓ0 ℓ1 (tPack ℓ2 a b) c =>
       if T_eqb ℓ0 ℓ2
       then (tstar c)[(tstar b) .: (tstar a)..]

@@ -1,5 +1,4 @@
 Require Import imports par geq.
-From Hammer Require Import Hammer.
 
 Module Type conv_sig
   (Import lattice : Lattice)
@@ -95,16 +94,16 @@ Proof.
     move /ihb => {ihb}?.
     move /ihc => {ihc}?.
     hauto lq:on ctrs:Par, IEq.
-  - move => Ξ ℓ C0 C1 t0 t1 p0 p1 ? ht ? hp q.
+  - move => Ξ ℓ t0 t1 p0 p1 ? ht ? hp q.
     elim /Par_inv=>// _.
-    + move => ? C2  ? ? t2 p2 + + + [*]. subst.
-      move /ht => {}ht ?.
+    + move => ? ? t2 p2 + + [*]. subst.
+      move /ht => {}ht.
       move /hp => {}hp.
       move : ht => [t']?.
       move : hp => [p']?.
-      exists (tJ C1 t' p').
+      exists (tJ t' p').
       hauto lq:on ctrs:IEq, Par use:Par_refl.
-    + move => ? t2 t3 + [*]. subst.
+    + move => t2 t3 + [*]. subst.
       have ? : p1 = tRefl by qauto l:on inv:IEq. subst.
       hauto l:on ctrs:Par, IEq.
   - hauto lq:on ctrs:IEq, Par inv:Par, IEq.

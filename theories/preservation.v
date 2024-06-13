@@ -85,7 +85,7 @@ Lemma T_J'  Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 T :
   Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) ->
   ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) ->
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
-  Γ ⊢ (tJ C t p) ; ℓ ∈ T.
+  Γ ⊢ (tJ t p) ; ℓ ∈ T.
 Proof. move =>> ->. apply T_J. Qed.
 
 Lemma T_Pack' Γ ℓ ℓ0 a A b B ℓT i B0:
@@ -612,18 +612,40 @@ Proof.
   hauto q:on use:subsumption, T_Eq solve+:(solve_lattice).
 Qed.
 
+(* Weaker than what it could have been but enough for what we need *)
+Lemma T_Var_inv Γ ℓ i A (h : Γ ⊢ var_tm i ; ℓ ∈ A) :
+  exists ℓ0 B, lookup i Γ ℓ0 B /\ ℓ0 ⊆ ℓ.
+Proof.
+  move E : (var_tm i) h => t h.
+  move : i E.
+  elim : Γ ℓ t A / h=>//=.
+  hauto lq:on.
+Qed.
+
+Lemma lookup_deter Γ ℓ ℓ0 i A A0  : lookup i Γ ℓ A -> lookup i Γ ℓ0 A0 -> ℓ = ℓ0 /\ A = A0.
+Proof.
+  move => h. move : ℓ0 A0.
+  elim : i Γ ℓ A / h; hauto lq:on rew:off inv:lookup ctrs:lookup.
+Qed.
+
 Lemma T_J_simpl Γ t a b p A i C ℓ ℓp ℓ0 ℓ1:
-  ℓ1 ⊆ ℓ0 ->
   ℓp ⊆ ℓ ->
   Γ ⊢ a ; ℓ1 ∈ A ->
   Γ ⊢ b ; ℓ1 ∈ A ->
   Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) ->
   ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) ->
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
-  Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..]).
+  Γ ⊢ (tJ t p) ; ℓ ∈ (C [p .: b..]).
 Proof.
   move=> ? ? /[dup] /Wt_regularity.
-  sfirstorder use:T_J.
+  move => [ℓ2][i0]hA hb hp hC ht.
+  suff : ℓ1 ⊆ ℓ0 by sfirstorder use:T_J.
+  move /Wt_Wff : hC; clear => hC.
+  have {}hC : exists ℓ i, (ℓ1, A)::Γ ⊢ tEq ℓ0 a ⟨S⟩ (var_tm 0) A ⟨S⟩ ; ℓ ∈ tUniv i by hauto lq:on inv:Wff.
+  move : hC => [ℓ][i].
+  move /Wt_Eq_inv => [?][?][h]*.
+  move : h; clear.
+  hauto q:on inv:lookup ctrs:lookup use:T_Var_inv, lookup_deter.
 Qed.
 
 Lemma T_Abs_simple Γ ℓ ℓ0 A a B :
@@ -640,8 +662,8 @@ Proof.
   hauto lq:on use:subsumption, T_Pi solve+:(by solve_lattice).
 Qed.
 
-Lemma Wt_J_inv Γ ℓ C t p U (h : Γ ⊢ (tJ C t p) ; ℓ ∈ U) :
-  exists ℓp ℓT ℓ0 ℓ1 a b A i,
+Lemma Wt_J_inv Γ ℓ t p U (h : Γ ⊢ (tJ t p) ; ℓ ∈ U) :
+  exists ℓp ℓT ℓ0 ℓ1 a b A i C,
     ℓ1 ⊆ ℓ0 /\
     ℓp ⊆ ℓ /\
     Γ ⊢ p ; ℓp ∈ (tEq ℓ0 a b A) /\
@@ -653,17 +675,17 @@ Lemma Wt_J_inv Γ ℓ C t p U (h : Γ ⊢ (tJ C t p) ; ℓ ∈ U) :
     conv (c2e Γ) C[p .: b..]  U /\
     exists ℓ j, Γ ⊢ U ; ℓ ∈ (tUniv j).
 Proof.
-  move E : (tJ C t p) h => T h.
-  move : C t p E.
+  move E : (tJ t p) h => T h.
+  move : t p E.
   elim :  Γ ℓ T U / h => //.
   - move => Γ ℓ ℓB a A B i ha iha hB _ hAB.
-    move => C t p ?. subst.
+    move => t p ?. subst.
     specialize iha with (1 := eq_refl).
-    move : iha => [ℓp][ℓT][ℓ0][ℓ1]?.
+    move  : iha => [ℓp][ℓT][ℓ0][ℓ1]?.
     exists ℓp, ℓT, ℓ0, ℓ1. hauto lq:on rew:off use:cfacts.conv_trans.
-  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ? ? ha _ hb _ hA _ hp _ hC _ ht _ ? ? ?  [] *; subst.
-    have /Wt_regularity ? : Γ ⊢ tJ C t p ; ℓ ∈ C[p.:b..] by eauto using T_J.
-    exists ℓp, ℓT, ℓ0, ℓ1, a, b, A, i. repeat split => //.
+  - move => Γ t a b p A i j C ℓ ℓp ℓT ℓ0 ℓ1 ? ? ha _ hb _ hA _ hp _ hC _ ht _ ? ?  [] *; subst.
+    have /Wt_regularity ? : Γ ⊢ tJ t p ; ℓ ∈ C[p.:b..] by eauto using T_J.
+    exists ℓp, ℓT, ℓ0, ℓ1, a, b, A, i, C. repeat split => //.
     sfirstorder.
     sfirstorder use:typing_conv.
 Qed.
@@ -698,9 +720,7 @@ Qed.
 
 Lemma preservation_helper2 ℓ ℓ0 ℓ1 ℓA1 ℓB1 A0 A1  B0 B1 j l Γ a A :
   ((ℓ0, B0) :: (ℓ1, A0) :: Γ) ⊢ a ; ℓ ∈ A ->
-  (* Γ ⊢ A0 ∈ tUniv i -> *)
   Γ ⊢ A1 ; ℓA1  ∈ tUniv j ->
-  (* (ℓ1, A0) :: Γ ⊢ B0 ; ℓ∈ tUniv k -> *)
   (ℓ1, A1) :: Γ ⊢ B1 ; ℓB1 ∈ tUniv l ->
   conv (c2e Γ) A1 A0 -> conv (ℓ1 :: c2e Γ) B1 B0 ->
   ((ℓ0, B1) :: (ℓ1, A1) :: Γ ⊢ a ; ℓ ∈ A).
@@ -930,38 +950,17 @@ Proof.
     intros (? & ha0' & hb0' & (q & hA0') & (i & eq) & (ℓ1 & j & hA)).
     eapply T_Conv with (A := (tUniv i)) (i := j); eauto.
     hauto q:on use:T_Par, T_Eq.
-  - move => C0 C1 t0 p0 t1 p1 ht iht hC ihC hp ihp Γ ℓ U /Wt_J_inv.
-    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & ? & ? & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (ℓ2 & j & hU)).
+  - move => t0 p0 t1 p1 ht iht hp ihp Γ ℓ U /Wt_J_inv.
+    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & C & ? & ? & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (ℓ2 & j & hU)).
     have ? : ⊢ Γ by eauto with wff.
-    have ? : C0[p0.:b..] ⇒C1[p1.:b..] by
+    have ? : C[p0.:b..] ⇒C[p1.:b..] by
       sfirstorder use:cfacts.pfacts.Par_cong2, cfacts.pfacts.Par_refl.
-    have : conv (c2e Γ) C1[p1.:b..] U by qauto l:on use:cfacts.iconv_par.
+    have : conv (c2e Γ) C[p1.:b..] U by qauto l:on use:cfacts.iconv_par.
     apply : T_Conv; eauto.
     eapply T_J_simpl with (a := a) (A := A) (ℓ0 := ℓ0) (ℓp := ℓp) (ℓ1 := ℓ1); eauto.
-    move /Wt_regularity : (ht0) => [ℓq][iq]?.
-    have : C0[tRefl .: a..] ⇒ C1[tRefl .: a..]
-      by sfirstorder use:cfacts.pfacts.Par_subst.
-    move /T_Par.
-    apply; eauto.
-    move /ihC : hC0.
-    move /(morphing_Syn) /(_ Γ (tRefl.:a..)).
-    asimpl.
-    apply; eauto with wff.
-    rewrite /lookup_good_morphing.
-    move => i0 ℓ3 A0.
-    elim /lookup_inv=>// _.
-    + move => ℓ4 A1 Γ0 ? [*]. subst => //=.
-      asimpl. apply : T_Refl=>//. eauto using subsumption.
-    + move => n A1 Γ0 ℓ4 B h ? [*]. subst => /=.
-      asimpl.
-      elim /lookup_inv : h => _.
-      * move => v A0 Γ0 ? [*]; subst.
-        asimpl. by eauto using subsumption.
-      * move => n0 A0 Γ0 ℓ4 B ? ? [*]. subst.
-        asimpl. apply : T_Var; eauto. solve_lattice.
   (* JRefl *)
-  - move => C t0 t1 ht iht Γ ℓ U /Wt_J_inv.
-    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & ? & ? & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (ℓ2 & k & hU')).
+  - move => t0 t1 ht iht Γ ℓ U /Wt_J_inv.
+    intros (ℓp & ℓT & ℓ0 & ℓ1 & a & b & A & i & C & ? & ? & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (ℓ2 & k & hU')).
     apply iht.
     move : T_Conv ht0. move/[apply]. apply; eauto.
     apply : cfacts.conv_trans;eauto.

@@ -45,12 +45,12 @@ Module Type geq_sig
     IOk Ξ ℓ A ->
     (* -------------- *)
     IOk Ξ ℓ (tEq ℓ0 a b A)
-  | IO_J C ℓp t p :
+  | IO_J ℓp t p :
     ℓp ⊆ ℓ ->
     IOk Ξ ℓ t ->
     IOk Ξ ℓp p ->
     (* --------------- *)
-    IOk Ξ ℓ (tJ C t p)
+    IOk Ξ ℓ (tJ t p)
 
   | IO_Sig ℓ0 A B :
     IOk Ξ ℓ A ->
@@ -107,11 +107,11 @@ Module Type geq_sig
     IEq Ξ ℓ A0 A1 ->
     (* -------------- *)
     IEq Ξ ℓ (tEq ℓ0 a0 b0 A0) (tEq ℓ0 a1 b1 A1)
-  | I_J C0 C1 t0 t1 p0 p1 :
+  | I_J t0 t1 p0 p1 :
     IEq Ξ ℓ t0 t1 ->
     IEq Ξ ℓ p0 p1 ->
     (* --------------- *)
-    IEq Ξ ℓ (tJ C0 t0 p0) (tJ C1 t1 p1)
+    IEq Ξ ℓ (tJ t0 p0) (tJ t1 p1)
   | I_Sig ℓ0 A0 B0 A1 B1 :
     IEq Ξ ℓ A0 A1 ->
     IEq (ℓ0 :: Ξ) ℓ B0 B1 ->

@@ -1,13 +1,18 @@
-Require Import join imports.
+Require Import syntax par imports.
+
+Module normalform_sig
+  (Import lattice : Lattice)
+  (Import syntax : syntax_sig lattice)
+  (Import par : par_sig lattice syntax).
 
 (* Identifying neutral (ne) and normal (nf) terms *)
 Fixpoint ne (a : tm) : bool :=
   match a with
   | var_tm _ => true
-  | tApp a b => ne a && nf b
-  | tAbs _ => false
-  | tPi A B => false
-  | tJ t a b p => nf t && nf a && nf b && ne p
+  | tApp a ℓ0 b => ne a && nf b
+  | tAbs _ _ => false
+  | tPi _ A B => false
+  | tJ C t p => nf t && nf a && nf b && ne p
   | tUniv _ => false
   | tZero => false
   | tSuc _ => false

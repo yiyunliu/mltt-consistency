@@ -124,7 +124,7 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* note the usage of var 0 in the eq type *)
   ((ℓp, tEq ℓ0 (ren_tm shift a) (var_tm 0) (ren_tm shift A)) :: (ℓ1, A) :: Γ) ⊢ C ; ℓ0 ∈ (tUniv i) ->
   Γ ⊢ t ; ℓ ∈ (C [tRefl .: a ..]) ->
-  Γ ⊢ (tJ C t p) ; ℓ ∈ (C [p .: b..])
+  Γ ⊢ (tJ t p) ; ℓ ∈ (C [p .: b..])
 
 | T_Sig Γ i j ℓ ℓ0 A B :
   Γ ⊢ A ; ℓ ∈ (tUniv i) ->
