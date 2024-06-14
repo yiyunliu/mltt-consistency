@@ -1,11 +1,12 @@
-Require Import conv par geq imports.
+Require Import conv par geq imports normalform.
 
 Module Type lr_sig
   (Import lattice : Lattice)
   (Import syntax : syntax_sig lattice)
   (Import par : par_sig lattice syntax)
   (Import ieq : geq_sig lattice syntax)
-  (Import conv : conv_sig lattice syntax par ieq).
+  (Import conv : conv_sig lattice syntax par ieq)
+  (Import normalform : normalform_sig lattice syntax par).
 
 Module pfacts := par_facts lattice syntax par.
 Import pfacts.
@@ -13,9 +14,9 @@ Import pfacts.
 Module cfacts := conv_facts lattice syntax par ieq conv.
 Import cfacts.
 
-Definition ProdSpace Ξ ℓ0 (PA : T -> tm -> Prop) (PF : tm -> (T -> tm -> Prop) -> Prop)ℓ (b : tm) :=
-  IOk Ξ ℓ b /\
-  forall a PB, PA ℓ0 a -> PF a PB -> PB ℓ (tApp b ℓ0 a).
+Definition ProdSpace Ξ ℓ0 (RA : (fin -> fin) -> econtext -> (T -> tm -> Prop) -> Prop) RF (ℓ : T) (b : tm) : Prop :=
+  forall ξ Δ PA a PB, iok_ren_ok ξ Ξ Δ -> RA ξ Δ PA -> PA ℓ0 a -> RF ξ Δ a PB ->
+                      PB ℓ (tApp b⟨ξ⟩ ℓ0 a).
 
 Definition SumSpace Ξ ℓ0 (PA : T -> tm -> Prop) (PF : tm -> (T -> tm -> Prop) -> Prop)ℓ (t : tm) :=
   IOk Ξ ℓ t /\
@@ -35,11 +36,12 @@ Definition SumSpace Ξ ℓ0 (PA : T -> tm -> Prop) (PF : tm -> (T -> tm -> Prop)
 
 
 Inductive InterpExt Ξ i (I : nat -> tm -> Prop) : tm -> (T -> tm -> Prop) -> Prop :=
-| InterpExt_Fun ℓ0 A B PA PF :
-  InterpExt Ξ i I A PA ->
-  (forall a, PA ℓ0 a -> exists PB, PF a PB) ->
-  (forall a PB, PA ℓ0 a -> PF a PB -> InterpExt Ξ i I B[a..] PB) ->
-  InterpExt Ξ i I (tPi ℓ0 A B) (ProdSpace Ξ ℓ0 PA PF)
+| InterpExt_Fun ℓ0 A B RA RF :
+  (forall Δ ξ, iok_ren_ok ξ Ξ Δ -> exists PA, RA ξ Δ PA) ->
+  (forall ξ Δ PA, RA ξ Δ PA -> InterpExt Δ i I A⟨ξ⟩ PA) ->
+  (forall ξ Δ PA a, iok_ren_ok ξ Ξ Δ -> RA ξ Δ PA -> PA ℓ0 a -> exists PB, RF ξ Δ a PB) ->
+  (forall ξ Δ PA a PB, iok_ren_ok ξ Ξ Δ -> RA ξ Δ PA -> PA ℓ0 a -> RF ξ Δ a PB -> InterpExt Δ i I B⟨upRen_tm_tm ξ⟩[a..] PB) ->
+  InterpExt Ξ i I (tPi ℓ0 A B) (ProdSpace Ξ ℓ0 RA RF)
 | InterpExt_Univ j :
   j < i ->
   InterpExt Ξ i I (tUniv j) (fun ℓ A => IOk Ξ ℓ A /\  I j A)
@@ -92,11 +94,11 @@ Lemma InterpExt_lt_redundant i Ξ I A PA
                      | right _ => False
                      end) ↘ PA.
 Proof.
-  elim : A PA / h.
+  elim : Ξ i I A PA / h.
   - hauto lq:on ctrs:InterpExt.
   (* - hauto l:on. *)
   (* - hauto l:on ctrs:InterpExt. *)
-  - move => m h.
+  - move => Ξ i I m h.
     apply InterpExt_Univ' => //.
     case : Compare_dec.lt_dec => //.
   - hauto l:on ctrs:InterpExt.
@@ -113,11 +115,17 @@ Lemma InterpExt_lt_redundant2 Ξ i I A PA
                      end) ↘ PA) :
   ⟦ Ξ ⊨ A ⟧ i ; I ↘ PA.
 Proof.
-  elim : A PA / h.
+  move E : (fun j A =>
+                      match Compare_dec.lt_dec j i with
+                     | left h => I j A
+                     | right _ => False
+                      end) h => I0 h.
+  move : I E.
+  elim : Ξ i I0 A PA / h.
   - hauto lq:on ctrs:InterpExt.
   (* - hauto l:on. *)
   (* - hauto l:on ctrs:InterpExt. *)
-  - move => m ?.
+  - move => Ξ i I m ? *. subst.
     apply InterpExt_Univ' => //.
     case : Compare_dec.lt_dec => //.
   - hauto l:on ctrs:InterpExt.
@@ -139,18 +147,30 @@ Qed.
 
 Lemma InterpExt_Fun_inv Ξ i I ℓ0 A B P
   (h :  ⟦ Ξ ⊨ tPi ℓ0 A B ⟧ i ; I ↘ P) :
-  exists (PA : T -> tm -> Prop) (PF : tm -> (T -> tm -> Prop) -> Prop),
-     ⟦ Ξ ⊨ A ⟧ i ; I ↘ PA /\
-    (forall a, PA ℓ0 a -> exists PB, PF a PB) /\
-    (forall a PB, PA ℓ0 a -> PF a PB -> ⟦ Ξ ⊨ B[a..] ⟧ i ; I ↘ PB) /\
-    P = ProdSpace Ξ ℓ0 PA PF.
+  exists RA RF,
+  (forall Δ ξ, iok_ren_ok ξ Ξ Δ -> exists PA, RA ξ Δ PA) /\
+  (forall ξ Δ PA, RA ξ Δ PA -> InterpExt Δ i I A⟨ξ⟩ PA) /\
+  (forall ξ Δ PA a, iok_ren_ok ξ Ξ Δ -> RA ξ Δ PA -> PA ℓ0 a -> exists PB, RF ξ Δ a PB) /\
+  (forall ξ Δ PA a PB, iok_ren_ok ξ Ξ Δ -> RA ξ Δ PA -> PA ℓ0 a -> RF ξ Δ a PB -> InterpExt Δ i I B⟨upRen_tm_tm ξ⟩[a..] PB) /\
+    P = ProdSpace Ξ ℓ0 RA RF.
 Proof.
   move E : (tPi ℓ0 A B) h => T h.
   move : A B E.
-  elim : T P / h => //.
-  - hauto q:on inv:tm.
-  - move => *. subst.
-    hauto lq:on rew:off inv:Par ctrs:InterpExt use:Par_subst.
+  elim : Ξ i I T P / h => //.
+  - move => Ξ i I ℓ1 A B RA RF h0 h1 h2 h3 h4 h5 ? ? [*]. subst.
+    exists RA, RF. repeat split => //.
+  - move => Ξ i I A A0 PA h0 h1 h2 A1 B ?. subst.
+    elim /Par_inv : h0 => // _ ℓ1 A2 A3 B0 B1 ? ? [*]. subst.
+    specialize h2 with (1 := eq_refl).
+    move : h2 => [RA][RF]h2.
+    exists RA, RF. repeat split => //; try tauto.
+    + hauto lq:on ctrs:InterpExt use:Par_renaming.
+    + move => ξ Δ PA0 a PB. asimpl.
+      move : h2 => [_][_][_][h2]_.
+      move : h2.
+      repeat move/[apply].
+      asimpl.
+      hauto lq:on ctrs:InterpExt use:Par_subst.
 Qed.
 
 Lemma InterpExt_Sig_inv Ξ i I ℓ0 A B P
@@ -179,7 +199,7 @@ Qed.
 Lemma InterpUnivN_Fun_nopf Ξ i ℓ0 A B PA :
   ⟦ Ξ ⊨ A ⟧ i ↘ PA ->
   (forall a, PA ℓ0 a -> exists PB, ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB) ->
-  ⟦ Ξ ⊨ tPi ℓ0 A B ⟧ i ↘ (ProdSpace Ξ ℓ0 PA (fun a PB => ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB)).
+  ⟦ Ξ ⊨ tPi ℓ0 A B ⟧ i ↘ (ProdSpace Ξ ℓ0 PA (fun ξ Δ a PB => ⟦ Δ ⊨ B⟨upRen_tm_tm ξ⟩[a..] ⟧ i ↘ PB)).
 Proof.
   hauto l:on ctrs:InterpExt rew:db:InterpUniv.
 Qed.
