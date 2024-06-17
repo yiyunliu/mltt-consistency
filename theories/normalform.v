@@ -27,6 +27,7 @@ Fixpoint ne (a : tm) : bool :=
   | tLet _ _ a b => ne a && nf b
   | tVoid => false
   | tAbsurd a => ne a
+  | tD => true
   end
 with nf (a : tm) : bool :=
   match a with
@@ -47,18 +48,22 @@ with nf (a : tm) : bool :=
   | tLet _ _ a b => ne a && nf b
   | tVoid => true
   | tAbsurd a => ne a
+  | tD => true
   end.
-
-(* Function is_nat_val (a : tm) : bool := *)
-(*   match a with *)
-(*   | tZero => true *)
-(*   | tSuc a => is_nat_val a *)
-(*   | _ => ne a *)
-(*   end. *)
 
 (* Terms that are weakly normalizing to a neutral or normal form. *)
 Definition wn (a : tm) := exists b, a ⇒* b /\ nf b.
 Definition wne (a : tm) := exists b, a ⇒* b /\ ne b.
+
+Definition var_or_d a :=
+  match a with
+  | tD => true
+  | var_tm _ => true
+  | _ => false
+  end.
+
+Definition ren_with_d (ξ : nat -> tm) :=
+  forall i, var_or_d (ξ i).
 
 End normalform_sig.
 
@@ -97,11 +102,11 @@ Qed.
 
 Lemma nf_refl a b (h: a ⇒ b) : (nf a -> b = a) /\ (ne a -> b = a).
 Proof.
-elim : a b / h => // ; hauto b:on.
+  elim : a b / h => // ; hauto b:on.
 Qed.
 
 (* Normal and neural forms are preserved by parallel reduction. *)
-Local Lemma nf_ne_preservation a b (h : a ⇒ b) : (nf a ==> nf b) /\ (ne a ==> ne b).
+Lemma nf_ne_preservation a b (h : a ⇒ b) : (nf a ==> nf b) /\ (ne a ==> ne b).
 Proof.
   elim : a b / h => //; hauto lqb:on depth:2.
 Qed.
@@ -118,76 +123,118 @@ Create HintDb nfne.
 
 (* ------------------ antirenaming ------------------------- *)
 
+Lemma ren_var_or_d ξ a : var_or_d a = var_or_d a⟨ξ⟩.
+Proof. case : a => //=. Qed.
+
+Lemma var_or_d_ne a : var_or_d a -> ne a && nf a.
+Proof. case : a => //=. Qed.
+
+Lemma ren_with_d_ne ξ i : ren_with_d ξ -> ne (ξ i) && nf (ξ i).
+Proof. sfirstorder use:var_or_d_ne unfold:ren_with_d. Qed.
+
+Lemma ren_with_d_up_tm ξ (h : ren_with_d ξ) :
+  ren_with_d (up_tm_tm ξ).
+Proof.
+  rewrite /ren_with_d in h *.
+  case => //= n.
+  asimpl.
+  move /(_ n) : h.
+  by rewrite -ren_var_or_d.
+Qed.
+
+Lemma ren_with_d_imp ξ i a :
+  ren_with_d ξ ->
+  ξ i = a ->
+  var_or_d a.
+Proof. scongruence. Qed.
+
+Lemma ne_nf_renaming_with_d (a : tm) :
+  forall ξ, ren_with_d ξ ->
+    (ne a = ne (a[ξ])) /\ (nf a = nf (a[ξ])).
+Proof.
+  elim : a; try solve [auto; hauto use:ren_with_d_ne, ren_with_d_up_tm b:on].
+Qed.
+
 (* Next we show that if a renamed term reduces, then
    we can extract the unrenamed term from the derivation. *)
-Local Lemma Par_antirenaming (a b0 : tm) (ξ : nat -> nat)
-  (h : a⟨ξ⟩ ⇒ b0) : exists b, (a ⇒ b) /\ b0 = b⟨ξ⟩.
+Local Lemma Par_antirenaming (a b0 : tm) ξ
+  (hξ : ren_with_d ξ)
+  (h : a[ξ] ⇒ b0) : exists b, (a ⇒ b) /\ b0 = b[ξ].
 Proof.
-  move E : (a⟨ξ⟩) h => a0 h.
+  move E : (a[ξ]) h hξ => a0 h.
   move : a ξ E.
   elim : a0 b0 / h.
   - move => + []//. eauto with par.
-  - move => + []//. eauto with par.
+  - move => + []//=; eauto with par.
   - move => ℓ0 A0 A1 B0 B1 h0 ih0 h1 ih1 [] // /=.
-    hauto lq:on ctrs:Par.
-  - move => ℓ0 a0 a1 h ih [] // ℓ1 a ξ [] ?.
-    hauto lq:on ctrs:Par.
+    hauto q:on use:ren_with_d_imp.
+    qauto l:on ctrs:Par use:ren_with_d_up_tm.
+  - move => ℓ0 a0 a1 h ih [] //.
+    hauto q:on use:ren_with_d_imp.
+    move => ℓ1 a ξ [] ?.
+    qauto l:on ctrs:Par use:ren_with_d_up_tm.
   - move => a0 a1 ℓ0 b0 b1  + + + + []//.
+    hauto q:on use:ren_with_d_imp.
     hauto q:on ctrs:Par.
-  - move => a a0 b0 b1 ℓ0 ha iha hb ihb []// []// ℓ1 t t0 t1 ξ [] *. subst.
+  - move => a a0 b0 b1 ℓ0 ha iha hb ihb []//.
+    hauto q:on use:ren_with_d_imp.
+    move => []//.
+    hauto q:on use:ren_with_d_imp.
+    move => ℓ1 t t0 t1 ξ [] *. subst.
     specialize iha with (1 := eq_refl).
     specialize ihb with (1 := eq_refl).
-    move : iha => [a [? ?]]. subst.
-    move : ihb => [b [? ?]]. subst.
+    move : (iha ltac:(by auto using ren_with_d_up_tm)) => [a [? ?]]. subst.
+    move : (ihb ltac:(by auto)) => [b [? ?]]. subst.
     exists (subst_tm (b..) a).
     split; last by asimpl.
     hauto lq:on ctrs:Par.
   - hauto q:on ctrs:Par inv:tm.
   - move => + + + + []//=.
+    hauto q:on use:ren_with_d_imp.
     qauto l:on ctrs:Par.
   - hauto q:on inv:tm ctrs:Par.
   - move => > ++++++ [] //.
-    hauto q:on ctrs:Par.
-  (* - move => a0 a1 b h0 ih0 []// a2 b1 c1 ξ. *)
-  (*   case => ? ? hz. subst. *)
-  (*   specialize ih0 with (1 := eq_refl). *)
-  (*   have {hz}-> : c1 = tZero by hauto q:on inv:tm. *)
-  (*   hauto lq:on ctrs:Par. *)
-  (* - move => ? a1 ? b1 ? c1 ha iha hb ihb hc ihc []// a0 b0 c0 ξ [? ?]. subst. *)
-  (*   case : c0 => // c0 [?]. subst. *)
-  (*   specialize iha with (1 := eq_refl). *)
-  (*   specialize ihb with (1 := eq_refl). *)
-  (*   specialize ihc with (1 := eq_refl). *)
-  (*   move : iha => [a2 [iha ?]]. *)
-  (*   move : ihb => [b2 [ihb ?]]. *)
-  (*   move : ihc => [c2 [ihc ?]]. subst. *)
-  (*   exists (b2[(tInd a2 b2 c2) .: c2 ..]). *)
-  (*   split; [by auto with par | by asimpl]. *)
-  (* - hauto q:on ctrs:Par inv:tm. *)
-  - hauto inv:tm q:on ctrs:Par.
-  - move => t0 t1 h0 h1 []// t []// ξ [?]. subst.
+    hauto q:on use:ren_with_d_imp.
     hauto q:on ctrs:Par.
   - move => > + + + + []//.
+    hauto q:on use:ren_with_d_imp.
+    hauto q:on ctrs:Par.
+  - move => t0 t1 h0 h1 []//.
+    hauto q:on use:ren_with_d_imp.
+    move => t []//.
+    hauto q:on use:ren_with_d_imp.
+    move => ξ [?]. subst.
     hauto q:on ctrs:Par.
   - move => > + + + + []//.
-    hauto q:on ctrs:Par.
+    hauto q:on use:ren_with_d_imp.
+    hauto q:on ctrs:Par use:ren_with_d_up_tm.
   - move => > + + + + []//.
-    hauto q:on ctrs:Par.
-  - move => ℓ0 ℓ1 ? ? ? a1 b1 c1 ha iha hb ihb hc ihc []//= ℓ2 ℓ3 []//= ℓ4 a0 b0 c0 ξ [*]. subst.
+    hauto q:on use:ren_with_d_imp.
+    hauto q:on ctrs:Par use:ren_with_d_up_tm.
+  - move => > + + + + []//.
+    hauto q:on use:ren_with_d_imp.
+    hauto q:on ctrs:Par use:ren_with_d_up_tm.
+  - move => ℓ0 ℓ1 ? ? ? a1 b1 c1 ha iha hb ihb hc ihc []//=.
+    hauto q:on use:ren_with_d_imp.
+    move => ℓ2 ℓ3 []//=.
+    hauto q:on use:ren_with_d_imp.
+    move => ℓ4 a0 b0 c0 ξ [*]. subst.
     specialize iha with (1 := eq_refl).
     specialize ihb with (1 := eq_refl).
     specialize ihc with (1 := eq_refl).
-    move : iha => [a2 [iha ?]].
-    move : ihb => [b2 [ihb ?]].
-    move : ihc => [c2 [ihc ?]]. subst.
+    move /(_ ltac:(auto)) : iha => [a2 [iha ?]].
+    move /(_ ltac:(auto)) : ihb => [b2 [ihb ?]].
+    move /(_ ltac:(auto using ren_with_d_up_tm)) : ihc => [c2 [ihc ?]]. subst.
     exists (c2[b2 .: a2 ..]).
     split; [by auto with par | by asimpl].
+  - hauto q:on inv:tm ctrs:Par.
 Qed.
 
-Local Lemma Pars_antirenaming (a b0 : tm) (ξ : nat -> nat)
-  (h : (a⟨ξ⟩ ⇒* b0)) : exists b, b0 = b⟨ξ⟩ /\ (a ⇒* b).
+Local Lemma Pars_antirenaming (a b0 : tm) ξ
+  (hξ : ren_with_d ξ)
+  (h : (a[ξ] ⇒* b0)) : exists b, b0 = b[ξ] /\ (a ⇒* b).
 Proof.
-  move E : (a⟨ξ⟩) h => a0 h.
+  move E : (a[ξ]) h => a0 h.
   move : a E.
   elim : a0 b0 / h.
   - hauto lq:on ctrs:rtc.
@@ -196,12 +243,12 @@ Proof.
     hauto lq:on ctrs:rtc, eq.
 Qed.
 
-Lemma wn_antirenaming a (ξ : nat -> nat) : wn (a⟨ξ⟩) -> wn a.
+Lemma wn_antirenaming a (ξ : nat -> tm) (hξ : ren_with_d ξ) : wn (a[ξ]) -> wn a.
 Proof.
   rewrite /wn.
   move => [v [rv nfv]].
-  move /Pars_antirenaming : rv => [b [hb ?]]. subst.
-  sfirstorder use:ne_nf_renaming.
+  move: Pars_antirenaming (hξ) (rv); repeat move/[apply]. move => [b [hb ?]]. subst.
+  hauto q:on use:ne_nf_renaming_with_d.
 Qed.
 
 (* ------------------------------------------------------------- *)
@@ -423,11 +470,11 @@ Qed.
    inversion principle for terms with normal forms. If a term applied to a
    variable is normal, then the term itself is normal. *)
 
-Lemma ext_wn ℓ0 (a : tm) i :
-    wn (tApp a ℓ0 (var_tm i)) ->
+Lemma ext_wn ℓ0 (a : tm) :
+    wn (tApp a ℓ0 tD) ->
     wn a.
 Proof.
-  move E : (tApp a ℓ0 (var_tm i)) => a0 [v [hr hv]].
+  move E : (tApp a ℓ0 tD) => a0 [v [hr hv]].
   move : a E.
   move : hv.
   elim : a0 v / hr.
@@ -439,13 +486,13 @@ Proof.
     elim /Par_inv=>//.
     + hauto q:on inv:Par ctrs:rtc b:on.
     + move => ? a0 a3 b2 b3 ℓ1 ? ? [? ? ?] ? [? ? ?]. subst.
-      have ? : b3 = var_tm i by hauto lq:on inv:Par. subst.
+      have ? : b3 = tD by hauto lq:on inv:Par. subst.
       suff : wn (tAbs ℓ a3) by hauto lq:on ctrs:Par, rtc unfold:wn.
-      have : wn (subst_tm ((var_tm i) ..) a3) by sfirstorder.
-      replace (subst_tm ((var_tm i) ..) a3) with (ren_tm (i..) a3).
-      move /wn_antirenaming.
-      by apply : wn_abs.
-      substify. by asimpl.
+      have : wn (subst_tm (tD ..) a3) by sfirstorder.
+      move /wn_antirenaming => h.
+      apply : wn_abs.
+      apply h.
+      case => //=.
 Qed.
 
 End normalform_fact.

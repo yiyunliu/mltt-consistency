@@ -1,13 +1,14 @@
-Require Import conv par geq imports semtyping typing typing_conv.
+Require Import conv par geq imports semtyping typing typing_conv normalform.
 
 Module soundness
   (Import lattice : Lattice)
   (Import syntax : syntax_sig lattice)
   (Import par : par_sig lattice syntax)
+  (Import nf : normalform_sig lattice syntax par)
   (Import ieq : geq_sig lattice syntax)
   (Import conv : conv_sig lattice syntax par ieq)
   (Import typing : typing_sig lattice syntax par ieq conv)
-  (Import lr : lr_sig lattice syntax par ieq conv).
+  (Import lr : lr_sig lattice syntax par nf ieq conv).
 
 Module pfacts := par_facts lattice syntax par.
 Import pfacts.
@@ -146,6 +147,43 @@ Theorem soundness :
   (forall Γ, Wff Γ -> SemWff Γ).
 Proof.
   apply wt_mutual.
+  11: {
+    move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ? ?.
+    move => _ha ha _hb hb hA ihA _hp hp hC ihC _t ht.
+    move => Δ ρ hρ.
+    move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
+    move  /InterpUnivN_Eq_inv : hPA hp ->.  move => [?].
+    case.
+    + move =>[?]hab{PA}.
+       move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
+       exists k, PA.
+       split.
+      * move : hPA. asimpl.
+        move /InterpUnivN_Conv.
+        move /(_ C[p[ρ] .: (b[ρ] .: ρ)] PA).
+
+apply.
+        rewrite /conv.
+        move /typing_iok in hC.
+        exists ℓ0.
+        rewrite /iconv in hab *.
+        move : hab => [a'][b']hab.
+        exists C[tRefl .: (b' .: ρ)], C[tRefl .: (a' .: ρ)].
+        repeat split.
+      * apply : Pars_morphing_star; auto using rtc_refl.
+        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
+      * apply : Pars_morphing_star; auto using rtc_refl.
+        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
+      * simpl in hC.
+        move /cfacts.ifacts.iok_ieq  : hC => /[dup] hC.
+        move  /(_ ℓ0 ltac:(by rewrite meet_idempotent)) /(proj1 (cfacts.ifacts.ieq_morphing_mutual _ _)).
+        apply.
+        rewrite /cfacts.ifacts.ieq_good_morphing.
+        rewrite /elookup.
+        case => //=.
+
+}
+
   (* Var *)
   - move => Γ ℓ0 ℓ i A h ih l hℓ Ξ ρ hρ.
     rewrite /SemWff in ih.
@@ -204,16 +242,19 @@ Proof.
     move : hTot hb. move/[apply].
     asimpl. hauto lq:on.
   (* Conv *)
-  - move => Γ ℓ ℓ0 a A B i _ hA _ /SemWt_Univ hB ? Δ ρ hρ.
+  - move => Γ ℓ ℓ0 a A B i _ ha _ /SemWt_Univ hB hconv Δ ρ hρ.
     move /ρ_ok_iok : (hρ) => ?.
-    have hs : conv (c2e Δ) (subst_tm ρ A) (subst_tm ρ B)
-      by hauto l:on use:cfacts.conv_subst.
-    move /hB : (hρ) {hB}.
+    move : hB (hρ) => /[apply].
+    move : ha hρ => /[apply].
+    move => [m][PA][hPA]ha.
     move => [?][PB]hPB.
-    move /hA : hρ {hA}.
-    move => [j][PA][hPA]ha.
-    have ? : ⟦ c2e Δ ⊨ A[ρ] ⟧ i ↘ PB by eauto using InterpUnivN_Conv.
-    have : PA = PB by eauto using InterpUnivN_deterministic'.
+    have hs : conv (c2e Δ) (subst_tm ρ A) (subst_tm ρ B).
+    by hauto l:on use:cfacts.conv_subst.
+    have [j [hm hi]] : exists j,  m <= j /\ i <= j by exists (S (max m i)); lia.
+    move : InterpUnivN_cumulative hPA hm; repeat move/[apply].
+    move : InterpUnivN_cumulative hPB hi; repeat move/[apply].
+    move => *.
+    have ? : PB = PA by eauto using InterpUnivN_Conv. subst.
     hauto lq:on.
   (* (* Zero *) *)
   (* - hauto l:on. *)

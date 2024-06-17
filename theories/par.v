@@ -99,6 +99,9 @@ Inductive Par : tm -> tm -> Prop :=
   c0 ⇒ c1 ->
   tLet ℓ0 ℓ1 (tPack ℓ0 a0 b0) c0 ⇒ c1[b1 .: a1 ..]
 
+| P_D :
+  tD ⇒ tD
+
 where "A ⇒ B" := (Par A B).
 #[export]Hint Constructors Par : par.
 
@@ -219,7 +222,7 @@ Lemma Par_morphing a b (σ0 σ1 : fin -> tm)
 Proof.
   move => h0.
   move : σ0 σ1 h.
-  elim : a b / h0 .
+  elim : a b / h0.
   - move => //=; eauto with par.
   - move => //=; eauto with par.
   - qauto db:par use: (Par_morphing_lift_n 1).
@@ -242,6 +245,7 @@ Proof.
     apply P_LetPack' with (a1 := a1[σ1]) (b1 := b1[σ1]) (c1 := c1[up_tm_tm (up_tm_tm σ1)]); eauto.
     by asimpl.
     sfirstorder use:(Par_morphing_lift_n 2).
+  - sfirstorder.
 Qed.
 
   (* - qauto db:par use:(Par_morphing_lift_n 2). *)
@@ -499,6 +503,7 @@ Function tstar (a : tm) :=
   | tPack ℓ a b => tPack ℓ (tstar a) (tstar b)
   | tVoid => tVoid
   | tAbsurd a => tAbsurd (tstar a)
+  | tD => tD
   end.
 
 Lemma Par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
@@ -527,6 +532,7 @@ Proof.
     case : T_eqdec=>//.
     hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
   - hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.

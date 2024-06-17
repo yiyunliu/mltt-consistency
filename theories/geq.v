@@ -69,7 +69,10 @@ Module Type geq_sig
     IOk Ξ ℓ1 a ->
     IOk (ℓ1::ℓ0::Ξ) ℓ b ->
     (* -------------------- *)
-    IOk Ξ ℓ (tLet ℓ0 ℓ1 a b).
+    IOk Ξ ℓ (tLet ℓ0 ℓ1 a b)
+  | IO_D :
+    (*  *)
+    IOk Ξ ℓ tD.
 
   Inductive IEq (Ξ : econtext) (ℓ : T) : tm -> tm -> Prop :=
   | I_Var i ℓ0 :
@@ -129,6 +132,10 @@ Module Type geq_sig
     IEq (ℓ1::ℓ0::Ξ) ℓ b0 b1 ->
     (* -------------------- *)
     IEq Ξ ℓ (tLet ℓ0 ℓ1 a0 b0) (tLet ℓ0 ℓ1 a1 b1)
+
+  | I_D :
+    (*  *)
+    IEq Ξ ℓ tD tD
 
   with GIEq (Ξ : econtext) (ℓ : T) : T -> tm -> tm -> Prop :=
   | GI_Dist ℓ0 A B :
@@ -384,6 +391,21 @@ Proof.
   sfirstorder use:ieq_morphing_mutual, iok_gieq unfold:ieq_good_morphing.
 Qed.
 
+Lemma ieq_iok_subst Ξ ℓ ℓ0 b0 b1 a (h : IOk Ξ ℓ0 a) (h0 : IEq (ℓ0:: Ξ) ℓ b0 b1) :
+  IEq Ξ ℓ b0[a..] b1[a..].
+Proof.
+  eapply ieq_morphing_mutual; eauto.
+  case => //=.
+  move => ℓ1.
+  rewrite /elookup //=.
+  move => [<-]{ℓ1}.
+  by apply : iok_gieq.
+  move => n ℓ1 he.
+  have {}he : elookup n Ξ ℓ1 by sfirstorder unfold:elookup.
+  apply : ieq_gieq.
+  move => *.
+  apply : I_Var; eauto.
+Qed.
 
 Lemma ieq_trans_heterogeneous Ξ ℓ ℓ0 a b c :
   IEq Ξ ℓ a b ->
