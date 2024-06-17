@@ -705,7 +705,7 @@ Proof.
     + hauto lq:on rew:off.
   - hauto lq:on inv:IEq ctrs:InterpExt use:InterpExt_Univ_inv.
   - hauto lq:on inv:IEq ctrs:InterpExt use:InterpExt_Void_inv.
-  - move => ℓ0 a b A ℓ B PB.
+  - move => ℓ0 a b A ? ? ? ℓ B PB.
     elim /IEq_inv=>//= _ ? ? a0 ? b0 ? A0 ? ha hb hA [? ? ? ?] ?. subst.
     move /InterpExt_Eq_inv => ?. subst.
     fext => ℓ1 p. f_equal. apply propositional_extensionality.
@@ -894,7 +894,7 @@ Proof.
   - move => j h ℓ0 a b ha hr.
     suff : I j b -> I j a by tauto.
     firstorder.
-  - sfirstorder.
+  - hauto lq:on ctrs:InterpExt, rtc.
   - hauto lq:on ctrs:rtc.
   - hauto lq:on ctrs:InterpExt, rtc unfold:SumSpace.
   - sfirstorder.

@@ -149,10 +149,18 @@ Proof.
   apply wt_mutual.
   11: {
     move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ? ?.
-    move => _ha ha _hb hb hA ihA _hp hp hC ihC _t ht.
+    move => _ha ha _hb hb hA ihA _hp hp hC /SemWt_Univ ihC _t ht.
     move => Δ ρ hρ.
     move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
     move  /InterpUnivN_Eq_inv : hPA hp ->.  move => [?].
+
+    have : ρ_ok  ((ℓp, tEq ℓ0 a ⟨S⟩ (var_tm 0) A ⟨S⟩) :: (ℓ1, A) :: Γ) Δ (p[ρ] .: (b[ρ] .: ρ)).
+    {
+      apply : ρ_ok_cons => //=.
+      apply (InterpUnivN_Eq _ 0).
+      asimpl. best use:
+    }
+
     case.
     + move =>[?]hab{PA}.
        move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
