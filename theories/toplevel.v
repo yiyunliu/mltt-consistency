@@ -1,35 +1,41 @@
-Require Import conv par geq imports semtyping typing soundness preservation.
+Require Import conv par geq imports normalform semtyping typing soundness preservation consistency.
 
 Module MkAll
   (Import lattice : Lattice).
 
   Module syntax <: syntax_sig lattice.
-    Include (syntax_sig lattice).
+    Include syntax_sig lattice.
   End syntax.
 
   Module par <: par_sig lattice syntax.
-    Include (par_sig lattice syntax).
+    Include par_sig lattice syntax.
   End par.
 
   Module ieq <: geq_sig lattice syntax.
-    Include (geq_sig lattice syntax).
+    Include geq_sig lattice syntax.
   End ieq.
 
   Module conv <: conv_sig lattice syntax par ieq.
-    Include (conv_sig lattice syntax par ieq).
+    Include conv_sig lattice syntax par ieq.
   End conv.
 
   Module typing <: typing_sig lattice syntax par ieq conv.
-    Include (typing_sig lattice syntax par ieq conv).
+    Include typing_sig lattice syntax par ieq conv.
   End typing.
 
-  Module lr <: lr_sig lattice syntax par ieq conv.
-    Include (lr_sig lattice syntax par ieq conv).
+  Module nf <: normalform_sig lattice syntax par.
+    Include normalform_sig lattice syntax par.
+  End nf.
+
+  Module lr <: lr_sig lattice syntax par nf ieq conv.
+    Include lr_sig lattice syntax par nf ieq conv.
   End lr.
 
-  Module soundness := soundness lattice syntax par ieq conv typing lr.
+  Module soundness := soundness lattice syntax par nf ieq conv typing lr.
 
   Module preservation := preservation lattice syntax par ieq conv typing.
+
+  Module consistency := consistency lattice syntax par nf ieq conv typing lr.
 End MkAll.
 
 Module nat_lattice <: Lattice.
@@ -78,5 +84,9 @@ End nat_lattice.
 
 Module dcoi_with_nat_lattice := MkAll nat_lattice.
 
-Print Assumptions dcoi_with_nat_lattice.soundness.consistency.
+Check dcoi_with_nat_lattice.consistency.consistency.
+Print Assumptions dcoi_with_nat_lattice.consistency.consistency.
+Check dcoi_with_nat_lattice.preservation.subject_reduction.
 Print Assumptions dcoi_with_nat_lattice.preservation.subject_reduction.
+Check dcoi_with_nat_lattice.soundness.normalization.
+Print Assumptions dcoi_with_nat_lattice.soundness.normalization.

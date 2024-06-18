@@ -1064,4 +1064,10 @@ Proof.
       hauto lq:on use:cfacts.iconv_par unfold:conv.
 Qed.
 
+Lemma subject_reduction_star a b (h : a ⇒* b) : forall Γ ℓ A,
+    Γ ⊢ a ; ℓ ∈ A -> Γ ⊢ b ; ℓ ∈ A.
+Proof.
+  induction h; sfirstorder use:subject_reduction ctrs:rtc.
+Qed.
+
 End preservation.
