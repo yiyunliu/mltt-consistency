@@ -42,7 +42,6 @@ Module Type geq_sig
     ℓ0 ⊆ ℓ ->
     IOk Ξ ℓ0 a ->
     IOk Ξ ℓ0 b ->
-    IOk Ξ ℓ A ->
     (* -------------- *)
     IOk Ξ ℓ (tEq ℓ0 a b A)
   | IO_J ℓp t p :
@@ -110,7 +109,6 @@ Module Type geq_sig
     ℓ0 ⊆ ℓ ->
     IEq Ξ ℓ a0 a1 ->
     IEq Ξ ℓ b0 b1 ->
-    IEq Ξ ℓ A0 A1 ->
     (* -------------- *)
     IEq Ξ ℓ (tEq ℓ0 a0 b0 A0) (tEq ℓ0 a1 b1 A1)
   | I_J t0 t1 p0 p1 :
@@ -249,7 +247,7 @@ Module geq_facts
     - move => Ξ ℓ a ℓ0 b ha iha hb ihb ℓ1 ?.
       apply I_App; eauto.
       case : (sub_eqdec ℓ0 ℓ1) => //; hauto l:on ctrs:GIEq.
-    - move => Ξ ℓ ℓ0 a b A hℓ ha iha hb ihb hA ihA ℓ1 hℓ'.
+    - move => Ξ ℓ ℓ0 a b A hℓ ha iha hb ihb ℓ1 hℓ'.
       have : ℓ0 ⊆ ℓ1 by eauto using leq_trans.
       hauto lq:on ctrs:IEq.
     - move => Ξ ℓ ℓ0 a b ha iha hb ihb ℓ1 ?.
