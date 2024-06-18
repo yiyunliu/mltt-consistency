@@ -102,6 +102,12 @@ Inductive Par : tm -> tm -> Prop :=
 | P_D :
   tD ⇒ tD
 
+| P_Down ℓ0 p0 p1 :
+  p0 ⇒ p1 ->
+  tDown ℓ0 p0 ⇒ tDown ℓ0 p1
+
+| P_DownRefl ℓ0 :
+  tDown ℓ0 tRefl ⇒ tRefl
 where "A ⇒ B" := (Par A B).
 #[export]Hint Constructors Par : par.
 
@@ -246,6 +252,8 @@ Proof.
     by asimpl.
     sfirstorder use:(Par_morphing_lift_n 2).
   - sfirstorder.
+  - hauto lq:on ctrs:Par.
+  - hauto lq:on ctrs:Par.
 Qed.
 
   (* - qauto db:par use:(Par_morphing_lift_n 2). *)
@@ -446,6 +454,22 @@ Proof.
     apply P_J; sfirstorder use:Par_refl.
 Qed.
 
+Lemma P_DownRefl_star ℓ0 p :
+  p ⇒* tRefl  ->
+  tDown ℓ0 p ⇒* tRefl.
+Proof.
+  move E : tRefl => v h.
+  move : E.
+  elim : p v / h.
+  - move => _ <-.
+    apply rtc_once.
+    apply P_DownRefl.
+  - move => x y z h0 h1 ih ?. subst.
+    move /(_ ltac:(done)) in ih.
+    apply : rtc_l; eauto.
+    by apply P_Down.
+Qed.
+
 Lemma P_LetPack_star t ℓ0 ℓ1 a b c :
   t ⇒* tPack ℓ0 a b ->
   tLet ℓ0 ℓ1 t c ⇒* c[b .: a ..].
@@ -504,6 +528,8 @@ Function tstar (a : tm) :=
   | tVoid => tVoid
   | tAbsurd a => tAbsurd (tstar a)
   | tD => tD
+  | tDown ℓ0 tRefl => tRefl
+  | tDown ℓ0 a => tDown ℓ0 (tstar a)
   end.
 
 Lemma Par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).
@@ -532,6 +558,8 @@ Proof.
     case : T_eqdec=>//.
     hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
   - hauto lq:on inv:Par use:Par_refl,Par_cong,Par_cong2 ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
+  - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.
   - hauto lq:on inv:Par ctrs:Par.

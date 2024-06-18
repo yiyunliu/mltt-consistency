@@ -409,7 +409,7 @@ Proof.
     by hauto lq:on ctrs:InterpExt rew:db:InterpUniv.
   have ? : (tEq ℓ0 a b A) ⇒* (tEq ℓ0 va vb vA) by auto using S_Eq.
   have : InterpUnivN Ξ i (tEq ℓ0 a b A) (fun ℓ p => IOk Ξ ℓ p /\ ((p ⇒* tRefl /\ iconv Ξ ℓ0 va vb) \/ wne p)) by eauto using InterpUnivN_back_preservation_star.
-  move /[dup] /InterpUnivN_Eq_inv. move => [?]. congruence.
+  move /[dup] /InterpUnivN_Eq_inv. congruence.
 Qed.
 
 Lemma InterpUnivN_Void_inv Ξ i P:

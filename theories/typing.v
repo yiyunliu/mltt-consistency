@@ -149,6 +149,15 @@ Inductive Wt : context -> T -> tm -> tm -> Prop :=
   (* ----------------------- *)
   Γ ⊢ tLet ℓ0 ℓp a b ; ℓ ∈ C[a ..]
 
+| T_Down Γ ℓ ℓ0 ℓ1 p a b A :
+  ℓ1 ⊆ ℓ0 ->
+  Γ ⊢ a ; ℓ1 ∈ A ->
+  Γ ⊢ b ; ℓ1 ∈ A ->
+  Γ ⊢ p ; ℓ ∈ tEq ℓ0 a b A ->
+  (* --------------------- *)
+  Γ ⊢ tDown ℓ1 p ; ℓ ∈ tEq ℓ1 a b A
+           
+
 with Wff : context -> Prop :=
 | Wff_nil :
 (* ----------------- *)

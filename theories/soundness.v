@@ -454,6 +454,27 @@ Proof.
         end.
         apply : wt_ρ_ok_morphing_iok; eauto.
         sfirstorder use:T_Let.
+  (* Down *)
+  - move => Γ ℓ ℓ0 ℓ1 p a b A ? ha iha hb ihb hp ihp Δ ρ hρ.
+    move : iha (hρ)=> /[apply]; move => [m][PA][hPA]ha'.
+    move : ihb (hρ)=> /[apply]; move => [n][PA'][hPA']hb'.
+    move : ihp (hρ)=> /[apply]; move => [q][PE][hPE]hp'.
+    do 2 eexists.
+    split => /=.
+    + apply (InterpUnivN_Eq _ 0);
+        hauto l:on use:adequacy unfold:CR.
+    + simpl.
+      split. apply IO_Down. hauto l:on use:wt_ρ_ok_morphing_iok.
+      move : hPE => /= /InterpUnivN_Eq_inv ?. subst.
+      case : hp' => [hp'][].
+      * move => + /ltac:(left).
+        move => [h0 h1].
+        split.
+        by apply P_DownRefl_star.
+        have : IOk (c2e Δ) ℓ1 a[ρ] by hauto l:on use:wt_ρ_ok_morphing_iok.
+        move : cfacts.iconv_iok_downgrade h1; repeat move/[apply].
+        scongruence.
+      * hauto lq:on use:nfacts.wne_down.
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)

@@ -15,3 +15,4 @@ tSig : T -> tm -> (tm -> tm) -> tm
 tPack : T -> tm -> tm -> tm
 tLet : T -> T -> tm -> (tm -> tm -> tm) -> tm
 tD : tm
+tDown : T -> tm -> tm

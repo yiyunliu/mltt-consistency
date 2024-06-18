@@ -72,7 +72,10 @@ Module Type geq_sig
     IOk Ξ ℓ (tLet ℓ0 ℓ1 a b)
   | IO_D :
     (*  *)
-    IOk Ξ ℓ tD.
+    IOk Ξ ℓ tD
+  | IO_Down ℓ0 p :
+    IOk Ξ ℓ p ->
+    IOk Ξ ℓ (tDown ℓ0 p).
 
   Inductive IEq (Ξ : econtext) (ℓ : T) : tm -> tm -> Prop :=
   | I_Var i ℓ0 :
@@ -136,6 +139,10 @@ Module Type geq_sig
   | I_D :
     (*  *)
     IEq Ξ ℓ tD tD
+
+  | I_Down ℓ0 p0 p1 :
+    IEq Ξ ℓ p0 p1 ->
+    IEq Ξ ℓ (tDown ℓ0 p0) (tDown ℓ0 p1)
 
   with GIEq (Ξ : econtext) (ℓ : T) : T -> tm -> tm -> Prop :=
   | GI_Dist ℓ0 A B :

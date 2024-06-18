@@ -133,6 +133,7 @@ Proof.
         scongruence.
         case : (lprop.sub_eqdec ℓ2 ℓ) => ?;
                by eauto with ieq.
+  - hauto q:on ctrs:Par, IEq inv:Par, IEq.
   - hauto l:on ctrs:Par use:Par_refl.
 Qed.
 

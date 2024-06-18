@@ -28,6 +28,7 @@ Fixpoint ne (a : tm) : bool :=
   | tVoid => false
   | tAbsurd a => ne a
   | tD => true
+  | tDown _ a => ne a
   end
 with nf (a : tm) : bool :=
   match a with
@@ -49,6 +50,7 @@ with nf (a : tm) : bool :=
   | tVoid => true
   | tAbsurd a => ne a
   | tD => true
+  | tDown _ a => ne a
   end.
 
 (* Terms that are weakly normalizing to a neutral or normal form. *)
@@ -228,6 +230,14 @@ Proof.
     exists (c2[b2 .: a2 ..]).
     split; [by auto with par | by asimpl].
   - hauto q:on inv:tm ctrs:Par.
+  - move => ℓ0 p0 p1 h ih []//.
+    hauto q:on use:ren_with_d_imp.
+    hauto q:on ctrs:Par.
+  - move => + []//=.
+    hauto q:on use:ren_with_d_imp.
+    move => ℓ0 ℓ1 t0 ξ [*]. subst.
+    have ? : t0 = tRefl by hauto q:on inv:tm use:ren_with_d_imp. subst.
+    hauto l:on.
 Qed.
 
 Local Lemma Pars_antirenaming (a b0 : tm) ξ
@@ -313,6 +323,15 @@ Proof.
   elim : a0 a1 /h; last by solve_s_rec.
   move => + b0 b1 h.
   elim : b0 b1 /h; last by solve_s_rec.
+  auto using rtc_refl.
+Qed.
+
+Lemma S_Down ℓ0 a b :
+  a ⇒* b ->
+  tDown ℓ0 a ⇒* tDown ℓ0 b.
+Proof.
+  move => h.
+  elim : a b / h; last by solve_s_rec.
   auto using rtc_refl.
 Qed.
 
@@ -437,6 +456,14 @@ Proof.
   move => [a0 [? ?]] [b0 [? ?]].
   exists (tLet ℓ0 ℓ1 a0 b0).
   hauto b:on use:S_Let.
+Qed.
+
+Lemma wne_down ℓ0 (a : tm) :
+  wne a -> wne (tDown ℓ0 a).
+Proof.
+  move => [a0 [? ?]].
+  exists (tDown ℓ0 a0).
+  sfirstorder b:on use:S_Down.
 Qed.
 
 Lemma wn_abs ℓ0 (a : tm) (h : wn a) : wn (tAbs ℓ0 a).
