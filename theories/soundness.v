@@ -456,22 +456,12 @@ Proof.
   - eauto using SemWff_cons.
 Qed.
 
-(* Lemma InterpExt_renaming Ξ i I A PA *)
-(*   (h : InterpExt Ξ i I A PA  ) : *)
-(*   forall Δ ξ, iok_ren_ok ξ Ξ Δ -> *)
-(*            exists PA', InterpExt Δ i I A⟨ξ⟩ PA'. *)
-(* Proof. *)
-(*   elim : A PA / h. *)
-(*   - hauto lq:on use:InterpExt_Ne, nfacts.ne_nf_renaming. *)
-(*   - move => ℓ0 A B PA PF hPA hTot hRes hPF ihPF Δ ξ hξ. *)
-(*     move : hTot (hξ) (hPA); repeat move/[apply]. *)
-(*     move => [PA']hPA'. *)
-(*     eexists => /=. *)
-(*     apply InterpExt_Fun_nopf with (PA := PA')=>//. *)
-(*     move => a ha. *)
-(*     move /ihPF : (). *)
+Lemma comp_const (ξ0 : fin -> fin) (a : tm) : ξ0 >> (const a) = const a.
+Proof.
+  fext => x. asimpl => //=.
+Qed.
 
-Lemma ρ_ok_id Γ : ⊢ Γ -> ρ_ok Γ Γ var_tm.
+Lemma ρ_ok_id Γ : ⊢ Γ -> ρ_ok Γ nil (const tD).
 Proof.
   move => h.
   have {}h : SemWff Γ by firstorder using soundness.
@@ -482,17 +472,10 @@ Proof.
     move => i0 ℓ1 A0.
     elim/lookup_inv => _.
     + move => ℓ2 A1 Γ0 ? [*]. subst.
-      (* move : (hA) (ihΓ) => /[apply]. *)
-      (* simpl. asimpl. *)
-      (* move => [m][PA][hPA]hA'. *)
-      have : SemWt ((ℓ, A)::Γ)ℓ A⟨S⟩ (tUniv i)⟨S⟩.
-      apply : weakening_Sem; eauto.
-      rewrite SemWt_Univ.
-      move /(_ ((ℓ, A) :: Γ) var_tm).
-      asimpl.
-      case.
-      rewrite /ρ_ok.
-      simpl.
+      move : (hA) (ihΓ) => /[apply].
+      simpl. asimpl.
+      move => [m][PA][hPA]hA'.
+      exists m,PA. rewrite comp_const.
 
       suff : exists PA, InterpUnivN (ℓ1 :: c2e Γ) m A⟨S⟩ PA.
       move => [PA0]hPA0.
