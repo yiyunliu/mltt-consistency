@@ -19,18 +19,21 @@ Import lfacts.
 Module tcfacts := typing_conv_facts lattice syntax par ieq conv typing.
 Import tcfacts.
 
+Module solver := Solver lattice.
+Import solver.
+
 (* Semantic substitution well-formedness *)
 (* Try use the existential version of ρ_ok and then derive the universal version of ρ_ok as a lemma *)
-Definition ρ_ok Γ Δ ρ := forall i ℓ A, lookup i Γ ℓ A -> exists m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA /\ PA ℓ (ρ i).
+Definition ρ_ok Γ Δ ρ := forall i ℓ A, lookup i Γ ℓ A -> IOk (c2e Δ) ℓ (ρ i) /\ forall m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA -> PA ℓ (ρ i).
 
-Lemma ρ_ok_forall Γ Δ ρ :
-  ρ_ok Γ Δ ρ -> forall i ℓ A, lookup i Γ ℓ A -> forall m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA -> PA ℓ (ρ i).
-Proof.
-  rewrite /ρ_ok => hρ.
-  move => i ℓ A + m PA hPA.
-  move /hρ => [m0][PA0][h0]h1.
-  by have -> : PA = PA0 by eauto using InterpUnivN_deterministic'.
-Qed.
+(* Lemma ρ_ok_forall Γ Δ ρ : *)
+(*   ρ_ok Γ Δ ρ -> forall i ℓ A, lookup i Γ ℓ A -> IOk Δ ℓ (ρ i) /\ forall m PA, ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA -> PA ℓ (ρ i). *)
+(* Proof. *)
+(*   rewrite /ρ_ok => hρ. *)
+(*   move => i ℓ A + m PA hPA. *)
+(*   move /hρ => [m0][PA0][h0]h1. *)
+(*   by have -> : PA = PA0 by eauto using InterpUnivN_deterministic'. *)
+(* Qed. *)
 
 (* Semantic typing, written Γ ⊨ a : A in the paper *)
 Definition SemWt Γ ℓ a A := forall Δ ρ, ρ_ok Γ Δ ρ -> exists m PA, ( ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA)  /\ PA ℓ (a [ρ]).
@@ -67,12 +70,13 @@ Proof.
   rewrite /ρ_ok. move => i0 ℓ A0.
   elim /lookup_inv=>//=.
   - move => _ ℓ1 A1 Γ0 ? [*]. subst.
-    exists i, PA.
+    split.
+    + sfirstorder use:InterpUniv_Ok.
+    + move => m PA0. asimpl.
+      move /InterpUnivN_deterministic' : h0 => /[apply]. congruence.
+  - move => ? n A1 Γ0 ℓ1 [ℓ2 B] hl ? [? ?]? ? ?. subst.
     asimpl.
-    tauto.
-  - move => ? n A1 Γ0 ℓ1 [ℓ2 B] ? ? [*]. subst.
-    asimpl.
-    sfirstorder.
+    hauto l:on.
 Qed.
 
 (* Well-formed substitutions are stable under renaming *)
@@ -168,7 +172,7 @@ Proof.
     move /ih : (hρ) => {ih} [? [PA h1]].
     exists j, PA. split=>//.
     asimpl.
-    move /ρ_ok_forall : hρ l (h1) => /[apply]/[apply].
+    move : hρ (l) (h1). move/[apply].
     hauto lq:on use:InterpUnivN_subsumption.
   (* Pi *)
   - move => Γ i j ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
@@ -456,59 +460,34 @@ Proof.
   - eauto using SemWff_cons.
 Qed.
 
-Lemma comp_const (ξ0 : fin -> fin) (a : tm) : ξ0 >> (const a) = const a.
+Lemma ρ_ok_id Γ : ρ_ok Γ Γ var_tm.
 Proof.
-  fext => x. asimpl => //=.
+  rewrite /ρ_ok.
+  move => i ℓ A.
+  elim/lookup_inv => _.
+  - move => ℓ2 A1 Γ0 *. subst.
+      split.
+      hauto lq:on use:IO_Var solve+:solve_lattice.
+      move => m PA. simpl. asimpl => h.
+      eapply adequacy in h.
+      apply h.
+      hauto lq:on use:rtc_refl.
+      hauto lq:on use:IO_Var solve+:solve_lattice.
+  - move => n A0 Γ0 ℓ0 B h *. subst.
+    split => //.
+    hauto lq:on use:IO_Var, lookup_elookup solve+:solve_lattice.
+    move => m PA /=.
+    asimpl.
+    move/lookup_elookup in h.
+    hauto lq:on rew:off use:adequacy, IO_Var solve+:solve_lattice.
 Qed.
-
-Lemma ρ_ok_id Γ : ⊢ Γ -> ρ_ok Γ nil (const tD).
-Proof.
-  move => h.
-  have {}h : SemWff Γ by firstorder using soundness.
-  elim : Γ / h.
-  - inversion 1.
-  - move => Γ ℓ0 ℓ A i hΓ ihΓ hA.
-    rewrite /ρ_ok.
-    move => i0 ℓ1 A0.
-    elim/lookup_inv => _.
-    + move => ℓ2 A1 Γ0 ? [*]. subst.
-      move : (hA) (ihΓ) => /[apply].
-      simpl. asimpl.
-      move => [m][PA][hPA]hA'.
-      exists m,PA. rewrite comp_const.
-
-      suff : exists PA, InterpUnivN (ℓ1 :: c2e Γ) m A⟨S⟩ PA.
-      move => [PA0]hPA0.
-      exists m, PA0.
-      split => //.
-      eapply adequacy in hPA0.
-      eapply hPA0.
-      hauto lq:on ctrs:rtc.
-      apply : IO_Var.
-      sfirstorder unfold:elookup.
-      by rewrite meet_idempotent.
-      split; last by best use:adequacy.
-      apply :
-    best use:
-
 
 Lemma mltt_normalizing Γ a ℓ A : Γ ⊢ a ; ℓ ∈ A -> wn a /\ wn A.
 Proof.
-  move /(proj1 soundness) /(_ Γ var_tm).
-  elim.
-  - asimpl.
-    hauto l:on use:adequacy unfold:CR.
-  - rewrite /ρ_ok=>i ? m PA. asimpl.
-    hauto q:on ctrs:rtc use:adequacy.
+  move /(proj1 soundness) /(_ Γ var_tm ltac:(hauto lq:on use:ρ_ok_id)).
+  asimpl.
+  hauto l:on use:adequacy unfold:CR.
 Qed.
-
-
-Lemma consistency ℓ a : ~ nil ⊢ a ; ℓ ∈ tVoid.
-  move /(proj1 soundness).
-  have := (ρ_ok_nil var_tm) => /[swap]/[apply].
-  sfirstorder use:InterpUnivN_Void_inv.
-Qed.
-
 
 (* (* Need to prove something about scoping before we can recover consistency *) *)
 (* Inductive stm (n : nat) : tm -> Prop := *)
