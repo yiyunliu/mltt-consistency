@@ -734,13 +734,17 @@ Proof. hauto q:on use:InterpExt_IEq rew:db:InterpUniv. Qed.
 
 (* ---------------------------------------------------------- *)
 
-Lemma InterpUnivN_Conv Ξ i A B PA PB (h : ⟦ Ξ ⊨ B ⟧ i ↘ PA) :
+Lemma InterpUnivN_Conv Ξ i j A B PA PB (h : ⟦ Ξ ⊨ B ⟧ i ↘ PA) :
   conv Ξ A B ->
-  ⟦ Ξ ⊨ A ⟧ i ↘ PB -> PA = PB.
+  ⟦ Ξ ⊨ A ⟧ j ↘ PB -> PA = PB.
 Proof.
   rewrite /conv. move => [ℓ][c0][c1][h0][h1]h2 h3.
   have ? : ⟦ Ξ ⊨ c1 ⟧ i ↘ PA by eauto using InterpUnivN_preservation_star.
-  have ? : ⟦ Ξ ⊨ c0 ⟧ i ↘ PB by eauto using InterpUnivN_preservation_star.
+  have ? : ⟦ Ξ ⊨ c0 ⟧ j ↘ PB by eauto using InterpUnivN_preservation_star.
+  have : ⟦ Ξ ⊨ c1 ⟧ (max i j) ↘ PA by
+    hauto q:on use:InterpUnivN_cumulative solve+:lia.
+  have : ⟦ Ξ ⊨ c0 ⟧ (max i j) ↘ PB by
+    hauto q:on use:InterpUnivN_cumulative solve+:lia.
   hauto lq:on use:InterpUnivN_IEq.
 Qed.
 

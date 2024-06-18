@@ -394,7 +394,7 @@ Qed.
 (* We can construct proofs that terms are weakly neutral
    and weakly normal compositionally. *)
 
-Lemma wne_j (t a b p : tm) :
+Lemma wne_j (t p : tm) :
   wn t -> wne p -> wne (tJ t p).
 Proof.
   move => [t0 [? ?]] [p0 [? ?]].

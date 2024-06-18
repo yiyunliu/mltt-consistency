@@ -147,51 +147,6 @@ Theorem soundness :
   (forall Γ, Wff Γ -> SemWff Γ).
 Proof.
   apply wt_mutual.
-  11: {
-    move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ? ?.
-    move => _ha ha _hb hb hA ihA _hp hp hC /SemWt_Univ ihC _t ht.
-    move => Δ ρ hρ.
-    move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
-    move  /InterpUnivN_Eq_inv : hPA hp ->.  move => [?].
-
-    have : ρ_ok  ((ℓp, tEq ℓ0 a ⟨S⟩ (var_tm 0) A ⟨S⟩) :: (ℓ1, A) :: Γ) Δ (p[ρ] .: (b[ρ] .: ρ)).
-    {
-      apply : ρ_ok_cons => //=.
-      apply (InterpUnivN_Eq _ 0).
-      asimpl. best use:
-    }
-
-    case.
-    + move =>[?]hab{PA}.
-       move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
-       exists k, PA.
-       split.
-      * move : hPA. asimpl.
-        move /InterpUnivN_Conv.
-        move /(_ C[p[ρ] .: (b[ρ] .: ρ)] PA).
-
-apply.
-        rewrite /conv.
-        move /typing_iok in hC.
-        exists ℓ0.
-        rewrite /iconv in hab *.
-        move : hab => [a'][b']hab.
-        exists C[tRefl .: (b' .: ρ)], C[tRefl .: (a' .: ρ)].
-        repeat split.
-      * apply : Pars_morphing_star; auto using rtc_refl.
-        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
-      * apply : Pars_morphing_star; auto using rtc_refl.
-        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
-      * simpl in hC.
-        move /cfacts.ifacts.iok_ieq  : hC => /[dup] hC.
-        move  /(_ ℓ0 ltac:(by rewrite meet_idempotent)) /(proj1 (cfacts.ifacts.ieq_morphing_mutual _ _)).
-        apply.
-        rewrite /cfacts.ifacts.ieq_good_morphing.
-        rewrite /elookup.
-        case => //=.
-
-}
-
   (* Var *)
   - move => Γ ℓ0 ℓ i A h ih l hℓ Ξ ρ hρ.
     rewrite /SemWff in ih.
@@ -503,54 +458,82 @@ apply.
     + eexists => //=. apply InterpUnivN_Eq.
   (* J *)
   - move => Γ t a b p A i j C ℓ ℓp ℓA ℓ0 ℓ1 ? ?.
-    move => _ha ha _hb hb hA ihA _hp hp hC ihC _t ht.
+    move => _ha ha _hb hb hA ihA _hp hp hC /SemWt_Univ ihC _t ht.
+    have hJ : exists A, Γ ⊢ tJ t p; ℓ ∈ A by hauto l:on use:T_J.
     move => Δ ρ hρ.
     move : hp (hρ); move/[apply] => /=. intros (m & PA & hPA & hp).
-    move  /InterpUnivN_Eq_inv : hPA hp => ->[?][?]hab{PA}.
-    move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
-    exists k, PA.
-    split.
-    + move : hPA. asimpl.
-      move /InterpUnivN_Conv. apply.
-      rewrite /conv.
-      move /typing_iok in hC.
-      exists ℓ0.
-      rewrite /iconv in hab *.
-      move : hab => [a'][b']hab.
-      exists C[tRefl .: (b' .: ρ)], C[tRefl .: (a' .: ρ)].
-      repeat split.
-      * apply : Pars_morphing_star; auto using rtc_refl.
-        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
-      * apply : Pars_morphing_star; auto using rtc_refl.
-        apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
-      * simpl in hC.
-        move /cfacts.ifacts.iok_ieq  : hC => /[dup] hC.
-        move  /(_ ℓ0 ltac:(by rewrite meet_idempotent)) /(proj1 (cfacts.ifacts.ieq_morphing_mutual _ _)).
-        apply.
-        rewrite /cfacts.ifacts.ieq_good_morphing.
-        rewrite /elookup.
-        case => //=.
-        ** move => ℓ2 [*]. subst.
-           apply cfacts.ifacts.ieq_gieq.
-           hauto lq:on ctrs:IEq.
-        ** case => ℓ2 //=.
-           *** move => [?]. subst.
-               case : (sub_eqdec ℓ2 ℓ0).
-               move => ?.
-               apply GI_Dist=>//.
-               apply cfacts.ifacts.ieq_sym_mutual. tauto.
-               move => ?. apply GI_InDist=>//.
-           *** suff : iok_subst_ok ρ (c2e Γ) (c2e Δ).
-               rewrite /iok_subst_ok.
-               rewrite /elookup.
-               sauto lq:on rew:off use:cfacts.ifacts.iok_gieq.
-               hauto l:on use:ρ_ok_iok.
-    + asimpl.
-      eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto.
+    move  /InterpUnivN_Eq_inv : (hPA) (hp) ->.  move => [?].
+    have hρ' : ρ_ok  ((ℓp, tEq ℓ0 a ⟨S⟩ (var_tm 0) A ⟨S⟩) :: (ℓ1, A) :: Γ) Δ (p[ρ] .: (b[ρ] .: ρ)).
+    {
+      apply : ρ_ok_cons => //=.
+      asimpl.
+      by apply hPA.
+      by eauto.
+      move : hb (hρ) => /[apply].
+      move => [m0][PA0][hb0]hb1.
+      apply : ρ_ok_cons => //=.
+      apply hb0.
+      done.
+    }
+    move /ihC : (hρ').
+    move => [hCp][PC]hPC.
+    case.
+    + move => [?]hab{hp}{hPA}{PA}.
+       move : ht (hρ); move/[apply]. intros (k & PA & hPA & ht).
+       exists i, PA.
+       split.
+      * move : hPA. asimpl => /[dup] hPA.
+        have : iconv (c2e Δ) ℓ0 C[p[ρ] .: (b[ρ] .: ρ)] C[tRefl .: (a[ρ] .: ρ)].
+        rewrite /iconv.
+        move : hab => [a'][b']hab.
+        exists C[tRefl .: (b' .: ρ)], C[tRefl .: (a' .: ρ)].
+        repeat split.
+        ** apply : Pars_morphing_star; auto using rtc_refl.
+           apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
+        ** apply : Pars_morphing_star; auto using rtc_refl.
+           apply good_Pars_morphing_ext2; hauto lq:on ctrs:rtc.
+        ** move /typing_iok : hC.
+           simpl.
+           move /cfacts.ifacts.iok_ieq => /[dup] hC.
+           move  /(_ ℓ0 ltac:(by rewrite meet_idempotent)) /(proj1 (cfacts.ifacts.ieq_morphing_mutual _ _)).
+           apply.
+           rewrite /cfacts.ifacts.ieq_good_morphing.
+           rewrite /elookup.
+           case => //=.
+           *** move => ℓ2 [*]. subst.
+               apply cfacts.ifacts.ieq_gieq.
+               hauto lq:on ctrs:IEq.
+           *** case => ℓ2 //=.
+               **** move => [?]. subst.
+                    case : (sub_eqdec ℓ2 ℓ0).
+                    move => ?.
+                    apply GI_Dist=>//.
+                    apply cfacts.ifacts.ieq_sym_mutual. tauto.
+                    move => ?. apply GI_InDist=>//.
+               **** suff : iok_subst_ok ρ (c2e Γ) (c2e Δ).
+                    rewrite /iok_subst_ok.
+                    rewrite /elookup.
+                    sauto lq:on rew:off use:cfacts.ifacts.iok_gieq.
+                    hauto l:on use:ρ_ok_iok.
+        ** move /cfacts.iconv_conv.
+           move /cfacts.conv_sym.
+           move : InterpUnivN_Conv (hPC); repeat move/[apply].
+           by move => <-.
+      * eapply InterpUnivN_back_clos_star with (b := subst_tm ρ t); eauto. simpl.
       apply : IO_J; eauto.
       move /typing_iok : _t.
       hauto lq:on use:ρ_ok_iok, cfacts.ifacts.iok_morphing.
       sfirstorder use: P_JRefl_star.
+    + move => h.
+      do 2 eexists.
+      split.
+      asimpl. apply hPC.
+      suff : wne (tJ t[ρ] p[ρ]) /\ IOk (c2e Δ) ℓ (tJ t p)[ρ] by hauto q:on use:adequacy.
+      split.
+      apply nfacts.wne_j => //.
+      move /ht : (hρ).
+      hauto q:on use:adequacy.
+      hauto l:on use:wt_ρ_ok_morphing_iok.
   (* Sig *)
   - move => Γ i j ℓ ℓ0 A B ? /SemWt_Univ h0 ? /SemWt_Univ h1.
     apply SemWt_Univ.

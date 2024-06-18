@@ -354,5 +354,8 @@ Lemma conv_renaming : forall Ξ a b,
                    conv Δ (ren_tm ξ a) (ren_tm ξ b).
 Proof. hauto lq:on use:iconv_renaming unfold:conv. Qed.
 
+Lemma iconv_conv Ξ ℓ a b : iconv Ξ ℓ a b -> conv Ξ a b.
+Proof. sfirstorder unfold:conv. Qed.
+
 
 End conv_facts.
