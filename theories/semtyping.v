@@ -194,13 +194,20 @@ Qed.
 
 (* -----  I-PiAlt is admissible (free of PF, the relation R on paper)  ---- *)
 
+Lemma InterpExt_Fun_nopf Ξ i I ℓ0 A B PA :
+  ⟦ Ξ ⊨ A ⟧ i ;I ↘ PA ->
+  (forall a, PA ℓ0 a -> exists PB, ⟦ Ξ ⊨ B[a..] ⟧ i ; I ↘ PB) ->
+  ⟦ Ξ ⊨ tPi ℓ0 A B ⟧ i ; I ↘ (ProdSpace Ξ ℓ0 PA (fun a PB => ⟦ Ξ ⊨ B[a..] ⟧ i ; I ↘ PB)).
+Proof.
+  hauto l:on ctrs:InterpExt.
+Qed.
 
 Lemma InterpUnivN_Fun_nopf Ξ i ℓ0 A B PA :
   ⟦ Ξ ⊨ A ⟧ i ↘ PA ->
   (forall a, PA ℓ0 a -> exists PB, ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB) ->
   ⟦ Ξ ⊨ tPi ℓ0 A B ⟧ i ↘ (ProdSpace Ξ ℓ0 PA (fun a PB => ⟦ Ξ ⊨ B[a..] ⟧ i ↘ PB)).
 Proof.
-  hauto l:on ctrs:InterpExt rew:db:InterpUniv.
+  hauto l:on use:InterpExt_Fun_nopf rew:db:InterpUniv.
 Qed.
 
 Lemma InterpUnivN_Sig_nopf Ξ i ℓ0 A B PA :

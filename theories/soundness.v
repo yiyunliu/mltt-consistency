@@ -36,7 +36,15 @@ Qed.
 Definition SemWt Γ ℓ a A := forall Δ ρ, ρ_ok Γ Δ ρ -> exists m PA, ( ⟦ c2e Δ ⊨ A [ρ] ⟧ m ↘ PA)  /\ PA ℓ (a [ρ]).
 
 (* Semantic context wellformedness *)
-Definition SemWff Γ := forall i ℓ A, lookup i Γ ℓ A -> exists ℓ0 j, SemWt Γ ℓ0 A (tUniv j).
+Inductive SemWff : context -> Prop :=
+| SemWff_nil :
+(* ----------------- *)
+  SemWff nil
+| SemWff_cons Γ ℓ0 ℓ A i :
+  SemWff Γ ->
+  SemWt Γ ℓ A (tUniv i) ->
+(* ----------------- *)
+  SemWff ((ℓ0, A) :: Γ).
 
 (* TODO: Fix the order of the arguments of iok_subst_ok *)
 Lemma ρ_ok_iok Γ Δ ρ (h : ρ_ok Γ Δ ρ) :
@@ -119,21 +127,26 @@ Proof.
     + hauto lq:on.
 Qed.
 
-(* Structural laws for Semantic context wellformedness *)
-Lemma SemWff_nil : SemWff nil. inversion 1. Qed.
-
-Lemma SemWff_cons Γ ℓ ℓ0 A i :
-    SemWff Γ ->
-    SemWt Γ ℓ A (tUniv i) ->
-    (* -------------- *)
-    SemWff ((ℓ0, A) :: Γ).
+Lemma SemWff_lookup Γ (h : SemWff Γ) : forall i ℓ A, lookup i Γ ℓ A -> exists ℓ0 j, SemWt Γ ℓ0 A (tUniv j).
 Proof.
-  move => h h0.
-  move => k ℓ1 h1. elim/lookup_inv.
-  - hauto q:on use:weakening_Sem.
-  - move => _ n A0 Γ0 ℓ2 B + ? []*. subst. move /h => [ℓ2 [j ?]].
-    exists ℓ2, j. change (tUniv j) with (tUniv j) ⟨S⟩.
-    eauto using weakening_Sem.
+  elim : Γ / h.
+  - inversion 1.
+  - move => Γ ℓ0 ℓ A i hΓ ihΓ hA i0 ℓ1 A0.
+    elim/lookup_inv=>_.
+    + move => ℓ2 A1 Γ0 ? [*]. subst.
+      exists ℓ, i.
+      change (tUniv i) with (tUniv i)⟨S⟩.
+      apply : renaming_SemWt; eauto.
+      rewrite /lookup_good_renaming.
+      hauto l:on.
+    + move => n A1 Γ0 ℓ2 B + ? [*]. subst.
+      move /ihΓ.
+      move => [ℓ2][j]h.
+      exists ℓ2, j.
+      change (tUniv j) with (tUniv j)⟨S⟩.
+      apply : renaming_SemWt; eauto.
+      rewrite /lookup_good_renaming.
+      hauto l:on.
 Qed.
 
 Lemma wt_ρ_ok_morphing_iok Γ Δ ρ ℓ a A (h : Γ ⊢ a ; ℓ ∈ A) (h0 : ρ_ok Γ Δ ρ) : IOk (c2e Δ) ℓ a[ρ].
@@ -148,7 +161,7 @@ Theorem soundness :
 Proof.
   apply wt_mutual.
   (* Var *)
-  - move => Γ ℓ0 ℓ i A h ih l hℓ Ξ ρ hρ.
+  - move => Γ ℓ0 ℓ i A h /SemWff_lookup ih l hℓ Ξ ρ hρ.
     rewrite /SemWff in ih.
     move /ih : (l) {ih} => [ℓ1 [j ih]].
     rewrite SemWt_Univ in ih.
@@ -369,7 +382,7 @@ Proof.
     move /InterpUnivN_Sig_inv_nopf : hS => [PA0][hPA0][hPB0]?. subst.
     rewrite /SumSpace.
     split => //.
-    qauto l:on use:InterpUniv_Ok, IO_Pack.
+    qauto l:on use:InterpUniv_Ok, IO_Pack. left.
     do 2 eexists. split; first by apply rtc_refl.
     have ? : PA = PA0 by eauto using InterpUnivN_deterministic'. subst.
     split => // PB0. asimpl.
@@ -383,7 +396,8 @@ Proof.
     move /ht : (hρ) {ht} => [m][PA][/= /[dup] hSig /InterpUnivN_Sig_inv_nopf].
     move => [PA0][h0][h1]?. subst.
     rewrite /SumSpace.
-    case => ?.
+    move => [?].
+    case.
     + move => [a0][b0][h2][h3]h4.
       have : ρ_ok ((ℓp , tSig ℓ0 A B) :: Γ) Δ ((tPack ℓ0 a0 b0) .: ρ).
       {
@@ -409,30 +423,102 @@ Proof.
         have : ρ_ok ((ℓp, B) :: (ℓ0, A) :: Γ) Δ (b0 .: (a0 .: ρ)) by eauto using ρ_ok_cons.
         move /hb => [m0][PA]. asimpl. move => [hPA] hPA0.
         by have <- : PA = S by eauto using InterpUnivN_deterministic'.
-    (* + move => h. *)
-    (*   have /hC : ρ_ok (tSig A B :: Γ) (t[ρ] .: ρ) by *)
-    (*     apply : ρ_ok_cons; hauto lq:on use:adequacy. *)
-    (*   move => [S hS]. *)
-    (*   exists i, S. asimpl; split => //. *)
-    (*   set a := (X in S X). *)
-    (*   suff : wne a by hauto q:on use:adequacy. *)
-    (*   subst a. *)
-    (*   apply wne_let=>//. *)
-    (*   have hz : wne (var_tm 0) by hauto lq:on ctrs:rtc. *)
-    (*   have hz' : PA0 (var_tm 0) by move : h0 hz; clear; hauto lq:on use:adequacy unfold:CR. *)
-    (*   apply wn_antirenaming with (ξ := var_zero .: (var_zero .: id)). *)
-    (*   asimpl. *)
-    (*   have hρ' : ρ_ok (A :: Γ) (var_tm 0 .: ρ) by eauto using ρ_ok_cons. *)
-    (*   move /h1 : hz' => [PB /ltac:(asimpl) hPB]. *)
-    (*   have hz'' : PB (var_tm 0) by move : hPB hz; clear; hauto lq:on use:adequacy unfold:CR. *)
-    (*   have : ρ_ok (B :: A :: Γ) (var_tm 0 .: (var_tm 0 .: ρ)) by eauto using ρ_ok_cons. *)
-    (*   move /hb. clear. *)
-    (*   hauto l:on use:adequacy unfold:CR. *)
+    + move => h.
+      have /hC : ρ_ok ((ℓp, tSig ℓ0 A B) :: Γ) Δ (t[ρ] .: ρ) by
+        apply : ρ_ok_cons; hauto lq:on use:adequacy.
+      move => [? [S hS]].
+      exists i, S. asimpl; split => //.
+      set a := (X in S ℓ X).
+      suff : wne a /\ IOk (c2e Δ) ℓ a by hauto q:on use:adequacy.
+      subst a.
+      split.
+      * apply nfacts.wne_let=>//.
+        have hz : wne tD by hauto lq:on ctrs:rtc.
+        have hz' : PA0 ℓ0 tD by move : h0 hz; clear; hauto lq:on ctrs:IOk use:adequacy unfold:CR.
+        apply nfacts.wn_antirenaming with (ξ := tD .: (tD ..)).
+        by do 2 case => //=.
+        asimpl.
+        have hρ' : ρ_ok ((ℓ0, A) :: Γ) Δ (tD .: ρ) by eauto using ρ_ok_cons.
+        move /h1 : hz' => [PB /ltac:(asimpl) hPB].
+        have hz'' : PB ℓp tD by move : hPB hz; clear; hauto lq:on use:adequacy unfold:CR.
+        have : ρ_ok ((ℓp, B) :: (ℓ0, A) :: Γ) Δ (tD .: (tD .: ρ)) by eauto using ρ_ok_cons.
+        move /hb. clear.
+        hauto l:on use:adequacy unfold:CR.
+      * lazymatch goal with
+        | [|- context[IOk _ _ ?a]] =>
+            have -> : a = (tLet ℓ0 ℓp t b)[ρ] by asimpl
+        end.
+        apply : wt_ρ_ok_morphing_iok; eauto.
+        sfirstorder use:T_Let.
   (* Nil *)
   - apply SemWff_nil.
   (* Cons *)
   - eauto using SemWff_cons.
 Qed.
+
+(* Lemma InterpExt_renaming Ξ i I A PA *)
+(*   (h : InterpExt Ξ i I A PA  ) : *)
+(*   forall Δ ξ, iok_ren_ok ξ Ξ Δ -> *)
+(*            exists PA', InterpExt Δ i I A⟨ξ⟩ PA'. *)
+(* Proof. *)
+(*   elim : A PA / h. *)
+(*   - hauto lq:on use:InterpExt_Ne, nfacts.ne_nf_renaming. *)
+(*   - move => ℓ0 A B PA PF hPA hTot hRes hPF ihPF Δ ξ hξ. *)
+(*     move : hTot (hξ) (hPA); repeat move/[apply]. *)
+(*     move => [PA']hPA'. *)
+(*     eexists => /=. *)
+(*     apply InterpExt_Fun_nopf with (PA := PA')=>//. *)
+(*     move => a ha. *)
+(*     move /ihPF : (). *)
+
+Lemma ρ_ok_id Γ : ⊢ Γ -> ρ_ok Γ Γ var_tm.
+Proof.
+  move => h.
+  have {}h : SemWff Γ by firstorder using soundness.
+  elim : Γ / h.
+  - inversion 1.
+  - move => Γ ℓ0 ℓ A i hΓ ihΓ hA.
+    rewrite /ρ_ok.
+    move => i0 ℓ1 A0.
+    elim/lookup_inv => _.
+    + move => ℓ2 A1 Γ0 ? [*]. subst.
+      (* move : (hA) (ihΓ) => /[apply]. *)
+      (* simpl. asimpl. *)
+      (* move => [m][PA][hPA]hA'. *)
+      have : SemWt ((ℓ, A)::Γ)ℓ A⟨S⟩ (tUniv i)⟨S⟩.
+      apply : weakening_Sem; eauto.
+      rewrite SemWt_Univ.
+      move /(_ ((ℓ, A) :: Γ) var_tm).
+      asimpl.
+      case.
+      rewrite /ρ_ok.
+      simpl.
+
+      suff : exists PA, InterpUnivN (ℓ1 :: c2e Γ) m A⟨S⟩ PA.
+      move => [PA0]hPA0.
+      exists m, PA0.
+      split => //.
+      eapply adequacy in hPA0.
+      eapply hPA0.
+      hauto lq:on ctrs:rtc.
+      apply : IO_Var.
+      sfirstorder unfold:elookup.
+      by rewrite meet_idempotent.
+      split; last by best use:adequacy.
+      apply :
+    best use:
+
+
+Lemma mltt_normalizing Γ a ℓ A : Γ ⊢ a ; ℓ ∈ A -> wn a /\ wn A.
+Proof.
+  move /(proj1 soundness) /(_ Γ var_tm).
+  elim.
+  - asimpl.
+    hauto l:on use:adequacy unfold:CR.
+  - rewrite /ρ_ok=>i ? m PA. asimpl.
+    hauto q:on ctrs:rtc use:adequacy.
+Qed.
+
 
 Lemma consistency ℓ a : ~ nil ⊢ a ; ℓ ∈ tVoid.
   move /(proj1 soundness).
@@ -440,15 +526,6 @@ Lemma consistency ℓ a : ~ nil ⊢ a ; ℓ ∈ tVoid.
   sfirstorder use:InterpUnivN_Void_inv.
 Qed.
 
-(* Lemma mltt_normalizing Γ a A : Γ ⊢ a ∈ A -> wn a /\ wn A. *)
-(* Proof. *)
-(*   move /(proj1 soundness) /(_ var_tm). *)
-(*   elim. *)
-(*   - asimpl. *)
-(*     hauto l:on use:adequacy, InterpUniv_wn_ty unfold:CR. *)
-(*   - rewrite /ρ_ok=>i ? m PA. asimpl. *)
-(*     hauto q:on ctrs:rtc use:adequacy. *)
-(* Qed. *)
 
 (* (* Need to prove something about scoping before we can recover consistency *) *)
 (* Inductive stm (n : nat) : tm -> Prop := *)
