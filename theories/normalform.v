@@ -351,6 +351,11 @@ Lemma S_Abs ℓ0 (a b : tm)
   (tAbs ℓ0 a) ⇒* (tAbs ℓ0 b).
 Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
 
+Lemma S_Absurd (a b : tm)
+  (h : a ⇒* b) :
+  (tAbsurd a) ⇒* (tAbsurd b).
+Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
+
 Lemma S_Eq ℓ0 a0 a1 b0 b1 A0 A1 :
   a0 ⇒* a1 ->
   b0 ⇒* b1 ->
@@ -393,6 +398,14 @@ Qed.
 
 (* We can construct proofs that terms are weakly neutral
    and weakly normal compositionally. *)
+
+Lemma wne_absurd a :
+  wne a -> wne (tAbsurd a).
+Proof.
+  move => [a0 [? ?]].
+  exists (tAbsurd a0).
+  sfirstorder use:S_Absurd.
+Qed.
 
 Lemma wne_j (t p : tm) :
   wn t -> wne p -> wne (tJ t p).
