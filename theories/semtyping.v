@@ -713,11 +713,11 @@ Proof.
   - hauto lq:on inv:IEq ctrs:InterpExt use:InterpExt_Univ_inv.
   - hauto lq:on inv:IEq ctrs:InterpExt use:InterpExt_Void_inv.
   - move => ℓ0 a b A ? ? ? ℓ B PB.
-    elim /IEq_inv=>//= _ ? ? a0 ? b0 ? A0 ? ha hb hA [? ? ? ?] ?. subst.
+    elim /IEq_inv=>//= _ ? ? a0 ? b0 ? A0 ? ha hb [? ? ? ?] ?. subst.
     move /InterpExt_Eq_inv => ?. subst.
     fext => ℓ1 p. f_equal. apply propositional_extensionality.
     suff : iconv Ξ ℓ0 a b <-> iconv Ξ ℓ0 a0 b0 by tauto.
-    apply ieq_iconv in ha, hb, hA.
+    apply ieq_iconv in ha, hb.
     hauto lq:on rew:off use:iconv_trans_heterogeneous_leq, iconv_trans_heterogeneous_leq', iconv_sym.
   - move => ℓ0 A B PA PF hPA ihPA hTot hRes ihPF ℓ1 T PB.
     elim /IEq_inv=>// _ ? A0 A1 B0 B1 h0 h1 [? ? ?] ?. subst.

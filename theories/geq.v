@@ -280,6 +280,13 @@ Module geq_facts
     - hauto lq:on use:GI_InDist solve+:(solve_lattice).
   Qed.
 
+  Lemma ieq_downgrade_leq : forall Ξ ℓ ℓ0 a b c,
+      ℓ0 ⊆ ℓ ->
+      (IEq Ξ ℓ a b -> IEq Ξ ℓ0 a c -> IEq Ξ ℓ0 a b).
+  Proof.
+    hauto l:on drew:off use:ieq_downgrade_mutual, meet_commutative.
+  Qed.
+
   Lemma ieq_gieq Ξ ℓ ℓ0 a b (h : forall ℓ0, ℓ ⊆ ℓ0 -> IEq Ξ ℓ0 a b) :
     GIEq Ξ ℓ0 ℓ a b.
   Proof.

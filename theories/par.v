@@ -575,4 +575,127 @@ Proof.
   sfirstorder use:Par_confluent, @diamond_confluent.
 Qed.
 
+Ltac solve_s_rec :=
+  move => *; eapply rtc_l; eauto;
+  hauto lq:on ctrs:Par use:Par_refl.
+
+Lemma S_AppLR ℓ0 (a a0 b b0 : tm) :
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tApp a ℓ0 b) ⇒* (tApp a0 ℓ0 b0).
+Proof.
+  move => h. move :  b b0.
+  elim : a a0 / h.
+  - move => a a0 b h.
+    elim : a0 b / h.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+Lemma S_J t0 t1 : forall p0 p1,
+    t0 ⇒* t1 ->
+    p0 ⇒* p1 ->
+    (tJ t0 p0) ⇒* (tJ t1 p1).
+Proof.
+  move => + + h.
+  elim : t0 t1 /h; last by solve_s_rec.
+  move => ? p0 p1 h.
+  elim : p0 p1 /h; last by solve_s_rec.
+  auto using rtc_refl.
+Qed.
+
+Lemma S_Let ℓ0 ℓ1 a0 a1 : forall b0 b1,
+    a0 ⇒* a1 ->
+    b0 ⇒* b1 ->
+    tLet ℓ0 ℓ1 a0 b0 ⇒* tLet ℓ0 ℓ1 a1 b1.
+Proof.
+  move => + + h.
+  elim : a0 a1 /h; last by solve_s_rec.
+  move => + b0 b1 h.
+  elim : b0 b1 /h; last by solve_s_rec.
+  auto using rtc_refl.
+Qed.
+
+Lemma S_Down ℓ0 a b :
+  a ⇒* b ->
+  tDown ℓ0 a ⇒* tDown ℓ0 b.
+Proof.
+  move => h.
+  elim : a b / h; last by solve_s_rec.
+  auto using rtc_refl.
+Qed.
+
+Lemma S_Pi ℓ0 (a a0 b b0 : tm) :
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tPi ℓ0 a b) ⇒* (tPi ℓ0 a0 b0).
+Proof.
+  move => h.
+  move : b b0.
+  elim : a a0/h.
+  - move => + b b0 h.
+    elim : b b0/h.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+Lemma S_Sig ℓ0 (a a0 b b0 : tm) :
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tSig ℓ0 a b) ⇒* (tSig ℓ0 a0 b0).
+Proof.
+  move => h.
+  move : b b0.
+  elim : a a0/h.
+  - move => + b b0 h.
+    elim : b b0/h.
+    + auto using rtc_refl.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
+Lemma S_Abs ℓ0 (a b : tm)
+  (h : a ⇒* b) :
+  (tAbs ℓ0 a) ⇒* (tAbs ℓ0 b).
+Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
+
+Lemma S_Absurd (a b : tm)
+  (h : a ⇒* b) :
+  (tAbsurd a) ⇒* (tAbsurd b).
+Proof. elim : a b /h; hauto lq:on ctrs:Par,rtc. Qed.
+
+Lemma S_Pack ℓ0 (a b a0 b0 : tm) :
+  a ⇒* a0 ->
+  b ⇒* b0 ->
+  (tPack ℓ0 a b) ⇒* (tPack ℓ0 a0 b0).
+Proof.
+  move => h.
+  move : b b0.
+  elim : a a0/h; last by solve_s_rec.
+  move => ? b b0 h.
+  elim : b b0/h; last by solve_s_rec.
+  auto using rtc_refl.
+Qed.
+
+Lemma S_Eq ℓ0 a0 a1 b0 b1 A0 A1 :
+  a0 ⇒* a1 ->
+  b0 ⇒* b1 ->
+  A0 ⇒* A1 ->
+  (tEq ℓ0 a0 b0 A0) ⇒* (tEq ℓ0 a1 b1 A1).
+Proof.
+  move => h.
+  move : b0 b1 A0 A1.
+  elim : a0 a1 /h.
+  - move => + b0 b1 + + h.
+    elim : b0 b1 /h.
+    + move => + + A0 A1 h.
+      elim : A0 A1 /h.
+      * auto using rtc_refl.
+      * solve_s_rec.
+    + solve_s_rec.
+  - solve_s_rec.
+Qed.
+
 End par_facts.

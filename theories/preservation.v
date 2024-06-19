@@ -1104,8 +1104,25 @@ Proof.
     apply T_Refl=>//. eauto with wff.
     apply : cfacts.conv_trans;eauto.
     move /cfacts.conv_eq_inj : hconv'.
-    move => [?][ℓ5][?][h0][h1]h2. subst.
-
+    move => [?][ℓ5][?][h0]h1. subst.
+    have ? : ℓ0 ⊆ ℓ5 by sfirstorder use:leq_trans.
+    have hab : iconv (c2e Γ) ℓ5 a b by hauto lq:on rew:off use:cfacts.iconv_trans, cfacts.iconv_sym.
+    exists ℓ0.
+    move : hab.
+    rewrite /iconv.
+    move => [a'][b']?.
+    exists (tEq ℓ0 a a' A0), (tEq ℓ0 a b' A0).
+    repeat split.
+    hauto l:on use:S_Eq, rtc_refl.
+    hauto l:on use:S_Eq, rtc_refl.
+    apply I_Eq. solve_lattice.
+    move /typing_iok /iok_ieq : ha.
+    apply. solve_lattice.
+    move /typing_iok in ha.
+    have {ha} : IOk (c2e Γ) ℓ0 a' by sfirstorder use:cfacts.iok_preservation_star.
+    move /iok_ieq.
+    move /(_ ℓ0 ltac:(solve_lattice)).
+    sfirstorder use:ieq_downgrade_leq.
 Qed.
 
 Lemma subject_reduction_star a b (h : a ⇒* b) : forall Γ ℓ A,

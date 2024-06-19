@@ -274,7 +274,7 @@ Proof.
     move /cfacts.ieq_iconv.
     hauto lq:on use:cfacts.iconv_subst.
   (* Eq *)
-  - move => Γ ℓ ℓ0 a b A i j hℓ ha iha hb ihb hA /SemWt_Univ ihA.
+  - move => Γ ℓ ℓ0 ℓA a b A i j hℓ ha iha hb ihb hA /SemWt_Univ ihA.
     rewrite SemWt_Univ.
     move => Ξ ρ hρ.
     move : iha (hρ) => /[apply] ?.
