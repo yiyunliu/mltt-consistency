@@ -1,4 +1,5 @@
 PDFLATEX = xelatex -shell-escape
+LATEXRUN = ./latexrun --latex-cmd lualatex --latex-args="-jobname=paper -shell-escape" -o paper.pdf
 BIBTEX = bibtex
 OTT = ott
 OTT_FLAGS := -tex_wrap false -tex_show_meta false -picky_multiple_parses false -merge true
@@ -10,10 +11,7 @@ paper-output.tex: paper.tex rules.tex
 	perl -i -ne 'print unless m/^%/' paper-output.tex
 
 paper-output.pdf : paper-output.tex refs.bib
-	$(PDFLATEX) paper-output.tex
-	$(BIBTEX) paper-output
-	$(PDFLATEX) paper-output.tex
-	$(PDFLATEX) paper-output.tex
+	$(LATEXRUN) paper-output.tex
 
 spec-out.pdf : spec-out.tex
 	$(PDFLATEX) -interaction nonstopmode spec-out.tex
