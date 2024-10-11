@@ -11,7 +11,6 @@
 \submissionfalse     %% at most one of these must be true (neither for draft version)
 \publicfalse         %% but if you want to see comments, these should both be off
 
-
 % If we are going to make a version public, i.e. on arXiv, we should
 % make sure that there are no comments and our names are on it.
 \ifpublic
@@ -28,84 +27,30 @@
 \anonymoustrue
 \fi
 
-
-%%
-%% This is file `sample-acmsmall.tex',
-%% generated with the docstrip utility.
-%%
-%% The original source files were:
-%%
-%% samples.dtx  (with options: `acmsmall')
-%%
-%% IMPORTANT NOTICE:
-%%
-%% For the copyright see the source file.
-%%
-%% Any modified versions of this file must be renamed
-%% with new filenames distinct from sample-acmsmall.tex.
-%%
-%% For distribution of the original source see the terms
-%% for copying and modification in the file samples.dtx.
-%%
-%% This generated file may be distributed as long as the
-%% original source files, as listed above, are part of the
-%% same distribution. (The sources need not necessarily be
-%% in the same archive or directory.)
-%%
-%%
-%% Commands for TeXCount
-%TC:macro \cite [option:text,text]
-%TC:macro \citep [option:text,text]
-%TC:macro \citet [option:text,text]
-%TC:envir table 0 1
-%TC:envir table* 0 1
-%TC:envir tabular [ignore] word
-%TC:envir displaymath 0 word
-%TC:envir math 0 word
-%TC:envir comment 0 0
-%%
-%%
-%% The first command in your LaTeX source must be the \documentclass
-%% command.
-%%
-%% For submission and review of your manuscript please change the
-%% command to \documentclass[manuscript, screen, review]{acmart}.
-%%
-%% When submitting camera ready or to TAPS, please change the command
-%% to \documentclass[sigconf]{acmart} or whichever template is required
-%% for your publication.
-%%
-%%
 \documentclass[\ifpublic nolinenum\else\fi,online,OA]{jfp}
 
-\let\Bbbk\relax
-\usepackage{ottalt}
-\usepackage[outputdir=latex.out]{minted}
-\usepackage{xspace}
-\usepackage{stmaryrd}
-\usepackage{bbding}
+\let\Bbbk\relax % amsmath tries to redefine this
 \usepackage{amsthm,amssymb}
-\usepackage{dejavu}
-\usepackage[para]{footmisc}
-\newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
-\newcommand{\lang}{$\lambda^{\Pi}$\xspace}
-\inputott{rules}
-%%
-%% \BibTeX command to typeset BibTeX logo in the docs
-\AtBeginDocument{%
-  \providecommand\BibTeX{{%
-    Bib\TeX}}}
-
 \let\draftnote\relax % this is already defined in JFP
 \usepackage{draft}
+\usepackage[outputdir=latex.out]{minted} % latexrun puts everything in latex.out
+\usepackage{xspace,stmaryrd,bbding}
+\usepackage[para]{footmisc}
+\usepackage{ottalt}
+\inputott{rules}
 
 \ifcomments
 \newnote{scw}{blue} % Stephanie Weirich
 \newnote{yl}{purple} % Yiyun Liu
+\newnote{jc}{darkgreen}
 \else
 \newcommand{\scw}[1]{}
 \newcommand{\yl}[1]{}
+\newcommand{\jc}[1]{}
 \fi
+
+\newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
+\newcommand{\lang}{$\lambda^{\Pi}$\xspace}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -115,41 +60,8 @@
 
 \DeclareTextCommand{\nobreakspace}{TU}{\leavevmode\nobreak\ }
 
-%%
-%% Submission ID.
-%% Use this when submitting an article to a sponsored event. You'll
-%% receive a unique submission ID from the organizers
-%% of the event, and this ID should be used as the parameter to this command.
-%%\acmSubmissionID{123-A56-BU3}
-
-%%
-%% For managing citations, it is recommended to use bibliography
-%% files in BibTeX format.
-%%
-%% You can then either use BibTeX with the ACM-Reference-Format style,
-%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
-%% support for advanced citation of software artefact from the
-%% biblatex-software package, also separately available on CTAN.
-%%
-%% Look at the sample-*-biblatex.tex files for templates showcasing
-%% the biblatex styles.
-%%
-
-%%
-%% The majority of ACM publications use numbered citations and
-%% references.  The command \citestyle{authoryear} switches to the
-%% "author year" style.
-%%
-%% If you are preparing content for an event
-%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
-%% citations and references.
-%% Uncommenting
-%% the next command will enable that style.
 \citestyle{acmauthoryear}
 
-
-%%
-%% end of the preamble, start of the body of the document source.
 \begin{document}
 
 \journaltitle{JFP}
@@ -160,41 +72,22 @@
 \lefttitle{Y. Liu et al.}
 \righttitle{Logical Relations for Type Theory}
 
-%%
-%% The "title" command has an optional parameter,
-%% allowing the author to define a "short title" to be used in page headers.
 \title{Functional Pearl: Short and Mechanized Logical Relation for Dependent Type Theories}
 
-%%
-%% The "author" command and its associated commands are used to define
-%% the authors and their affiliations.
-%% Of note is the shared affiliation of the first two authors, and the
-%% "authornote" and "authornotemark" commands
-%% used to denote shared contribution to the research.
 \begin{authgrp}
 \author{Yiyun Liu}
 % \orcid{0009-0006-8717-2498}
 \affiliation{University of Pennsylvania (\email{\elink{liuyiyun@seas.upenn.edu}})}
 
+\author{Jonathan Chan}
+% \orcid{0000-0003-0830-3180}
+\affiliation{University of Pennsylvania (\email{\elink{jcxz@seas.upenn.edu}})}
+
 \author{Stephanie Weirich}
 % \orcid{0000-0002-6756-9168}
 \affiliation{University of Pennsylvania (\email{\elink{sweirich@seas.upenn.edu}})}
-
-\author{Jonathan Chan}
-\affiliation{University of Pennsylvania (\email{\elink{jcxz@seas.upenn.edu}})}
 \end{authgrp}
 
-%%
-%% By default, the full list of authors will be used in the page
-%% headers. Often, this list is too long, and will overlap
-%% other information printed in the page headers. This command allows
-%% the author to define a more concise list
-%% of authors' names for this purpose.
-% \renewcommand{\shortauthors}{Trovato et al.}
-
-%%
-%% The abstract is a short summary of the work to be presented in the
-%% article.
 \begin{abstract}
 Proof by logical relations is a powerful technique that has been used
 to derive metatheoretic properties of type systems, such as
@@ -214,9 +107,6 @@ in under 1000 lines of code, with 500 lines of additional code for the
 $\beta\eta$-normal form extension.
 \end{abstract}
 
-%%
-%% This command processes the author and affiliation and title
-%% information and builds the first part of the formatted document.
 \maketitle[T]
 
 \section{Introduction}
@@ -371,7 +261,6 @@ understand whether it is definable in a given ambient logic.
 % recursion in Coq, we keep the overall structure of our typeset proofs
 % consistent with our mechanization.
 
-
 \section{Specification of a Dependent Type Theory}
 \label{sec:spec}
 
@@ -424,7 +313,6 @@ understand whether it is definable in a given ambient logic.
   \label{fig:syntax}
 \end{figure}
 
-
 In this section, we present the dependent type theory, \lang{}, whose logical
 consistency will be proven in Section~\ref{sec:logrelproof}.
 
@@ -453,7 +341,6 @@ $[[J c a b p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
 $[[b]]$, and $[[c]]$ is the term whose type is to be casted.  Finally, \lang{}
 includes booleans, with standard syntax.  \scw{Example of what you can use
   identity types for? Or an example of a program that uses J?}
-
 
 Our reduction and typing relations are defined in terms of \emph{simultaneous
   substitutions}, $[[rho]]$, which are mappings from variables to terms.  We
@@ -594,7 +481,6 @@ We compare this
 definition with type-directed approaches to equality in
 Section~\ref{sec:discuss}.
 
-
 \subsection{Syntactic Typing}
 
 \begin{figure}[H]
@@ -673,9 +559,6 @@ input is $[[true]]$ or $[[false]]$.
 % \scw{Is there an advantage for Tarski universes even with infinite
 % hierarchy? or no?}
 
-
-
-
 % working with a system with untyped equality not only preserves the
 % same level of generality,
 % Of course,
@@ -683,19 +566,12 @@ input is $[[true]]$ or $[[false]]$.
 % (Lemma~\ref{lemma:parconfluent}) early on without having to use the
 % intricate techniques from \citet{lemma:}
 
-
-
-
-
-
-
 % TODO, where terms ... and ... are known to be
 % well-typed. The equivalence of such systems and a system that uses
 % untyped equality are explored in detail in ...
 
 % Without fancy eta laws, it is easy to embed a typed language into an
 % untyped language.
-
 
 % We note that a more conventional presentation of
 % \rref{T-Conv} would instead use full beta reduction as the base for
@@ -844,7 +720,6 @@ universe levels greater than or equal to $[[i]]$, which are yet to be defined.
 % system where one can encode Girard's
 % paradox~\citep{girard-thesis}. 
 
-
 By unfolding Definition~\ref{fig:logrelrec}, we can
 show that the same introduction rules for $[[Interp I i A S]]$ are
 admissible for $[[InterpR i A S]]$. For example, 
@@ -914,7 +789,6 @@ Bool]]$. The derivation that $[[Interp I i (\ x . x) Bool { a | a =>+
   true \/ a =>+ false }]]$ therefore follows by composing \rref{I-Red}
 and \rref{I-Bool}.
 
-
 \Rref{I-Pi} is the most complex rule in our logical
 relation. Instead of explaining it directly, we first consider the following
 simplified version, \rref{I-PiAlt}, that follows directly from \rref{I-Pi}.
@@ -982,7 +856,6 @@ function $[[F]]$ each time we apply it, though this is mitigated by
 the derivability of \rref{I-PiAlt} and the alternative $\Pi$ inversion
 principle (Lemma~\ref{lemma:piinvalt}).
 
-
 \subsection{Properties about the Logical Relation}
 In the rest of this section, we develop the theory of our logical relation
 with the goal of showing four key facts: irrelevance
@@ -996,7 +869,6 @@ follows as a corollary of a property about $[[Interp I i A S]]$ with no or few
 assumptions imposed on $[[I]]$. As a result, we usually state our lemmas in
 terms of $[[Interp I i A S]]$ without duplicating them in terms of
 $[[InterpR i A S]]$.
-
 
 First, we prove a family of simple properties, which we refer to as
 inversion principles for our logical relation. Given $[[Interp I i A
@@ -1322,7 +1194,6 @@ work with.
   ]]$ for $[[S0]]$ and it is trivial to verify the conditions hold.
 \end{proof}
 
-
 Next, we show some non-trivial cases of the fundamental theorem as
 top-level lemmas. For example, we can define the semantic analogue to the
 syntactic typing rule for variables (\rref{T-Var}).
@@ -1370,7 +1241,6 @@ syntactic typing rule for variables (\rref{T-Var}).
 
 % \scw{Need a transition here that you are starting to explain the semantic typing
 % rules.}
-
 
 \begin{lemma}[ST-Set]
   \label{lemma:stset}
@@ -1684,7 +1554,6 @@ has a normal form, then we know that the term must have a normal form.
   \ref{lemma:parnenf}.
 \end{proof}
 
-
 Before we can prove the fundamental theorem and derive the normalization
 property as its corollary, we need to additionally formulate and prove an
 \emph{adequacy property} about the logical relation.  This property, that the
@@ -1746,7 +1615,6 @@ We now state and prove the adequacy lemma.
   semantically inhabits $[[A]]$, from which we derive $[[wn (B {x / x})]]$
   and conclude $[[wn B]]$ through antirenaming (Lemma~\ref{lemma:parantirenaming}).
 \end{proof}
-
 
 The formulation of semantic well-typedness and the fundamental lemma from
 Section~\ref{sec:logrelproof} remains
@@ -2048,7 +1916,6 @@ we will have trouble instantiating $[[F]]$ with the logical relation,
 which is defined as a relation that we prove to be functional, rather
 than a computable function.
 
-
 % In Coq, there is a distinction between computable functions and
 % relations that can later be proven to be functional. The former can be
 % viewed as a strict subset of the latter in axiom-free Coq. To be more
@@ -2192,7 +2059,6 @@ part of our future work.
 \section{Related Work}
 \label{sec:relatedwork}
 
-
 % \scw{Maybe it would be useful to include a chart here, so that readers can
 %   easily keep track of the features of the various languages.  i.e. which ones
 %   include large eliminations? type-directed equivalence? impredicative prop?
@@ -2286,7 +2152,6 @@ semantic typing because it is sufficient for our purposes
     MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidibility of type checking \\
     \hline
   \end{tabular}
-
 
   \begin{tabular}{ll}
     \\
@@ -2482,7 +2347,6 @@ technique genuinely more efficient?
 % shorter than the other mechanized results from \citet{decagda,
 % nbeincoq, martin-lof-a-la-coq}?
 
-
 % First, the metatheoretic properties that we prove are indeed simpler.  Unlike
 % developments that mechanize the correctness of a type-directed conversion
 % algorithm, we only show the existence of normal forms for open and closed
@@ -2535,7 +2399,6 @@ with respect to their respective declarative equational theory.
 \yl{Makes sense. Though Abel's work doesn't use nbe but a recursive
   binary algorithm. Rewrote the paragraph above and commented out the original}
 
-
 Second, the definition of our logical relation does
 contribute to a more concise proof.
 In \rref{I-Red, I-Bool}, we choose parallel reduction, a full
@@ -2570,8 +2433,6 @@ can prove the fundamental theorem, leading to a more complicated proof.
 % delay the factorization property until we need to justify the use
 % leftmost-outermost reduction as a deterministic reduction strategy for
 % normalization.
-
-
 
 % In terms of our proof technique, the choice of parallel reduction, a full reduction
 % relation, to close over our semantic interpretation in \rref{I-Red,I-Bool} has a non-negligible effect on the
@@ -2673,10 +2534,6 @@ months of effort to implement.  We hope our proof can inspire researchers to
 more frequently mechanize results, such as consistency and normalization, for
 their dependent type theories.
 
-
-
-
-
 % Type soundness can be proven through a syntactic
 % approach~\citep{syntacticsoundness} as a corollary of two properties:
 % progress and preservation. % The syntactic type soundness proof
@@ -2693,19 +2550,9 @@ their dependent type theories.
 % full dependent type support, the overall structure remains almost
 % identical.
 
-
 % NbE in Coq
 
-%%
-%% The next two lines define the bibliography style to be used, and
-%% the bibliography file.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{refs}
 
-%%
-%% If your work has an appendix, this is the place to put it.
-
 \end{document}
-\endinput
-%%
-%% End of file `sample-acmsmall.tex'.
