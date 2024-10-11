@@ -82,7 +82,9 @@
 \usepackage{ottalt}
 \usepackage[outputdir=latex.out]{minted}
 \usepackage{xspace}
-\usepackage{amsthm}
+\usepackage{stmaryrd}
+\usepackage{bbding}
+\usepackage{amsthm,amssymb}
 \usepackage{dejavu}
 \usepackage[para]{footmisc}
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
@@ -94,6 +96,7 @@
   \providecommand\BibTeX{{%
     Bib\TeX}}}
 
+\let\draftnote\relax % this is already defined in JFP
 \usepackage{draft}
 
 \ifcomments
@@ -2272,14 +2275,14 @@ semantic typing because it is sufficient for our purposes
       & \header{L E} & \header{A} &  Main results \\
 
     \hline
-    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & {\boxedsymbols ✓} & 1 
+    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & $\checkmark$ & 1 
     & Consistency and normalization \\
     % \hline
-    $\lambda^\theta$ & 0 & Id, Nat & U & {\boxedsymbols ✗} & 1 & Consistency \\
-    Core Nuprl & $\mathbb{N}$ & W-Types & E & {\boxedsymbols ✓} & 2 & Consistency \\
-    NBE-in-Coq & 1 & Nat & T & {\boxedsymbols ✗} & 2 & Correctness of NBE \\
-    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & {\boxedsymbols ✓} & 2 & Decidability of conversion \\
-    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & {\boxedsymbols ✓} & 2 & Decidibility of type checking \\
+    $\lambda^\theta$ & 0 & Id, Nat & U & $\XSolidBrush$ & 1 & Consistency \\
+    Core Nuprl & $\mathbb{N}$ & W-Types & E & $\checkmark$ & 2 & Consistency \\
+    NBE-in-Coq & 1 & Nat & T & $\XSolidBrush$ & 2 & Correctness of NBE \\
+    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidability of conversion \\
+    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidibility of type checking \\
     \hline
   \end{tabular}
 
@@ -2289,7 +2292,7 @@ semantic typing because it is sufficient for our purposes
   \underline{U}niverses: & Countable ($\mathbb{N}$), Zero (0), One (1) \\
   \underline{Ind}uctives: & Identity types (Id), Natural numbers (Nat), $\Sigma$-types ($\Sigma$), W-types \\
   \underline{C}onversion:& Untyped (U), Typed (T),  Extensional (E) \\
-  \underline{L}arge \underline{E}liminations:& Included ({\boxedsymbols ✓}), not included ({\boxedsymbols ✗}) \\
+  \underline{L}arge \underline{E}liminations:& Included ($\checkmark$), not included ($\XSolidBrush$) \\
   \underline{A}rity of interpretation: & Sets of terms (1), Relations between terms (2) \\
   \\
   $\lambda^\theta$  & \citet{casinghino:combining-proofs-programs} (logical fragment only) \\
