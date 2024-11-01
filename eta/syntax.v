@@ -16,7 +16,7 @@ Inductive tm  : Type :=
   | tIf : ( tm   ) -> ( tm   ) -> ( tm   ) -> tm 
   | tBool : tm 
   | tEq : ( tm   ) -> ( tm   ) -> ( tm   ) -> tm 
-  | tJ : ( tm   ) -> ( tm   ) -> ( tm   ) -> ( tm   ) -> tm 
+  | tJ : ( tm   ) -> ( tm   ) -> tm 
   | tRefl : tm .
 
 Lemma congr_tAbs  { s0 : tm   } { t0 : tm   } (H1 : s0 = t0) : tAbs  s0 = tAbs  t0 .
@@ -49,7 +49,7 @@ Proof. congruence. Qed.
 Lemma congr_tEq  { s0 : tm   } { s1 : tm   } { s2 : tm   } { t0 : tm   } { t1 : tm   } { t2 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) : tEq  s0 s1 s2 = tEq  t0 t1 t2 .
 Proof. congruence. Qed.
 
-Lemma congr_tJ  { s0 : tm   } { s1 : tm   } { s2 : tm   } { s3 : tm   } { t0 : tm   } { t1 : tm   } { t2 : tm   } { t3 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) (H4 : s3 = t3) : tJ  s0 s1 s2 s3 = tJ  t0 t1 t2 t3 .
+Lemma congr_tJ  { s0 : tm   } { s1 : tm   } { t0 : tm   } { t1 : tm   } (H1 : s0 = t0) (H2 : s1 = t1) : tJ  s0 s1 = tJ  t0 t1 .
 Proof. congruence. Qed.
 
 Lemma congr_tRefl  : tRefl  = tRefl  .
@@ -71,7 +71,7 @@ Fixpoint ren_tm   (xitm : ( fin ) -> fin) (s : tm ) : tm  :=
     | tIf  s0 s1 s2 => tIf  ((ren_tm xitm) s0) ((ren_tm xitm) s1) ((ren_tm xitm) s2)
     | tBool   => tBool 
     | tEq  s0 s1 s2 => tEq  ((ren_tm xitm) s0) ((ren_tm xitm) s1) ((ren_tm xitm) s2)
-    | tJ  s0 s1 s2 s3 => tJ  ((ren_tm xitm) s0) ((ren_tm xitm) s1) ((ren_tm xitm) s2) ((ren_tm xitm) s3)
+    | tJ  s0 s1 => tJ  ((ren_tm xitm) s0) ((ren_tm xitm) s1)
     | tRefl   => tRefl 
     end.
 
@@ -91,7 +91,7 @@ Fixpoint subst_tm   (sigmatm : ( fin ) -> tm ) (s : tm ) : tm  :=
     | tIf  s0 s1 s2 => tIf  ((subst_tm sigmatm) s0) ((subst_tm sigmatm) s1) ((subst_tm sigmatm) s2)
     | tBool   => tBool 
     | tEq  s0 s1 s2 => tEq  ((subst_tm sigmatm) s0) ((subst_tm sigmatm) s1) ((subst_tm sigmatm) s2)
-    | tJ  s0 s1 s2 s3 => tJ  ((subst_tm sigmatm) s0) ((subst_tm sigmatm) s1) ((subst_tm sigmatm) s2) ((subst_tm sigmatm) s3)
+    | tJ  s0 s1 => tJ  ((subst_tm sigmatm) s0) ((subst_tm sigmatm) s1)
     | tRefl   => tRefl 
     end.
 
@@ -114,7 +114,7 @@ Fixpoint idSubst_tm  (sigmatm : ( fin ) -> tm ) (Eqtm : forall x, sigmatm x = (v
     | tIf  s0 s1 s2 => congr_tIf ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm sigmatm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm sigmatm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm sigmatm Eqtm) s1) ((idSubst_tm sigmatm Eqtm) s2) ((idSubst_tm sigmatm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm sigmatm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 
@@ -137,7 +137,7 @@ Fixpoint extRen_tm   (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (Eqtm : f
     | tIf  s0 s1 s2 => congr_tIf ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm xitm zetatm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm xitm zetatm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm xitm zetatm Eqtm) s1) ((extRen_tm xitm zetatm Eqtm) s2) ((extRen_tm xitm zetatm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm xitm zetatm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 
@@ -160,7 +160,7 @@ Fixpoint ext_tm   (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm ) (Eqtm : fo
     | tIf  s0 s1 s2 => congr_tIf ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm sigmatm tautm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm sigmatm tautm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm sigmatm tautm Eqtm) s1) ((ext_tm sigmatm tautm Eqtm) s2) ((ext_tm sigmatm tautm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm sigmatm tautm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 
@@ -180,7 +180,7 @@ Fixpoint compRenRen_tm    (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (rho
     | tIf  s0 s1 s2 => congr_tIf ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm xitm zetatm rhotm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm xitm zetatm rhotm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1) ((compRenRen_tm xitm zetatm rhotm Eqtm) s2) ((compRenRen_tm xitm zetatm rhotm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 
@@ -203,7 +203,7 @@ Fixpoint compRenSubst_tm    (xitm : ( fin ) -> fin) (tautm : ( fin ) -> tm ) (th
     | tIf  s0 s1 s2 => congr_tIf ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm xitm tautm thetatm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm xitm tautm thetatm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1) ((compRenSubst_tm xitm tautm thetatm Eqtm) s2) ((compRenSubst_tm xitm tautm thetatm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 
@@ -226,7 +226,7 @@ Fixpoint compSubstRen_tm    (sigmatm : ( fin ) -> tm ) (zetatm : ( fin ) -> fin)
     | tIf  s0 s1 s2 => congr_tIf ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s2) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 
@@ -249,7 +249,7 @@ Fixpoint compSubstSubst_tm    (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm 
     | tIf  s0 s1 s2 => congr_tIf ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s2) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 
@@ -272,7 +272,7 @@ Fixpoint rinst_inst_tm   (xitm : ( fin ) -> fin) (sigmatm : ( fin ) -> tm ) (Eqt
     | tIf  s0 s1 s2 => congr_tIf ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm xitm sigmatm Eqtm) s2)
     | tBool   => congr_tBool 
     | tEq  s0 s1 s2 => congr_tEq ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm xitm sigmatm Eqtm) s2)
-    | tJ  s0 s1 s2 s3 => congr_tJ ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1) ((rinst_inst_tm xitm sigmatm Eqtm) s2) ((rinst_inst_tm xitm sigmatm Eqtm) s3)
+    | tJ  s0 s1 => congr_tJ ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1)
     | tRefl   => congr_tRefl 
     end.
 

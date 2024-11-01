@@ -87,20 +87,16 @@ Inductive Par : tm -> tm -> Prop :=
   A0 ⇒ A1 ->
   (* ----------------------- *)
   tEq a0 b0 A0 ⇒ tEq a1 b1 A1
-| P_J t0 a0 b0 p0 t1 a1 b1 p1 :
+| P_J t0 p0 t1 p1 :
   t0 ⇒ t1 ->
-  a0 ⇒ a1 ->
-  b0 ⇒ b1 ->
   p0 ⇒ p1 ->
   (* ----------------------- *)
-  tJ t0 a0 b0 p0 ⇒ tJ t1 a1 b1 p1
-| P_JRefl t0 a0 b0 p t1 a1 b1 :
+  tJ t0 p0 ⇒ tJ t1 p1
+| P_JRefl t0 p t1 :
   t0 ⇒ t1 ->
-  a0 ⇒ a1 ->
-  b0 ⇒ b1 ->
   p ⇒ tRefl ->
   (* ------------------ *)
-  tJ t0 a0 b0 p ⇒ t1
+  tJ t0 p ⇒ t1
 | P_AbsEta a0 a1 :
   a0 ⇒ a1 ->
   (* -------------------------------------- *)
@@ -213,8 +209,6 @@ Proof.
   - hauto lq:on db:par use:Par_morphing_lift unfold:Par_m.
   - hauto lq:on db:par use:Par_morphing_lift unfold:Par_m.
   - move => *; apply : P_AppAbs'; eauto; by asimpl.
-  - hauto lq:on db:par use:Par_morphing_lift.
-  - hauto lq:on db:par use:Par_morphing_lift.
   - move => *; apply : P_AbsEta'; eauto. by asimpl.
 Qed.
 
@@ -418,9 +412,9 @@ Lemma P_IfFalse_star a b c :
     hauto lq:on ctrs:Par use:Par_refl.
 Qed.
 
-Lemma P_JRefl_star t a b p :
+Lemma P_JRefl_star t p :
   (p ⇒* tRefl)  ->
-  ((tJ t a b p) ⇒* t).
+  ((tJ t p) ⇒* t).
 Proof.
   move E : tRefl => v h.
   move : E.
@@ -454,7 +448,7 @@ Definition size_tm : tm -> nat.
   exact (fun _ a _ b _ c => 1 + a + b + c).
   exact 1.
   exact (fun _ a _ b _ c => 1 + a + b + c).
-  exact (fun _ a _ b _ c _ d => 1 + a + b + c + d).
+  exact (fun _ a _ b => 1 + a + b).
   exact 1.
 Defined.
 
@@ -596,18 +590,14 @@ Proof.
     apply_ih ih => b1 [? ?].
     apply_ih ih => c1 [? ?]. subst.
     exists (tEq a1 b1 c1). eauto with par.
-  - move => t a b p ih ? ξ.
+  - move => t p ih ? ξ.
     elim /Par_inv=>// ?.
-    + move => ? ? ? ? t0 a0 b0 p0 + + + + []*. subst.
+    + move => t0 p0 ? ? + + []*. subst.
       apply_ih ih => t1 [? ?].
-      apply_ih ih => a1 [? ?].
-      apply_ih ih => b1 [? ?].
       apply_ih ih => p1 [? ?]. subst.
-      exists (tJ t1 a1 b1 p1). eauto with par.
-    + move => ? ? ? ? t1 a1 b1 + + + + [] *. subst.
+      exists (tJ t1 p1). eauto with par.
+    + move => ? ? t1 + + [] *. subst.
       apply_ih ih => t2 [? ?].
-      apply_ih ih => a2 [? ?].
-      apply_ih ih => b2 [? ?].
       apply_ih ih => p2 [+ +]. subst.
       case : p2 => // _ ?.
       exists t2. eauto with par.
@@ -717,11 +707,11 @@ Proof.
   - move => h a0 a1 A0 a2 b3 A1 + + + ? ?. subst.
     do 3 (apply_ih'' ih => ?).
     hauto lq:on rew:off inv:Par ctrs:Par.
-  - move => h1 t0 a0 b1 p0 t1 a1 b2 p1 + + + + ? ? +. subst.
-    do 4 (apply_ih'' ih => ?).
+  - move => h1 t0 p0 t1 p1 + + ? ? +. subst.
+    do 2 (apply_ih'' ih => ?).
     hauto lq:on rew:off inv:Par ctrs:Par.
-  - move => h t0 a0 b1 p t1 a1 b2 + + + + ? ?. subst.
-    do 4 (apply_ih'' ih => ?).
+  - move => h t0 p t1 + + ? ?. subst.
+    do 2 (apply_ih'' ih => ?).
     hauto lq:on rew:off inv:Par ctrs:Par.
   - move => h0 a0 a1 h1 ? ?. subst.
     elim /Par_inv=>//.
