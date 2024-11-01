@@ -81,9 +81,9 @@
 % \orcid{0009-0006-8717-2498}
 \affiliation{University of Pennsylvania (\email{\elink{liuyiyun@seas.upenn.edu}})}
 
-\author{Jonathan Chan}
+% \author{Jonathan Chan}
 % \orcid{0000-0003-0830-3180}
-\affiliation{University of Pennsylvania (\email{\elink{jcxz@seas.upenn.edu}})}
+% \affiliation{University of Pennsylvania (\email{\elink{jcxz@seas.upenn.edu}})}
 
 \author{Stephanie Weirich}
 % \orcid{0000-0002-6756-9168}
@@ -113,8 +113,8 @@ $\beta\eta$-normal form extension.
 
 \section{Introduction}
 This paper presents a \emph{short} and \emph{mechanized} proof of
-logical consistency for \lang{}, a dependent type theory with a full
-predicative universe hierarchy, large eliminations, an intensional identity
+logical consistency for \lang{}, a dependent type theory with a
+predicative universe hierarchy, large elimination, an intensional identity
 type, a boolean base type, and dependent elimination forms.
 
 Our goal with this work is to demonstrate the application of the proof
@@ -131,13 +131,13 @@ algorithms~\citep{harper2005equivalence,Abel12,abel2013normalization}.
 However, tutorial material on syntactic logical
 relations~\citep{skorstengaard2019introduction, harpertait, harperkripke,
   pierce2002types, pierce2004advanced,harper2016practical} is primarily
-focused on systems with simple or polymorphic types. In that context,
+focused on simple or polymorphic types. In that context,
 syntactic logical relations can be defined as simple recursive functions over
-the structure of types, or (in the case of recursive types) defined over the
-evaluation steps of the computation. Yet, neither of these techniques can be
+the structure of types, or in the case of recursive types, defined over the
+evaluation steps of the computation. Yet neither of these techniques can be
 used to define a logical relation in the context of a predicative dependent
-type theory, so a novice researcher might be excused for thinking that proofs
-that use logical relations are not applicable for such languages.
+type theory, so a novice researcher may have the impression
+that logical relations are not applicable to dependent types.
 
 But this is not the case. 
 % \scw{Add a sentence about pen-and-paper LR proofs
@@ -148,32 +148,36 @@ But this is not the case.
 Recent authors have developed tour-de-force
 mechanizations for the metatheory of modern proof
 assistants~\citep{nbeincoq,decagda,martin-lof-a-la-coq,anand2014towards}, and
-have relied on logical relations defined as part of their
+rely on logical relations as part of their
 developments. However, because these proofs show diverse results about real
 systems and algorithms, these developments range in size from 10,000 to
 300,000 lines of code. As a result, their uses of logical relations are
 difficult to isolate from the surrounding contexts and inaccessible
 to casual readers.
 
-Thus, our paper provides a gentle and accessible introduction to a powerful
-technique for dependent type theories. To promote the use of machine-assisted
-reasoning, our development is accompanied by a short mechanized proof script,
-of less than 1000 lines of code, developed using the Coq proof
-assistant~\cite{coq}.
-
+Our paper instead provides a gentle and accessible introduction to a powerful
+technique for dependent type theories.
+It is accompanied by a short mechanized proof development
+of fewer than 1000 lines of code, developed using the Coq proof
+assistant~\citep{coq}.
 We have streamlined our proof through a number of means: the careful selection
 of the features that we include in the object type system and the results that
-we prove about it, in addition to the judicious use of automation.  Our
-language is small, but includes enough to be illustrative. For example, we
-eschew inductive datatypes or W-types, but we do include propositional
+we prove about it, in addition to the judicious use of automation.
+
+Our language is small, but includes enough to be illustrative. For example, we
+eschew inductive datatypes and W types, but we do include propositional
 equality and booleans to capture the challenges presented by indexed types and
 dependent pattern matching. We do not show the decidability of type checking,
 nor do we develop a PER semantics, but we prove logical consistency, which
-states that empty types are not inhabited in an empty context, and demonstrate
-how our consistency proof can be extended (at a moderate cost of 500 lines of
-code) to show the existence of $\beta\eta$-normal forms for well-typed open
-\emph{and} closed terms. We include a full predicative universe hierarchy and
-type-level computation to demonstrate the logical strength of the approach.
+states that empty types are not inhabited in an empty context,
+and extend our consistency proof to show the existence of $\beta\eta$-normal
+forms for well-typed closed \emph{and} open terms,
+at a moderate cost of 600 lines of code.
+We include a full predicative universe hierarchy with large elimination
+to demonstrate the logical strength of the approach.
+% JC: I changed "type-level computation" to "large elimination"
+% since I think it's usually the latter that gets referred to
+% when talking about logical strength and expressivity.
 
 %%
 %% SCW: save specific comparisons with other systems for later
@@ -197,7 +201,7 @@ type-level computation to demonstrate the logical strength of the approach.
 % giving us a metatheoretic result almost as strong as the one from
 % \citet{decagda} at the moderate cost of around 500 lines of extra code.
 
-More concretely, our paper makes the following contributions.
+Concretely, our paper makes the following contributions.
 \begin{itemize}
 \item In Section~\ref{sec:spec}, we introduce \lang{}, the dependent type
   theory of interest. A key design choice that impacts our proofs is the use
@@ -206,55 +210,56 @@ More concretely, our paper makes the following contributions.
   reduction~\citep{takahashi-parallel-reduction,
     barendregt:lambda-calculi-with-types}.
 \item In Section~\ref{sec:logreldep}, we formulate logical consistency for
-  \lang{}, the property of interest, to motivate a logical relation. We define
-  the relation first inductively and then later prove that it is a partial
-  function. Based on this definition, we define semantic typing and prove the
+  \lang{}, the property of interest, to motivate a logical relation. We
+  define the relation inductively, prove its functionality,
+  define semantic typing in terms of the relation, and prove the
   fundamental theorem, from which consistency follows as a corollary
-  (Section~\ref{sec:logrelproof}). Thanks to the design of \lang{}, our proof
-  showcases the special treatment required to model many of the most common
+  (Section~\ref{sec:logrelproof}). Our proof
+  showcases the special treatment required to model many common
   features of dependent type theories, thus making our proof applicable to a
   broad range of type systems.
 \item We strengthen our logical relation to prove the existence of
   $\beta$-normal forms (Section~\ref{sec:extension}) and $\beta\eta$-normal
   forms (Section~\ref{sec:betaeta}) for well-typed open terms. The
   modifications made to our initial logical relation are small and closely
-  mirror the necessary extensions for a simply-typed language. We use this
-  part to show that once we have established the base techniques, we can port
+  mirror the necessary extensions for a simply typed language. This shows
+  that once we have established the base techniques, we can port
   ideas from proofs about simpler languages to the dependently typed setting.
-\item We mechanize all our proofs using the Coq proof assistant, with 957
-  lines of code for the consistency proof and a moderate increase to 1568
-  lines of code for the normalization proof.  We discuss the specifics related
-  to our choice of Coq as our metatheory, including our use of off-the-shelf
+\item We mechanize all our proofs in Coq, with 983
+  lines of code for the consistency proof with $\beta$ rules and a moderate
+  increase to 1596 lines of code for the normalization proof with $\beta\eta$
+  rules. We discuss our choice of using Coq as our metatheory,
+  including the use of off-the-shelf
   semantic engineering infrastructure and automation tools, in
-  Section~\ref{sec:logrelmech}.  Our proof scripts, with comments, are
-  available to reviewers as supplementary materials.
+  Section~\ref{sec:logrelmech}. Our proof development is available as
+  supplementary material.
 \item We compare our work to existing proofs by logical relations and other
   proof techniques for proving consistency and normalization.  We provide an
-  overview of this prior work (Section~\ref{sec:relatedwork}) and also give an
-  in-depth explanation on how various design decisions affect the size of our
+  overview of prior work (Section~\ref{sec:relatedwork}) and explain
+  how various design decisions affect the size of our
   proof and its extensibility to additional features
   (Section~\ref{sec:discuss}).
 \end{itemize}
 
-The result of our work is an artifact that an interested researcher can
-navigate and understand. We accompany this short mechanized proof with an
-informal description, presented here using set-theoretic notation and
-terminology so that it is accessible to readers with a general mathematical
-background.  That said, our explanations do not stray too far away from our
-proof scripts.  We link each lemma directly to its counterpart in the proof
-script, anticipating that readers may wish to see how these results may be
-expressed and verified in a proof assistant.  The typeset proofs purposefully
-follow the mechanized proofs closely while avoiding, as much as possible,
-artifacts specific to Coq.
+The result of our work is an artifact targeted towards researchers
+familiar with the syntax of dependent types, as well as logical relations
+for simple or polymorphic types, and who wish to understand using logical
+relations \emph{for} dependent types.
+The short mechanized proof is accompanied here by a pen-and-paper description
+using set-theoretic notation and terminology so that it is accessible to
+readers with a general mathematical background. This pen-and-paper proof
+purposefully follows the mechanized proof closely while avoiding Coq-specific
+details as much as possible, and lemmas are linked directly to their
+counterparts in the mechanization.
 
-Not only does this close connection aid readers that wish to, like us, adopt
-proof assistants for their day-to-day use, but we also find that this
-precision is important for conveying the proof technique itself. Unlike
-properties that are derivable through syntactic means, proofs by logical
-relations make demands on the strength of the metalogic in which they are
-expressed. An informal proof that attempts to be agnostic or ambiguous about
-the underlying metatheory requires substantial effort from the reader to
-understand whether it is definable in a given ambient logic.
+Not only does this close connection aid readers who wish to adopt proof
+assistants for mechanizing metatheory, this precision is also important for
+conveying the proof technique itself. Unlike properties derivable through
+purely syntactic means, proofs by logical relations make demands on the
+strength of the metatheory in which they are expressed. An informal proof that
+attempts to be agnostic or ambiguous about the underlying metatheory requires
+substantial effort from the reader to understand whether it is definable in a
+given ambient logic.
 
 %% SCW: I think we said this already in the 2nd paragraph above.
 % Finally, our approach does not result in a verbose proof on paper, thanks to
