@@ -8,7 +8,7 @@ Fixpoint ne (a : tm) : bool :=
   | tAbs _ => false
   | tPi A B => false
   | tVoid => false
-  | tJ t a b p => nf t && nf a && nf b && ne p
+  | tJ t p => nf t && ne p
   | tUniv _ => false
   | tTrue => false
   | tFalse => false
@@ -24,7 +24,7 @@ with nf (a : tm) : bool :=
   | tAbs a => nf a
   | tPi A B => nf A && nf B
   | tVoid => true
-  | tJ t a b p => nf t && nf a && nf b && ne p
+  | tJ t p => nf t && ne p
   | tUniv _ => true
   | tTrue => true
   | tFalse => true
@@ -122,9 +122,9 @@ Proof.
   - hauto inv:tm q:on ctrs:Par.
   - move => a0 b0 A0 a1 b1 A1 h ih h0 ih0 h1 ih1 []//.
     hauto q:on ctrs:Par.
-  - move => t0 a0 b0 p0 t1 a1 b1 p1 ++++++++[]//.
+  - move => t0 p0 t1 p1 ++++[]//.
     hauto q:on ctrs:Par.
-  - move => t0 a b t1 ++[]//+++[]//.
+  - move => t0 t1 ++[]//+[]//.
     hauto q:on ctrs:Par.
 Qed.
 
@@ -189,20 +189,14 @@ Proof.
   - solve_s_rec.
 Qed.
 
-Lemma S_J t0 t1 : forall a0 a1 b0 b1 p0 p1,
+Lemma S_J t0 t1 : forall p0 p1,
     t0 ⇒* t1 ->
-    a0 ⇒* a1 ->
-    b0 ⇒* b1 ->
     p0 ⇒* p1 ->
-    (tJ t0 a0 b0 p0) ⇒* (tJ t1 a1 b1 p1).
+    (tJ t0 p0) ⇒* (tJ t1 p1).
 Proof.
-  move => + + + + + + h.
+  move => + + h.
   elim : t0 t1 /h; last by solve_s_rec.
-  move => + a0 a1 + +  + + h.
-  elim : a0 a1 /h; last by solve_s_rec.
-  move => + + b0 b1 + + h.
-  elim : b0 b1 /h; last by solve_s_rec.
-  move => + + + p0 p1 h.
+  move => + p0 p1 h.
   elim : p0 p1 / h; last by solve_s_rec.
   auto using rtc_refl.
 Qed.
@@ -251,11 +245,11 @@ Qed.
 (* We can construct proofs that terms are weakly neutral 
    and weakly normal compositionally. *)
 
-Lemma wne_j (t a b p : tm) :
-  wn t -> wn a -> wn b -> wne p -> wne (tJ t a b p).
+Lemma wne_j (t p : tm) :
+  wn t -> wne p -> wne (tJ t p).
 Proof.
-  move => [t0 [? ?]] [a0 [? ?]] [b0 [? ?]] [p0 [? ?]].
-  exists (tJ t0 a0 b0 p0).
+  move => [t0 [? ?]] [p0 [? ?]].
+  exists (tJ t0 p0).
   hauto lq:on b:on use:S_J.
 Qed.
 

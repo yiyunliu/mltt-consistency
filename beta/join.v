@@ -83,17 +83,15 @@ Inductive Par : tm -> tm -> Prop :=
   (A0 ⇒ A1) ->
   (* ---------- *)
   (tEq a0 b0 A0) ⇒ (tEq a1 b1 A1)
-| P_J t0 a0 b0 p0 t1 a1 b1 p1 :
+| P_J t0 p0 t1 p1 :
   (t0 ⇒ t1) ->
-  (a0 ⇒ a1) ->
-  (b0 ⇒ b1) ->
   (p0 ⇒ p1) ->
   (* ---------- *)
-  (tJ t0 a0 b0 p0) ⇒ (tJ t1 a1 b1 p1)
-| P_JRefl t0 a b t1 :
+  (tJ t0 p0) ⇒ (tJ t1 p1)
+| P_JRefl t0 t1 :
   (t0 ⇒ t1) ->
   (* ---------- *)
-  (tJ t0 a b tRefl) ⇒ t1
+  (tJ t0 tRefl) ⇒ t1
 where "A ⇒ B" := (Par A B).
 
 #[export]Hint Constructors Par : par.
@@ -197,9 +195,7 @@ Proof.
   - move => a a0 b0 b1 h0 ih0 h1 ih1 σ0 σ h /=.
     apply P_AppAbs' with (a0 := a0 [up_tm_tm σ]) (b1 := b1 [σ]).
     by asimpl. hauto l:on unfold:Par_m use:Par_renaming inv:nat. eauto.
-  - hauto lq:on db:par use:Par_morphing_lift.
 Qed.
-
 
 Lemma Par_morphing_star a0 a1 (h : a0 ⇒* a1) (σ0 σ1 : fin -> tm) :
   (σ0 ⇒ς σ1) ->
@@ -232,7 +228,6 @@ Proof.
   - hauto lq:on unfold:Par_m use:Par_morphing, Par_refl ctrs:rtc.
 Qed.
 
-
 Lemma Pars_morphing_star a b (σ0 σ1 : fin -> tm)
   (h : σ0 ⇒ς* σ1)
   (h0 : a ⇒* b) :
@@ -252,7 +247,6 @@ Lemma Coherent_morphing_star a b σ0 σ1
 Proof.
   hauto q:on use:Pars_morphing_star unfold:Coherent.
 Qed.
-
 
 
 (* These two lemmas allow us to create substitutions
@@ -328,8 +322,6 @@ Proof.
 Qed.
 
 
-
-
 (* ------------------------------------------------------------ *)
 
 (* Inversion lemmas *)
@@ -401,9 +393,9 @@ Lemma P_IfFalse_star a b c :
     hauto lq:on ctrs:Par use:Par_refl.
 Qed.
 
-Lemma P_JRefl_star t a b p :
+Lemma P_JRefl_star t p :
   (p ⇒* tRefl)  ->
-  ((tJ t a b p) ⇒* t).
+  ((tJ t p) ⇒* t).
 Proof.
   move E : tRefl => v h.
   move : E.
@@ -447,8 +439,8 @@ Function tstar (a : tm) :=
   | tBool => tBool
   | tRefl => tRefl
   | tEq a b A => tEq (tstar a) (tstar b) (tstar A)
-  | tJ t a b tRefl => tstar t
-  | tJ t a b p => tJ (tstar t) (tstar a) (tstar b) (tstar p)
+  | tJ t tRefl => tstar t
+  | tJ t p => tJ (tstar t) (tstar p)
   end.
 
 Lemma Par_triangle a : forall b, (a ⇒ b) -> (b ⇒ tstar a).

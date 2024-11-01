@@ -32,7 +32,7 @@ Definition tm_to_head (a : tm) :=
   | var_tm _ => Some hVar
   | tEq _ _ _ => Some hEq
   | tRefl => Some hRefl
-  | tJ _ _ _ _ => None
+  | tJ _ _ => None
   end.
 
 Lemma Par_head a b (h : a ⇒ b) :
@@ -107,7 +107,7 @@ Lemma T_J' (Γ : context) (t a b p A : tm) (i j : fin) (C C0 : tm) :
   Γ ⊢ p ∈ (tEq a b A) ->
   (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) ->
   Γ ⊢ t ∈ (subst_tm (tRefl .: a..) C) ->
-  Γ ⊢ (tJ t a b p) ∈ C0.
+  Γ ⊢ (tJ t p) ∈ C0.
 Proof. move =>> ->. apply T_J. Qed.
 
 (* ------------------------------------- *)
@@ -194,7 +194,7 @@ Proof.
   - move => Γ t a b p A i j C ha iha hA ihA hb ihb hp
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     rewrite -renaming_Syn_helper.
-    eapply T_J; try qauto ctrs:Wt.
+    eapply T_J with (a := a⟨ξ⟩); try qauto ctrs:Wt.
     + apply ihC.
       * move /good_renaming_up in hξ.
         move /(_ A) in hξ.
@@ -286,7 +286,7 @@ Proof.
              ihp hC ihC ht iht Δ ξ hξ hΔ /=.
     have ? : Wt Δ (subst_tm ξ a) (subst_tm ξ A) by hauto l:on.
     have hwff : Wff (subst_tm ξ A :: Δ) by eauto using Wff_cons.
-    eapply T_J' with (i := i) (C := (subst_tm (up_tm_tm (up_tm_tm ξ)) C)); eauto; first by asimpl.
+    eapply T_J' with (i := i) (b := b[ξ]) (C := (subst_tm (up_tm_tm (up_tm_tm ξ)) C)); eauto; first by asimpl.
     + move => [:hwteq].
       apply ihC.
       * move : ihA (hξ) (hΔ); repeat move/[apply].
@@ -418,7 +418,7 @@ Lemma T_J_simpl Γ t a b p A C i
   (h : Γ ⊢ p ∈ (tEq a b A)) :
   (tEq (ren_tm shift a) (var_tm 0) (ren_tm shift A) :: A :: Γ) ⊢ C ∈ (tUniv i) ->
   Γ ⊢ t ∈ (subst_tm (tRefl .: a ..) C) ->
-  Γ ⊢ (tJ t a b p) ∈ (subst_tm (p .: b..) C).
+  Γ ⊢ (tJ t p) ∈ (subst_tm (p .: b..) C).
 Proof.
   case /Wt_regularity : (h) => j /Wt_Eq_inv ?.
   have [? ?] : exists i, Γ ⊢ A ∈ (tUniv i)
@@ -426,8 +426,8 @@ Proof.
        hauto l:on use:T_J.
 Qed.
 
-Lemma Wt_J_inv Γ t a b p U (h : Γ ⊢ (tJ t a b p) ∈ U) :
-  exists A C i,
+Lemma Wt_J_inv Γ t p U (h : Γ ⊢ (tJ t p) ∈ U) :
+  exists a b A C i,
     Γ ⊢ p ∈ (tEq a b A) /\
     Γ ⊢ a ∈ A /\
     Γ ⊢ b ∈A /\
@@ -437,15 +437,15 @@ Lemma Wt_J_inv Γ t a b p U (h : Γ ⊢ (tJ t a b p) ∈ U) :
     Coherent (subst_tm (p .: b..) C) U /\
     exists j, Γ ⊢ U ∈ (tUniv j).
 Proof.
-  move E : (tJ t a b p) h => T h.
-  move : t a b p E.
+  move E : (tJ t p) h => T h.
+  move : t p E.
   elim :  Γ T U / h => //.
   - hauto lq:on rew:off use:Coherent_transitive.
-  - move => Γ t a b p A i j C ha _ hb _ hA _ hp _ hC _ ht _ ? ? ? ? [] *; subst.
-    exists A, C, i. repeat split => //.
+  - move => Γ t a b p A i j C ha _ hb _ hA _ hp _ hC _ ht _ ? ? [] *; subst.
+    exists a, b, A, C, i. repeat split => //.
     sfirstorder.
     sfirstorder use:Coherent_reflexive.
-    have ? : Γ ⊢ (tJ t a b p) ∈ (subst_tm (p .: b..) C) by hauto l:on use:T_J.
+    have ? : Γ ⊢ (tJ t p) ∈ (subst_tm (p .: b..) C) by hauto l:on use:T_J.
     sfirstorder ctrs:Wt use:Wt_regularity.
 Qed.
 
@@ -561,25 +561,25 @@ Proof.
     intros (ha0' & hb0' & (q & hA0') & (i & eq) & (j & hA)).
     apply T_Conv with (A := (tUniv i)) (i := j); eauto.
     hauto l:on ctrs:Wt use:@rtc_once.
-  - move => t0 a0 b0 p0 t1 a1 b1 p1 ht iht ha iha hb ihb hp ihp Γ U /Wt_J_inv.
-    intros (A & C & i & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (j & hU)).
-    have ? : (tEq a0 b0 A ⇒ tEq a1 b1 A) by hauto lq:on ctrs:Par use:Par_refl.
-    have ? : Coherent (tEq a0 b0 A) (tEq a1 b1 A) by hauto l:on use:@rtc_once.
-    apply T_Conv with (A := subst_tm (p1 .: b1..) C) (i := j) => //.
-    apply T_J_simpl with (A := A) (i := i).
+  - move => t0 p0 t1 p1 ht iht hp ihp Γ U /Wt_J_inv.
+    intros (a & b & A & C & i & hp0 & ha0 & hb0 & (k & hA) & hC0 & ht0 & heq & (j & hU)).
+    (* have ? : (tEq a0 b0 A ⇒ tEq a1 b1 A) by hauto lq:on ctrs:Par use:Par_refl.
+    have ? : Coherent (tEq a0 b0 A) (tEq a1 b1 A) by hauto l:on use:@rtc_once. *)
+    apply T_Conv with (A := subst_tm (p1 .: b..) C) (i := j) => //.
+    apply T_J_simpl with (a := a) (A := A) (i := i).
     + hauto lq:on use:T_Eq_simpl, T_Conv.
     + eapply preservation_helper with (i := 0) (j := 0); eauto.
       * hauto drew:off ctrs:Wt,lookup use:T_Eq_simpl, weakening_Syn' db:wff.
       * hauto drew:off ctrs:Wt,lookup use:T_Eq_simpl, weakening_Syn' db:wff.
       * sfirstorder use:Par_Coherent, P_Eq, Par_renaming, Par_refl.
-    + apply T_Conv with (A := subst_tm (tRefl .: a0..) C) (i := i);auto.
+    + apply T_Conv with (A := subst_tm (tRefl .: a..) C) (i := i);auto.
       * move : morphing_Syn hC0. move/[apply].
-        move /(_ Γ (tRefl .: a1..)).
+        move /(_ Γ (tRefl .: a..)).
         move => [:hwff].
         asimpl. apply; last by (abstract : hwff; eauto using Wt_Wff).
         move => l h. elim/lookup_inv.
         ** move => _ A0 Γ0 ? [] *. subst=>/=. asimpl.
-           apply T_Refl'; eauto.
+           apply T_Refl; eauto.
         ** move => _. inversion 1; subst;
              asimpl; hauto q:on ctrs:Wt.
       * apply Par_Coherent.
@@ -589,8 +589,8 @@ Proof.
       apply Par_Coherent.
       apply Par_morphing; last by apply Par_refl.
       hauto lq:on unfold:Par_m inv:nat use:Par_refl.
-  - move => t0 a b t1 ht iht Γ U /Wt_J_inv.
-    intros (A & C & i & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (k & hU')).
+  - move => t0 t1 ht iht Γ U /Wt_J_inv.
+    intros (a & b & A & C & i & hp0 & ha0 & hb0 & (j & hA) & hC & ht0 & heq & (k & hU')).
     apply iht.
     move : T_Conv ht0. move/[apply]. apply; eauto.
     apply : Coherent_transitive;eauto.
@@ -617,7 +617,7 @@ Definition is_value (a : tm) :=
   | tApp a b => false
   | tUniv _ => true
   | tRefl => true
-  | tJ _ _ _ _ => false
+  | tJ _ _ => false
   | tEq _ _ _ => true
   | var_tm _ => false
   end.
