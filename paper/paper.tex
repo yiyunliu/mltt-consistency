@@ -302,7 +302,7 @@ given ambient logic.
                   & \mbox{universes, variables, empty type} \\
             & |   & [[Pi x : A . B]]\ |\ [[\ x . a]]\ |\ [[a b]]
                   & \mbox{function types, abstractions, applications} \\
-            & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J c a b p]]
+            & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J c p]]
                   & \mbox{equality types, reflexivity proof, J eliminator} \\
             & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ % |\  [[if a b0 b1]]
                   & \mbox{boolean type, true, false} \\
@@ -344,7 +344,7 @@ our development in Section~\ref{sec:betaeta}, where we extend our
 consistency result to the existence of $\beta\eta$-normal forms.
 We include in \lang{} the intensional identity type
 $[[a ~ b : A]]$ whose proofs can be eliminated by the J-eliminator
-$[[J c a b p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
+$[[J c p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
 $[[b]]$, and $[[c]]$ is the term whose type is to be casted.  Finally, \lang{}
 includes booleans, with standard syntax.  \scw{Example of what you can use
   identity types for? Or an example of a program that uses J?}
@@ -1416,7 +1416,7 @@ of \lang{}.
   \[
     \begin{array}{llcl}
        \beta\text{-}\mathit{neutral\ terms} &
-      [[e]] & ::= & [[x]]\ |\ [[e f]]\ |\ [[J e f f f]]\ |\ [[if e f
+      [[e]] & ::= & [[x]]\ |\ [[e f]]\ |\ [[J e f]]\ |\ [[if e f
                     f]] \\ \\
       \beta\text{-}\mathit{normal\ terms} &
       [[f]] & ::= & [[e]]\ |\ [[Set i]]\ |\ [[Void]]\ |\ [[Pi x : f . f]]\

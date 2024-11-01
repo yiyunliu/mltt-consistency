@@ -91,7 +91,7 @@ tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
     {{ com reflexivity proof }}
   | Void      :: :: Void
     {{ com empty type }}
-  | J c a b p         :: :: Transp
+  | J c p         :: :: Transp
     {{ com J eliminator }}
   | Bool           :: :: Bool
     {{ com boolean type }}
@@ -291,15 +291,13 @@ a0 ~ b0 : A0 => a1 ~ b1 : A1
 refl => refl
 
 c0 => c1
-a0 => a1
-b0 => b1
 p0 => p1
-------------------------------- :: J
-J c0 a0 b0 p0 => J c1 a1 b1 p1
+------------------ :: J
+J c0 p0 => J c1 p1
 
 c0 => c1
--------------------- :: JRefl
-J c0 a0 b0 refl => c1
+--------------- :: JRefl
+J c0 refl => c1
 
 y notin fv a0
 a => a0
@@ -410,7 +408,7 @@ G |- p : a ~ b : A
 (# G ++ x : A #) ++ y : x ~ a  : A |- B : Set i
 G |- c : B { a ,  refl / x ,  y }
 ------------------------------------ :: J
-G |- J c a b p : B { b , p / x , y }
+G |- J c p : B { b , p / x , y }
 
 |- G
 -------------------------- :: Bool
