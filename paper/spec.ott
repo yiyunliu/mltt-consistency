@@ -91,6 +91,8 @@ tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
     {{ com reflexivity proof }}
   | Void      :: :: Void
     {{ com empty type }}
+  | absurd b  :: :: Absurd
+    {{ com ex falso quodlibet }}
   | J c p         :: :: Transp
     {{ com J eliminator }}
   | Bool           :: :: Bool
@@ -238,6 +240,10 @@ Set i => Set i
 
 -------------- :: Void
 Void => Void
+
+b0 => b1
+---------------------- :: Absurd
+absurd b0 => absurd b1
 
 A0 => A1
 B0 => B1
@@ -433,6 +439,10 @@ G |- if a b0 b1 : A { a / x }
 ----------------------------- :: Void
 G |- Void : Set i
 
+G |- b : Void
+G |- A : Set i
+----------------- :: Absurd
+G |- absurd b : A
 
 defns
 JI :: '' ::=
@@ -488,7 +498,6 @@ Interp I i Pi x : A . B { b | forall a, (# a in S implies forall S0, (# Interp I
 j < i
 --------------------------------- :: Set
 Interp I i Set j I j
-
 
 A => B
 Interp I i B S

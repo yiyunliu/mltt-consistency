@@ -34,7 +34,7 @@
 \let\draftnote\relax % this is already defined in JFP
 \usepackage{draft}
 \usepackage[outputdir=latex.out]{minted} % latexrun puts everything in latex.out
-\usepackage{xspace,stmaryrd,bbding}
+\usepackage{xspace,stmaryrd,mathtools,bbding}
 \usepackage[para]{footmisc}
 \usepackage{ottalt}
 \inputott{rules}
@@ -292,75 +292,66 @@ given ambient logic.
 %  \end{itemize}
 %}
 
-\begin{figure}[H]
-\[
-\begin{array}{lcll}
-% \mathit{Natural\ numbers}\\
-% [[i]],[[j]],[[n]] & \in &  [[SNat]] &  \\ \\
-\mathit{Terms}\\
-[[a]],[[b]],[[c]],[[p]],[[A]],[[B]] & ::= & [[Set i]]\ |\ [[x]]\  |\ [[Void]]
-                  & \mbox{universes, variables, empty type} \\
-            & |   & [[Pi x : A . B]]\ |\ [[\ x . a]]\ |\ [[a b]]
-                  & \mbox{function types, abstractions, applications} \\
-            & |   & [[a ~ b : A ]]\ |\  [[refl]]\ |\ [[J c p]]
-                  & \mbox{equality types, reflexivity proof, J eliminator} \\
-            & |   & [[Bool]]\ |\  [[true]]\ |\  [[false]]\ % |\  [[if a b0 b1]]
-                  & \mbox{boolean type, true, false} \\
-            & |   & [[if a b0 b1]]
-                  & \mbox{conditional expression} \\ \\
-\end{array}
-\]
-\[
-\begin{array}{lll}
-\mathit{Substitutions}      & \qquad\qquad & \mbox{\emph{Typing Contexts}}  \\
-[[rho]] \in [[SVar -> STm]] & & [[G]] ::= [[empty]]\ |\ [[G ++ x : A]] 
-\end{array}
-\]
-  \caption{Syntax of \lang}
-  \label{fig:syntax}
+\begin{figure}[h]
+\begin{align*}
+[[a]],[[b]],[[c]],[[p]],[[A]],[[B]] & \Coloneqq && \textit{Terms} \\
+            & \mid [[Set i]] \mid [[x]] \mid [[Void]] \mid [[absurd b]]
+              && \textrm{universes, variables, empty type, explosion} \\
+            & \mid [[Pi x : A . B]] \mid [[\ x . a]] \mid [[a b]]
+              && \textrm{function types, abstractions, applications} \\
+            & \mid [[a ~ b : A ]] \mid [[refl]] \mid [[J c p]]
+              && \textrm{equality types, reflexivity proof, J eliminator} \\
+            & \mid [[Bool]] \mid [[true]] \mid [[false]] \mid [[if a b0 b1]]
+              && \textrm{boolean type, true, false, conditionals} \\
+            % & \mid [[if a b0 b1]]
+            %   && \textrm{conditional expression} \\
+[[G]] & \Coloneqq [[empty]] \mid [[G ++ x : A]] && \textit{Typing contexts} \\
+[[rho]] & \in [[SVar -> STm]] && \textit{Substitutions}
+\end{align*}
+\caption{Syntax of \lang}
+\label{fig:syntax}
 \end{figure}
 
-In this section, we present the dependent type theory, \lang{}, whose logical
+In this section, we present the dependent type theory \lang{}, whose logical
 consistency will be proven in Section~\ref{sec:logrelproof}.
-
-\scw{Need to acknowledge the lack of type annotation on abstractions.}
 
 The syntax of \lang can be found in Figure~\ref{fig:syntax}.  As a dependent
 type theory, terms and types are collapsed into the same syntactic
-category. The type $[[Set i]]$ represent a universe type, annotated by its
-universe level, a natural number $i$.  Abstractions $[[ \ x . a ]]$ and
+category. We use a Curry-style (extrinsic) syntax, where terms are not
+annotated by types, and only terms which participate in reduction are part of
+introduction and elimination forms.
+
+The type $[[Set i]]$ represents a universe at level $i$,
+a natural number. Abstractions $[[ \ x . a ]]$ and
 dependent function types $[[Pi x : A . B]]$ are binding forms for the variable
-$x$ in the body of the function and codomain of the function type.
+$x$ in the body of the function and codomain of the function type.%
 \footnote{In the exposition in this paper, binding forms are equal up to
   $\alpha$-conversion and we adopt the Barendregt Variable
   Convention~\cite{barendregt:lambda-calculus}, which lets us assume that
   bound variables are distinct.  In some places, we are informal about the
   treatment of variables and substitution; our mechanized proofs make these
-  notions precise by using de Bruijn indices~\cite{debruijn1994automath}. }
+  notions precise by using de Bruijn indices~\citep{debruijn1994automath}. }
 We use the notation $[[A -> B]]$ when the output type $[[B]]$ is not dependent
-on the input variable. For simplicity, we omit the type annotations in the abstraction
-forms. We discuss how the inclusion of type annotations can affect
+on the input variable. Type annotations in abstraction forms are omitted, and
+we discuss how the inclusion of type annotations can affect
 our development in Section~\ref{sec:betaeta}, where we extend our
 consistency result to the existence of $\beta\eta$-normal forms.
-We include in \lang{} the intensional identity type
-$[[a ~ b : A]]$ whose proofs can be eliminated by the J-eliminator
-$[[J c p]]$, where $[[p]]$ is an equality proof between $[[a]]$ and
-$[[b]]$, and $[[c]]$ is the term whose type is to be casted.  Finally, \lang{}
-includes booleans, with standard syntax.  \scw{Example of what you can use
-  identity types for? Or an example of a program that uses J?}
+Intensional identity types $[[a ~ b : A]]$, or equality types, represent an
+equality between terms $[[a]]$ and $[[b]]$ of the same type $[[A]]$, whose
+canonical inhabitant is the reflexive proof $[[refl]]$. Equality proofs $[[p]]$
+can be eliminated by the J eliminator $[[J c p]]$, which casts the term $[[c]]$
+from one end of the equality to the other. Finally, we have booleans along with
+the standard boolean values and conditional expressions.
 
 Our reduction and typing relations are defined in terms of \emph{simultaneous
-  substitutions}, $[[rho]]$, which are mappings from variables to terms.  We
-use $[[idtm]]$ as the identity substitution.  The extension operation,
-$[[(rho .: x -> a)]]$, updates the substitution $[[rho]]$ to map the variable
+substitutions} $[[rho]]$, which are mappings from variables to terms. We
+use $[[idtm]]$ as the identity substitution, and the extension operator
+$[[rho .: x -> a]]$ updates the substitution $[[rho]]$ to map the variable
 $[[x]]$ to $[[a]]$ rather than $[[rho x]]$.
-
-The substitution operator, which takes the form $[[a {rho}]]$, traverses the
-syntax of $[[a]]$ and replaces each variable $[[x]]$ with the term
-$[[rho x]]$. When traversing under binders (e.g. in the
-$[[(\ x . a) { rho }]]$ case), it must be the case that $[[rho]]$ maps the
-bound variable to itself and that the bound variable does not appear freely in
-the application of the substitution to any other variable.
+% When traversing under binders (e.g. in the
+% $[[(\ x . a) { rho }]]$ case), it must be the case that $[[rho]]$ maps the
+% bound variable to itself and that the bound variable does not appear freely in
+% the application of the substitution to any other variable.
 %
 \scw{Maybe we should handwave more here, and note that we aren't covering all
   of the details of the treatment of variable binding in the text. If readers
@@ -369,27 +360,24 @@ the application of the substitution to any other variable.
   Coq proof. }
 \yl{I agree. Should mention upfront that the presentation is not
   watertight and rigorous, though we have one in our mechanization}
+The substitution operator $[[a {rho}]]$ replaces every free variable $[[x]]$ of
+$[[a]]$ by $[[rho x]]$ simultaneously. A single substitution corresponds to
+composing extension and identity:
+$[[a { b / x }]] \coloneqq [[a { idtm .: x -> b }]]$.
 
-The substitution operator is referred to as simultaneous substitution as it
-substitutes for all variables at once. It is possible to recover single
-substitution by composing the extension operator and the identity
-substitution: $[[a { b / x }]] := [[a { idtm .: x -> b }]]$.
-
-When reasoning about logical relations, we find it more convenient to
-formulate simultaneous substitution directly rather than recovering it from
-single substitution.  In particular, this shows up in the definition of
-semantic typing in Section~\ref{sec:logrelproof}, which relies on simultaneous
-substitution.
+When reasoning about logical relations, it is more convenient to formulate
+definitions in terms of simultaneous substitutions than single substitutions,
+such as semantic typing in Section~\ref{sec:logrelproof}.
+\jc{I've rewritten this paragraph to be more succinct,
+but I'm still not certain it's necessary at all.
+We're not focussing on the merits of simultaneous substitution over
+other representations of substitution and binding, after all.}
 
 \subsection{Definitional equality via parallel reduction}
 
 \begin{figure}[H]
-\begin{minipage}{0.9\textwidth}
 \drules[P]{$[[a => b]]$}{Parallel Reduction}{AppAbs, IfTrue, IfFalse, JRefl}
-% \drules[PS]{$[[a =>+ b]]$}{Transitive Closure of Parallel Reduction}{Refl, Step}
-% \drules[C]{$[[a <=> b]]$}{Convertibility}{Intro}
-\end{minipage}
-\caption{Parallel reduction ($\beta$-rules only) }
+\caption{Parallel reduction ($\beta$ rules only) }
 \label{fig:par}
 \end{figure}
 
