@@ -27,6 +27,12 @@ Inductive Wt : context -> tm -> tm -> Prop :=
   (* -------- *)
   Γ ⊢ tVoid ∈ (tUniv i)
 
+| T_Absurd Γ b A i :
+  Γ ⊢ b ∈ tVoid ->
+  Γ ⊢ A ∈ (tUniv i) ->
+  (* --------------- *)
+  Γ ⊢ (tAbsurd b) ∈ A
+
 | T_Pi Γ i A B :
   Γ ⊢ A ∈ (tUniv i) ->
   (A :: Γ) ⊢ B ∈ (tUniv i) ->

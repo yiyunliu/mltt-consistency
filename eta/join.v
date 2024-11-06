@@ -32,6 +32,10 @@ Inductive Par : tm -> tm -> Prop :=
 | P_Void :
   (* -------- *)
   tVoid ⇒ tVoid
+| P_Absurd b0 b1 :
+  (b0 ⇒ b1) ->
+  (* ----------------------- *)
+  (tAbsurd b0) ⇒ (tAbsurd b1)
 | P_Pi A0 A1 B0 B1 :
   (A0 ⇒ A1) ->
   (B0 ⇒ B1) ->
@@ -442,6 +446,7 @@ Definition size_tm : tm -> nat.
   exact (fun _ a _ b => 1 + a + b).
   exact (fun _ a _ b => 1 + a + b).
   exact 1.
+  exact (fun _ a => 1 + a).
   exact (fun _ => 1).
   exact 1.
   exact 1.
@@ -496,6 +501,7 @@ Proof.
     move /(_ (S i)) in iha.
     move : iha h; move/[apply].
     apply=>//. asimpl. sfirstorder.
+  - hauto lq:on rew:off.
   - hauto lq:on rew:off.
   - hauto lq:on rew:off.
   - hauto lq:on rew:off.
@@ -559,6 +565,11 @@ Proof.
     apply_ih ih => B0 [? ?]. subst.
     exists (tPi A0 B0). eauto with par.
   - hauto lq:on dep:on inv:Par ctrs:Par.
+  - move => b ih ? ξ.
+    elim /Par_inv =>// ?.
+    move => b0 b1 + [] *. subst.
+    apply_ih ih => b2 [-> ?].
+    exists (tAbsurd b2). eauto with par.
   - move => n _ ? ?.
     elim /Par_inv=>//.
     move => *. subst. eauto with par.
@@ -630,6 +641,10 @@ Proof.
   - hauto lq:on rew:off inv:Par ctrs:Par.
   - hauto lq:on rew:off inv:Par ctrs:Par.
   - hauto lq:on rew:off inv:Par ctrs:Par.
+  - move => h b1 b2 hb ? ?. subst.
+    elim /Par_inv => // => h0 b3 b4 + [] *. subst.
+    move : hb. apply_ih' ih => b [? ?].
+    eauto with par.
   - move => h A0 A1 B0 B1 hA0 hB0 ? ?. subst.
     elim /Par_inv=>// => h0 A2 A3 B2 B3 + + [] *. subst.
     move : hA0. apply_ih' ih => A [? ?].

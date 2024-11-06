@@ -8,6 +8,7 @@ Fixpoint ne (a : tm) : bool :=
   | tAbs _ => false
   | tPi A B => false
   | tVoid => false
+  | tAbsurd b => ne b
   | tJ t p => nf t && ne p
   | tUniv _ => false
   | tTrue => false
@@ -24,6 +25,7 @@ with nf (a : tm) : bool :=
   | tAbs a => nf a
   | tPi A B => nf A && nf B
   | tVoid => true
+  | tAbsurd b => ne b
   | tJ t p => nf t && ne p
   | tUniv _ => true
   | tTrue => true
@@ -191,6 +193,16 @@ Proof.
   - solve_s_rec.
 Qed.
 
+Lemma S_Absurd b0 b1 :
+  b0 ⇒* b1 ->
+  (tAbsurd b0) ⇒* (tAbsurd b1).
+Proof.
+  move => h.
+  elim : b0 b1 /h.
+  - auto using rtc_refl.
+  - solve_s_rec.
+Qed.
+
 (* ------------------------------------------------------ *)
 
 (* We can construct proofs that terms are weakly neutral
@@ -242,6 +254,15 @@ Proof.
   split.
   - by apply S_Eq.
   - hauto lqb:on.
+Qed.
+
+Lemma wne_absurd b : wne b -> wne (tAbsurd b).
+Proof.
+  rewrite /wne.
+  move => [vb [? ?]].
+  exists (tAbsurd vb).
+  split => //.
+  by apply S_Absurd.
 Qed.
 
 (* --------------------------------------------------------------- *)
