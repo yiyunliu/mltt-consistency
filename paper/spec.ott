@@ -411,7 +411,7 @@ G |- a ~ b : A : Set i
 [ G |- b : A ]
 [ G |- A : Set j ]
 G |- p : a ~ b : A
-(# G ++ x : A #) ++ y : x ~ a  : A |- B : Set i
+(# G ++ x : A #) ++ y : a ~ x  : A |- B : Set i
 G |- c : B { a ,  refl / x ,  y }
 ------------------------------------ :: J
 G |- J c p : B { b , p / x , y }

@@ -4,9 +4,9 @@
 \newif\ifsubmission   %% prepare the submitted version
 \newif\ifpublic       %% version available for posting / final version
 
-\commentsfalse        %% toggle comments here
+\commentstrue         %% toggle comments here
 \extendedfalse
-\anonymoustrue
+\anonymousfalse
 
 \submissionfalse     %% at most one of these must be true (neither for draft version)
 \publicfalse         %% but if you want to see comments, these should both be off
@@ -42,7 +42,7 @@
 \ifcomments
 \newnote{scw}{blue} % Stephanie Weirich
 \newnote{yl}{purple} % Yiyun Liu
-\newnote{jc}{darkgreen}
+\newnote{jc}{red} % Jonathan Chan
 \else
 \newcommand{\scw}[1]{}
 \newcommand{\yl}[1]{}
@@ -375,23 +375,16 @@ other representations of substitution and binding, after all.}
 
 \subsection{Definitional equality via parallel reduction}
 
-\begin{figure}[H]
-\drules[P]{$[[a => b]]$}{Parallel Reduction}{AppAbs, IfTrue, IfFalse, JRefl}
-\caption{Parallel reduction ($\beta$ rules only) }
-\label{fig:par}
-\end{figure}
-
 Before we specify the typing rules, we first specify the equational theory
-used in the conversion rule (\rref{T-Conv} in Figure~\ref{fig:typing}). The
-equivalence relation used in this rule is often referred to
-\textit{definitional equality} in dependent type theories because it defines
-the equivalence that the syntactic type system works up to. 
-
-In \lang{}, we use a relation called \emph{convertibility} for definitional
-equality. Two terms are convertible, if they reduce to a common form. The
-reduction that we use is called \emph{parallel reduction}, written
-$[[a => b]]$. The notation $[[a =>+ b]]$ indicates the transitive closure of
-parallel reduction.
+used in the conversion \rref{T-Conv} in Figure~\ref{fig:typing},
+known as \textit{definitional equality} in dependent type theories because it
+defines the equivalence that the syntactic type system works up to. 
+The definitional equality we use is \emph{convertibility}:
+two terms are convertible if they reduce to a common form.
+The reduction that we use is \emph{parallel reduction}, written
+$[[a => b]]$, with $[[a =>+ b]]$ indicating its reflexive, transitive closure.
+The parallel reduction relation is defined in Figure~\ref{fig:par},
+which omits reflexivity and congruence rules for brevity.
 
 \begin{definition}[Convertibility]
   Two terms $[[a0]]$ and $[[a1]]$ are \emph{convertible}, written
@@ -399,27 +392,30 @@ parallel reduction.
   and $[[a1 =>+ b]]$.
 \end{definition}
 
-The definition of the parallel reduction relation, appears in
-Figure~\ref{fig:par}. (For brevity, the reflexivity and congruence rules of
-this relation are omitted from this figure).
+\begin{figure}
+\drules[P]{$[[a => b]]$}{Parallel Reduction}{AppAbs, IfTrue, IfFalse, JRefl}
+\caption{Parallel reduction ($\beta$ rules only) }
+\label{fig:par}
+\end{figure}
 
 We prove, through standard
-techniques~\citet{takahashi-parallel-reduction,plfa22.08}, the following
+techniques~\citep{takahashi-parallel-reduction,plfa22.08}, the following
 properties of parallel reduction.
-\begin{lemma}[Par Refl\footnote{\dotv{join.v}{Par\_refl}}]
+
+\begin{lemma}[Reflexivity (parallel reduction)\footnote{\dotv{join.v}{Par\_refl}}]
   \label{lemma:parrefl}
   For all terms $[[a]]$, $[[a => a]]$.
 \end{lemma}
-\begin{lemma}[Par cong\footnote{\dotv{join.v}{par\_cong}}]
+\begin{lemma}[Congruence (p.r.)\footnote{\dotv{join.v}{par\_cong}}]
   \label{lemma:parcong}
   If $[[a0 => a1]]$ and $[[b0 => b1]]$, then $[[a0 { b0 / x } => a1 {
     b1 / x }]]$.
 \end{lemma}
-\begin{corollary}[Par subst\footnote{\dotv{join.v}{par\_subst}}]
+\begin{corollary}[Substitution (p.r.)\footnote{\dotv{join.v}{par\_subst}}]
   \label{lemma:parsubst}
   If $[[a0 => a1]]$, then $[[a0 {b / x } => a1 {b / x}]]$ for arbitrary $[[b]]$.
 \end{corollary}
-\begin{lemma}[Par diamond\footnote{\dotv{join.v}{par\_confluent}}]
+\begin{lemma}[Diamond property\footnote{\dotv{join.v}{par\_confluent}}]
   \label{lemma:pardiamond}
   If $[[a => b0]]$ and $[[a => b1]]$, then there exists some term
   $[[c]]$ such that $[[b0 => c]]$ and $[[b1 => c]]$.
@@ -428,46 +424,48 @@ properties of parallel reduction.
 Convertibility is an equivalence relation. The key step in
 proving transitivity is showing the diamond property for parallel reduction.
 
-\begin{lemma}[Convertibility refl\footnote{\dotv{join.v}{Coherent\_reflexive}}]
+\begin{lemma}[Reflexivity (convertibility)\footnote{\dotv{join.v}{Coherent\_reflexive}}]
   \label{lemma:coherencerefl}
   For all terms $[[a]]$, $[[a <=> a]]$.
 \end{lemma}
-\begin{lemma}[Convertibility sym\footnote{\dotv{join.v}{Coherent\_symmetric}}]
+\begin{lemma}[Symmetry (convertibility)\footnote{\dotv{join.v}{Coherent\_symmetric}}]
   \label{lemma:coherencesym}
   If $[[a <=> b]]$, then $[[b <=> a]]$.
 \end{lemma}
-\begin{lemma}[Convertibility trans\footnote{\dotv{join.v}{Coherent\_transitive}}]
+\begin{lemma}[Transitivity (convertibility)\footnote{\dotv{join.v}{Coherent\_transitive}}]
   \label{lemma:coherencetrans}
   If $[[a0 <=> a1]]$ and $[[a1 <=> a2]]$, then $[[a0 <=> a2]]$.
 \end{lemma}
 
-The convertibility relation that we use for conversion in \lang{} is unusual
+The convertibility relation that we use for definitional equality is unusual
 in that it is directly defined via parallel reduction, instead of using the
-related notion of $\beta$-equivalence~\citep{barendregt1991introduction,coquand1990:cic}. This choice
-does not change the language definition; a detailed argument of the
+related notion of $\beta$-equivalence~\citep{barendregt1991introduction,coquand1990:cic}.
+This choice does not change the language definition; a detailed argument of the
 equivalence between $[[a <=> b]]$ and untyped $\beta$-equivalence can be found
 in \citet{barendregt:lambda-calculi-with-types} and
 \citet{takahashi-parallel-reduction}. However, this choice simplifies later
 proofs, as we discuss in Section~\ref{sec:discuss}.
 
-Our definition of equality is untyped: the judgement does not require the two
+Our definitional equality is untyped: the judgment does not require the two
 terms to type check and have the same type. The use of an untyped relation for
 conversion is similar to Barendregt's Pure Type
 Systems~\cite{barendregt1991introduction} and differs
-from MLTT~\citep{Martin-Lof-1973}, where the judgmental
+from MLTT~\citep{Martin-Lof-1973}, where definitional
 equality takes the form $\Gamma \vdash a \equiv b : A$.
 % from which one can
 % usually derive $[[G |- a : A]]$ and $[[G |- b : A]]$ after proving subject
 % reduction.
-By working with an untyped judgement, we can establish its
-properties independently from the type system and the logical relation, using
+By working with an untyped judgment, we can establish its
+properties independently of the type system and the logical relation, using
 well-established syntactic approaches.
 %
 \citet{siles2012pure} show the equivalence of Barendregt's Pure Type
 System, which employs untyped equality, and
-its variant that uses typed judgmental equality. This assures us that we do
+its variant that uses typed equality. This assures us that we do
 not lose generality working with a system with untyped
 conversion.
+\jc{I'm not too fond of this last sentence because we \emph{do} lose
+the ability to add typed $\eta$ equivalences.}
 \yl{removed the eta equivalence sentence because it might give the
   wrong message that we extended Siles' work with eta:
  Furthermore, we discuss how this definition can be extended with
@@ -478,62 +476,80 @@ Section~\ref{sec:discuss}.
 
 \subsection{Syntactic Typing}
 
-\begin{figure}[H]
-\begin{minipage}{0.9\textwidth}
-\drules[Ctx]{$[[ |- G]]$}{Context Well-Formedness}{}
-\[ \drule{Ctx-Empty} \qquad \drule[width=3in]{Ctx-Cons} \]
-\drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv,
- Void, Bool, True, False}
-\[ \drule[width=5in]{T-If}\]
-\[ \drule[width=3in]{T-Eq} \qquad \drule{T-Refl} \]
-\[ \drule[width=4in]{T-J} \]
-\end{minipage}
-\caption{Syntactic typing for \lang}
+\begin{figure}
+\begin{mathpar}
+  \fbox{$[[ |- G]]$} \hfill \textit{(Context well-formedness)} \\
+  \drule{Ctx-Empty} \drule[width=3in]{Ctx-Cons}
+\end{mathpar}
+\drules[T]{$[[G |-  a : A]]$}{Typing}{Var, Set, Pi, Abs, App, Conv, Void, Absurd, Bool, True, False}
+\begin{mathpar}
+  \drule[width=3in]{T-If} \drule[width=2in]{T-Eq} \\
+  \drule{T-Refl} \drule[width=4in]{T-J}
+\end{mathpar}
+\caption{Syntactic typing}
 \label{fig:typing}
 \end{figure}
 
-Figure~\ref{fig:typing} gives the full typing rules for \lang{}. The premises
-wrapped in \colorbox{lightgray}{gray} boxes can be shown to be admissible
-syntactically, though some of them are required to strengthen the inductive
+Figure~\ref{fig:typing} gives the complete typing rules. The premises
+highlighted in \colorbox{lightgray}{gray} can be shown to be admissible
+syntactically, though they are required to strengthen the inductive
 hypothesis of the fundamental theorem.
 
-The typing rules of \lang{} are standard for dependent
+These rules are standard for dependent
 type theories.  The variable rule, \rref{T-Var}, uses the auxiliary relation
-$[[x : A in G]]$, that holds when a variable declaration is found in the
-typing context.  The typing of universes ensures that each one belongs to the
-next higher level.  \Rref{T-Pi} ensures predicative quantification by
-requiring that all parts of the type be typeable at the same universe
+$[[x : A in G]]$ that holds when a variable declaration is found in the
+typing context. \Rref{T-Set} ensures that each universe belongs to the
+next higher level. \Rref{T-Pi} ensures predicative quantification by
+requiring that the domain and codomain types be typeable at the same universe
 level. \Rref{T-Abs} ensures that all functions have well-formed dependent
-types. In an application (\rref{T-App}) the argument is substituted for the
+types. In the application \rref{T-App}, the argument is substituted for the
 variable in the result type.
-
 \Rref{T-Conv} uses the convertibility relation from earlier
 as our equality judgment for type conversion.
 
 \scw{Cassia did not follow our discussion of dependent pattern matching. We need to expand}
-The elimination form for booleans, \rref{T-If}, demonstrates dependent pattern
-matching.  The result type of this expression, $[[A {a / x}]]$, is composed of some
-\emph{motive} $[[A]]$, a type where its single free variable has been replaced
-with the condition of the if expression. When typing the true branch, this
-substitution replaces the variable by $[[true]]$, and similarly for the false
-branch. As a result, the type system communicates the information gained from
-the test to each of the branches of the expression.
+The elimination form for booleans in \rref{T-If} demonstrates dependent pattern
+matching: the type of the expression \emph{depends} on the term being matched.
+This result type involves a \emph{motive} $[[A]]$ abstracted over a boolean.
+For the overall expression, $[[x]]$ is filled in by the match target $[[a]]$,
+while in the $[[true]]$ (resp. $[[false]]$) branch, $[[x]]$ is filled in by
+$[[true]]$ (resp. $[[false]]$). Informally, the type of each branch is more
+precise than those in a nondependent match expression, since it knows which
+branch it is in. An alternative perspective is that to prove $[[A {a/x}]]$, it
+suffices to show that it holds for the two canonical cases that $[[a]]$ is
+$[[true]]$ or is $[[false]]$.
 
-A similar sort of dependent pattern matching occurs when eliminating identity
-types. Such types are checked for well-formedness with \rref{T-Eq} and
-introduced by \rref{T-Refl}. In \rref{T-J}, the elimination form, the subterm
-$p$ is a proof of an equality between $[[a]]$ and $[[b]]$. The subterm $[[c]]$
-is the body of the elimination form. In this rule, $[[B]]$ is the motive and
-has two free variables.  When checking $[[c]]$, the substitution for these
-variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
-witnessing the information gained through dependent pattern matching.
+% The elimination form for booleans, \rref{T-If}, demonstrates dependent pattern
+% matching.  The result type of this expression, $[[A {a / x}]]$, is composed of some
+% \emph{motive} $[[A]]$, a type where its single free variable has been replaced
+% with the condition of the if expression. When typing the true branch, this
+% substitution replaces the variable by $[[true]]$, and similarly for the false
+% branch. As a result, the type system communicates the information gained from
+% the test to each of the branches of the expression.
 
-The universe hierarchy and the boolean base type gives \lang{} the
-ability to compute a type using a term as input, a feature commonly referred to
-as large elimination. For
-example, we can type check the function $[[\ x . if x Bool Void]]$,
-which returns either $[[Bool]]$ or $[[Void]]$ depending on whether its
-input is $[[true]]$ or $[[false]]$.
+Dependent pattern matching similarly occurs when eliminating equality types.
+Their well-formedness in \rref{T-Eq} enforces that the endpoints of the
+equality have the same type, and there is a single canonical proof introduced
+by \rref{T-Refl}. The elimination form in \rref{T-J} takes a proof of an
+equality $[[p]]$ between $[[a]]$ and $[[b]]$, as well as an elimination body
+$[[c]]$. Here, the motive $[[B]]$ is abstracted over the right endpoint $[[x]]$
+and an equality $[[y]]$ between it and the fixed left endpoint $[[a]]$. The
+eliminator states that to prove $[[B{b, p / x, y}]]$, it suffices to prove the
+canonical case that $[[p]]$ is $[[refl]]$ (and consequently that $[[b]]$ is
+$[[a]]$), which is witnessed by $[[c]]$.
+
+% In \rref{T-J}, the elimination form, the subterm
+% $p$ is a proof of an equality between $[[a]]$ and $[[b]]$. The subterm $[[c]]$
+% is the body of the elimination form. In this rule, $[[B]]$ is the motive and
+% has two free variables.  When checking $[[c]]$, the substitution for these
+% variables changes from $[[b]]$ to $[[a]]$ and from $[[p]]$ to $[[refl]]$,
+% witnessing the information gained through dependent pattern matching.
+
+The universe hierarchy and the boolean base type give the
+ability to compute a type using a term as input, referred to as
+\emph{large elimination}. For example, the well-typed function
+$[[\ x . if x Bool Void]]$ returns either $[[Bool]]$ or $[[Void]]$
+depending on whether its input is $[[true]]$ or $[[false]]$.
 % Working with a system with untyped equality has the huge benefit that
 % the confluence result for untyped parallel reduction
 % (Lemma~\ref{lemma:pardiamond}) is easily derivable without having to
