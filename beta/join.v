@@ -32,6 +32,10 @@ Inductive Par : tm -> tm -> Prop :=
 | P_Void :
   (* -------- *)
   tVoid ⇒ tVoid
+| P_Absurd b0 b1 :
+  (b0 ⇒ b1) ->
+  (* ----------------------- *)
+  (tAbsurd b0) ⇒ (tAbsurd b1)
 | P_Pi A0 A1 B0 B1 :
   (A0 ⇒ A1) ->
   (B0 ⇒ B1) ->
@@ -427,6 +431,7 @@ Function tstar (a : tm) :=
   | var_tm i => a
   | tUniv _ => a
   | tVoid => a
+  | tAbsurd b => tAbsurd (tstar b)
   | tPi A B => tPi (tstar A) (tstar B)
   | tAbs a => tAbs (tstar a)
   | tApp (tAbs a) b =>  (tstar a) [(tstar b)..]

@@ -114,6 +114,11 @@ Proof.
     by asimpl.
   (* Void *)
   - hauto l:on use:SemWt_Univ.
+  (* Absurd *)
+  - move => > _ ih _ /SemWt_Univ ihA ρ hρ.
+    case /(_ ρ hρ) : ihA => P /[dup] ? /adequacy => [[_ ?]].
+    case /(_ ρ hρ) : ih => j [_] [/InterpExt_Void_inv ->] ?.
+     hauto lq:on use:wne_absurd.
   (* Pi *)
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.

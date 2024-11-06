@@ -26,6 +26,7 @@ Definition tm_to_head (a : tm) :=
   | tTrue => Some hTrue
   | tFalse => Some hFalse
   | tVoid => Some hVoid
+  | tAbsurd _ => None
   | tIf a b c => None
   | tApp a b => None
   | tUniv _ => Some hUniv
@@ -161,6 +162,15 @@ Proof.
   elim : Γ a0 T / h => //.
   - hauto lq:on use:Coherent_reflexive.
   - hauto lq:on use:Coherent_transitive.
+Qed.
+
+Lemma Wt_Absurd_inv Γ b A (h : Γ ⊢ (tAbsurd b) ∈ A) :
+  Γ ⊢ b ∈ tVoid.
+Proof.
+  move E : (tAbsurd b) h => a h.
+  move : b E.
+  elim : Γ a A / h => //.
+  move => > ? _ _ _ ? [] -> //.
 Qed.
 
 (* -------------------------------------------------- *)
@@ -512,6 +522,8 @@ Lemma subject_reduction a b (h : a ⇒ b) : forall Γ A,
     Γ ⊢ a ∈ A -> Γ ⊢ b ∈ A.
 Proof.
   elim : a b /h => //.
+  - move => > _ ih ? ? /[dup] /Wt_Absurd_inv /ih ? /Wt_regularity => [[?] ?].
+    apply : T_Absurd => //. eauto.
   - move => A0 A1 B0 B1 h0 ih0 h1 ih1 Γ A /Wt_Pi_inv.
     intros (i & hA0 & hAB0 & hACoherent & j & hA).
     have ? : ⊢ Γ by eauto with wff.
@@ -613,6 +625,7 @@ Definition is_value (a : tm) :=
   | tTrue => true
   | tFalse => true
   | tVoid => true
+  | tAbsurd _ => false
   | tIf a b c => false
   | tApp a b => false
   | tUniv _ => true
@@ -655,6 +668,22 @@ Proof.
 Qed.
 
 (* Canonical forms lemmas *)
+
+Lemma wt_void_canon b :
+  nil ⊢ b ∈ tVoid ->
+  is_value b -> False.
+Proof.
+  case : b => //.
+  - qauto l:on use:Wt_Abs_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Pi_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Void_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Univ_winv, Coherent_consistent.
+  - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_True_False_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Bool_winv, Coherent_consistent.
+  - qauto l:on use:Wt_Eq_inv, Coherent_consistent.
+  - qauto l:on use:Wt_Refl_inv, Coherent_consistent.
+Qed.
 
 Lemma wt_pi_canon a A B :
   nil ⊢ a ∈ (tPi A B) ->
@@ -709,6 +738,7 @@ Proof.
   move E : nil h => Γ h.
   move : E.
   elim: Γ a A/h; try hauto q:on depth:2.
+  - sauto lq:on use:wt_void_canon.
   - hauto lq:on rew:off ctrs:Par use:wt_pi_canon, Par_refl.
   - hauto lq:on rew:off use:wt_switch_canon, Par_refl.
   - hauto lq:on rew:off ctrs:Par use:wt_refl_canon, Par_refl.

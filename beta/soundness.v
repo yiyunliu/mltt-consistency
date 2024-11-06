@@ -120,6 +120,10 @@ Proof.
     by asimpl.
   (* Void *)
   - hauto l:on use:SemWt_Univ.
+  (* Absurd *)
+  - move => > _ ihb _ _ ρ hρ.
+    case /(_ ρ hρ) : ihb => _ [_] [/InterpExt_Void_inv ->].
+    contradiction.
   (* Pi *)
   - move => Γ i A B _ /SemWt_Univ h0 _ /SemWt_Univ h1.
     apply SemWt_Univ.

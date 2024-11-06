@@ -5,6 +5,7 @@ tAbs : (tm -> tm) -> tm
 tApp : tm -> tm -> tm
 tPi : tm -> (tm -> tm) -> tm
 tVoid : tm
+tAbsurd : tm -> tm
 tUniv : nat -> tm
 tTrue : tm
 tFalse : tm

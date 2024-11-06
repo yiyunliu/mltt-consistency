@@ -10,6 +10,7 @@ Inductive tm  : Type :=
   | tApp : ( tm   ) -> ( tm   ) -> tm 
   | tPi : ( tm   ) -> ( tm   ) -> tm 
   | tVoid : tm 
+  | tAbsurd : ( tm   ) -> tm 
   | tUniv : ( nat   ) -> tm 
   | tTrue : tm 
   | tFalse : tm 
@@ -29,6 +30,9 @@ Lemma congr_tPi  { s0 : tm   } { s1 : tm   } { t0 : tm   } { t1 : tm   } (H1 : s
 Proof. congruence. Qed.
 
 Lemma congr_tVoid  : tVoid  = tVoid  .
+Proof. congruence. Qed.
+
+Lemma congr_tAbsurd  { s0 : tm   } { t0 : tm   } (H1 : s0 = t0) : tAbsurd  s0 = tAbsurd  t0 .
 Proof. congruence. Qed.
 
 Lemma congr_tUniv  { s0 : nat   } { t0 : nat   } (H1 : s0 = t0) : tUniv  s0 = tUniv  t0 .
@@ -65,6 +69,7 @@ Fixpoint ren_tm   (xitm : ( fin ) -> fin) (s : tm ) : tm  :=
     | tApp  s0 s1 => tApp  ((ren_tm xitm) s0) ((ren_tm xitm) s1)
     | tPi  s0 s1 => tPi  ((ren_tm xitm) s0) ((ren_tm (upRen_tm_tm xitm)) s1)
     | tVoid   => tVoid 
+    | tAbsurd  s0 => tAbsurd  ((ren_tm xitm) s0)
     | tUniv  s0 => tUniv  ((fun x => x) s0)
     | tTrue   => tTrue 
     | tFalse   => tFalse 
@@ -85,6 +90,7 @@ Fixpoint subst_tm   (sigmatm : ( fin ) -> tm ) (s : tm ) : tm  :=
     | tApp  s0 s1 => tApp  ((subst_tm sigmatm) s0) ((subst_tm sigmatm) s1)
     | tPi  s0 s1 => tPi  ((subst_tm sigmatm) s0) ((subst_tm (up_tm_tm sigmatm)) s1)
     | tVoid   => tVoid 
+    | tAbsurd  s0 => tAbsurd  ((subst_tm sigmatm) s0)
     | tUniv  s0 => tUniv  ((fun x => x) s0)
     | tTrue   => tTrue 
     | tFalse   => tFalse 
@@ -108,6 +114,7 @@ Fixpoint idSubst_tm  (sigmatm : ( fin ) -> tm ) (Eqtm : forall x, sigmatm x = (v
     | tApp  s0 s1 => congr_tApp ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm sigmatm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((idSubst_tm sigmatm Eqtm) s0) ((idSubst_tm (up_tm_tm sigmatm) (upId_tm_tm (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((idSubst_tm sigmatm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -131,6 +138,7 @@ Fixpoint extRen_tm   (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (Eqtm : f
     | tApp  s0 s1 => congr_tApp ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm xitm zetatm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((extRen_tm xitm zetatm Eqtm) s0) ((extRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upExtRen_tm_tm (_) (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((extRen_tm xitm zetatm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -154,6 +162,7 @@ Fixpoint ext_tm   (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm ) (Eqtm : fo
     | tApp  s0 s1 => congr_tApp ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm sigmatm tautm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((ext_tm sigmatm tautm Eqtm) s0) ((ext_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (upExt_tm_tm (_) (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((ext_tm sigmatm tautm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -174,6 +183,7 @@ Fixpoint compRenRen_tm    (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) (rho
     | tApp  s0 s1 => congr_tApp ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm xitm zetatm rhotm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((compRenRen_tm xitm zetatm rhotm Eqtm) s0) ((compRenRen_tm (upRen_tm_tm xitm) (upRen_tm_tm zetatm) (upRen_tm_tm rhotm) (up_ren_ren (_) (_) (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((compRenRen_tm xitm zetatm rhotm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -197,6 +207,7 @@ Fixpoint compRenSubst_tm    (xitm : ( fin ) -> fin) (tautm : ( fin ) -> tm ) (th
     | tApp  s0 s1 => congr_tApp ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm xitm tautm thetatm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((compRenSubst_tm xitm tautm thetatm Eqtm) s0) ((compRenSubst_tm (upRen_tm_tm xitm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_ren_subst_tm_tm (_) (_) (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((compRenSubst_tm xitm tautm thetatm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -220,6 +231,7 @@ Fixpoint compSubstRen_tm    (sigmatm : ( fin ) -> tm ) (zetatm : ( fin ) -> fin)
     | tApp  s0 s1 => congr_tApp ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0) ((compSubstRen_tm (up_tm_tm sigmatm) (upRen_tm_tm zetatm) (up_tm_tm thetatm) (up_subst_ren_tm_tm (_) (_) (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((compSubstRen_tm sigmatm zetatm thetatm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -243,6 +255,7 @@ Fixpoint compSubstSubst_tm    (sigmatm : ( fin ) -> tm ) (tautm : ( fin ) -> tm 
     | tApp  s0 s1 => congr_tApp ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0) ((compSubstSubst_tm (up_tm_tm sigmatm) (up_tm_tm tautm) (up_tm_tm thetatm) (up_subst_subst_tm_tm (_) (_) (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((compSubstSubst_tm sigmatm tautm thetatm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -266,6 +279,7 @@ Fixpoint rinst_inst_tm   (xitm : ( fin ) -> fin) (sigmatm : ( fin ) -> tm ) (Eqt
     | tApp  s0 s1 => congr_tApp ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm xitm sigmatm Eqtm) s1)
     | tPi  s0 s1 => congr_tPi ((rinst_inst_tm xitm sigmatm Eqtm) s0) ((rinst_inst_tm (upRen_tm_tm xitm) (up_tm_tm sigmatm) (rinstInst_up_tm_tm (_) (_) Eqtm)) s1)
     | tVoid   => congr_tVoid 
+    | tAbsurd  s0 => congr_tAbsurd ((rinst_inst_tm xitm sigmatm Eqtm) s0)
     | tUniv  s0 => congr_tUniv ((fun x => (eq_refl) x) s0)
     | tTrue   => congr_tTrue 
     | tFalse   => congr_tFalse 
@@ -316,6 +330,8 @@ Lemma renRen'_tm    (xitm : ( fin ) -> fin) (zetatm : ( fin ) -> fin) : (funcomp
 Proof. exact ((FunctionalExtensionality.functional_extensionality _ _ ) (fun n => renRen_tm xitm zetatm n)). Qed.
 
 End tm.
+
+
 
 
 
