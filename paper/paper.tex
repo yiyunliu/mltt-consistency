@@ -344,10 +344,12 @@ from one end of the equality to the other. Finally, we have booleans along with
 the standard boolean values and conditional expressions.
 
 Our reduction and typing relations are defined in terms of \emph{simultaneous
-substitutions} $[[rho]]$, which are mappings from variables to terms. We
-use $[[idtm]]$ as the identity substitution, and the extension operator
+substitutions} $[[rho]]$, which are mappings from variables to terms. Simultaneous
+substitutions are more convenient to reason about than single substitutions,
+especially when dealing with semantic typing in Section~\ref{sec:logrelproof}.
+We use $[[idtm]]$ as the identity substitution, and the extension operator
 $[[rho .: x -> a]]$ updates the substitution $[[rho]]$ to map the variable
-$[[x]]$ to $[[a]]$ rather than $[[rho x]]$.
+$[[x]]$ to $[[a]]$ rather than to $[[rho x]]$.
 % When traversing under binders (e.g. in the
 % $[[(\ x . a) { rho }]]$ case), it must be the case that $[[rho]]$ maps the
 % bound variable to itself and that the bound variable does not appear freely in
@@ -360,18 +362,10 @@ $[[x]]$ to $[[a]]$ rather than $[[rho x]]$.
   Coq proof. }
 \yl{I agree. Should mention upfront that the presentation is not
   watertight and rigorous, though we have one in our mechanization}
-The substitution operator $[[a {rho}]]$ replaces every free variable $[[x]]$ of
+The substitution operation $[[a {rho}]]$ replaces every free variable $[[x]]$ of
 $[[a]]$ by $[[rho x]]$ simultaneously. A single substitution corresponds to
 composing extension and identity:
 $[[a { b / x }]] \coloneqq [[a { idtm .: x -> b }]]$.
-
-When reasoning about logical relations, it is more convenient to formulate
-definitions in terms of simultaneous substitutions than single substitutions,
-such as semantic typing in Section~\ref{sec:logrelproof}.
-\jc{I've rewritten this paragraph to be more succinct,
-but I'm still not certain it's necessary at all.
-We're not focussing on the merits of simultaneous substitution over
-other representations of substitution and binding, after all.}
 
 \subsection{Definitional equality via parallel reduction}
 
@@ -622,28 +616,28 @@ depending on whether its input is $[[true]]$ or $[[false]]$.
   Is there a cost to an untyped relation?
 }
 
-Before we define our logical relation, we first formally specify the
-consistency property that we want to prove.
+Our ultimate goal is to prove the following consistency property for our type theory.
+
 \begin{theorem}[Logical Consistency]
   \label{theorem:consistency}
   The judgment $[[empty |- a : Void ]]$ is not derivable.
 \end{theorem}
 The property can be formulated in a simply typed language, where
-$[[Void]]$ is similarly defined as a type that has no term. A related
-property, referred to as the termination property (for closed terms),
+$[[Void]]$ is a type with no constructors. A related
+property, the \emph{termination property} (for closed terms),
 is commonly used in introductory materials such as
 \citet{skorstengaard2019introduction}, \citet{pierce2002types}, and
 \citet{harpertait} to motivate the need for a logical relation.
 
-A naive attempt to proving Theorem~\ref{theorem:consistency} by
-induction on the derivation $[[empty |- a : Void]]$ would succeed at
+A na\"ive attempt at proving Theorem~\ref{theorem:consistency} by
+induction on the derivation $[[empty |- a : Void]]$ would succeed in
 almost all cases except for \rref{T-App}. In the application
 case, we are given $[[empty |- b : Pi x : A . B]]$ and $[[empty |- a : A]]$, and
 the equality that $[[B {a / x} = Void]]$. Our goal is to show that
-$[[empty |- b a : Void]]$ is not possible. However, note that there is
-nothing we know of $[[b]]$ or $[[a]]$ from the induction hypothesis
-because neither $[[Pi x : A . B]]$ nor $[[A]]$ is equal to $[[Void]]$.
-We have no way of deriving a contradiction from $[[empty |- b a :
+$[[empty |- b a : Void]]$ is not possible. Unfortunately, there is
+nothing we know about $[[b]]$ or $[[a]]$ from the induction hypothesis
+because neither $[[Pi x : A . B]]$ nor $[[A]]$ are equal to $[[Void]]$,
+so we have no way of deriving a contradiction from $[[empty |- b a :
 Void]]$. The takeaway from this failed attempt is that, in order to
 derive the consistency, we need to know something about types other
 than $[[Void]]$. From a pragmatic point of view, proof by logical
@@ -651,32 +645,35 @@ relation can be seen as a sophisticated way of strengthening the
 induction hypothesis. From the strengthened property, the fundamental
 theorem, we will be able to derive consistency as a corollary.
 
-The complexity of applying proof by logical relation to dependent types stems
-from the fact that the logical relation is much harder to define. In
-simply typed languages, the logical relation is defined as a recursive
-function over the type $[[A]]$.
-In dependent types, the type
-$[[A]]$ can take the form $[[(\ x . x ) Bool]]$. To assign meaning to
-this type, we need to first reduce it to $[[Bool]]$. However, we
-cannot write a function that performs the reduction because we do not
-know the termination of well-typed terms a priori. As a result, we
-define the logical relation as an inductively defined relation,
-reminiscent of how we specify the reduction graph of a partial
-function; the functionality of the relation can later be recovered in Lemma~\ref{lemma:logreldeter}.
+\jc{Minor comment but ``proof by logical relation'' sounds grammatically strange to me,
+but I'm not sure whether ``proof by logical relations'' or
+``proof by a logical relation'' would be any more correct...}
+
+The challenge behind applying proofs by logical relation to dependent types
+stems from the difficulty in defining the logical relation itself. In simply
+typed languages, the logical relation is a recursive function over the type
+$[[A]]$. In dependently typed languages, the type $[[A]]$ can take the form
+$[[(\ x . x ) Bool]]$, for example. To assign meaning to this type, we need to
+first reduce it to $[[Bool]]$. However, we cannot write a function that
+performs the reduction because we do not know the termination of well-typed
+terms a priori. As a result, we define the logical relation as an inductively
+defined relation, reminiscent of how we specify the reduction graph of a
+partial function.
+We later recover functionality of the relation in Lemma~\ref{lemma:logreldeter}.
 
 \subsection{Definition of the Logical Relation}
-\begin{figure}[H]
+
+\begin{figure}
 \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Set, Void, Bool, Eq, Red}
 \[ \drule[width=5in]{I-Pi} \]
 \caption{Logical relation for \lang}
 \label{fig:logrel}
 \end{figure}
+
 The logical relation for \lang{}, which takes the form $[[Interp I i A
-S]]$, is defined as an inductively generated relation (Figure~\ref{fig:logrel}).
+S]]$, is defined as an inductively generated relation in Figure~\ref{fig:logrel}.
 % The logical relation takes the form $[[Interp I i A S]]$.
-Metavariables $[[A]]$ and $[[i]]$ stand for terms and natural
-numbers respectively, as introduced earlier in
-Figure~\ref{fig:syntax}.
+The metavariables $[[A]]$ and $[[i]]$ are terms and naturals, respectively.
 % \scw{Many introductory texts define the relation as a recursive function
 % over type structure, or step-indices. You use an inductive relation instead, why?}
 %\yl{resolved}
@@ -691,41 +688,40 @@ Figure~\ref{fig:syntax}.
 % looking. Need to explain.  }
 % \yl{resolved}
 The metavariables $[[I]]$ and $[[S]]$ are
-sets with the following signatures.
+sets with the following signatures,
+using $[[PowerSet STm]]$ to denote the powerset of the set of terms.
 \[
     [[I]] \in [[ { j | j < i  } ->  PowerSet STm ]] \qquad\qquad\qquad
     [[S]] \in [[PowerSet STm]]
 \]
-The notation $[[PowerSet STm]]$ denotes the powerset of the set of
-\lang{} terms.
-The function $[[I]]$ is a family of sets of terms indexed by
-natural numbers strictly less than the parameter $[[i]]$, which
-represents the current universe level.  In \rref{I-Set}, the function
-$[[I]]$ is used to define the meaning of
+The function $[[I]]$ is a family of sets of terms indexed by natural numbers
+strictly less than $[[i]]$, which represents the current universe level.
+In \rref{I-Set}, the function $[[I]]$ is used to define the meaning of
 universes that are strictly smaller than the current level $[[i]]$. The
-restriction $[[j < i]]$ in \rref{I-Set} ensures the predicativity of the system.
+restriction $[[j < i]]$ in \rref{I-Set} ensures predicativity of the system.
 
-We tie the knot and obtain an interpretation for all universe levels
-below. The judgment $[[InterpR i A S]]$ reads that the type $[[A]]$ is a
-level-$[[i]]$ type \emph{semantically} inhabited by terms from the set
-$[[S]]$. 
+Predicativity allows us to tie the knot and obtain an interpretation for all
+universe levels as the judgment $[[InterpR i A S]]$, which says that the type
+$[[A]]$ is a type at universe level $[[i]]$, \emph{semantically} inhabited by
+terms from the set $[[S]]$.
+
 \begin{definition}[Logical relation for all universe levels]
 \label{fig:logrelrec}
-Define $[[InterpR i A S]]$ recursively through the well-foundedness of the $<$
+$[[InterpR i A S]]$ is defined recursively by well-foundedness of the $<$
 relation on natural numbers.
 \begin{equation*}
     [[InterpR i A S]] := [[ Interp I i A S  ]], \text{where } [[I j]]
     := [[{A | exists S , InterpR j A S}]] \text{ for } [[j < i]]
 \end{equation*}
 \end{definition}
-Definition~\ref{fig:logrelrec} explains how the $[[j
-< i]]$ constraint in \rref{I-Set} makes our system predicative; the
-interpretation of the $[[i]]_{th}$ universe is only dependent on
-universes strictly lower than $[[i]]$, which have already been defined.
-This restriction ensures that that the relation is well-defined: without 
-it the definition of $[[InterpR i A S]]$ would
-not be well-founded; $[[Interp I i A S]]$ would call $[[I]]$ on
-universe levels greater than or equal to $[[i]]$, which are yet to be defined.
+
+Our system is predicative because the interpretation of the $[[i]]$th universe
+is dependent only on universes strictly below $[[i]]$,
+which have already been defined.
+This restriction ensures that the relation is well defined; otherwise, the
+definition of $[[InterpR i A S]]$ would not be well founded, and
+$[[Interp I i A S]]$ could call $[[I]]$ on universe levels greater than
+or equal to $[[i]]$, which are yet to be defined.
 %% SCW: removing the constraing wouldn't result in any system at all
 % Removing the ordering constraint would result in a
 % system where one can encode Girard's
@@ -745,24 +741,18 @@ i A S]]$ are given directly, with the implicit understanding that the
 relation is an inductive definition nested inside a recursive
 function over the universe level $[[i]]$. We choose
 the more explicit definition not only because it is directly definable
-in proof assistants that lack induction-recursion,
-% where inductive definitions must appear
-%at the top level,
+in proof assistants that lack induction--recursion,
 but also because it makes clear the induction
-principle we are allowed to use when reasoning about $[[InterpR i A
-S]]$.
-
-% The paragraph below might be useful but I don't know how to phrase
-% it well
+principle we are allowed to use when reasoning about $[[InterpR i A S]]$.
 
 % The most general format of the induction principle over
 % $[[InterpR i A S]]$ is first by strong induction over the universe level $[[i]]$
 % followed by structural induction over $[[Interp I i A S]]$. As
 % examples, ... (\rref{I-Set} and \rref{I-Red}).
 
-We next take a closer look at the inductive relation $[[Interp I i A S]]$, defined 
-in Figure~\ref{fig:logrel}.
-\Rref{I-Void, I-Bool} capture terms that \emph{behave like} the inhabitants
+We next take a closer look at the remaining rules for the inductive relation
+$[[Interp I i A S]]$ in Figure~\ref{fig:logrel}.
+\Rref{I-Void, I-Bool} capture terms that \emph{behave} like the inhabitants
 of the $[[Void]]$ and $[[Bool]]$ types under an empty context. For
 example, the $[[Void]]$ type should not have any inhabitants under the
 empty context, where as the $[[Bool]]$ type only contains terms that
