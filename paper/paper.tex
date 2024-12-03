@@ -785,86 +785,75 @@ The derivation for $[[Interp I i (\ x . x) Bool { a | a =>+ true \/ a =>+ false 
 therefore follows by composing \rref{I-Red} and \rref{I-Bool}.
 
 \Rref{I-Pi} is the most complex rule in our logical relation.
-Consider first the following simplified \rref{I-PiAlt}, which follows from \rref{I-Pi}.
+It states that, to build the interpretation of a dependent function type,
+we first require the interpretation $[[S]]$ of its domain $[[A]]$.
+Because the codomain depends on the function input,
+rather than a single interpretation, we require an interpretation $[[F a]]$
+of the codomain $[[B {a / x}]]$ for each $[[a in S]]$.
+The interpretation of the overall function type is the set of terms $[[b]]$
+such that for every term $[[a]]$ in the interpretation $[[S]]$ of $[[A]]$,
+$[[b a]]$ is in the interpretation $[[F a]]$ of $[[B {a / x}]]$.
+
+However, this form of the rule is less convenient to work with, since it
+requires constructing the sets $[[F]]$ separately from the proof that they are
+indeed interpretations of $[[B]]$. A more convenient form is the following
+\rref{I-PiAlt}, which combines the existence of interpretations of the codomain
+with their proofs.
 
 \begin{center}
   \drule[]{I-PiAlt}
 \end{center}
 
-\Rref{I-PiAlt} directly captures the meaning of
-a well-behaved dependent function type. The preconditions of
-the rule says that the function type $[[Pi x : A . B]]$ has an interpretation
-if its input type $[[A]]$ can be interpreted as some set $[[S]]$, and for all
-terms $[[a in S]]$, the type $[[B {a / x}]]$, obtained by substituting $[[a]]$
-into the output type $[[B]]$, has some semantic interpretation $[[S0]]$. In its
-conclusion, the  interpretation of $[[Pi x : A . B]]$ is the set of terms
-$[[b]]$ such that for all $[[a in S]]$, where $[[S]]$ is an interpretation of
-$[[A]]$, the application form $[[b a]]$ belongs to all possible interpretations
-of $[[B {a  / x}]]$. The second precondition ensures at least one interpretation
-exists for each $[[B {a / x}]]$ where $[[a in S]]$.
+The second precondition now states that for every $[[a in S]]$,
+there must exist some interpretation $[[S0]]$ of $[[B {a / x}]]$.
+The interpretation of the overall function type then states that $[[b a]]$
+must be in every interpretation $[[S0]]$ of $[[B {a / x}]]$.
+Later, Lemma~\ref{lemma:logreldeter} proves functionality of the interpretation
+of types, which guarantees that there must only be one such interpretation.
+This alternate rule for the interpretation of function types follows from \rref{I-Pi}.
 
-\jc{I think at this point it's unclear why \rref{I-PiAlt} is shaped the way it is.
-I found myself asking: If in the second precondition we've established the existence of $[[S0]]$,
-why do we need to quantify over all interpretations $[[S0]]$?
-In fact, instead of the second precondition,
-why can't split it into two and say that there exists some family of sets
-$S_0 : \forall a, a \in S \to [[PowerSet STm]]$
-such that $\forall a, (m : a \in S) \to [[Interp I i B { a / x } (# S0 a m #)]]$,
-then conclude that the intepretation of the function type yields a set over $[[b]]$
-such that $\forall a, (m : a \in S) \to [[b in S0 a m]]$?
-As far as I can tell, the interpretation would be well formed,
-but proving the fundamental theorem would then require something like indefinite description,
-since the induction hypothesis would yield $\forall a, a \in S \to \exists S_0, \dots$,
-the mere existence of such a family of sets,
-while the constructor requires the actual family of sets itself.
-This is subtle but maybe warrants explaining.}
-
-\begin{lemma}[I-PiAlt derivability]
+\begin{lemma}[I-PiAlt derivability\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_nopf}}]
   \label{lemma:piintroalt}
   \Rref{I-PiAlt} is derivable from \rref{I-Pi}.
 \end{lemma}
-\begin{proof}
-The precondition $[[forall a, (# a in S
-implies (# exists S0 , Interp I i B { a / x } S0 #) #)]]$ from
-\rref{I-PiAlt} immediately induces a function $[[F in S -> PowerSet
-STm]]$ such that $[[forall a, (# a in S implies Interp I i B { a / x }
-F a #)]]$, which is exactly what we need to apply \rref{I-Pi}.
-\end{proof} 
-In fact, while \rref{I-PiAlt} is an instantiation of \rref{I-Pi},
-these two rules are equivalent in the sense that every derivation
-involving \rref{I-Pi} can be systematically replaced by
-\rref{I-PiAlt}. This equivalence follows directly from the fact
-that the logical relation is a partial function, a result we will show
-in Lemma~\ref{lemma:logreldeter}. The preconditions of \rref{I-Pi},
-when combined with the functionality of the logical relation, uniquely
-determine the function $[[F in S -> PowerSet STm]]$ to be the
-functional relation
-$[[{ (a , S0 ) | a in S implies Interp I  i B { a /x } S0 }]]$. This result is
-formally shown through the improved inversion lemma for function types
-(Lemma~\ref{lemma:piinvalt}).
 
-Unfortunately, we cannot define the function case of our logical
-relation directly using \rref{I-PiAlt} since the occurrence of
-$[[Interp I i B {a/x} S0]]$ in its conclusion not only violates the
-syntactic strict positivity constraint required in proof assistants,
+\begin{proof}
+  The precondition
+  $[[forall a, (# a in S implies (# exists S0 , Interp I i B { a / x } S0 #) #)]]$
+  from \rref{I-PiAlt} immediately induces a function
+  $[[F in S -> PowerSet STm]]$ such that
+  $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$,
+  which is exactly what we need to apply \rref{I-Pi}.
+\end{proof}
+
+While \rref{I-PiAlt} is an instantiation of \rref{I-Pi}, by functionality,
+the two rules are equivalent in the sense that every derivation involving
+\rref{I-Pi} can be systematically replaced by \rref{I-PiAlt}.
+Furthermore, functionality uniquely determines the function
+$[[F in S -> PowerSet STm]]$ to be the functional relation
+$[[{ (a , S0 ) | a in S implies Interp I i B { a /x } S0 }]]$.
+This result is shown by Lemma~\ref{lemma:piinvalt},
+the corresponding inversion lemma for \rref{I-PiAlt}.
+
+Unfortunately, we cannot directly define the interpretation of function types
+by \rref{I-PiAlt}, since the occurrence of $[[Interp I i B {a/x} S0]]$ in its
+conclusion not only violates the syntactic strict positivity constraint on
+inductive definitions required by proof assistants,
 but is genuinely non-monotone when we treat the inductive definition
 as the fixed point of an endofunction over the domain of relations.
-Intuitively, the failure of monotonicity stems from the fact
-that the witness picked in the precondition is not necessarily the
-same witness being referred to in the post condition as the relation
-grows, whereas the
-function $[[F]]$ in \rref{I-Pi} ``fixes'' the witnesses $[[S0]]$ as
-$[[F a]]$ for each $[[a in S]]$,
-thus preventing the set of witnesses from growing. While it might
+\jc{What?}
+Intuitively, the failure of monotonicity stems from the fact that the witness
+picked in the precondition is not necessarily the same witness being referred
+to in the postcondition as the relation grows, \jc{Why?} whereas the function $[[F]]$
+in \rref{I-Pi} ``fixes'' the witnesses $[[S0]]$ as $[[F a]]$ for each
+$[[a in S]]$, thus preventing the set of witnesses from growing. While it might
 be possible to restrict the domain with additional constraints such as
 functionality and inversion properties to justify the well-definedness of our
 inductive relation with \rref{I-PiAlt}, we opt for our current
 \rref{I-Pi} that immediately produces a
-well-defined inductive relation and usable induction principle. The
-slight disadvantage of \rref{I-Pi} is that we need to construct the
-function $[[F]]$ each time we apply it, though this is mitigated by
-the derivability of \rref{I-PiAlt} and the alternative $\Pi$ inversion
-principle (Lemma~\ref{lemma:piinvalt}).
+well-defined inductive relation and usable induction principle.
+Then by deriving \rref{I-PiAlt} and its inversion lemma,
+we avoid needing to manipulate the function $[[F]]$ directly.
 
 \subsection{Properties about the Logical Relation}
 In the rest of this section, we develop the theory of our logical relation
