@@ -15,7 +15,7 @@ nat, i, j, n, m :: '' ::= {{ com natural numbers }}
 
 set, R , S, F, I :: '' ::= {{ com sets }}
   | emptyset :: :: empty
-    {{ tex \emptyset }}
+    {{ tex \varnothing }}
   | { a | formula } :: :: comprehension
     {{ tex \{ [[a]] \mid [[formula]]  \} }}
   | { ( a , S ) | formula } :: :: pcomprehension
@@ -54,7 +54,7 @@ rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
   | idtm          :: :: idtm
     {{ tex \ottkw{id} }}
 
-tm, a , b , c, p, A, B, e,f :: 'a_' ::= {{ com terms and types }}
+tm, a , b , c, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
   | arg :: :: Hole
     {{ tex - }}
   | x :: :: Var

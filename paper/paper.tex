@@ -294,7 +294,7 @@ given ambient logic.
 
 \begin{figure}[h]
 \begin{align*}
-[[a]],[[b]],[[c]],[[p]],[[A]],[[B]] & \Coloneqq && \textit{Terms} \\
+[[a]],[[b]],[[c]],[[p]],[[A]],[[B]],[[C]] & \Coloneqq && \textit{Terms} \\
             & \mid [[Set i]] \mid [[x]] \mid [[Void]] \mid [[absurd b]]
               && \textrm{universes, variables, empty type, explosion} \\
             & \mid [[Pi x : A . B]] \mid [[\ x . a]] \mid [[a b]]
@@ -855,7 +855,7 @@ well-defined inductive relation and usable induction principle.
 Then by deriving \rref{I-PiAlt} and its inversion lemma,
 we avoid needing to manipulate the function $[[F]]$ directly.
 
-\subsection{Properties about the Logical Relation}
+\subsection{Properties of the Logical Relation}
 In the rest of this section, we develop the theory of our logical relation
 with the goal of showing four key facts: irrelevance
 (Lemma~\ref{lemma:logrelcoherence}), functionality
@@ -865,74 +865,76 @@ with the goal of showing four key facts: irrelevance
 we prove in this section, we do not need any information about the
 parameterized function $[[I]]$.  Each property about $[[InterpR i A S]]$
 follows as a corollary of a property about $[[Interp I i A S]]$ with no or few
-assumptions imposed on $[[I]]$. As a result, we usually state our lemmas in
+assumptions imposed on $[[I]]$. As a result, we state most of our lemmas in
 terms of $[[Interp I i A S]]$ without duplicating them in terms of
 $[[InterpR i A S]]$.
 
-First, we prove a family of simple properties, which we refer to as
-inversion principles for our logical relation. Given $[[Interp I i A
-S]]$ where $[[A]]$ is in some head form such as $[[Bool]]$ or $[[Pi x
-: A0 .B0]]$, the inversion lemma allows us to say something about the set
-$[[S]]$. Its proof is simple, but we sketch out the case for
+First, we prove inversion principles for our logical relation. Given
+$[[Interp I i A S]]$ where $[[A]]$ is in some head form such as $[[Bool]]$ or
+$[[Pi x : A . B]]$, the inversion lemma allows us to say something about the set
+$[[S]]$. The proofs are simple, but we sketch out the case for
 functions to help readers confirm their understanding of \rref{I-Pi}.
-\begin{lemma}[Inversion of the logical relation]
+
+\begin{lemma}[Inversion (logical relation)]
   \label{lemma:interpinv}\leavevmode
   \begin{enumerate}
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Void\_inv}} If $[[Interp I i Void S]]$, then $[[S = emptyset]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Bool\_inv}} If $[[Interp I i Bool S]]$, then $[[S = { a | a =>+ true \/ a =>+ false   }]]$.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Eq\_inv}} If $[[Interp I i a ~ b : A S]]$, then $[[S = { p | p =>+ refl /\ a <=> b  }]]$.
-  \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}} If $[[Interp
-    I i Pi x : A . B S1]]$, then there exists $[[S]],[[F]]$ such that:
+  \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}}
+    If $[[Interp I i Pi x : A . B S1]]$, then there exist
+    $[[S in PowerSet STm]]$, $[[F in S -> PowerSet STm]]$ such that:
     \begin{itemize}
     \item $[[Interp I i A S ]]$
-    \item $[[F in S -> PowerSet STm]]$
     \item $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$
     \item $[[S1 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Univ\_inv}} If $[[Interp I i Set j S]]$, then $[[j < i]]$ and $[[S = I j]]$.
   \end{enumerate}
 \end{lemma}
+
 \begin{proof}
-  As mentioned earlier, we only show the inversion property for the
-  function type.
-  We start by inducting over the derivation of $[[Interp I i Pi x : A . B S]]$. There
-  are only two possible cases we need to consider.
+  We show only the inversion property for the function type.
+  We start by induction on the derivation of $[[Interp I i Pi x : A . B S1]]$.
+  There are only two possible cases we need to consider.
   \begin{description}
   \item[\Rref{I-Pi}:] Immediate.
-  \item[\Rref{I-Red}:] We are given that $[[Interp I i Pi x : A . B S1]]$.
-    We know that there exists some $[[A0]]$ and
-    $[[B0]]$ such that $[[Pi x : A . B => Pi x : A0 . B0]]$ and $[[Interp I i Pi
-    x : A0 . B0 S1]]$. From the
-    induction hypothesis, there exists $[[S]]$ and $[[F]]$ such that :
+  \item[\Rref{I-Red}:]
+    We are given that $[[Pi x : A . B => C]]$ and that $[[Interp I i C S1]]$.
+    By inversion on parallel reduction, we have that $[[C]] = [[Pi x : A0 . B0]]$
+    for some $[[A0]], [[B0]]$, and that $[[A => A0]]$ and $[[B => B0]]$.
+    From the induction hypothesis on $[[Interp I i (# Pi x : A0 . B0 #) S1]]$,
+    there exist $[[S in PowerSet STm]]$ and $[[F in S -> PowerSet STm]]$ such that:
     \begin{itemize}
-    \item $[[Interp I i A0 S ]]$
-    \item $[[F in S -> PowerSet STm]]$
-    \item $[[forall a, (# a in S implies Interp I i B0 { a / x } F a #)]]$
-    \item $[[S1 = { b | forall a, (# a in S implies b a in F a #) }]]$
+      \item $[[Interp I i A0 S ]]$
+      \item $[[forall a, (# a in S implies Interp I i B0 { a / x } F a #)]]$
+      \item $[[S1 = { b | forall a, (# a in S implies b a in F a #) }]]$
     \end{itemize}
-    By inverting the derivation of $[[Pi x : A . B => Pi x : A0 . B0]]$, we derive $[[A => A0]]$ and
-    $[[B => B0]]$. By Lemma~\ref{lemma:parsubst}, we have $[[B {a /x} => B0 {a/x} ]]$ for all
-    $[[a]]$. As a result, by \rref{I-Red}, the same $[[S]]$ and
-    $[[F]]$ additionally satisfy the following properties.
+    By Lemma~\ref{lemma:parsubst}, we have $[[B {a /x} => B0 {a/x}]]$ for all
+    $[[a]]$. As a result, $[[S]]$ and $[[F]]$ satisfy the following properties
+    by \rref{I-Red} on $[[A => A0]]$ and $[[B {a /x} => B0 {a/x}]]$, respectively:
     \begin{itemize}
-    \item $[[Interp I i A S ]]$
-    \item $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$
+      \item $[[Interp I i A S]]$
+      \item $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$
     \end{itemize}
     These properties are exactly what we need to finish the proof.
   \end{description}
+  \vspace{-2\baselineskip}
 \end{proof}
 
 \Rref{I-Red} bakes into the logical relation the backward preservation
 property. That is, given $[[Interp I i A S]]$, if $[[B =>+ A]]$, then
 $[[Interp I i B S]]$ also holds. The following property shows that
-preservation holds in the usual forward direction too.
-\begin{lemma}[Forward preservation\footnote{\dotv{semtyping.v}{InterpExt\_preservation}}]
+preservation holds in the usual forward direction as well.
+
+\begin{lemma}[Forward preservation (l.r.)\footnote{\dotv{semtyping.v}{InterpExt\_preservation}}]
   \label{lemma:interppreservation}
   If $[[Interp I i A S]]$ and $[[A => B]]$, then $[[Interp I i B S]]$.
 \end{lemma}
+
 \begin{proof}
-  We carry out the proof by induction over the derivation of $[[Interp
-  I i A S]]$.
+  We carry out the proof by induction on the derivation of
+  $[[Interp I i A S]]$.
 
   The only interesting case is \rref{I-Red}. Given that
   $[[A => B0]]$ and $[[Interp I i B0 S]]$, we need to show
@@ -942,123 +944,128 @@ preservation holds in the usual forward direction too.
   that $[[B0 => B]]$ and $[[B1 => B]]$. By the induction hypothesis,
   we deduce $[[Interp I i B S]]$ from $[[B0 => B]]$ and $[[Interp I i
   B0 S]]$. By \rref{I-Red} and $[[B1 => B]]$, we conclude that
-  $[[Interp I i B S]]$.
+  $[[Interp I i B1 S]]$.
 
-  The remaining cases all fall from induction hypotheses and basic
-  properties about convertibility and parallel reduction we have
-  established in Section~\ref{sec:spec}.
+  The remaining cases all fall from the induction hypotheses and the basic
+  properties of convertibility and parallel reduction established in
+  Section~\ref{sec:spec}.
 \end{proof}
-From Lemma~\ref{lemma:interppreservation} and \rref{I-Red}, we can easily
-derive the following corollary that two convertible types can always interpret
+
+From forward preservation and \rref{I-Red}, we can easily
+derive the following corollary that two convertible types always interpret
 into the same set. We adopt the terminology from \citet{martin-lof-a-la-coq}
-and refer to this property as irrelevance.
-\begin{corollary}[Irrelevance of logical relation\footnote{\dotv{semtyping.v}{InterpUnivN\_Coherent}}]
+and refer to this property as \emph{irrelevance}.
+
+\begin{corollary}[Irrelevance (l.r.)\footnote{\dotv{semtyping.v}{InterpUnivN\_Coherent}}]
   \label{lemma:logrelcoherence}
   If $[[Interp I i A S]]$ and $[[A <=> B]]$, then $[[Interp I i B S]]$.
 \end{corollary}
 
-Because the definition of our logical relation is an inductive relation,
-it is not immediately obvious why each type $[[A]]$ can only uniquely
-correspond to one set $[[S]]$. The following lemma shows that our
-logical relation is indeed functional.
-\begin{lemma}[Logical relation is functional\footnote{\dotv{semtyping.v}{InterpExt\_deterministic}}]
+Because the definition of our logical relation is an inductive relation, it is
+not immediately obvious that each type $[[A]]$ interprets to a unique set $[[S]]$.
+The following lemma shows that our logical relation is indeed functional.
+
+\begin{lemma}[Functionality (l.r.)\footnote{\dotv{semtyping.v}{InterpExt\_deterministic}}]
   \label{lemma:logreldeter}
   If $[[Interp I i A S0]]$ and $[[Interp I i A S1]]$, then $[[S0 = S1]]$.
 \end{lemma}
+
 \begin{proof}
-  The proof proceeds by induction over the derivation of the first
+  The proof proceeds by induction on the derivation of the first
   premise $[[Interp I i A S0]]$.
   All cases that are not \rref{I-Red} follow immediately from
   Lemma~\ref{lemma:interpinv}, the inversion properties.
 
-  For \rref{I-Red}, we are given that there exists some $[[B]]$ such
-  that $[[A => B]]$ and $[[Interp I i B S0]]$. Our goal is to show
-  that given $[[Interp I i A S1]]$ for some $[[S1]]$, we have $[[S0 =
-  S1]]$. By the preservation property
-  (Lemma~\ref{lemma:interppreservation}),
-  we know that $[[Interp I i B S1]]$ since $[[A => B]]$. The statement
-  $[[S0 = S1]]$ then immediately follows from the induction hypothesis.
+  In \rref{I-Red}, there exists some $[[B]]$ such that $[[A => B]]$ and
+  $[[Interp I i B S0]]$. Our goal is to show that given $[[Interp I i A S1]]$
+  for some $[[S1]]$, we have $[[S0 = S1]]$. By forward preservation
+  (Lemma~\ref{lemma:interppreservation}) and $[[A => B]]$,
+  we know that $[[Interp I i B S1]]$.
+  Then $[[S0 = S1]]$ immediately follows from the induction hypothesis.
 \end{proof}
 
-Lemma~\ref{lemma:logreldeter} enables us to show the following
-improved inversion lemma for function types whose statement is free of
-the relation $[[F]]$, analogous to the derivable \rref{I-PiAlt}.
-\begin{lemma}[Pi Inversion Alt\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
-  \label{lemma:piinvalt}
-  Suppose $[[Interp I i Pi x : A . B S]]$, then there exists some $[[S0]]$
-  such that the following constraints hold:
+Functionality allows us to prove an inversion lemma for the derivable
+\rref{I-PiAlt}, which does not mention the function $[[F]]$ found in \rref{I-Pi}.
+
+\begin{lemma}[Alternate inversion of function types (l.r.)\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv\_nopf}}]
+  \label{lemma:piinvalt}\leavevmode
+  If $[[Interp I i Pi x : A . B S]]$, then there exists some $[[S0]]$
+  such that:
   \begin{itemize}
-  \item $[[Interp I i A S0]]$
-  \item $[[forall a, (# a in S0 implies (# exists S1 , Interp I i B {a
-    / x}
-    S1 #) #)]]$
-  \item $[[S = { b | forall a, (# a in S0 implies forall
-    S1, (# Interp I i B {a / x} S1 implies  b a in S1 #) #) }]]$
+    \item $[[Interp I i A S0]]$
+    \item $[[forall a, (# a in S0 implies (# exists S1 , Interp I i B {a / x} S1 #) #)]]$
+    \item $[[S = { b | forall a, (# a in S0 implies forall S1, (# Interp I i B {a / x} S1 implies  b a in S1 #) #) }]]$
   \end{itemize}
 \end{lemma}
+
 \begin{proof}
   Immediate from Lemmas~\ref{lemma:interpinv} and \ref{lemma:logreldeter}.
 \end{proof}
 
-The next lemma shows that our logical relation satisfies
-cumulativity. That is, if a type has an interpretation at a lower
-universe level, then we can obtain the same interpretation at a higher
-universe level.
-\begin{lemma}[Logical relation cumulativity\footnote{\dotv{semtyping.v}{InterpExt\_cumulative}}]
-  \label{lemma:logrelcumulativity}
-  If $[[Interp I i0 A S]]$ and $[[i0 < i1]]$, then $[[Interp I i1 A S]]$.
-\end{lemma}
-\begin{proof}
-  Trivial by structural induction over the derivation of $[[Interp I
-  i0 A S]]$.
-\end{proof}
-Note that in the statement of Lemma~\ref{lemma:logrelcumulativity}, we
-implicitly assume that $[[I]]$ is defined on the set of natural
-numbers less than $[[i1]]$.
+The next lemma shows that the logical relation is cumulative:
+if a type has an interpretation at a lower universe level,
+then we can obtain the same interpretation at a higher universe level.
 
-\begin{corollary}[Logical relation is functional with different levels\footnote{\dotv{semtyping.v}{InterpExt\_deterministic'}}]
+\begin{lemma}[Cumulativity (l.r.)\footnote{\dotv{semtyping.v}{InterpExt\_cumulative}}]
+  \label{lemma:logrelcumulativity}
+  If $[[Interp I i A S]]$ and $[[i < j]]$, then $[[Interp I j A S]]$.
+\end{lemma}
+
+\begin{proof}
+  Trivial by structural induction over the derivation of $[[Interp I i A S]]$.
+\end{proof}
+
+Note that in the statement of cumulativity, we implicitly assume that $[[I]]$
+is defined on naturals strictly less than $[[j]]$. Then by cumulativity and
+trichotomy of the order on naturals (i.e. for any $i, j$, either $i < j$ or
+$i = j$ or $i > j$), we show that functionality holds even when considering
+interpretations of type at different universe levels.
+
+\begin{corollary}[Level-irrelevant functionality (l.r.)\footnote{\dotv{semtyping.v}{InterpExt\_deterministic'}}]
   \label{lemma:logreldeterhet}
   If $[[Interp I i0 A S0]]$ and $[[Interp I i1 A S1]]$, then $[[S0 = S1]]$.
 \end{corollary}
+
 \begin{proof}
   Immediate from Lemmas~\ref{lemma:logreldeter} and
   \ref{lemma:logrelcumulativity}.
 \end{proof}
 
-\begin{definition}[Sets closed under expansion]
-  We say that a set of terms $[[S]]$ is closed under expansion if
-  given $[[a in S]]$, then $[[b in S]]$ for all $[[b => a]]$.
-\end{definition}
 The final property we want to show is that the output set $[[S]]$ from
 the logical relation is closed under expansion. Unlike the previous
 lemmas, we directly state the lemma
 in terms of $[[InterpR i A S]]$ rather than $[[Interp I i A S]]$
-because we need to know something about $[[I]]$ for this property to
-hold in the \rref{I-Set} case.
+because we need the actual instantiation of $I$ to prove the \rref{I-Set} case.
 
-\yl{Can lift this lemma somewhere earlier in the section since it doesn't really
-  depend on anything}
-\scw{Jon didn't understand this proof}
-\begin{lemma}[Interpreted sets are closed under expansion\footnote{\dotv{semtyping.v}{InterpUnivN\_back\_clos}}]
+\begin{definition}[Closure under expansion]
+  We say that a set of terms $[[S]]$ is closed under expansion if
+  given $[[a in S]]$, then $[[b in S]]$ for all $[[b => a]]$.
+\end{definition}
+
+\begin{lemma}[Backward closure of interpretations (l.r.)\footnote{\dotv{semtyping.v}{InterpUnivN\_back\_clos}}]
   \label{lemma:logrelbackclos}
-  If $[[InterpR i A S]]$, then the set $[[S]]$ is closed under expansion.
+  If $[[InterpR i A S]]$, then $[[S]]$ is closed under expansion.
 \end{lemma}
-\begin{proof}
-  By the definition of $[[InterpR i A S]]$, we unfold $[[InterpR i A S]]$ by one
-  step into $[[ Interp I i A S  ]]$ where $[[I j]] := [[{A | exists S
-    , InterpR j A S}]]$.
-  We then proceed by induction over the derivation of $[[Interp I i A S]]$.
 
-  All cases are trivial except for the \rref{I-Set} case, where we
-  want to show that the set $[[I j]]$ is closed under expansion for
-  all $[[j < i]]$. However, by the definition of $[[I]]$, we know that
-  $[[A in I j]]$ if and only if there exists some $[[S]]$ such that
-  $[[Interp I j A S]]$. By \rref{I-Red}, we must also have $[[B in I
-  j]]$ for all $[[B => A]]$.
+\begin{proof}
+  By the definition of $[[InterpR i A S]]$, we unfold $[[InterpR i A S]]$ into
+  $[[Interp I i A S]]$ where $[[I j]] := [[{A | exists S, InterpR j A S}]]$ for
+  $[[j < i]]$. We then proceed by induction on the derivation of
+  $[[Interp I i A S]]$.
+
+  All cases are trivial except for the \rref{I-Set} case, where the goal is to
+  show that $[[I j]]$ is closed under expansion for all $[[j < i]]$;
+  that is, if $[[B => A]]$ and $[[A in I j]]$, then $[[B in I j]]$.
+  By the definition of $[[I]]$, this is equivalent to showing that if
+  $[[B => A]]$ and $[[Interp I j A S]]$ for some $[[S]]$,
+  then there exists some $[[S0]]$ such that $[[Interp I j B S0]]$.
+  Letting $[[S0]]$ be $[[S]]$, by \rref{I-Red},
+  we have that $[[Interp I j B S]]$ as required.
 \end{proof}
 
 \section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
+
 \scw{Would it make sense to define the notation $a \in [\![A]\!]^i$ when
 there exists some $S$ such that $[[InterpR i A S]]$ and $[[a in S]]$ ?}
 
