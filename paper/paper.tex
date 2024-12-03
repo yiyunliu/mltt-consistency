@@ -753,62 +753,71 @@ principle we are allowed to use when reasoning about $[[InterpR i A S]]$.
 We next take a closer look at the remaining rules for the inductive relation
 $[[Interp I i A S]]$ in Figure~\ref{fig:logrel}.
 \Rref{I-Void, I-Bool} capture terms that \emph{behave} like the inhabitants
-of the $[[Void]]$ and $[[Bool]]$ types under an empty context. For
-example, the $[[Void]]$ type should not have any inhabitants under the
-empty context, where as the $[[Bool]]$ type only contains terms that
-reduce to $[[true]]$ or $[[false]]$. Note that the characterization
-of $[[Bool]]$ (and other inhabited types) in our logical relation does not always correspond to
-well-typed or even closed terms. For example, the term $[[if false (#
-Void true #)
-true]]$ is ill-typed under the empty context but still belongs to the set $[[{ a | a =>+
-  true \/ a =>+ false }]]$ since it evaluates to $[[true]]$.
+of the $[[Void]]$ and $[[Bool]]$ types under an empty context. In particular,
+the $[[Void]]$ type has no inhabitants, while the $[[Bool]]$ type only contains
+terms that reduce to $[[true]]$ or $[[false]]$. Note that the characterization
+of $[[Bool]]$ (and other inhabited types) in our logical relation does not
+always correspond to well-typed or even closed terms. For example, the term
+$[[if false (# Void true #) true]]$ is ill typed under the empty context,
+but still belongs to the set $[[{ a | a =>+ true \/ a =>+ false }]]$ since it
+evaluates to $[[true]]$.
 The independence of syntactic typing in our logical relation allows
 our semantic typing definition in Section~\ref{sec:logrelproof} to be
 meaningful on its own. Furthermore, not having to embed scoping
 information into the logical relation avoids extra bookkeeping and the
 need for a Kripke-style logical relation when we extend our logical
-relation to prove the existence of $\beta$-normal forms (Section~\ref{sec:extension}).
+relation to prove the existence of $\beta$-normal forms in Section~\ref{sec:extension}.
 \yl{Not sure what to cite from Derek Dreyer. I know his blog post
   about semantic type soundness but is there a good paper to cite? one
 of the rust papers?}
+\jc{Should there be an explanation of what Kripke-style logical relations are here?}
 
-% unsurprising; when considering only closed terms, the empty type
-% should not be inhabited and therefore corresponds to the empty set,
-% whereas the boolean type is semantically inhabited by terms that
-% evaluate to the boolean values $[[true]]$ or $[[false]]$.
-\Rref{I-Eq}
-says that an equality type $[[a ~ b : A]]$ corresponds to the
+\Rref{I-Eq} states that an equality type $[[a ~ b : A]]$ corresponds to the
 set of terms that reduce to $[[refl]]$ when $[[a <=> b]]$ also holds and
-otherwise corresponds to the empty set. Conditions like $[[a <=>
-b]]$ are typically required for indexed types, of which equality types
+otherwise corresponds to the empty set. Conditions like $[[a <=> b]]$ are
+typically required for indexed types, of which equality types
 are an instance. \Rref{I-Red} enables us to reduce types in order
-to assign meanings. Recall the type expression $[[(\ x . x )
-Bool]]$. \Rref{I-Red} says that to know that
-$[[Interp I i  (\ x . x) Bool S ]]$ for some $[[S]]$, it suffices to
-show that $[[Interp I i Bool S]]$ since $[[(\ x . x) Bool =>
-Bool]]$. The derivation that $[[Interp I i (\ x . x) Bool { a | a =>+
-  true \/ a =>+ false }]]$ therefore follows by composing \rref{I-Red}
-and \rref{I-Bool}.
+to assign meanings. Recalling expression $[[(\ x . x ) Bool]]$, \rref{I-Red}
+says that to know that $[[Interp I i  (\ x . x) Bool S ]]$ for some $[[S]]$,
+it suffices to show that $[[Interp I i Bool S]]$, since
+$[[(\ x . x) Bool => Bool]]$.
+The derivation for $[[Interp I i (\ x . x) Bool { a | a =>+ true \/ a =>+ false }]]$
+therefore follows by composing \rref{I-Red} and \rref{I-Bool}.
 
-\Rref{I-Pi} is the most complex rule in our logical
-relation. Instead of explaining it directly, we first consider the following
-simplified version, \rref{I-PiAlt}, that follows directly from \rref{I-Pi}.
+\Rref{I-Pi} is the most complex rule in our logical relation.
+Consider first the following simplified \rref{I-PiAlt}, which follows from \rref{I-Pi}.
+
 \begin{center}
   \drule[]{I-PiAlt}
 \end{center}
+
 \Rref{I-PiAlt} directly captures the meaning of
-a well-behaved dependent function type. The precondition of
-the rule says that
-the function type $[[Pi x : A . B]]$ has an interpretation if its input
-type $[[A]]$ can be
-interpreted as some set $[[S]]$, and for all terms $[[a in S]]$, the
-type $[[B {a / x}]]$, obtained by substituting $[[a]]$ into the output type
-$[[B]]$, has some semantic interpretation $[[S0]]$. In its conclusion, the 
-interpretation of $[[Pi x : A . B]]$ is the set of terms $[[b]]$, such that
-for all $[[a in S]]$, where $[[S]]$ is an interpretation of $[[A]]$, the
-application form $[[b a]]$ belongs to all possible interpretations of
-$[[B {a  / x}]]$ (the pre-condition ensures at least one interpretation
-exists for each $[[B {a / x}]]$ where $[[a in S]]$).
+a well-behaved dependent function type. The preconditions of
+the rule says that the function type $[[Pi x : A . B]]$ has an interpretation
+if its input type $[[A]]$ can be interpreted as some set $[[S]]$, and for all
+terms $[[a in S]]$, the type $[[B {a / x}]]$, obtained by substituting $[[a]]$
+into the output type $[[B]]$, has some semantic interpretation $[[S0]]$. In its
+conclusion, the  interpretation of $[[Pi x : A . B]]$ is the set of terms
+$[[b]]$ such that for all $[[a in S]]$, where $[[S]]$ is an interpretation of
+$[[A]]$, the application form $[[b a]]$ belongs to all possible interpretations
+of $[[B {a  / x}]]$. The second precondition ensures at least one interpretation
+exists for each $[[B {a / x}]]$ where $[[a in S]]$.
+
+\jc{I think at this point it's unclear why \rref{I-PiAlt} is shaped the way it is.
+I found myself asking: If in the second precondition we've established the existence of $[[S0]]$,
+why do we need to quantify over all interpretations $[[S0]]$?
+In fact, instead of the second precondition,
+why can't split it into two and say that there exists some family of sets
+$S_0 : \forall a, a \in S \to [[PowerSet STm]]$
+such that $\forall a, (m : a \in S) \to [[Interp I i B { a / x } (# S0 a m #)]]$,
+then conclude that the intepretation of the function type yields a set over $[[b]]$
+such that $\forall a, (m : a \in S) \to [[b in S0 a m]]$?
+As far as I can tell, the interpretation would be well formed,
+but proving the fundamental theorem would then require something like indefinite description,
+since the induction hypothesis would yield $\forall a, a \in S \to \exists S_0, \dots$,
+the mere existence of such a family of sets,
+while the constructor requires the actual family of sets itself.
+This is subtle but maybe warrants explaining.}
 
 \begin{lemma}[I-PiAlt derivability]
   \label{lemma:piintroalt}
