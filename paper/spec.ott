@@ -521,6 +521,19 @@ InterpR i Set j { A | exists S , InterpR j A S }
 
 
 defns
+JIS :: '' ::=
+
+defn
+a in InterpR i A :: :: InterpIn :: 'II_' {{ com Membership in interpretation }}
+{{ tex [[a]] \in \llbracket [[A]] \rrbracket^{[[i]]} }}
+by
+
+InterpR i A S
+a in S
+---------------- :: In
+a in InterpR i A
+
+defns
 JSTyping :: '' ::=
 
 defn
@@ -537,7 +550,7 @@ by
 
 defn
 |= G ::     :: SCtx :: 'SCtx_' {{ com Semantic Context Well-Formedness }}
-{{ tex \vDash [[G]] }}
+{{ tex {} \vDash [[G]] }}
 by
 
 ------------- :: Empty

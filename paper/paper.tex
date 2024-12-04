@@ -884,6 +884,7 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
   \item\footnote{\dotv{semtyping.v}{InterpExt\_Fun\_inv}}
     If $[[Interp I i Pi x : A . B S1]]$, then there exist
     $[[S in PowerSet STm]]$, $[[F in S -> PowerSet STm]]$ such that:
+    \vspace{-0.5\baselineskip}
     \begin{itemize}
     \item $[[Interp I i A S ]]$
     \item $[[forall a, (# a in S implies Interp I i B { a / x } F a #)]]$
@@ -921,6 +922,15 @@ functions to help readers confirm their understanding of \rref{I-Pi}.
   \end{description}
   \vspace{-2\baselineskip}
 \end{proof}
+
+An immediate consequence of the inversion principle for the interpretation
+of universes is that if a type is in such an interpretation, then that type
+itself has an interpretation.
+
+\begin{corollary}\hspace{-0.5em}\footnote{\dotv{semtyping.v}{InterpUnivN\_Univ\_inv'}} \label{lemma:interpinvSet}
+  If $[[InterpR i Set j S]]$ and $[[A in S]]$,
+  then there exists some set $[[S0]]$ such that $[[InterpR j A S0]]$ and $[[j < i]]$.
+\end{corollary}
 
 \Rref{I-Red} bakes into the logical relation the backward preservation
 property. That is, given $[[Interp I i A S]]$, if $[[B =>+ A]]$, then
@@ -1068,36 +1078,40 @@ because we need the actual instantiation of $I$ to prove the \rref{I-Set} case.
 
 \scw{Would it make sense to define the notation $a \in [\![A]\!]^i$ when
 there exists some $S$ such that $[[InterpR i A S]]$ and $[[a in S]]$ ?}
+\jc{I like this notation too, $[[a in InterpR i A]]$}
 
 In this section, we show that all closed, well-typed terms are contained
-within their type-indexed sets. In other words, $[[empty |- a : A]]$ implies
-$[[InterpR i A S]]$ and $[[a in S]]$.  This result gives us consistency
-because we know that $[[InterpR i Void S]]$ is defined, and that $[[S]]$ must
-be the empty set. Therefore, if there were some closed, well-typed term of type
-$[[Void]]$, it would need to be a member of the empty set, a contradiction.
+in the interpretation of their types. In other words, $[[empty |- a : A]]$
+implies that there exists a set $[[S]]$ such that $[[InterpR i A S]]$ and
+$[[a in S]]$ hold; we write $[[a in InterpR i A]]$ as shorthand. This result
+gives us consistency because $[[InterpR i Void emptyset]]$ holds, so if there
+were a closed, well-typed term of type $[[Void]]$, it would be a member of the
+empty set, which is a contradiction.
 
 To prove this result, we define a notion of semantic typing based on the
-logical relation we have defined in Section~\ref{sec:logreldep} and prove the
-fundamental lemma, which states that syntactic typing implies semantic typing.
-Semantic typing extends our logical relation from being a (type-indexed)
-family of predicates on closed terms, to a type-indexed family of predicates
-on open terms.
+logical relation and prove the fundamental lemma, which states that syntactic
+typing implies semantic typing. Semantic typing extends the logical relation
+from being a type-indexed family of predicates on closed terms to a
+type-indexed family of predicates on open terms.
 
-The necessity of semantic typing as an extra layer of
-definition on top of the logic relation can be understood in simply typed
-languages~\citep{skorstengaard2019introduction, harpertait,
-  pierce2002types}. In our setting, attempting to show that
-$[[empty |- a : A]]$ implies $[[InterpR i A S]]$ and $[[a in S]]$ through induction over the derivation of $[[empty |- a : A]]$ will fail in
-\rref{T-Abs}, where the induction hypothesis is not helpful since the body of
-the lambda term is typed under a non-empty context. Through the definition of
-semantic typing, we can state a strengthened property that is actually
-provable.
+The necessity of semantic typing as an extra layer of definitions on top of the
+logic relation is understood in the simply typed 
+setting~\citep{skorstengaard2019introduction, harpertait,pierce2002types}.
+In our setting,
+\jc{Is this trying to say that our setting is different from the simply typed setting,
+or the same as the simply typed setting? Are the definitions to follow on semantic typing
+taken from the works cited above, or are they our own modifications?}  
+attempting to show that $[[empty |- a : A]]$ implies $[[a in InterpR i A]]$ by
+induction on the derivation of $[[empty |- a : A]]$ will fail for \rref{T-Abs},
+where the induction hypothesis is not helpful since the body of the lambda term
+is typed under a nonempty context. Using the definition of semantic typing, we
+can state a strengthened property that is actually provable.
 
-\begin{definition}[Semantic well-formed substitution\footnote{\dotv{soundness.v}{$\rho$\_ok}}]
-Define $[[rho |= G]]$ when
-\[ \forall [[x]], [[A]], [[i]], \text { and } [[S]], \text{ if }[[x :
-  A in G]]\text{ and
-                     } [[InterpR i A { rho } S ]] \text{, then } [[rho x in S]] \]
+\begin{definition}[Semantically well formed substitutions\footnote{\dotv{soundness.v}{$\rho$\_ok}}]
+  We say that a substitution $[[rho]]$ is semantically well formed with respect
+  to the context $[[G]]$, written as $[[rho |= G]]$, when
+  \[ \forall [[x : A in G]], [[i]], [[S]],
+  [[InterpR i A { rho } S ]] \text{ implies } [[rho x in S]]. \]
 \end{definition}
 
 % To generalize our logical relation to open
@@ -1109,100 +1123,99 @@ Define $[[rho |= G]]$ when
 % typing ($[[ G |= a : A]]$), and semantic context well-formedness
 % ($[[|= G]]$) are presented in Figure~\ref{fig:semtyping}.
 
-The $[[rho |= G]]$ notation denotes the semantic well-formedness of a
-substitution $[[rho]]$ with respect to a context $[[G]]$. For every
-variable $[[x]]$ with its associated type $[[A]]$ in the context,
-$[[rho x]]$ is a term that inhabits all possible interpretations of the type
-$[[A {rho}]]$. The $\forall$ quantifier in its definition might look excessive since we
-know from Lemma~\ref{lemma:logreldeter} that each type can have at most
-one interpretation. However, since $[[rho |= G]]$ mostly appears in
-the position of a hypothesis, the $\forall$ statement is easy to
-instantiate and makes our proofs slightly easier. The few cases where we need to prove $[[rho |= G]]$ are
-handled by the following two structural properties, the second of
-which depends on Lemma~\ref{lemma:logreldeter}.
-%
-\begin{lemma}[Well-formed $[[rho]]$ empty\footnote{\dotv{soundness.v}{$\rho$\_ok\_nil}}]
+$[[rho |= G]]$ states that for every variable $[[x]]$ and its type $[[A]]$ in the $[[G]]$,
+$[[rho x]]$ is a term that inhabits every interpretation of $[[A {rho}]]$.
+While functionality of the logical relation tells us each type has at most one
+interpretation, quantifying over all possible interpretations $[[S]]$ makes the
+proofs slightly simpler. Since $[[rho |= G]]$ typically appears as a hypothesis,
+$[[S]]$ is easy to instantiate. The following structural properties handle the
+few cases where we need to prove $[[rho |= G]]$ as a goal; the second property
+depends on functionality.
+
+\begin{lemma}[Well-formed $[[rho]]$ w.r.t. empty\footnote{\dotv{soundness.v}{$\rho$\_ok\_nil}}]
   \label{lemma:rhowfempty}
-  $[[rho |= G]]$ whenever $[[G]]$ is the empty context.
+  $[[rho |= empty]]$ holds for any $[[rho]]$.
 \end{lemma}
-\begin{lemma}[Well-formed $[[rho]]$ cons\footnote{\dotv{soundness.v}{$\rho$\_ok\_cons}}]
-  If $[[InterpR i A S]]$, $[[a in S]]$, and $[[rho |= G]]$, then
+
+\begin{lemma}[Well-formed $[[rho]]$ w.r.t. cons\footnote{\dotv{soundness.v}{$\rho$\_ok\_cons}}]
+  \label{lemma:rhowfcons}
+  If $[[a in InterpR i A]]$ and $[[rho |= G]]$, then
   $[[rho .: x -> a |= G ++ x : A]]$.
 \end{lemma}
 
-We next define semantic well-typedness.
+Semantic well-typedness is then defined using well formed substitutions
+to handle the contexts of open terms.
 
 \begin{definition}[Semantic typing\footnote{\dotv{soundness.v}{SemWt}}]
-Define $[[G |= a : A]]$  when
-\[ \forall [[rho]], \text{ if }[[rho |=
-                       G]]\text{ then there exists some } [[j]] \text{
-                       and } [[S]] \text{ such that } [[InterpR j A
-                       {rho} S]] \text{ and } [[a {rho} in S]]  \]
+  We say that $[[a]]$ is semantically typed as $[[A]]$ under the context $[[G]]$,
+  written $[[G |= a : A]]$, when
+  \[ \forall [[rho |= G]], \exists [[j]] \text{ such that } [[a {rho} in InterpR j A {rho}]]. \]
 \end{definition}
 
-This definition says the term $[[a]]$ can be semantically typed $[[A]]$ under
-the context $[[G]]$ if for all substitutions $[[rho]]$ such that
-$[[rho |= G]]$, the type $[[A { rho }]]$ can be interpreted as the set
-$[[S]]$, and $[[a { rho } in S]]$. Our definition of semantic well-typedness
-is standard, though dependent types add a small twist that we apply the
-$[[rho]]$ to $[[A]]$ and require that $[[A { rho }]]$ has some interpretation.
-
-Finally, we define semantic well-formedness for contexts, analogous to the
+Semantic typing $[[G |= a : A]]$ says that for all well-formed substitutions $[[rho |= G]]$,
+$[[a {rho}]]$ is in the interpretation of $[[A { rho }]]$ at some universe level.
+This definition is standard, though dependency of types on terms requires
+also applying the substitution $[[rho]]$ to the type $[[A]]$, and that
+$[[A { rho }]]$ have an interpretation.
+Finally, we define semantic well-formedness of contexts, analogous to the
 relation $[[|-G]]$.
 
 \begin{definition}[Semantic context well-formedness\footnote{\dotv{soundness.v}{SemWff}}]
-Define $[[|= G]]$ as follows.
-\[ \forall [[x : A in G]],\text{ there exists some } i \text{ such that } [[G |= A : Set i]] \]
+  We say that the context $[[G]]$ is semantically well formed, written $[[|= G]]$, when
+  \[ \forall [[x : A in G]], \exists i \text{ such that } [[G |= A : Set i]]. \]
 \end{definition}
-Recall that $[[|- G]]$ is defined inductively in terms of the
-syntactic typing judgment. We take a different approach here with its
-semantic counterpart $[[|= G]]$. The definition of
-$[[|= G]]$ is not telescopic: with $[[|- G]]$, a variable appearing
-earlier in the context is well-scoped under a truncated context,
-whereas with $[[|= G]]$, the types are only required to be
-semantically well-formed with respect to the full context, regardless
-of their position in $[[G]]$. Our definition of $[[|= G]]$ could be
-strengthened, though the simpler definition is sufficient for showing the
-fundamental lemma.
 
+Recall that $[[|- G]]$ is defined inductively in terms of the
+syntactic typing judgment. We take a different approach here for its
+semantic counterpart $[[|= G]]$. The definition of
+$[[|= G]]$ is not telescopic: for $[[|- G]]$, a variable appearing
+earlier in the context is well-scoped under a truncated context,
+whereas for $[[|= G]]$, the types are only required to be
+semantically well-formed with respect to the full context, regardless of their
+position in $[[G]]$. While the definition of $[[|= G]]$ could be strengthened,
+the simpler definition is sufficient for showing the fundamental lemma.
 We can recover the structural rules for $[[|= G]]$ as lemmas.
-\begin{lemma}[Semantic context well-formedness empty\footnote{\dotv{soundness.v}{SemWff\_nil}}]
+
+\begin{lemma}[Empty context well-formedness\footnote{\dotv{soundness.v}{SemWff\_nil}}]
   \label{lemma:semwffempty}
-  $[[|= G]]$ holds when $[[G]]$ is empty.
+  $[[|= empty]]$ holds.
 \end{lemma}
-\begin{lemma}[Semantic context well-formedness cons\footnote{\dotv{soundness.v}{SemWff\_cons}}]
+\begin{lemma}[Cons context well-formedness\footnote{\dotv{soundness.v}{SemWff\_cons}}]
   \label{lemma:semwffcons}
   If $[[|= G]]$ and $[[G |= A : Set i]]$, then $[[|= G ++ x : A]]$.
 \end{lemma}
 
-The following lemma makes the statement $[[G |= A : Set i]]$ easier to
+The following lemma makes statements of the form $[[G |= A : Set i]]$ easier to
 work with.
+
 \begin{lemma}[Set Inversion\footnote{\dotv{soundness.v}{SemWt\_Univ}}]
   \label{lemma:setinv}
-  The following two statements are equivalent:
+  The following are equivalent:
   \begin{itemize}
-  \item $[[G |= A : Set i]]$
-  \item $\forall$ $[[rho]]$, if $[[rho |= G]]$, then there exists
-    $[[S]]$ such that $[[InterpR i (A {rho}) S]]$
+  \item $[[G |= A : Set i]]$;
+  \item $\forall [[rho |= G]]$, there exists a set $[[S]]$ such that
+    $[[InterpR i (A {rho}) S]]$.
   \end{itemize}
 \end{lemma}
+
 \begin{proof}
-  The forward direction is immediate by
-  Lemma~\ref{lemma:interpinv}. We now consider the backward direction
+  The forward direction is immediate by Lemma~\ref{lemma:interpinvSet}.
+  We now consider the backward direction
   and show that $[[G |= A : Set i]]$ given the second bullet.
 
-  Suppose $[[rho |= G]]$, then we know that there exists some $[[S]]$
+  Suppose $[[rho |= G]]$. We know that there exists some $[[S]]$
   such that $[[InterpR i (A {rho}) S]]$. By the definition of semantic
   typing, it suffices to show that there exists some $[[j]]$ and
   $[[S0]]$ such that  $[[InterpR j Set i S0]]$ and $[[A {rho} in
   S0]]$.
   Pick $[[Suc i]]$ for $[[j]]$ and $[[ { A | exists S , InterpR i A S }
-  ]]$ for $[[S0]]$ and it is trivial to verify the conditions hold.
+  ]]$ for $[[S0]]$; it is trivial to verify the conditions hold.
 \end{proof}
 
 Next, we show some non-trivial cases of the fundamental theorem as
-top-level lemmas. For example, we can define the semantic analogue to the
-syntactic typing rule for variables (\rref{T-Var}).
+top-level lemmas, namely for \rref{T-Var}, \rref{T-Set}, \rref{T-Pi},
+\rref{T-Abs}, and \rref{T-App}.
+
 \begin{lemma}[ST-Var]
   \label{lemma:stvar}
   If $[[|= G]]$ and $[[x : A in G]]$, then $[[G |= x : A]]$.
@@ -1210,17 +1223,13 @@ syntactic typing rule for variables (\rref{T-Var}).
 \begin{proof}
   Suppose $[[rho |= G]]$. By the definition of semantic typing, we
   need to show that there exists some $[[i]]$ and $[[S]]$ such that
-  \begin{itemize}
-  \item $[[InterpR i A { rho } S]]$
-  \item $[[rho x in S]]$
-  \end{itemize}
+  $[[InterpR i A { rho } S]]$ and $[[rho x in S]]$ hold.
   By the definition of semantic context well-formedness, we deduce
   from $[[|= G]]$ and $[[x : A in G]]$ that there exists some universe
   level $[[i]]$ such that $[[G |= A : Set i]]$. By
-  the equivalence from Lemma~\ref{lemma:setinv}, there exists $[[S]]$
-  such that $[[InterpR i A {rho} S]]$. However, by the definition of
-  $[[rho |= G]]$, we know that $[[rho x in S]]$, which is exactly what
-  we need for the conclusion.
+  the equivalence from Lemma~\ref{lemma:setinv}, there exists an $[[S]]$
+  such that $[[InterpR i A {rho} S]]$. Finally, by the definition of
+  $[[rho |= G]]$, we know that $[[rho x in S]]$.
 \end{proof}
 
 % Next, we show some non-trivial cases of the fundamental theorem as
@@ -1279,7 +1288,7 @@ in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
 \end{lemma}
 \begin{proof}
   By unfolding the definition of $[[G |= \ x . b : Pi x : A . B]]$, we need to
-  show that given some $[[rho |= G]]$, there exists some $[[i]]$ and
+  show that given some $[[rho |= G]]$, there exist some $[[i]]$ and
   $[[S]]$ such that $[[InterpR i (Pi x : A . B){rho}
   S]]$ and $[[(\ x . b) {rho} in S]]$.
 
@@ -1287,27 +1296,31 @@ in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
   i]]$, there exists some set $[[S]]$ such that
   $[[InterpR i (Pi x : A . B){rho} S]]$. It now suffices to show that
   $[[(\ x . b){rho} in S
-  ]]$. By Lemma~\ref{lemma:piinvalt}, the alternative inversion
+  ]]$. By Lemma~\ref{lemma:piinvalt}, the alternate inversion
   principle for \rref{I-Pi}, there exists some $[[S0]]$ such
-  that all following conditions hold:
+  that the following hold:
   \begin{itemize}
-  \item $[[InterpR i A{rho} S0]]$
+  \item $[[InterpR i A{rho} S0]]$;
   \item $[[forall a, (# a in S0 implies (# exists S1 , InterpR i B
     {rho .: x -> a}
-    S1 #) #)]]$
+    S1 #) #)]]$; and
   \item $[[S = { b | forall a, (# a in S0 implies forall
-      S1, (# InterpR i B {rho .: x -> a} S1 implies  b a in S1 #) #) }]]$
+      S1, (# InterpR i B {rho .: x -> a} S1 implies  b a in S1 #) #) }]]$.
   \end{itemize}
   To show that $[[(\ x . b){rho} in S]]$, we need to prove
-  that given $[[a in S0]]$,
-  $[[Interp I i B {rho .: x -> a} S1]]$, we have  $[[(\x . b ){rho}
+  that given $[[a in S0]]$ and
+  $[[Interp I i B {rho .: x -> a} S1]]$, we have $[[(\x . b ){rho}
   a in S1]]$.
   By Lemma~\ref{lemma:logrelbackclos}, the set $[[S1]]$ is closed
   under expansion. Since $[[( \ x . b ){rho}
   a => b {rho .: x -> a}]]$, it suffices to show that
-  $[[b {rho .: x -> a} in S1]]$, which is immediate from $[[G ++ x : A |= b :
-  B]]$ and the fact that the logical relation is deterministic and
-  cumulative (Lemma~\ref{lemma:logreldeterhet}).
+  $[[b {rho .: x -> a} in S1]]$.
+  By $[[G ++ x : A |= b : B]]$, Lemma~\ref{lemma:rhowfcons}, and $[[a in S0]]$,
+  we know that there exist some $[[j]], [[S2]]$ such that
+  $[[InterpR j B {rho .: x -> a} S2]]$ and $[[b {rho .: x -> a} in S2]]$.
+  Finally, by level-irrelevant functionality of the logical relation
+  (Lemma~\ref{lemma:logreldeterhet}), we have that $[[S1 = S2]]$
+  and thus $[[b {rho .: x -> a} in S1]]$.
 \end{proof}
 
 \begin{lemma}[ST-App]
@@ -1319,17 +1332,17 @@ in S0]]$. The conclusion immediately follows from the admissible \rref{I-PiAlt}.
 Suppose $[[rho |= G]]$. The goal is to show that there exists some
 $[[i]]$ and $[[S1]]$
 such that  $[[b {rho} a {rho} in S1 ]]$ and $[[InterpR i B {a / x} {rho}
-S1]]$, or equivalently, $[[InterpR i B {rho .: x -> a {rho}} S1]]$ since
+S1]]$, or equivalently $[[InterpR i B {rho .: x -> a {rho}} S1]]$, since
 $[[B {a / x}{rho}]] = [[B {rho .: x -> a {rho}}]]$. By the premise $[[G |= b :
 Pi x : A . B]]$, Lemma~\ref{lemma:setinv}, and Lemma~\ref{lemma:piinvalt},
-there exists some $[[i]]$ and $[[S0]]$ such that:
+there exists some $[[i]]$ and $[[S0]]$ such that the following hold:
   \begin{itemize}
-  \item $[[InterpR i A{rho} S0]]$
+  \item $[[InterpR i A{rho} S0]]$;
   \item $[[forall a0, (# a0 in S0 implies (# exists S1 , InterpR i B
     {rho .: x ->  a0}
-    S1 #) #)]]$
+    S1 #) #)]]$; and
   \item $[[forall a0, (# a0 in S0 implies (# forall
-      S1, (# InterpR i B {rho .: x -> a0} S1 implies  b {rho} a0 in S1 #) #) #)]]$
+      S1, (# InterpR i B {rho .: x -> a0} S1 implies  b {rho} a0 in S1 #) #) #)]]$.
   \end{itemize}
   Instantiating the variable $[[a0]]$ from the last two bullets with
   the term $[[a {rho}]]$, the conclusion immediately follows.
@@ -1343,45 +1356,41 @@ there exists some $[[i]]$ and $[[S0]]$ such that:
   \end{itemize}
 \end{theorem}
 \begin{proof}
-  Proof by mutual induction over the derivation of $[[G |- a :
-  A]]$ and $[[|- G]]$.   The cases related to context well-formedness immediately follow
-  from Lemmas~\ref{lemma:semwffempty} and \ref{lemma:semwffcons}. The semantic typing rules
-(Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp})
-  can be used to discharge their syntactic counterparts
-  (e.g. Lemma~\ref{lemma:stabs} for case \rref{T-Abs}). The remaining
-  cases not covered by the lemmas are similar to the ones already
-  shown.
+  By mutual induction over the derivation of $[[G |- a : A]]$ and $[[|- G]]$.
+  The cases related to context well-formedness immediately follow
+  from Lemmas~\ref{lemma:semwffempty} and \ref{lemma:semwffcons}.
+  The semantic typing rules
+  (Lemmas~\ref{lemma:stvar},~\ref{lemma:stset},~\ref{lemma:stpi},~\ref{lemma:stabs},~\ref{lemma:stapp})
+  are used to discharge their syntactic counterparts
+  (e.g. Lemma~\ref{lemma:stabs} for \rref{T-Abs}). The remaining
+  cases not covered by those lemmas are similar to the ones already shown.
 \end{proof}
 
-Recall the logical consistency property
-(Theorem~\ref{theorem:consistency}), which states that the judgment
-$[[empty |- a : Void ]]$ is not derivable. We now give a proof of the
-property using the fundamental lemma.
+We now give a proof of logical consistency (Theorem~\ref{theorem:consistency}),
+which states that the judgment $[[empty |- a : Void]]$ is not derivable,
+using the fundamental theorem.
 
 \begin{proof}
-  Suppose $[[empty |- a : Void]]$ is derivable, then by the
-  fundamental lemma, we have $[[empty |= a : Void]]$, which states
-  that for all $[[rho |= empty]]$, and for all $[[j]]$, $[[S]]$ such
-  that $[[InterpR j Void S]]$, we have $[[a {rho} in S]]$. By
-  Lemma~\ref{lemma:rhowfempty}, any $[[rho]]$ we pick trivially
-  satisfies $[[rho |= G]]$. For convenience, we pick $[[rho]]$ as
-  $[[idtm]]$, though any $[[rho]]$ would work since
-  $[[empty |- a : Void]]$ ensures there is no free variable in
-  $[[a]]$. We have $[[a {idtm}]] = [[a in S]]$. By the $[[Void]]$
-  case of the inversion property (Lemma~\ref{lemma:interpinv}), we
-  know that $[[S]]$ must be the empty set, contradicting
-  the assumption that $[[a in S]]$.
+  Suppose $[[empty |- a : Void]]$ is derivable. By the
+  fundamental theorem, we have $[[empty |= a : Void]]$, which states
+  that for all $[[rho |= empty]]$, $[[j]]$, $[[S]]$ such
+  that $[[InterpR j Void S]]$, we have $[[a {rho} in S]]$.
+  By Lemma~\ref{lemma:rhowfempty}, any $[[rho]]$ we pick trivially
+  satisfies $[[rho |= G]]$; for convenience, we pick $[[idtm]]$,
+  so that we have $[[a in S]]$.
+  However, by the $[[Void]]$ case of the inversion property
+  (Lemma~\ref{lemma:interpinv}), $[[S]]$ must be the empty set,
+  which is a contradiction.
 \end{proof}
 
-Our soundness theorem also tells us something about closed terms of type 
-$[[Bool]]$; they either reduce to $[[true]]$ or $[[false]]$.
+The fundamental theorem also tells us that closed terms of type 
+$[[Bool]]$ reduce to either $[[true]]$ or $[[false]]$.
 
 \begin{corollary}[Canonicity\footnote{\dotv{soundness.v}{canonicity}}]
 If $[[empty |- b : Bool]]$, then either $[[b =>+ true]]$ or $[[b =>+ false]]$.
 \end{corollary}
 \begin{proof}
-  The proof is similar to above, except that we use the $[[Bool]]$ case of the
-  inversion property.
+  Similar to above, using instead the $[[Bool]]$ case of the inversion property.
 \end{proof}
 
 \section{Existence of \texorpdfstring{$\beta$}{beta}-normal forms}
@@ -1411,7 +1420,7 @@ demonstrates the robustness of our initial framework.
 We begin this part with a description of the $\beta$-normal forms
 of \lang{}.
 %
-\begin{figure}[H]
+\begin{figure}
   \[
     \begin{array}{llcl}
        \beta\text{-}\mathit{neutral\ terms} &
