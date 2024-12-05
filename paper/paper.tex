@@ -314,8 +314,7 @@ given ambient logic.
 
 In this section, we present the dependent type theory \lang{}, whose logical
 consistency will be proven in Section~\ref{sec:logrelproof}.
-
-The syntax of \lang can be found in Figure~\ref{fig:syntax}.  As a dependent
+Its syntax is given in Figure~\ref{fig:syntax}. As a dependent
 type theory, terms and types are collapsed into the same syntactic
 category. We use a Curry-style (extrinsic) syntax, where terms are not
 annotated by types, and only terms which participate in reduction are part of
@@ -664,14 +663,15 @@ We later recover functionality of the relation in Lemma~\ref{lemma:logreldeter}.
 \subsection{Definition of the Logical Relation}
 
 \begin{figure}
-\drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Set, Void, Bool, Eq, Red}
+\drules[I]{$[[Interp I i A S]]$}{Logical relation}{Set, Void, Bool, Eq, Red}
 \[ \drule[width=5in]{I-Pi} \]
-\caption{Logical relation for \lang}
+\caption{Logical relation for \lang{}}
 \label{fig:logrel}
 \end{figure}
 
-The logical relation for \lang{}, which takes the form $[[Interp I i A
-S]]$, is defined as an inductively generated relation in Figure~\ref{fig:logrel}.
+The logical relation\footnote{\dotv{semtyping.v}{InterpExt}} for \lang{},
+which takes the form $[[Interp I i A S]]$,
+is defined as an inductively generated relation in Figure~\ref{fig:logrel}.
 % The logical relation takes the form $[[Interp I i A S]]$.
 The metavariables $[[A]]$ and $[[i]]$ are terms and naturals, respectively.
 % \scw{Many introductory texts define the relation as a recursive function
@@ -1395,31 +1395,27 @@ If $[[empty |- b : Bool]]$, then either $[[b =>+ true]]$ or $[[b =>+ false]]$.
 
 \section{Existence of \texorpdfstring{$\beta$}{beta}-normal forms}
 \label{sec:extension}
-In this section, we show how the logical relation from
-Section~\ref{sec:logreldep} can be extended to show the existence of $\beta$
-normal forms for (open and closed) well-typed terms.  In other words, we prove
-that it is possible to repeatedly use the parallel reduction relation to
-reduce any term to its unique normal form, where no further (non-identity)
-reductions can be applied. This result can be used to show that our type
-conversion relation is decidable.% , as computation of the normal form will
-% always terminate.\yl{dependent on reduction strategy}
 
-The goal of this section is also to demonstrate that our logical relations
-proof technique can be extended to reason about the reduction properties of
-open terms, not just the reduction of terms after closing substitutions.
-Reasoning about open terms is particularly important for dependently-typed
-languages because type checking involves working with open terms.
+In this section, we extend the logical relation in Figure~\ref{fig:logrel}
+to show the existence of $\beta$-normal forms for both open and closed
+well-typed terms. More precisely, we prove it possible to repeatedly apply
+parallel reduction to reduce a term to its unique normal form. Consequently,
+this shows that the convertibility relation is decidable.
+
+This extension of the logical relation demonstrates that our proof technique
+can also be used to reason about the reduction properties of open terms, not
+just of terms after closing substitutions. Reasoning about open terms is
+especially important for dependently typed languages, as type checking involves
+working with open terms.
 \scw{
   Add when we can find a reference:
   However, even non dependently-typed languages employ such techniques,
   especially in the case of relational semantics.
 }
-While this extension employs well-known techniques, it continues to be short and
-demonstrates the robustness of our initial framework.
+While the extension use well-known techniques,
+\jc{Does this need a citation?}
+it remains short and demonstrates the robustness of our initial framework.
 
-We begin this part with a description of the $\beta$-normal forms
-of \lang{}.
-%
 \begin{figure}
   \[
     \begin{array}{llcl}
@@ -1435,70 +1431,59 @@ of \lang{}.
   \caption{$\beta$-neutral and normal forms}
   \label{fig:nenf}
 \end{figure}
-%
-The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
-neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite
-\footnote{\dotv{normalform.v}{nf\_refl}} }.\yl{I always think of
-normal form as the specific definition that says the relation can't
-step. We can refer to nfrefl but that requires some explanation about
-the definition of normal form and the complication that it doesn't
-hold in $\eta$ (maybe it's fine if we just don't mention it in the
-$\eta$ case)}\scw{A terminal form is a syntactic characterization of terms that don't step 
-according to a particular relation. A normal form is a terminal form of a normalizing relation.}
- Instead of the
-metavariables $e$ and $f$, we also
-use the judgment forms $[[ne a]]$ and $[[nf a]]$ to indicate that there exists
-$[[e]]$ or $[[f]]$ such that $[[a = e]]$ or $[[a = f]]$.
 
-The predicates $[[wne a]]$ and $[[wn
-a]]$ describe terms that can evaluate into $\beta$-neutral or
-$\beta$-normal form through parallel reduction and are defined as
-follows.
-\[
-\begin{array}{llcl}
-\mbox{\emph{weakly normalizes to a neutral form}} & [[wne a]] &\iff& \exists [[e]], [[a =>+ e]] \\
-\mbox{\emph{weakly normalizes to a normal form}}  & [[wn a]]  &\iff& \exists [[f]], [[a =>+ f]] \\
-\end{array}
-\]
+Figure~\ref{fig:nenf} gives the $\beta$-neutral forms $[[e]]$ and
+$\beta$-normal forms $[[f]]$ of \lang{}. Neutral terms consist of variables and
+elimination forms that do not reduce any further, while normal terms consist of
+neutral terms and other introduction forms. We use the judgment forms $[[ne a]]$
+and $[[nf a]]$ to indicate that there exists a term $[[e]]$ (resp. $[[f]]$)
+such that $[[a = e]]$ (resp. $[[a = f]]$). Additionally, we define predicates
+to describe terms that weak normalization: reduction to neutral or normal forms
+by parallel reduction.
 
-\begin{figure}[H]
-  \drules[I]{$[[Interp I i A S]]$}{Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
-  \caption{Extended logical relation (new and changed rules) }
+% The syntactic forms $[[e]]$ and $[[f]]$ (Figure~\ref{fig:nenf}) capture the
+% neutral terms and normal forms with respect to $\beta$-reduction\scw{Why not say parallel reduction here? We can be specific and say that that the only reductions available for these terms are identity reductions and cite
+% \footnote{\dotv{normalform.v}{nf\_refl}} }.\yl{I always think of
+% normal form as the specific definition that says the relation can't
+% step. We can refer to nfrefl but that requires some explanation about
+% the definition of normal form and the complication that it doesn't
+% hold in $\eta$ (maybe it's fine if we just don't mention it in the
+% $\eta$ case)}\scw{A terminal form is a syntactic characterization of terms that don't step 
+% according to a particular relation. A normal form is a terminal form of a normalizing relation.}
+
+\begin{definition}[Weak normalization]
+  We define weak normalization of a term $[[a]]$ to a neutral form, written
+  $[[wne a]]$, or to a normal form, written $[[wn a]]$, as the following:
+  \begin{align*}
+    [[wne a]] &\iff \exists [[e]], [[a =>+ e]] \\
+    [[wn a]]  &\iff \exists [[f]], [[a =>+ f]]
+  \end{align*}
+\end{definition}
+
+\begin{figure}
+  \drules[I]{$[[Interp I i A S]]$}{Extended Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
+  \caption{Extended logical relation for \lang{} (new and changed rules)}
   \label{fig:logrelopen}
 \end{figure}
 
-The updated logical relation is shown in
-Figure~\ref{fig:logrelopen}.~\footnote{\dotv{semtypingopen.v}{InterpExt}}
-There is one new rule in this figure, \rref{I-Ne}. In a non-empty context, a
-type itself may evaluate to a neutral term and in turn can only be inhabited
-by neutral terms.  Otherwise, the rest of the rules in this figure are updates
-to the analogous rules in Figure~\ref{fig:logrel}. Note that, we omit the
-rules for the function and universe cases because they are identical to the
-original version.
+The modifications to the logical relation\footnote{\dotv{semtypingopen.v}{InterpExt}}
+are given in Figure~\ref{fig:logrelopen}. The new \rref{I-Ne} asserts that
+only terms that reduce to neutral forms inhabit the interpretation of neutral
+types. The remaining rules are updates to existing rules; we omit those for
+function types and universes as they are unchanged.
 
-% The idea of a term blocked from $\beta$ reduction is
-% captured by $[[e]]$, the set of neutral terms. We augment the
-% interpretation of booleans and the empty types with terms that
-% evaluate to neutral terms. Furthermore, types that are neutral terms
-% can also be assigned a meaning since they may be inhabited by other
-% neutral terms.
-The changes to \rref{I-Bool} and \rref{I-Void}
-follow the same pattern: an open term of type $[[Bool]]$ does not necessarily
-reduce to $[[true]]$ or $[[false]]$, but may reduce to a variable, or more
-generally, a neutral term. Likewise, while the $[[Void]]$ type remains
-uninhabited under an empty context, it may be inhabited when there is a
-variable in the context that has type $[[Void]]$ or that can be eliminated to
-type $[[Void]]$.
+The changes in \rref{I-BoolNew} and \rref{I-VoidNew} follow the same pattern. An open
+term of type $[[Bool]]$ may reduce to $[[true]]$ or $[[false]]$ as before, but
+may also reduce to a neutral term, such as a variable. Likewise, while in an
+empty context the interpretation of $[[Void]]$ remains empty, if the context
+is not empty, then it may contain, for instance, a variable in the context of
+type $[[Void]]$ or that can be eliminated into type $[[Void]]$.
 
-\scw{Cassia didn't understand this part}
-The rule for equality type $[[a ~ b : A]]$ is augmented with the precondition that
-$[[a]]$, $[[b]]$, and $[[A]]$ are all normal forms because
-otherwise our model would include equality types that are themselves
-not normalizing.
-Furthermore, the condition $[[a <=> b]]$ is only
-required when the equality proof reduces to $[[refl]]$. If the proof
-term reduces to a neutral term, then there is nothing we need to show
-about the relationship between $[[a]]$ and $[[b]]$.
+In \rref{I-EqNew}, we add preconditions asserting that $[[a]]$, $[[b]]$, and
+$[[A]]$ are normal so that we only model normalizing equality types.
+Furthermore, we only require $[[a <=> b]]$ when the equality proof reduces to
+$[[refl]]$. If the proof term reduces to a neutral term, there is nothing we
+can assert about the relationship between $[[a]]$ and $[[b]]$.
 
 Because we are working with open terms, we need a few additional syntactic
 lemmas about reduction. First, a renaming $\xi$ is a generalization of
