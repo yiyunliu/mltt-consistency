@@ -1486,16 +1486,17 @@ $[[refl]]$. If the proof term reduces to a neutral term, there is nothing we
 can assert about the relationship between $[[a]]$ and $[[b]]$.
 
 Because we are working with open terms, we need a few additional syntactic
-lemmas about reduction. First, a renaming $\xi$ is a generalization of
+lemmas about reduction. First, a renaming $[[xi]]$ is a generalization of
 weakening when working with simultaneous substitutions. It consistently maps the
 variables that appears in terms to other variables. If a renamed term has been reduced, we can
 always recover the result of the reduction without the renaming.
-%
+
 \scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
-used more generally. Maybe we should replace it with
-that?}\yl{Anti-renaming is mentioned once in Section 6 when we talk abou how confluence with $\eta$
+used more generally. Maybe we should replace it with that?}
+\yl{Anti-renaming is mentioned once in Section 6 when we talk about how confluence with $\eta$
 depends on anti-renaming for Par. I don't think that discussion in
-Section 6 is very important so I'm fine with replacing it  }
+Section 6 is very important so I'm fine with replacing it}
+
 \begin{lemma}[Par anti-renaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
   \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
 exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
