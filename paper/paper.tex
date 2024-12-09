@@ -51,6 +51,7 @@
 
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
 \newcommand{\lang}{$\lambda^{\Pi}$\xspace}
+\newcommand{\CR}{\mathit{CR}}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -1532,7 +1533,7 @@ are replaced by other variables. In this special case, if a renamed term
 reduces, then we can separate the reduction from the renaming, asserting that
 renaming never introduces new redexes.
 
-\begin{lemma}[Par anti-renaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
+\begin{lemma}[Par antirenaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
   \label{lemma:parantirenaming}
   If $[[a < xi > => b0]]$, then there exists some $[[b]]$ such that
   $[[b < xi > = b0]]$ and $[[a => b]]$.
@@ -1572,93 +1573,91 @@ Lemma~\ref{lemma:parnenf}.
 % $\beta$-normal form.
 
 Before we can prove the fundamental theorem and derive the normalization
-property as its corollary, we need to additionally formulate and prove an
-\emph{adequacy property} about the logical relation.  This property, that the
-interpretation of each type is a \emph{reducibility candidate}, allows us to
-conclude that every term in each interpretation has a normal form. In the
-previous section, we only needed a property of the interpretation of the
-$[[Void]]$ type. However, for this section, we need to know something about
-the interpretation of every type.
+property as its corollary, we need to formulate and prove an \emph{adequacy}
+property of the logical relation, which states that the interpretation of each
+type is a \emph{reducibility candidate} ($\CR$), which characterizes sets of
+weakly normalizing terms. In contrast to proving consistency, which only
+requires knowing that the interpretation of $[[Void]]$ is empty, adequacy
+allows us to conclude that all terms in \emph{every} interpretation have a
+normal form.
 
-Furthermore, to prove this adequacy property, we need to strengthen it to also
-give us more information about neutral terms as we proceed by induction. In
-particular, we need to know that all terms that reduce to neutral forms are
-contained within the interpretation.
-Therefore, we formally define when a set is a \emph{reducibility candidate}
-(shortened as $CR$) as follows. Our definition of $CR$ is inspired by
-\citet{girard1989proofs}, but not identical since we only care about
-weak normalization.
-\begin{definition}[Reducibility Candidates (CR)\footnote{\dotv{semtypingopen.v}{CR}}]
-  Let $[[S]]$ be a set of terms. We say that $[[S]] \in CR$
-  if and only if conditions $CR_1$ and $CR_2$ hold.
+To prove adequacy, we need to strengthen it to with more information about
+neutral terms as we proceed by induction. In particular, we need to know that
+all terms that reduce to neutral forms are contained within the interpretation.
+Therefore, we define reducibility candidates as follows, inspired by
+\citet{girard1989proofs}, but modified for weak normalization only. Adequacy
+then states that interpretations are in $\CR$.
+
+\begin{definition}[Reducibility Candidates ($\CR$)\footnote{\dotv{semtypingopen.v}{CR}}]
+  A set of terms $[[S]]$ is in $\CR$
+  if and only if conditions $\CR_1$ and $\CR_2$ hold.
   \begin{itemize}
-  \item $[[S]] \in CR_1 \iff\ [[forall a, (#  wne a implies a in S #)]]$
-  \item $[[S]] \in CR_2 \iff\ [[forall a, (# a in S implies wn a #)]]$
+  \item $[[S]] \in \CR_1 \iff\ [[forall a, (# wne a implies a in S #)]]$
+  \item $[[S]] \in \CR_2 \iff\ [[forall a, (# a in S implies wn a #)]]$
   \end{itemize}
 \end{definition}
 
-We now state and prove the adequacy lemma.
 \begin{lemma}[Adequacy\footnote{\dotv{semtypingopen.v}{adequacy}}]
   \label{lemma:adequacy}
-  If $[[InterpR i A S]]$, then we have $[[S]] \in CR$.
+  If $[[InterpR i A S]]$, then $[[S]] \in \CR$.
 \end{lemma}
+
 \begin{proof}
   We start by strong induction over $[[i]]$. We are given the
   induction hypothesis that for all $[[j < i]]$, $[[InterpR j A S]]$
-  implies $[[S]] \in CR$. Our goal is to show $[[InterpR i A S]]$
-  implies $[[S]] \in CR$.
+  implies $[[S]] \in \CR$. Our goal is to show that $[[InterpR i A S]]$
+  implies $[[S]] \in \CR$.
 
-  By Definition~\ref{fig:logrelrec}, we have the
-  equality $[[InterpR i A S]] = [[Interp I i A S]]$  where $[[I i]] :=
-  [[{A | exists S , InterpR i A S}]]$.
-  We then proceed by structural induction over the derivation of $[[Interp I i A
-  S]]$. The only interesting cases are \rref{I-Pi} and \rref{I-Set}.
-  The function case requires Lemmas~\ref{lemma:extwn} and
-  \ref{lemma:wnewn}, which we have shown earlier.
+  By Definition~\ref{fig:logrelrec}, we have $[[Interp I i A S]]$,
+  where $[[I j]] := [[{A | exists S , InterpR j A S}]]$ for $[[j < i]]$.
+  We then proceed by structural induction on the derivation of
+  $[[Interp I i A S]]$. The interesting cases are \rref{I-Pi} and \rref{I-Set}.
+  For \rref{I-Pi}, proving $S \in \CR_1$ requires Lemma~\ref{lemma:wnewn}. When
+  proving $S \in \CR_2$, by the structural induction hypotheses, we have that
+  $[[wn (b a)]]$ for any $[[wne a]]$, while the goal is to show that $[[wn b]]$.
+  We pick an arbitrary $[[x]]$ and conclude by applying Lemma~\ref{lemma:extwn}
+  to $[[b x]]$.
 
   The \rref{I-Set} case is the most interesting. We must show that
-  for all $[[j < i]]$, the set $[[{ A | exists S, InterpR j A S  }]]
-  \in CR$. We immediately know that $[[{A | exists S, InterpR j A S
-  }]] \in CR_1$ by \rref{I-Ne}. It remains to show that $[[{A | exists S, InterpR j A S
-  }]] \in CR_2$, or equivalently, for all $[[A]]$, $[[InterpR j A S]]$
-  implies $[[wn A]]$. Suppose $[[InterpR j A S]]$ for an arbitrary
-  $[[A]]$. We have $[[InterpR j A S]]=[[Interp I j A S]]$ where $[[I]]$
-  has the same definition from earlier but its domain restricted to
-  numbers less than $[[j]]$. We perform another induction on
-  the derivation of $[[Interp I j A S]]$. All cases are trivial except for the case for
-  \rref{I-Pi}. Our induction hypothesis immediately gives us $[[wn
-  A]]$. To derive $[[wn (Pi x : A . B)]]$, it remains to show $[[wn B]]$. We
-  use the outermost induction hypothesis to show that an arbitrary $[[y]]$
-  semantically inhabits $[[A]]$, from which we derive $[[wn (B {y / x})]]$
-  and conclude $[[wn B]]$ through antirenaming (Lemma~\ref{lemma:parantirenaming}).
+  for all $[[j < i]]$, $[[{A | exists S, InterpR j A S}]] \in \CR$.
+  We immediately know that $[[{A | exists S, InterpR j A S}]] \in \CR_1$
+  by \rref{I-Ne}. It remains to show that
+  $[[{A | exists S, InterpR j A S}]] \in \CR_2$, or equivalently that
+  $[[Interp I j A S]]$ implies $[[wn A]]$, where $[[I]]$ is defined as above
+  over $k < j$.
+  
+  We assume $[[Interp I j A S]]$ and proceed once more by structural induction
+  on its derivation. All cases are trivial except for \rref{I-Pi}. The induction
+  hypothesis immediately gives $[[wn A]]$. To derive $[[wn (Pi x : A . B)]]$,
+  it remains to show $[[wn B]]$. We use the outermost induction hypothesis on
+  $[[Interp I j A S]]$ to show that an arbitrary $[[y]]$ semantically inhabits
+  $[[A]]$ by $\CR_1$, followed by the structural induction hypothesis to derive
+  $[[wn (B {y / x})]]$. We conclude $[[wn B]]$ by applying antirenaming
+  (Lemma~\ref{lemma:parantirenaming}).
 \end{proof}
 
 The formulation of semantic well-typedness and the fundamental lemma from
-Section~\ref{sec:logrelproof} remains
-unchanged.
-The proof of the fundamental lemma\footnote{\dotv{soundnessopen.v}{soundness}} is still carried out by induction
-over the typing derivation, where the additional neutral term related
-cases are handled by Lemma~\ref{lemma:adequacy}, the adequacy property.
+Section~\ref{sec:logrelproof} remains unchanged. The proof of the fundamental
+lemma\footnote{\dotv{soundnessopen.v}{soundness}} is still carried out by
+induction over the typing derivation, where the additional neutral term related
+cases are handled by adequacy. The normalization property then follows as a
+corollary of the fundamental theorem.
 
-The normalization property then follows as a corollary of the
-fundamental theorem.
 \begin{corollary}[Existence of $\beta$-normal forms\footnote{\dotv{soundnessopen.v}{mltt\_normalizing}}]
   \label{corollary:exbetanf}
   If $[[G |- a : A]]$, then $[[wn a]]$ and $[[wn A]]$.
 \end{corollary}
+
 \begin{proof}
   By the fundamental lemma, we know that $[[G |= a : A]]$. That is,
   for all $[[rho |= G]]$, there exists some $[[i]]$ and $[[S]]$ such
   that $[[InterpR i A {rho} S]]$ and $[[a {rho} in S]]$.
-  We pick the $[[rho]]$ to be the identity substitution $[[idtm]]$, which injects
-  variables as terms. The side condition $[[idtm |=
-  G]]$ is satisfied since Lemma~\ref{lemma:adequacy} says neutral terms,
-  including variables, semantically inhabit any $[[S0]]$ where
-  $[[S0]]$ is the interpretation of some type. With our choice of
-  $[[rho]]$, we have $[[A {rho}]] = [[A {idtm}]] = [[A]]$ and $[[a {rho}]] = [[a{idtm}]] = [[a]]$. Then we
-  know that $[[InterpR i A S]]$ and $[[a in S]]$ for some $[[i]]$ and
-  $[[S]]$. By Lemma~\ref{lemma:adequacy}, we
-  conclude that $[[wn a]]$ and $[[wn A]]$.
+  We pick the $[[rho]]$ to be the identity substitution $[[idtm]]$, and the
+  condition $[[idtm |= G]]$ is satisfied by adequacy, which says that variables,
+  as neutral terms, semantically inhabit the interpretations of the types in
+  $[[G]]$. Performing the identity substitutions, we then know that there exist
+  $[[i]]$ and $[[S]]$ such that $[[InterpR i A S]]$ and $[[a in S]]$. Finally,
+  by adequacy again, we conclude that $[[wn a]]$ and $[[wn A]]$.
 \end{proof}
 
 % Due to the non-deterministic nature of parallel reduction, we need to take a
