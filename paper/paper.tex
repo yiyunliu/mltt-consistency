@@ -1838,7 +1838,7 @@ renaming and substitution functions, and lemmas and tactics that allow
 reasoning about those functions. The auto-generated syntax file (291 LOC)
 and other Autosubst library files are also not included in the figure.
 
-\paragraph{Axioms}
+\subsection{Axioms}
 Our Coq development assumes two axioms: functional extensionality
 and propositional extensionality. The former is also required by
 the Autosubst 2 libraries. Both axioms are known to be consistent
@@ -1859,7 +1859,7 @@ $\forall x, P(x) \iff Q(x)$. But this is exactly the statement of
 predicate extensionality, an immediate corollary from functional
 extensionality and propositional extensionality.
 
-\paragraph{Encoding the logical relation in Coq}
+\subsection{Encoding the logical relation in Coq}
 We next discuss specific details of the Coq encoding of the logical relation
 presented in Section~\ref{sec:logreldep}.
 
@@ -1971,7 +1971,7 @@ than a computable function.
 % theory, where there is no distinction between computable functions and
 % functions in general. \scw{not sure I follow this last bit}
 
-\paragraph{Automation}
+\subsection{Automation}
 \label{sec:automation}
 Our Coq mechanization heavily uses automation, supported by the tools
 Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
@@ -2129,19 +2129,57 @@ to constantly juggle between the impredicative but irrelevant sort
 More recent work such as \citet{Abel12}
 and \citet{abel2008betaeta} make their definitions more explicit and
 precise and thus more directly encodable in proof assistants.
-Our logical relation resembles their definition of a
-semantic universe hierarchy, although we close our relation
-under expansion with respect to parallel reduction rather
-than weak-head reduction. \scw{Why is this important?} \yl{if you are
-  referring to the sentence about weak-head reduction, it can
-  be deleted because it's discussed in Section 9 already}
-Furthermore, \citet{Abel12} and
-\citet{abel2008betaeta} use their semantic universe hierarchy as a
-measure to define Kripke-style logical relations, from which they
-derive the correctness of their conversion algorithms. In our work, we
-use the semantic universe hierarchy directly in our definition of
-semantic typing because it is sufficient for our purposes
-(consistency and normalization).
+% Our logical relation resembles their definition of a
+% semantic universe hierarchy.
+Unlike \lang, their systems support type-directed $\eta$ laws. These
+type-directed equational rules complicate the proof significantly
+since the confluence of full reduction is not available until the
+fundamental theorem is proven. Therefore,
+instead of a logical predicate, a relational model with
+syntactic type annotations is needed to remove the early reliance on
+confluence, despite the fact that the underlying type theory is
+intensional.
+
+\citet{coquand:canonicity,coquand:prop} use a \emph{proof-relevant} logical
+relation to prove canonicity and normalization for intensional
+dependent type theories. % Intuitively, proof-relevant logical relations
+% can be viewed as the set theoretic augmented with information
+% about syntactic terms so the fundamental theorem can give us more
+Compared
+to the proof-irrelevant logical predicate we present, Coquand's proof
+has the benefit that it does not rely on the confluence of reduction,
+and can be easily extended to more $\eta$ laws without relying on a
+complex relational model. Instead of working with concrete syntax,
+Coquand works directly with an algebraic representation of dependent
+type theory called category with families (CwF)~\citep{hofmann:cwf},
+though the idea of proof-relevant logical relations for dependent
+types can be expressed independently of category
+theory~\citep{barras2012semantical}.
+
+More abstractly, the proof technique by Coquand can be viewed as an
+instance of a categorical construction called Artin Gluing
+~\citep{kaposi:gluing}. Different metatheoretic
+properties, such as normalization, parametricity, and
+$\Pi$-injectivity can be obtained by gluing the initial CwF with the
+corresponding CwF model. \citet{sterling:tait} introduces the notion of
+\emph{Synthetic Tait Computability}, which allows further
+simplification of such proofs by working in the internal language
+formed by gluing.
+However, proof-relevant logical relations are more demanding on the
+expressive power of the metatheory. For example, the mechanization of
+NbE by \citet{altenkirch:normalisation} relies on Quotient Inductive
+Inductive Types (QIIT)~\citep{kaposi:qiit}.
+
+% To support type-directed $\eta$ laws, \citet{Abel12,abel2008betaeta}
+% use a partial equivalence relation to model their type system. The 
+% prove the injectivity of $\Pi$ types cannot be derived 
+% Furthermore, \citet{Abel12} and
+% \citet{abel2008betaeta} use their semantic universe hierarchy as a
+% measure to define Kripke-style logical relations, from which they
+% derive the correctness of their conversion algorithms. In our work, we
+% use the semantic universe hierarchy directly in our definition of
+% semantic typing because it is sufficient for our purposes
+% (consistency and normalization).
 
 \subsection{Mechanized logical relations for dependent types}
 
