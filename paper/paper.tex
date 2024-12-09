@@ -1675,27 +1675,28 @@ The extension of our logical relation to prove normalization of open
 \emph{and} closed terms closely mirrors the progression from
 normalization of closed terms~\citep{harpertait} to normalization of
 open terms~\citep{harperkripke} in the simply typed lambda calculus.
-Indeed, a mechanization of normalization generalized to open terms
-appears in ~\citet{abel2019poplmark}.  In this setting, as above,
+Indeed, \citet{abel2019poplmark} mechanize normalization generalized
+to open terms. In this setting, as above,
 adequacy must be proven before the
-fundamental theorem so they can handle elimination rules such as
-\rref{T-App} where the scrutinee is a neutral term. % In
+fundamental theorem so that they can handle elimination rules such as
+\rref{T-App} where the function is a neutral term. % In
 % \citet{abel2019poplmark}, a variant of Lemma~\ref{lemma:extwn} is used
 % in the exact same way to show the normalization of lambda forms
 %
-Dependent types make the adequacy proof slightly more complicated because we
+Dependent types make the adequacy proof more complicated because we
 also need to know that every \emph{type} has a normal form, not just
 terms. This complicates our proof specifically in the \rref{I-Set} case for
 our adequacy property (Lemma~\ref{lemma:adequacy}).
 
-Overall, despite the dependently typed setting, it is in fact reassuring that
+Overall, despite the dependently typed setting, it is reassuring that
 once we have laid the foundational technique for handling dependent types in
-our logical relation, the extension to open terms mostly boils down to
-properties that can be independently derived from the logical relation through
+our logical relation, the extension to open terms boils down to
+properties that can be derived independently from the logical relation through
 syntactic means.
 
 \section{Existence of \texorpdfstring{$\beta\eta$-}{beta-eta--}normal forms}
 \label{sec:betaeta}
+
 \citet{nbeincoq,decagda,martin-lof-a-la-coq}
 include the $\eta$ law for functions in their equational theory and
 use relational models to justify its validity.
