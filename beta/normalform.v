@@ -327,16 +327,15 @@ Lemma ext_wn (a : tm) i :
     wn a.
 Proof.
   move E : (tApp a (var_tm i)) => a0 [v [hr hv]].
-  move : a E.
-  move : hv.
+  move : hv a E.
   elim : a0 v / hr.
-  - hauto q:on inv:tm ctrs:rtc b:on db: nfne.
+  - intros. hauto qb:on ctrs:rtc use:ne_nf unfold:wn.
   - move => a0 a1 a2 hr0 hr1 ih hnfa2.
     move /(_ hnfa2) in ih.
     move => a.
     case : a0 hr0=>// => b0 b1.
     elim /Par_inv=>//.
-    + hauto q:on inv:Par ctrs:rtc b:on.
+    + hauto q:on inv:Par ctrs:rtc.
     + move => ? a0 a3 b2 b3 ? ? [? ?] ? [? ?]. subst.
       have ? : b3 = var_tm i by hauto lq:on inv:Par. subst.
       suff : wn (tAbs a3) by hauto lq:on ctrs:Par, rtc unfold:wn.
