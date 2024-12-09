@@ -716,8 +716,8 @@ relation on natural numbers.
 \end{definition}
 
 Our system is predicative because the interpretation of the $[[i]]$th universe
-is dependent only on universes strictly below $[[i]]$,
-which have already been defined.
+is dependent only on universes strictly below $[[i]]$.
+% which have already been defined.
 This restriction ensures that the relation is well defined; otherwise, the
 definition of $[[InterpR i A S]]$ would not be well founded, and
 $[[Interp I i A S]]$ could call $[[I]]$ on universe levels greater than
@@ -856,18 +856,32 @@ Then by deriving \rref{I-PiAlt} and its inversion lemma,
 we avoid needing to manipulate the function $[[F]]$ directly.
 
 \subsection{Properties of the Logical Relation}
+
 In the rest of this section, we develop the theory of our logical relation
-with the goal of showing four key facts: irrelevance
+with the goal of showing four key properties: irrelevance
 (Lemma~\ref{lemma:logrelcoherence}), functionality
 (Lemma~\ref{lemma:logreldeter}), cumulativity
 (Lemma~\ref{lemma:logrelcumulativity}), and the backward closure property
-(Lemma~\ref{lemma:logrelbackclos}).  For the majority of the properties that
-we prove in this section, we do not need any information about the
-parameterized function $[[I]]$.  Each property about $[[InterpR i A S]]$
-follows as a corollary of a property about $[[Interp I i A S]]$ with no or few
-assumptions imposed on $[[I]]$. As a result, we state most of our lemmas in
-terms of $[[Interp I i A S]]$ without duplicating them in terms of
-$[[InterpR i A S]]$.
+(Lemma~\ref{lemma:logrelbackclos}).
+These properties semantically correspond to ones that hold for syntactic typing,
+and allow us to prove that syntactic typing implies semantic typing, which we
+define in the next section.
+
+In particular, irrelevance states that convertible
+types have the same interpretation, which is used to interpret \rref{T-Conv}.
+Functionality with cumulativity shows that all interpretations of a type are
+the same across all universe levels, which allows us to treat a type that
+appears twice in a judgment uniformly, such as the function domain type in
+\rref{T-App}. Finally, backward closure ensures that anything that reduces to
+a term in the interpretation of a type is itself in the interpretation, which
+we use to handle $\beta$-reductions in the cases for introduction forms.
+
+For the majority of the properties that we prove in this section, we need no
+information about the parameterized function $[[I]]$.  Each property about
+$[[InterpR i A S]]$ follows as a corollary of a property about
+$[[Interp I i A S]]$ with no or few assumptions imposed on $[[I]]$. As a result,
+we state most of our lemmas in terms of $[[Interp I i A S]]$ without duplicating
+them in terms of $[[InterpR i A S]]$.
 
 First, we prove inversion principles for our logical relation. Given
 $[[Interp I i A S]]$ where $[[A]]$ is in some head form such as $[[Bool]]$ or
@@ -1492,7 +1506,7 @@ variables that appears in terms to other variables. If a renamed term has been r
 always recover the result of the reduction without the renaming.
 
 \scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
-used more generally. Maybe we should replace it with that?}
+used more generally. Maybe we should replace it with  that?}
 \yl{Anti-renaming is mentioned once in Section 6 when we talk about how confluence with $\eta$
 depends on anti-renaming for Par. I don't think that discussion in
 Section 6 is very important so I'm fine with replacing it}
