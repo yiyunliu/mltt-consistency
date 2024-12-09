@@ -386,7 +386,7 @@ which omits reflexivity and congruence rules for brevity.
 \end{definition}
 
 \begin{figure}
-\drules[P]{$[[a => b]]$}{Parallel Reduction}{AppAbs, IfTrue, IfFalse, JRefl}
+\drules[P]{$[[a => b]]$}{Parallel reduction}{AppAbs, IfTrue, IfFalse, JRefl}
 \caption{Parallel reduction ($\beta$ rules only) }
 \label{fig:par}
 \end{figure}
@@ -1431,18 +1431,13 @@ While the extension use well-known techniques,
 it remains short and demonstrates the robustness of our initial framework.
 
 \begin{figure}
-  \[
-    \begin{array}{llcl}
-       \beta\text{-}\mathit{neutral\ terms} &
-      [[e]] & ::= & [[x]]\ |\ [[e f]]\ |\ [[J e f]]\ |\ [[if e f
-                    f]] \\ \\
-      \beta\text{-}\mathit{normal\ terms} &
-      [[f]] & ::= & [[e]]\ |\ [[Set i]]\ |\ [[Void]]\ |\ [[Pi x : f . f]]\
-                    |\ [[f ~ f : f]]\\
-            & & |   & [[\ x . f]]\ |\ [[refl]]\ |\ [[Bool]]\ |\ [[true]]\ |\ [[false]]
-    \end{array}
-  \]
-  \caption{$\beta$-neutral and normal forms}
+  \begin{align*}
+    [[e]] & ::= [[x]] \mid [[e f]] \mid [[J e f]] \mid [[if e f f]] \mid [[absurd e]]
+    && \textit{Neutral terms} \\
+    [[f]] & ::= [[e]] \mid [[Set i]] \mid [[Pi x : f . f]] \mid [[Bool]] \mid [[f ~ f : f]] \mid [[Void]] \mid [[\ x . f]] \mid [[true]] \mid [[false]] \mid [[refl]]
+    && \textit{Normal terms}
+  \end{align*}
+  \caption{$\beta$-neutral and $\beta$-normal forms}
   \label{fig:nenf}
 \end{figure}
 
@@ -1474,17 +1469,36 @@ by parallel reduction.
   \end{align*}
 \end{definition}
 
-\begin{figure}
-  \drules[I]{$[[Interp I i A S]]$}{Extended Logical Relation}{Ne, VoidNew, BoolNew, EqNew}
-  \caption{Extended logical relation for \lang{} (new and changed rules)}
-  \label{fig:logrelopen}
-\end{figure}
+Weakly normalizing terms are composed of other weakly normalizing terms
+following the structure of neutral and normal forms. For example, an
+application normalizes to neutral form if the function normalizes to neutral
+form and the argument to normal form. Similar lemmas hold for
+function types\footnote{\dotv{normalform.v}{wn\_pi}},
+abstractions\footnote{\dotv{normalform.v}{wn\_abs}},
+conditionals\footnote{\dotv{normalform.v}{wne\_if}},
+and absurdity\footnote{\dotv{normalform.v}{wne\_absurd}}.
+
+\begin{lemma}[Application (wne)\footnote{\dotv{normalform.v}{wne\_app}}]
+  \label{lemma:wnewn}
+  If $[[wne a]]$ and $[[wn b]]$, then $[[wne (a b)]]$.
+\end{lemma}
+
+\begin{proof}
+  By induction over the length of reduction sequences in
+  $[[wne a]]$ and $[[wn b]]$.
+\end{proof}
 
 The modifications to the logical relation\footnote{\dotv{semtypingopen.v}{InterpExt}}
 are given in Figure~\ref{fig:logrelopen}. The new \rref{I-Ne} asserts that
 only terms that reduce to neutral forms inhabit the interpretation of neutral
 types. The remaining rules are updates to existing rules; we omit those for
 function types and universes as they are unchanged.
+
+\begin{figure}
+  \drules[I]{$[[Interp I i A S]]$}{Extended logical relation}{Ne, VoidNew, BoolNew, EqNew}
+  \caption{Extended logical relation for \lang{} (new and changed rules)}
+  \label{fig:logrelopen}
+\end{figure}
 
 The changes in \rref{I-BoolNew} and \rref{I-VoidNew} follow the same pattern. An open
 term of type $[[Bool]]$ may reduce to $[[true]]$ or $[[false]]$ as before, but
@@ -1499,11 +1513,30 @@ Furthermore, we only require $[[a <=> b]]$ when the equality proof reduces to
 $[[refl]]$. If the proof term reduces to a neutral term, there is nothing we
 can assert about the relationship between $[[a]]$ and $[[b]]$.
 
-Because we are working with open terms, we need a few additional syntactic
-lemmas about reduction. First, a renaming $[[xi]]$ is a generalization of
-weakening when working with simultaneous substitutions. It consistently maps the
-variables that appears in terms to other variables. If a renamed term has been reduced, we can
-always recover the result of the reduction without the renaming.
+Because we are working with open terms, we need additional lemmas for parallel
+reduction. First, it preserves neutral and normal forms.
+
+\begin{lemma}[Preservation of neutral and normal forms (p.r.)\footnote{\dotv{normalform.v}{nf\_ne\_preservation}}]
+  \label{lemma:parnenf}
+  If $[[a => b]]$, then $[[ne a]]$ implies $[[ne b]]$,
+  and $[[nf a]]$ implies $[[nf b]]$.
+\end{lemma}
+
+Since neutral and normal forms have no redexes, if $[[a]]$ is neutral or normal,
+parallel reduction never $\beta$-reduces, so $[[a = b]]$ additionally holds,
+but preservation of neutral and normal forms is sufficient for our proof.
+
+Next, parallel reduction also satisfies an antirenaming property. A
+\emph{renaming} $[[xi]]$ is a special case of substitution where all variables
+are replaced by other variables. In this special case, if a renamed term
+reduces, then we can separate the reduction from the renaming, asserting that
+renaming never introduces new redexes.
+
+\begin{lemma}[Par anti-renaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
+  \label{lemma:parantirenaming}
+  If $[[a < xi > => b0]]$, then there exists some $[[b]]$ such that
+  $[[b < xi > = b0]]$ and $[[a => b]]$.
+\end{lemma}
 
 \scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
 used more generally. Maybe we should replace it with  that?}
@@ -1511,63 +1544,32 @@ used more generally. Maybe we should replace it with  that?}
 depends on anti-renaming for Par. I don't think that discussion in
 Section 6 is very important so I'm fine with replacing it}
 
-\begin{lemma}[Par anti-renaming\footnote{\dotv{normalform.v}{Par\_antirenaming}}]
-  \label{lemma:parantirenaming} If $[[a < xi > => b0]]$, then there
-exists some $[[b]]$ such that $[[b < xi > = b0]]$ and $[[a => b]]$.
-\end{lemma}
+Together, these lemmas prove an inversion property for weakly normalizing forms:
+if an application of a term to a variable is weakly normalizing, then the term
+must also be weakly normalizing.
 
-We can show that parallel reduction preserves $\beta$-normal and
-neutral forms.
-\begin{lemma}[Par preserves $\beta$-neutral and normal forms\footnote{\dotv{normalform.v}{nf\_ne\_preservation}}]
-  \label{lemma:parnenf}
-  If $[[a => b]]$, then
-  \begin{itemize}
-  \item $[[ne a]]$ implies $[[ne b]]$
-  \item $[[nf a]]$ implies $[[nf b]]$
-  \end{itemize}
-\end{lemma}
-Lemma~\ref{lemma:parnenf} could have been strengthened to say that if
-$[[ne a]]$ or $[[nf a]]$ and $[[a => b]]$, then $[[a = b]]$. Since
-$\ottkw{ne}$ and $\ottkw{nf}$ captures terms free of $\beta$ redexes, parallel
-reduction cannot take any real reduction steps and can only step into a term
-itself. However, for the purpose of our proof, Lemma~\ref{lemma:parnenf} is
-sufficient.
-
-All the properties we have shown in
-Section~\ref{sec:logreldep} and \ref{sec:logrelproof} before the fundamental
-lemma can be proven in the same order, where the new cases due to \rref{I-Ne}
-and the augmentation of neutral terms to \rref{I-Void, I-Eq, I-Bool} can be
-immediately discharged by Lemma~\ref{lemma:parnenf}.
-
-Furthermore, Lemma~\ref{lemma:parnenf}, in its current weaker form, would
-still hold after we extend our equational theory with the function $\eta$
-rule, where parallel reduction can take $\eta$ steps but still preserves
-$\beta$-normal form.
-
-We also need to know that the $[[wne a]]$ and $[[wn a]]$ relations can be
-justified compositionally. For example, an application has a neutral form when
-the function has a neutral form and the argument has a normal form.
-
-\begin{lemma}[Wne application\footnote{\dotv{normalform.v}{wne\_app}}]
-  \label{lemma:wnewn}
-  If $[[wne a]]$ and $[[wn b]]$, then $[[wne (a b)]]$.
-\end{lemma}
-\begin{proof}
-  Immediate by induction over the length of the reduction sequences in
-  $[[wne a]]$ and $[[wn b]]$.
-\end{proof}
-
-Furthermore, if we know that an application of a term to a variable
-has a normal form, then we know that the term must have a normal form.
-\begin{lemma}[Wn extensionality\footnote{\dotv{normalform.v}{ext\_wn}}]
+\begin{lemma}\hspace{-0.5em}\footnote{\dotv{normalform.v}{ext\_wn}}
   \label{lemma:extwn}
   If $[[wn (a x)]]$, then $[[wn a]]$.
 \end{lemma}
 \begin{proof}
-  By induction over the length of the reduction sequence in $[[wn (a
-  x)]]$. The conclusion follows from Lemmas~\ref{lemma:parantirenaming} and
-  \ref{lemma:parnenf}.
+  By induction over the length of the reduction sequence in $[[wn (a x)]]$.
+  When the reduction is a $\beta$-reduction, $[[a]]$ is a function and the
+  application reduces to a renaming by $[[x]]$, so the conclusion follows
+  from Lemma~\ref{lemma:parantirenaming}.
 \end{proof}
+
+All the properties we have shown in
+Section~\ref{sec:logreldep} and \ref{sec:logrelproof} before the fundamental
+lemma can be proven in the same order, where the new cases due to \rref{I-Ne}
+and the modifications to \rref{I-Void, I-Eq, I-Bool} can be discharged by
+Lemma~\ref{lemma:parnenf}.
+
+% \jc{Don't mention this right now; delay to $\eta$ section.}
+% Furthermore, Lemma~\ref{lemma:parnenf}, in its current weaker form, would
+% still hold after we extend our equational theory with the function $\eta$
+% rule, where parallel reduction can take $\eta$ steps but still preserves
+% $\beta$-normal form.
 
 Before we can prove the fundamental theorem and derive the normalization
 property as its corollary, we need to additionally formulate and prove an
@@ -1626,8 +1628,8 @@ We now state and prove the adequacy lemma.
   the derivation of $[[Interp I j A S]]$. All cases are trivial except for the case for
   \rref{I-Pi}. Our induction hypothesis immediately gives us $[[wn
   A]]$. To derive $[[wn (Pi x : A . B)]]$, it remains to show $[[wn B]]$. We
-  use the outermost induction hypothesis to show that $[[x]]$
-  semantically inhabits $[[A]]$, from which we derive $[[wn (B {x / x})]]$
+  use the outermost induction hypothesis to show that an arbitrary $[[y]]$
+  semantically inhabits $[[A]]$, from which we derive $[[wn (B {y / x})]]$
   and conclude $[[wn B]]$ through antirenaming (Lemma~\ref{lemma:parantirenaming}).
 \end{proof}
 
