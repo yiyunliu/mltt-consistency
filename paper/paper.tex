@@ -1597,8 +1597,9 @@ then states that interpretations are in $\CR$.
   \end{itemize}
 \end{definition}
 
-\begin{lemma}[Adequacy\footnote{\dotv{semtypingopen.v}{adequacy}}]
+\begin{lemma}[Adequacy]
   \label{lemma:adequacy}
+  \footnote{\dotv{semtypingopen.v}{adequacy}}
   If $[[InterpR i A S]]$, then $[[S]] \in \CR$.
 \end{lemma}
 
@@ -1725,7 +1726,7 @@ identical since the complications introduced by $\eta$ are hidden
 behind the proofs of the diamond property and the anti-renaming property.
 As before, $\ottkw{ne}$ and $\ottkw{nf}$
 represent $\beta$-neutral and $\beta$-normal forms, and the
-fundamental lemma shows us that every well-typed term has a
+fundamental theorem shows us that every well-typed term has a
 $\beta$-normal form. However, in the presence of the $\eta$ reduction
 rule, Lemma~\ref{lemma:parnenf} tells us that $\eta$ reduction
 preserves $\beta$-normal forms (i.e. does not produce new
@@ -2073,6 +2074,63 @@ an induction metric to define an executable algorithm\footnote{Coq's
 factorization property and the extraction of a conversion algorithm as
 part of our future work.
 \fi
+
+\section{Extensions}
+In this section, we discuss how the normalization
+proof of \lang can be extended to incorporate features including
+natural numbers, dependent pairs, cumulative
+universes with subtyping, and $\eta$ law for functions. All these
+extensions have been implemented in our development. More advanced
+features such as type-directed $\eta$ laws are out of the scope of
+this paper, and we instead point the readers to existing work for
+techniques that can be readily adapted to our minimal development.
+
+
+\subsection{Natural Numbers}
+\begin{figure}
+  \drules[T]{$[[G |- a : A]]$}{Typing for Naturals}{Nat, Zero, Suc, Ind}
+  \drules[I]{$[[Interp I i A S]]$}{Logical Relation for Naturals}{Nat}
+  \drules[N]{$[[NatOk a]]$}{Natural values}{Zero, Neu, Suc}
+\caption{Rules for natural numbers}
+\label{fig:nat}
+\end{figure}
+
+We can replace the boolean type with the natural number type as our
+observable type. By introducing an infinite data type to \lang,
+we significantly increase its expressiveness.
+
+The syntactic and semantic rules for natural numbers can be found in
+Figure~\ref{fig:nat}. \Rref*{T-Zero, T-Suc} allow us to construct natural
+numbers. \Rref*{T-Ind} allows us to eliminate natural numbers
+through the induction principle where $[[a]]$ is the base case,
+$[[b]]$ the inductive case, and $[[c]]$ the natural number being
+eliminated.
+
+\Rref{I-Nat} gives us the semantic
+interpretation of natural number; a term $[[a]]$ semantically inhabits
+$[[Nat]]$ if $[[a]]$ reduces to some term $[[b]]$ such that $[[NatOk
+b]]$ holds.
+The $\vdash_\mathbb{N}$ judgment inductively characterizes the
+normal form of (potentially open) terms of type $[[Nat]]$ and is
+particularly useful in the \rref*{T-Ind} case of the fundamental
+theorem. Let $[[rho |= G]]$, the induction hypothesis $[[G |= c :
+Nat]]$ tells us that $[[c { rho } =>+ b ]]$ for $[[NatOk b]]$. The proof
+then follows by induction over the derivation of $[[NatOk b]]$. When
+$[[b]]$ is neutral, we conclude the proof with
+\nameref{lemma:adequacy}. When $[[b]]$ is $[[zero]]$, we conclude the
+proof with the outer induction hypothesis $[[G |= a : A {zero / x}]]$.
+When $[[b]]$ is a successor, we conclude the proof with the outer
+induction hypothesis $[[G ++ x : Nat ++ y : A |= b : A { succ x / x
+}]]$.
+
+
+\subsection{Cumulativity}
+\label{sec:cumulativity}
+The semantic model we build in \cref{sec:logreldep} satisfies
+\nameref{lemma:logrelcumulativity}.
+
+
+
 \section{Related Work}
 \label{sec:relatedwork}
 

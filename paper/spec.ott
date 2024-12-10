@@ -55,6 +55,8 @@ rho {{ tex \rho }}, xi {{tex \xi}} :: '' ::= {{ com substitutions }}
     {{ tex \ottkw{id} }}
 
 tm, a , b , c, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
+  | ind a (x y . b) c :: :: Ind
+    {{ com natural number induction }}
   | arg :: :: Hole
     {{ tex - }}
   | x :: :: Var
@@ -62,6 +64,15 @@ tm, a , b , c, p, A, B, C, e,f :: 'a_' ::= {{ com terms and types }}
   | Pi x : A . B :: :: Pi
     {{ tex  \Pi [[x]]\!:\![[A]].[[B]] }}
     {{ com dependent function type }}
+  | Sigma x : A . B :: :: Sigma
+    {{ tex  \Sigma [[x]]\!:\![[A]].[[B]] }}
+    {{ com dependent pair type }}
+  | Nat :: :: Nat
+    {{ com natural number type }}
+  | zero  :: :: Zero
+    {{ com zero }}
+  | succ a  :: :: Successor
+    {{ com successor }}
   | \ x . a :: :: Abs
     {{ tex \lambda [[x]]. [[a]] }}
     {{ com function }}
@@ -223,6 +234,25 @@ embed
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%Dependent Types
+
+defns
+  JNVal :: '' ::=
+defn
+  NatOk a :: :: NOk :: 'N_' {{ com natural number values }}
+ {{ tex \vdash_\mathbb{N} [[ a ]] }}
+by
+
+----------------- :: Zero
+NatOk zero
+
+ne a
+--------------- :: Neu
+NatOk a
+
+NatOk a
+--------------- :: Suc
+NatOk succ a
+
 
 defns
    JPar :: '' ::=
@@ -444,6 +474,29 @@ G |- A : Set i
 ----------------- :: Absurd
 G |- absurd b : A
 
+
+|- G
+------------------ :: Nat
+G |- Nat : Set i
+
+|- G
+----------------- :: Zero
+G |- zero : Nat
+
+G |- a : Nat
+----------------- :: Suc
+G |- succ a : Nat
+
+
+G ++ x : Nat |- A : Set i
+G |- a : A { zero / x }
+G ++ x : Nat ++ y : A |- b : A { succ x / x }
+G |- c : Nat
+------------------------------------- :: Ind
+G |- ind a (x y . b) c : A { c / x }
+
+
+
 defns
 JI :: '' ::=
 
@@ -467,6 +520,10 @@ Interp I i Bool { a | a =>+ true \/ a =>+ false }
 
 --------------------------- :: BoolNew
 Interp I i Bool { a | a =>+ true \/ a =>+ false \/ wne a  }
+
+
+------------------------------ :: Nat
+Interp I i Nat { a | a =>+ b /\ NatOk b }
 
 --------------------------------------- :: Eq
 Interp I i a ~ b : A { p | p =>+ refl /\ a <=> b }
