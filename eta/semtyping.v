@@ -16,7 +16,7 @@ Definition ProdSpace (PA : tm -> Prop) (PF : tm -> (tm -> Prop) -> Prop) (b : tm
  *)
 
 Reserved Notation "⟦ A ⟧ i , I ↘ S" (at level 70).
-Inductive InterpExt i (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
+Inductive InterpExt i (I : forall j, j < i -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
 | InterpExt_Ne A : ne A -> ⟦ A ⟧ i , I ↘ wne
 | InterpExt_Void : ⟦ tVoid ⟧ i , I ↘ wne
 | InterpExt_Bool : ⟦ tBool ⟧ i , I ↘ (fun a => exists v, a ⇒* v /\ (is_bool_val v \/ ne v))
@@ -25,9 +25,8 @@ Inductive InterpExt i (I : nat -> tm -> Prop) : tm -> (tm -> Prop) -> Prop :=
   (forall a, PA a -> exists PB, PF a PB) ->
   (forall a PB, PF a PB -> ⟦ B[a..] ⟧ i , I ↘ PB) ->
   ⟦ tPi A B ⟧ i , I ↘ (ProdSpace PA PF)
-| InterpExt_Univ j :
-  j < i ->
-  ⟦ tUniv j ⟧ i , I ↘ (I j)
+| InterpExt_Univ j lt :
+  ⟦ tUniv j ⟧ i , I ↘ (I j lt)
 | InterpExt_Eq a b A :
   nf a ->
   nf b ->
@@ -48,78 +47,37 @@ Lemma InterpExt_Eq' i I PA a b A :
   ⟦ tEq a b A ⟧ i , I ↘ PA.
 Proof. hauto lq:on use:InterpExt_Eq. Qed.
 
-Lemma InterpExt_Univ' i I j PF :
-  PF = I j ->
-  j < i ->
+Lemma InterpExt_Univ' i I j PF lt :
+  PF = I j lt ->
   ⟦ tUniv j ⟧ i , I ↘ PF.
 Proof. hauto lq:on ctrs:InterpExt. Qed.
 
 Equations InterpUnivN (n : nat) : tm -> (tm -> Prop) -> Prop by wf n lt :=
-  InterpUnivN n := InterpExt n (fun m A =>
-                                  match Compare_dec.lt_dec m n with
-                                  | left h => exists PA, InterpUnivN m A PA
-                                  | right _ => False
-                                  end).
+  InterpUnivN n := InterpExt n (fun m lt A => exists PA, InterpUnivN m A PA).
 
 Notation "⟦ A ⟧ i ↘ S" := (InterpUnivN i A S) (at level 70).
 
 (* ---------------------------------------------------- *)
 
-(* The definition of InterpUnivN is more complicated than
-   it needs to be. We show that that we can
-   simplify the unfolding above to just mention InterpUnivN
-   without doing the case analysis.
-*)
-Lemma InterpExt_lt_redundant i I A PA
-  (h : ⟦ A ⟧ i , I ↘ PA) :
-       ⟦ A ⟧ i , (fun j A =>
-                     match Compare_dec.lt_dec j i with
-                     | left h => I j A
-                     | right _ => False
-                     end) ↘ PA.
-Proof.
-  elim : A PA / h.
-  - hauto lq:on ctrs:InterpExt.
-  - hauto l:on.
-  - hauto l:on.
-  - hauto l:on ctrs:InterpExt.
-  - move => m h.
-    apply InterpExt_Univ' => //.
-    case : Compare_dec.lt_dec => //.
-  - hauto l:on ctrs:InterpExt.
-  - hauto lq:on ctrs:InterpExt.
-Qed.
-
-Lemma InterpExt_lt_redundant2 i I A PA
- (h : ⟦ A ⟧ i , (fun j A =>
-                      match Compare_dec.lt_dec j i with
-                     | left h => I j A
-                     | right _ => False
-                     end) ↘ PA) :
-  ⟦ A ⟧ i , I ↘ PA.
-Proof.
-  elim : A PA / h.
-  - hauto lq:on ctrs:InterpExt.
-  - hauto l:on.
-  - hauto l:on.
-  - hauto l:on ctrs:InterpExt.
-  - move => m ?.
-    apply InterpExt_Univ' => //.
-    case : Compare_dec.lt_dec => //.
-  - hauto l:on ctrs:InterpExt.
-  - hauto lq:on ctrs:InterpExt.
-Qed.
-
 Lemma InterpUnivN_nolt i :
-  InterpUnivN i = InterpExt i (fun j A => exists PA, ⟦ A ⟧ j ↘ PA).
-Proof.
-  simp InterpUnivN.
-  fext => A P.
-  apply propositional_extensionality.
-  hauto l:on use:InterpExt_lt_redundant, InterpExt_lt_redundant2.
-Qed.
+  InterpUnivN i = InterpExt i (fun j lt A => exists PA, ⟦ A ⟧ j ↘ PA).
+Proof. simp InterpUnivN. reflexivity. Qed.
 
 #[export]Hint Rewrite InterpUnivN_nolt : InterpUniv.
+
+(* Properties of < on naturals that seem to be missing from the stdlib *)
+
+Lemma lt_unique {n m} (lt1 lt2 : n < m) : lt1 = lt2.
+Proof. apply Peano_dec.le_unique. Qed.
+
+Lemma lt_trans {n m p} : n < m -> m < p -> n < p.
+Proof. lia. Qed.
+
+Lemma lt_max_l {n m} : n < S (max n m).
+Proof. lia. Qed.
+
+Lemma lt_max_r {n m} : m < S (max n m).
+Proof. lia. Qed.
 
 Lemma InterpExt_Fun_inv i I A B P
   (h :  ⟦ tPi A B ⟧ i , I ↘ P) :
@@ -137,7 +95,6 @@ Proof.
   - move => *; subst.
     hauto lq:on inv:Par ctrs:InterpExt use:Par_subst.
 Qed.
-
 
 (* For all of the proofs about InterpUnivN below, we need to
    do them in two steps. Once for InterpExt, and then tie the
@@ -165,13 +122,12 @@ Qed.
 (* --------------- relation is cumulative ----------------- *)
 
 
-Lemma InterpExt_cumulative i j I A PA :
-  i < j ->
-   ⟦ A ⟧ i , I ↘ PA ->
+Lemma InterpExt_cumulative i j I A PA ltij :
+   ⟦ A ⟧ i , (fun k ltki => I k (lt_trans ltki ltij)) ↘ PA ->
    ⟦ A ⟧ j , I ↘ PA.
 Proof.
-  move => h h0.
-  elim : A PA /h0;
+  move => h.
+  elim : A PA /h;
     hauto l:on ctrs:InterpExt use:PeanoNat.Nat.lt_trans.
 Qed.
 
@@ -285,7 +241,7 @@ Qed.
 
 Lemma InterpExt_Univ_inv i I P j :
   ⟦ tUniv j ⟧ i , I ↘ P ->
-  P = I j /\ j < i.
+  exists lt, P = I j lt.
 Proof.
   move E : (tUniv j) => A h.
   move : E.
@@ -346,7 +302,8 @@ Proof.
     fext => b a PB ha.
     apply propositional_extensionality.
     hauto lq:on rew:off.
-  - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
+  - move => j lt PB /InterpExt_Univ_inv => [[lt']] ->.
+    rewrite (lt_unique lt lt') => //.
   - hauto lq:on inv:InterpExt use:InterpExt_Eq_inv.
   - hauto l:on use:InterpExt_preservation.
 Qed.
@@ -363,28 +320,24 @@ Qed.
 
 
 Lemma InterpExt_deterministic' i j I A PA PB :
-   ⟦ A ⟧ i , I ↘ PA ->
-   ⟦ A ⟧ j , I ↘ PB ->
+   ⟦ A ⟧ i , (fun k ltki => I k (lt_trans ltki lt_max_l)) ↘ PA ->
+   ⟦ A ⟧ j , (fun k ltkj => I k (lt_trans ltkj lt_max_r)) ↘ PB ->
   PA = PB.
 Proof.
-  move => h0 h1.
-  case : (Coq.Arith.Compare_dec.lt_eq_lt_dec i j); first case.
-  - hauto l:on use:InterpExt_cumulative, InterpExt_deterministic.
-  - move => *; subst.
-    sfirstorder use:InterpExt_deterministic.
-  - move => ?.
-    symmetry.
-    hauto l:on use:InterpExt_cumulative, InterpExt_deterministic.
+  move => /InterpExt_cumulative + /InterpExt_cumulative.
+  apply /InterpExt_deterministic.
 Qed.
 
 Lemma InterpUnivN_deterministic' i j  A PA PB :
   ⟦ A ⟧ i ↘ PA ->
   ⟦ A ⟧ j ↘ PB ->
   PA = PB.
-Proof. hauto lq:on rew:off use:InterpExt_deterministic' rew:db:InterpUniv. Qed.
+Proof.
+  move => h0 h1. simp InterpUnivN in h0, h1.
+  eapply InterpExt_deterministic' with (I := fun k _ A => exists PA, ⟦ A ⟧ k ↘ PA); eauto.
+Qed.
 
 (* ----- Improved inversion lemma for functions (Pi Inv Alt) ---------- *)
-
 
 Lemma InterpExt_Fun_inv_nopf i I A B P  (h : InterpExt i I (tPi A B) P) :
   exists (PA : tm -> Prop),
@@ -402,7 +355,6 @@ Proof.
       have ? : PB0 = PB by eauto using InterpExt_deterministic. sfirstorder.
     + sfirstorder.
 Qed.
-
 
 Lemma InterpUnivN_Fun_inv_nopf i A B P  (h : InterpUnivN i (tPi A B) P) :
   exists (PA : tm -> Prop),
@@ -462,7 +414,7 @@ Lemma InterpUnivN_Univ_inv i j :
 Proof.
   move => hji.
   simp InterpUniv.
-  apply InterpExt_Univ' => [|//].
+  apply InterpExt_Univ' => [//|].
   by simp InterpUniv.
 Qed.
 

@@ -82,7 +82,7 @@ Proof.
     case => PA hPA.
     exists (S i). eexists.
     split.
-    + simp InterpUniv. apply InterpExt_Univ. lia.
+    + simp InterpUniv. apply InterpExt_Univ' => //.
     + simpl. eauto.
 Qed.
 
