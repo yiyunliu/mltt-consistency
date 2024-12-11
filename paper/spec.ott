@@ -591,6 +591,36 @@ a in S
 a in InterpR i A
 
 defns
+JIR :: '' ::=
+
+defn
+InterpIR i A ::  :: InterpIR :: 'IIR_' {{ com Inductive--recursive interpretaiton }}
+{{ tex \llbracket [[A]] \rrbracket^[[i]] }}
+by
+
+----------------- :: Void
+InterpIR i Void
+
+InterpIR i A
+forall a, (# a in InterpIR i A implies InterpIR i B { a / x } #)
+---------------------------------------------------------------- :: Pi
+InterpIR i Pi x : A . B
+
+j < i
+------------------ :: Set
+InterpIR i (Set j) 
+
+A => B
+InterpIR i B
+------------ :: Red
+InterpIR i A
+
+defn
+a in InterpIR i A :: :: InterpIRIn :: 'IIRIn_' {{ com Membership in interpretation }}
+{{ tex [[a]] \in \llbracket [[A]] \rrbracket^{[[i]]} }}
+by
+
+defns
 JSTyping :: '' ::=
 
 defn

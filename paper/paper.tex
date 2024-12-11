@@ -1789,10 +1789,11 @@ sentence, but I am still not happy with it.}
 % immediately induce a decision procedure for type conversion in
 % \lang{}. We discuss this issue and its workaround in
 % Section~\ref{sec:conversionalgo}.
+
 \section{Mechanization}
 \label{sec:logrelmech}
-\begin{figure}[H]
-  \begin{minipage}{0.9\textwidth}
+
+\begin{figure}[h]
   \begin{tabular}{ |l |  c  | c | c| }
     \hline
     & Consistency & Normalization & Syntactic metatheory \\
@@ -1807,7 +1808,6 @@ sentence, but I am still not happy with it.}
     Total                    & 957 & 1341 & 1056 \\
     \hline
   \end{tabular}
-  \end{minipage}
   \caption{Nonblank, noncomment lines of code of the Coq Development. The marker = indicates that the line count is the same as the column to the
 left. The marker - indicates the file does not
 contribute to the total.}
@@ -1860,18 +1860,93 @@ $\forall x, P(x) \iff Q(x)$. But this is exactly the statement of
 predicate extensionality, an immediate corollary from functional
 extensionality and propositional extensionality.
 
-\subsection{Encoding the logical relation in Coq}
-We next discuss specific details of the Coq encoding of the logical relation
-presented in Section~\ref{sec:logreldep}.
+\subsection{Encoding the logical relation}
+
+As discussed, the logical relations $[[Interp I i A S]]$ in
+Figures~\ref{fig:logrel} and \ref{fig:logrelopen} are encoded as inductive
+definitions indexed by sets of terms representing the semantic inhabitants of
+$[[A]]$. In the Coq mechanization, we represent sets of terms as predicates
+over terms asserting whether the term is in the set, so $[[S]]$ has type
+\texttt{tm -> Prop}, and $[[I]]$ has type \texttt{forall j, j < i -> tm -> Prop},
+representing the set of types in universes strictly smaller than $[[i]]$.
+Because the overall inductive definition represents a functional relation
+between a type at a universe level and its interpretation as a set of terms,
+it too lives in \texttt{Prop}.
+
+Due to the limitations of eliminating inductives in \texttt{Prop}, the encoding
+of the rule for function types differs from the presentation in \rref{I-Pi},
+reproduced below.
+%
+\begin{mathpar}
+  \drule[width=\textwidth]{I-Pi}
+\end{mathpar}
+
+While the first and last premises are propositions, $[[S]]$ and $[[F]]$
+represent sets of terms, which are not propositions. While this is not an issue
+when proving properties of the logical relation, which never require projecting
+out these sets, it is an issue when proving the fundamental theorem, and in
+particular proving the function case in Lemma~\ref{lemma:stpi}. By the definition
+of semantic typing, the induction hypothesis (after some instantiation) gives
+%
+$$\forall [[a in S]], \exists [[i]], [[S0]] \text{ such that }
+  [[InterpR i B {a / x} S0]] \text{ and } [[b a in S0]].$$
+
+We would like to define $[[F]]$ as the function that projects out $[[S1]]$ from
+the induction hypothesis, but the existential quantification being a proposition
+prevents us from doing so without the axiom of choice. To avoid relying on
+classical reasoning, we instead encode $[[F]]$ as a functional relation
+$[[R in S * PowerSet STm]]$ such that
+$\forall [[a]], \exists [[S0]], [[( a , S0 ) in R]]$ holds. The actual encoding
+is given as \rref{I-PiCoq} below.
+%
+\begin{mathpar}
+  \drule[width=\textwidth]{I-PiCoq}
+\end{mathpar}
+
+From this rule, we are still able to derive \rref{I-PiAlt} as before. The
+benefit of working with the derived rule is that it does not involve $[[R]]$,
+which is uniquely determined to be
+$[[{ (a , S0 ) | a in S implies Interp I i B { a /x } S0 }]]$ as before.
+
+An alternative to these various encodings in Coq is to use
+\emph{induction--recursion} (IR)~\citep{IR}, which is available in Agda~\citep{agda}.
+IR permits mutually defining an inductive definition along with a recursive function
+on the inductive. We can change our perspective on the logical relation and
+view it as two separate pieces: an inductive interpretation $\llbracket A \rrbracket^{i}$
+of types, and a recursive interpretation $[[a in InterpR i A]]$ of types as sets of terms.
+The rule for function types and its interpretation would be defined as follows.
+%
+\begin{mathpar}
+  \drule[width=\textwidth]{IIR-Pi} \\
+  [[b in InterpIR i Pi x : A . B]] \coloneqq
+    [[forall a, (# a in InterpIR i A implies b a in InterpIR i B {a / x} #)]]
+\end{mathpar}
+
+Because the inductive definition no longer needs to quantify over all sets of terms,
+we can work entirely within Agda's lowest \texttt{Set} universe without worrying
+about impredicativity or universe polymorphism. However, to define the above,
+we still need an intermediate definition involving the interpretation $[[I]]$
+of types at $[[j < i]]$ and tie the knot as before. While the same properties
+are provable, the inductive--recursive logical relation changes the structure
+and the order of these proofs; for instance, a weaker form of functionality
+is provable before and is required to prove forward preservation.
+
+Further details of the IR encoding can be found in our Agda mechanization of
+the consistency of \lang. Due to the lack of automation support, proofs about
+syntactic properties of terms and proofs using well-founded induction on levels
+are written manually. Even so, the total number of nonblack, noncomment lines
+of code remains small at below 1200 lines, and functional extensionality is
+still the only axiom used.
 
 % First, this definition requires the use of Coq's impredicatve \texttt{Prop}
 % sort. In particular, the function $[[F]]$ in \rref{I-Pi} requires the use of
 % impredicativity because $[[F]]$ must later be instantiated into something
 % defined in terms of the logical relation itself (e.g. in
 % Lemma~\ref{lemma:piintroalt}).
-In the Coq mechanized proof, % we encode $[[PowerSet STm]]$ as the type \texttt{tm -> Prop}, a predicate over lambda terms. 
-the definition of $[[Interp I i A S]]$ has type
-\texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S} has type \texttt {tm -> Prop}.
+% In the Coq mechanized proof,
+% we encode $[[PowerSet STm]]$ as the type \texttt{tm -> Prop}, a predicate over lambda terms. 
+% the definition of $[[Interp I i A S]]$ has type
+% \texttt{Prop}, where \texttt{I} has type \texttt{nat -> tm -> Prop} and \texttt{S} has type \texttt {tm -> Prop}.
 
 % The inductive
 % definition of the logical relation in Figure~\ref{fig:logrel} requires
@@ -1879,60 +1954,60 @@ the definition of $[[Interp I i A S]]$ has type
 % the function $[[F]]$ can be later instantiated into the logical
 % relation itself (e.g. in the proof of Lemma~\ref{lemma:piintroalt}).
 
-However, if desired, we could consistently replace the use of \texttt{Prop}
-with Coq's predicative sort \texttt{Type} in the definition of
-$[[Interp I i A S]]$. This alternative definition could be part of
-the interpretation for any \emph{finite} number of universes. The use of
-\texttt{Type} becomes troublesome only when we attempt to define
-$[[InterpR i A S]]$, the top-level logical relation 
-(Definition~\ref{fig:logrelrec}) that recursively calls itself at smaller universe
-levels. Therefore, the one feature of \lang{} that truly requires
-impredicativity is its countable universe hierarchy.
+% However, if desired, we could consistently replace the use of \texttt{Prop}
+% with Coq's predicative sort \texttt{Type} in the definition of
+% $[[Interp I i A S]]$. This alternative definition could be part of
+% the interpretation for any \emph{finite} number of universes. The use of
+% \texttt{Type} becomes troublesome only when we attempt to define
+% $[[InterpR i A S]]$, the top-level logical relation 
+% (Definition~\ref{fig:logrelrec}) that recursively calls itself at smaller universe
+% levels. Therefore, the one feature of \lang{} that truly requires
+% impredicativity is its countable universe hierarchy.
 
-The definition of $[[Interp I i A S]]$ has an almost one-to-one
-correspondence to the Coq definition. The main difference is the
-specification of $[[I]]$. In
-Section~\ref{sec:logreldep}, we define $[[I]]$ as a function over
-numbers less than $[[i]]$, the universe level. In Coq, we only require
-$[[I]]$ to be a function with the set of natural numbers as its domain.
-In the Coq encoding of $[[InterpR i A S]]$, we define $[[I]] \in [[SNat -> PowerSet STm]]$ as follows.
-\begin{equation*}
-  \begin{split}
-    [[I j]] &=
-     \begin{cases}
-      \ [[{A | exists S , InterpR j A S}]] & \text{when } j < i \\
-      \ [[emptyset]] & \text{otherwise}
-    \end{cases}
-  \end{split}
-\end{equation*}
-Since $[[I]]$ is only applied to numbers strictly less than $[[i]]$ in
-\rref{I-Set}, we can retroactively show that the set we return in the $j
-\geq i$ case is junk data that does not affect the result of the logical
-relation. This property allows us to recover the simple equation for $[[InterpR i A S]]$ shown in Definition~\ref{fig:logrelrec}.
+% The definition of $[[Interp I i A S]]$ has an almost one-to-one
+% correspondence to the Coq definition. The main difference is the
+% specification of $[[I]]$. In
+% Section~\ref{sec:logreldep}, we define $[[I]]$ as a function over
+% numbers less than $[[i]]$, the universe level. In Coq, we only require
+% $[[I]]$ to be a function with the set of natural numbers as its domain.
+% In the Coq encoding of $[[InterpR i A S]]$, we define $[[I]] \in [[SNat -> PowerSet STm]]$ as follows.
+% \begin{equation*}
+%   \begin{split}
+%     [[I j]] &=
+%      \begin{cases}
+%       \ [[{A | exists S , InterpR j A S}]] & \text{when } j < i \\
+%       \ [[emptyset]] & \text{otherwise}
+%     \end{cases}
+%   \end{split}
+% \end{equation*}
+% Since $[[I]]$ is only applied to numbers strictly less than $[[i]]$ in
+% \rref{I-Set}, we can retroactively show that the set we return in the $j
+% \geq i$ case is junk data that does not affect the result of the logical
+% relation. This property allows us to recover the simple equation for $[[InterpR i A S]]$ shown in Definition~\ref{fig:logrelrec}.
 
-\Rref{I-PiCoq} shows how \rref{I-Pi} is actually encoded in our
-mechanized proof.
-\begin{center}
-  \drule[width=5in]{I-PiCoq}
-\end{center}
-Compared to \rref{I-Pi}, \rref{I-PiCoq} replaces the function
-$[[F]]$ with a total relation $[[R]]$. The equivalence of these two
-rules follows from the fact that the logical relation is a
-partial function (Lemma~\ref{lemma:logreldeter}). In set-theoretic
-notation, \rref{I-Pi} is more readable. However, if we want to encode
-the same rule in Coq, we must encode $[[F]]$ as a relation (with type
-\texttt{tm -> (tm -> Prop) -> Prop}) that satisfies the functionality constraint:
-\mintinline{coq}{forall a S0 S1, F a S0 -> F a S1 -> S0 = S1}.
-In comparison, \rref{I-PiCoq} does not require this side condition and
-results in a simpler definition.
+% \Rref{I-PiCoq} shows how \rref{I-Pi} is actually encoded in our
+% mechanized proof.
+% \begin{center}
+%   \drule[width=5in]{I-PiCoq}
+% \end{center}
+% Compared to \rref{I-Pi}, \rref{I-PiCoq} replaces the function
+% $[[F]]$ with a total relation $[[R]]$. The equivalence of these two
+% rules follows from the fact that the logical relation is a
+% partial function (Lemma~\ref{lemma:logreldeter}). In set-theoretic
+% notation, \rref{I-Pi} is more readable. However, if we want to encode
+% the same rule in Coq, we must encode $[[F]]$ as a relation (with type
+% \texttt{tm -> (tm -> Prop) -> Prop}) that satisfies the functionality constraint:
+% \mintinline{coq}{forall a S0 S1, F a S0 -> F a S1 -> S0 = S1}.
+% In comparison, \rref{I-PiCoq} does not require this side condition and
+% results in a simpler definition.
 
-We note that we cannot ascribe $[[F]]$ the type \texttt{tm -> (tm ->
-  Prop)} since Coq requires functions of such type to be
-computable. While defining $[[F]]$ as a computable Coq function rather than a
-functional relation does result in a concise encoding of \rref{I-Pi},
-we will have trouble instantiating $[[F]]$ with the logical relation,
-which is defined as a relation that we prove to be functional, rather
-than a computable function.
+% We note that we cannot ascribe $[[F]]$ the type \texttt{tm -> (tm ->
+%   Prop)} since Coq requires functions of such type to be
+% computable. While defining $[[F]]$ as a computable Coq function rather than a
+% functional relation does result in a concise encoding of \rref{I-Pi},
+% we will have trouble instantiating $[[F]]$ with the logical relation,
+% which is defined as a relation that we prove to be functional, rather
+% than a computable function.
 
 % In Coq, there is a distinction between computable functions and
 % relations that can later be proven to be functional. The former can be
@@ -1972,8 +2047,9 @@ than a computable function.
 % theory, where there is no distinction between computable functions and
 % functions in general. \scw{not sure I follow this last bit}
 
-\subsection{Automation}
+\subsection{Automation in Coq}
 \label{sec:automation}
+
 Our Coq mechanization heavily uses automation, supported by the tools
 Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
 
