@@ -1698,6 +1698,8 @@ syntactic means.
 \section{Existence of \texorpdfstring{$\beta\eta$-}{beta-eta--}normal forms}
 \label{sec:betaeta}
 
+\jc{Delete this section}
+
 \citet{nbeincoq,decagda,martin-lof-a-la-coq}
 include the $\eta$ law for functions in their equational theory and
 use relational models to justify its validity.
@@ -1828,13 +1830,13 @@ type safety through preservation
 \footnote{\dotv{syntactic\_soundness.v}{subject\_reduction}} and
 progress\footnote{\dotv{syntactic\_soundness.v}{wt\_progress}}.
 
-The $\beta\eta$-normalization proof from Section~\ref{sec:betaeta} comprises
-1549 lines of non-blank, non-comment lines of code. We choose not to include
-it in the chart, because of slight differences in lemma dependencies for
-untyped reduction and normal forms that make the comparison less
-informative. However, when compared to the $\beta$-normalization extension,
-the $\beta\eta$ extension has the same line count in the definition of the
-logical relation and the semantic soundness proof.
+% The $\beta\eta$-normalization proof from Section~\ref{sec:betaeta} comprises
+% 1549 lines of non-blank, non-comment lines of code. We choose not to include
+% it in the chart, because of slight differences in lemma dependencies for
+% untyped reduction and normal forms that make the comparison less
+% informative. However, when compared to the $\beta$-normalization extension,
+% the $\beta\eta$ extension has the same line count in the definition of the
+% logical relation and the semantic soundness proof.
 
 The Autosubst 2 tool takes our 16-line syntax specification, written in
 higher-order abstract syntax, and generates the Coq syntax specification,
@@ -2058,7 +2060,7 @@ Autosubst 2~\citep{autosubst2} and CoqHammer~\citep{czajka2018hammer}.
 We use the Autosubst 2 framework to produce Coq syntax files based on a de
 Bruijn representation of variable binding and capture-avoiding substitution.
 In addition to these generated definitions, Autosubst 2 provides a powerful
-tactic \texttt{asimpl} that can be used to prove the equivalence of two terms
+\texttt{asimpl} tactic used to prove the equivalence of two terms
 constructed using the primitive operators provided by the framework. This
 tactic simplifies the reasoning about substitution as many
 substitution-related properties about syntax are immediately discharged by
@@ -2071,7 +2073,7 @@ the triangle property about parallel reduction, from which the diamond
 property (Lemma~\ref{lemma:pardiamond}) follows as a corollary.
 The triangle property states
 that if $[[a => b]]$, then $[[b]]\Rightarrow [[a]]^*$, where $[[a]]^*$
-is the Takahashi translation~\citep{takahashi-parallel-reduction}
+is the Takahashi translation~\citep{takahashi-parallel-reduction},
 which roughly corresponds to simultaneous reduction of the redexes in
 $[[a]]$, excluding the new redexes that appear as a result of
 reduction.
@@ -2088,9 +2090,8 @@ of the derivations of parallel reduction. The option
 \texttt{use:Par\_refl,Par\_cong} allows the automation tactic to use the
 reflexivity and congruence properties of parallel reduction as lemmas.
 
-The flag \texttt{lq:on} tunes CoqHammer's search algorithm.  While this flag
-appears arcane, when developing our proof scripts we never specify this option
-manually. Instead, we first invoke the \texttt{best} tactic provided by
+The flag \texttt{lq:on} tunes CoqHammer's search algorithm, which is never
+specified manually. Instead, we first invoke the \texttt{best} tactic provided by
 CoqHammer, specifying only the \texttt{inv}, \texttt{ctrs}, and lemmas that we
 want to use. The \texttt{best} tactic then iterates through possible
 configurations and provides us with a replacement with the tuned performance
@@ -2099,8 +2100,17 @@ flags that save time for future re-execution of the proof script.
 The automation provided by CoqHammer not only gives us a proof that is shorter
 and more resilient to changes, but also provides useful documentation for
 readers who wish to understand the mechanized proof. Although automation
-performs extensive search, we can configure it to not use lemmas or invert derivations that
-are not specified in the \texttt{use} or \texttt{inv} flags.
+performs extensive search, we can configure it to only use lemmas or invert
+derivations specified by the \texttt{use} or \texttt{inv} flags.
+
+\jc{Just a digression but I find that CoqHammer automated proofs are \emph{not}
+good documentation compared to how we might have otherwise written the proofs
+manually. While the flags indicate what lemmas and inversions \emph{may} be used,
+the \texttt{best} tactic does not delete unused ones, so there's no way of knowing
+which ones actually \emph{are} used, and the automation hides away \emph{how} they
+are used. Automation makes proofs resilient to change when things go right, but
+when things go wrong, it becomes much harder to discern what lemmas I need to add
+when I don't even know where the existing ones are used.}
 
 \ifextended
 \subsection{Extraction of a conversion algorithm}
@@ -2154,20 +2164,26 @@ part of our future work.
 \fi
 
 \section{Extensions}
+
 In this section, we discuss how the normalization
 proof of \lang can be extended to incorporate features including
 natural numbers, dependent pairs, cumulative
-universes with subtyping, and $\eta$ law for functions. All these
+universes with subtyping, and the $\eta$ law for functions. These
 extensions have been implemented in our development. More advanced
 features such as type-directed $\eta$ laws are out of the scope of
 this paper, and we instead point the readers to existing work for
 techniques that can be readily adapted to our minimal development.
 
+\jc{We may want to briefly mention the LOC for each addition?}
 
 \subsection{Natural Numbers}
 \begin{figure}
-  \drules[T]{$[[G |- a : A]]$}{Typing for Naturals}{Nat, Zero, Suc, Ind}
-  \drules[I]{$[[Interp I i A S]]$}{Logical Relation for Naturals}{Nat}
+  \drules[T]{$[[G |- a : A]]$}{Typing (naturals)}{Nat, Zero, Suc}
+  \vspace{-\baselineskip}
+  \begin{mathpar}
+    \drule[width=\textwidth]{T-Ind}
+  \end{mathpar}
+  \drules[I]{$[[Interp I i A S]]$}{Logical relation (naturals)}{Nat}
   \drules[N]{$[[NatOk a]]$}{Natural values}{Zero, Neu, Suc}
 \caption{Rules for natural numbers}
 \label{fig:nat}
@@ -2184,11 +2200,10 @@ through the induction principle where $[[a]]$ is the base case,
 $[[b]]$ the inductive case, and $[[c]]$ the natural number being
 eliminated.
 
-\Rref{I-Nat} gives us the semantic
-interpretation of natural number; a term $[[a]]$ semantically inhabits
-$[[Nat]]$ if $[[a]]$ reduces to some term $[[b]]$ such that $[[NatOk
-b]]$ holds.
-The $\vdash_\mathbb{N}$ judgment inductively characterizes the
+\Rref{I-Nat} gives us the semantic interpretation of natural number:
+a term $[[a]]$ semantically inhabits $[[Nat]]$ if $[[a]]$ reduces to
+some term $[[b]]$ such that $[[NatOk b]]$ holds.
+The $[[NatOk b]]$ judgment inductively characterizes the
 normal form of (potentially open) terms of type $[[Nat]]$ and is
 particularly useful in the \rref*{T-Ind} case of the fundamental
 theorem. Let $[[rho |= G]]$, the induction hypothesis $[[G |= c :
@@ -2201,13 +2216,12 @@ When $[[b]]$ is a successor, we conclude the proof with the outer
 induction hypothesis $[[G ++ x : Nat ++ y : A |= b : A { succ x / x
 }]]$.
 
-
 \subsection{Cumulativity}
 \label{sec:cumulativity}
 The semantic model we build in \cref{sec:logreldep} satisfies
 \nameref{lemma:logrelcumulativity}.
 
-
+\subsection{\texorpdfstring{$\beta\eta$}{beta-eta}-normal forms}
 
 \section{Related Work}
 \label{sec:relatedwork}
@@ -2340,7 +2354,7 @@ Inductive Types (QIIT)~\citep{kaposi:qiit}.
     Core Nuprl & $\mathbb{N}$ & W-Types & E & $\checkmark$ & 2 & Consistency \\
     NBE-in-Coq & 1 & Nat & T & $\XSolidBrush$ & 2 & Correctness of NBE \\
     $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidability of conversion \\
-    MLTT-\'a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidibility of type checking \\
+    MLTT-\`a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidibility of type checking \\
     \hline
   \end{tabular}
 
@@ -2704,44 +2718,28 @@ Do we even need nondeterministic parallel reduction?}
 \section{Conclusion}
 \label{sec:conclusion}
 In this work, we present a short and mechanized proof by logical relations for
-a dependently typed language with a full universe hierarchy, large
-eliminations, an intensional identity type, and dependent eliminators.  We
-show the extensibility of our approach by proving the existence of
-$\beta\eta$-normal forms with only small and mechanical changes to our proof
-development.  Our Coq mechanization leverages existing Coq libraries for
-reasoning about metatheory and for general purpose automation, allowing us to
-significantly reduce the verbosity typically associated with mechanized
-proofs. The result is a declarative proof style that rivals pen and paper.
+a dependently typed language with a predicative universe hierarchy, large
+elimination, an intensional identity type, and dependent eliminators.
+From the fundamental theorem for the logical relation, we prove consistency
+and canonicity, then show the extensibility of our approach by proving the
+existence of $\beta$($\eta$)-normal forms and adding natural numbers and
+cumulativity to the language. These extensions only require small and mechanical
+changes to our proof development. Our Coq mechanization leverages existing Coq
+libraries for reasoning about metatheory and for general purpose automation,
+allowing us to significantly reduce the verbosity typically associated with
+mechanized proofs. The result is a declarative proof style that rivals pen and paper.
 
 Related work gives us confidence that we could extend our logical relation to
 include features such as full inductive datatypes, irrelevant arguments, and
 type-directed conversion; however, it is not clear how much of the brevity of
-this development can be maintained.  Furthermore, we hope that mechanized
+this development can be maintained. Furthermore, we hope that mechanized
 logical relations proofs will eventually grow to include other features found
 in dependent type theories, such as impredicative universes, universe
-polymorphism, and cumulativity.  Regardless, our development shows that proofs
+polymorphism, and cumulativity. Regardless, our development shows that proofs
 by logical relations for dependent types are accessible and do not require
-months of effort to implement.  We hope our proof can inspire researchers to
+months of effort to implement. We hope our proof can inspire researchers to
 more frequently mechanize results, such as consistency and normalization, for
 their dependent type theories.
-
-% Type soundness can be proven through a syntactic
-% approach~\citep{syntacticsoundness} as a corollary of two properties:
-% progress and preservation. % The syntactic type soundness proof
-% % varies in complexity depending on the underlying type
-% % system. For example, a type system that tracks information flow would
-% % require additional structural rules related to security levels. In
-% % this paper, we focus on one specific type of complexity: the
-% In Figure~\ref{fig:stlcsoundness}, we summarize the structure of the
-% syntactic type soundness proof for the simply typed lambda
-% calculus. Each lemma can be proven by structural induction over the
-% typing derivation, while using the previous established results as
-% lemmas for specific cases that do not immediately follow from the
-% induction hypothesis. If we make our language more complex by adding
-% full dependent type support, the overall structure remains almost
-% identical.
-
-% NbE in Coq
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{refs}

@@ -239,7 +239,7 @@ defns
   JNVal :: '' ::=
 defn
   NatOk a :: :: NOk :: 'N_' {{ com natural number values }}
- {{ tex \vdash_\mathbb{N} [[ a ]] }}
+ {{ tex \mathop{ \vdash_\mathbb{N} } [[ a ]] }}
 by
 
 ----------------- :: Zero
