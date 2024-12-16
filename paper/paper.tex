@@ -2353,6 +2353,19 @@ inductive--inductive types (QIIT)~\citep{kaposi:qiit}.
 \end{figure}
 \scw{Extra columns in Fig 10:  Predicate vs. Relational interpretation (we can explain this) / Typed vs. Untyped interpretation}
 
+\jc{Missing from the table:
+\begin{itemize}
+  \item Altenkirch and Kaposi (2016) using QIITs, mentioned above (Agda);
+    mechanization might be part of Kaposi's thesis (2016)
+  \item prior work Chapman (2009), Type Theory should Eat Itself (Agda);
+    possibly also his thesis (2008)
+  \item Kipling by McBride (2010), mixing deep and shallow embedding
+    using host conversion (Agda) to avoid the whole QIIT business
+  \item Kaposi et al. (2019), Shallow Embedding of Type Theory (Agda),
+    although at this point I'm not sure if this counts as having a syntax
+\end{itemize}
+}
+
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
 that feature logical relations for dependently-typed languages.
 Each of these proofs is significantly larger than our development, but they
@@ -2424,35 +2437,37 @@ development.
 
 \subsection{Other mechanized metatheory of dependent types}
 
-\citet{barras2010sets, Wang2013SemanticsOI} assign
+\Citet{barras2010sets} and \citet{Wang2013SemanticsOI} assign
 set-theoretic semantics to dependent type theory in Coq. Unlike the
-previous efforts, which primarily focus on predicative
-type theory and more direct reducibility models,
-\citet{barras2010sets, Wang2013SemanticsOI} tackle extensions of
-$CC^\omega$, a system that incorporates a predicative universe on top
-of the impredicative sort in the Calculus of Constructions. We choose to
-focus on a syntactic term model so we do not have to take the extra step
-of mechanizing mathematical objects such as sets and domains.
+previous efforts, which focus on predicative type theory and direct
+reducibility models, they tackle extensions of
+CC$^\omega$, which extends the Calculus of Constructions with predicative
+universes on top of the impredicative sort. We choose to
+focus on a syntactic term model to avoid mechanizing mathematical objects
+such as sets and domains.
 
 There are other mechanized developments for dependently typed systems that
 only involve properties that are derivable through syntactic means. For
 example, \citet{coqcoqcorrect2019} prove the correctness of a type checker
-for the Predicative, Cumulative Calculus of Inductive Constructions (PCUIC),
-Coq's core calculus, assuming the strong normalization property of the object
-language. \citet{weirich:systemd} define System D, a core calculus of
+for the Predicative Calculus of Cumulative Inductive Constructions (pCuIC),
+Coq's core calculus, assuming strong normalization.
+\citet{weirich:systemd} define System D, a core calculus of
 dependent Haskell, and prove the syntactic type safety of the type
-system. Because System D includes nontermination, they proved
-the consistency of definitional equality from the confluence of 
-parallel reduction.  
+system. Because System D includes nontermination, they prove
+consistency of definitional equality from the confluence of 
+parallel reduction.
+\jc{Why specifically mention System D? Surely there are other more notable
+(in reviewers' eyes) dependent languages for which type safety have been proven?}
 
-Compared to the systems described here, the most notable features we are
-missing are cumulativity and impredicativity. Our semantic model already
-satisfies the cumulativity property (Lemma~\ref{lemma:logrelcumulativity}),
-but we need to extend our convertibility relation into a subtyping relation in
-our syntactic typing rules. Impredicativity, on the other hand, is known to be
+Compared to the systems described here, the most notable feature we are
+missing is impredicativity, which is known to be
 difficult to model when the impredicative sort is at the bottom of a
-predicative universe hierarchy; in this scenario, the erasure technique from
-\citet{geuvers1994short} is not
+predicative universe hierarchy.
+\jc{This makes it sound like it's easy when it's at the top of a predicative
+universe hierarchy, which I don't think is what you meant; did you mean when
+impredicativity is combined with some sort of large elimination of base types/
+type-level computation?}
+In this scenario, the erasure technique from \citet{geuvers1994short} is not
 applicable~\citep{abel2013normalization}. Whether there is a similarly short
 and simple treatment for impredicativity remains an open question.
 
