@@ -34,7 +34,7 @@
 \let\draftnote\relax % this is already defined in JFP
 \usepackage{draft}
 \usepackage[outputdir=latex.out]{minted} % latexrun puts everything in latex.out
-\usepackage{xspace,stmaryrd,mathtools,bbding}
+\usepackage{xspace,stmaryrd,mathtools,pifont}
 \usepackage[para]{footmisc}
 \usepackage{ottalt}
 \inputott{rules}
@@ -52,6 +52,8 @@
 \newcommand{\dotv}[2]{\href{#1}{\texttt{#1}}{\texttt{:#2}}}
 \newcommand{\lang}{$\lambda^{\Pi}$\xspace}
 \newcommand{\CR}{\mathit{CR}}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -101,7 +103,7 @@ presentation of proof by logical relation for a dependently typed language
 is lacking. In this paper, we present a short
 consistency proof for a dependently typed language that contains a
 rich set of features, including a countable universe
-hierarchy, booleans, and an intensional identity type. We show that
+hierarchy, booleans, and a propositional equality type. We show that
 the logical relation can be easily extended to prove the existence of
 $\beta\eta$-normal forms.
 We have
@@ -115,7 +117,7 @@ $\beta\eta$-normal form extension.
 \section{Introduction}
 This paper presents a \emph{short} and \emph{mechanized} proof of
 logical consistency for \lang{}, a dependent type theory with a
-predicative universe hierarchy, large elimination, an intensional identity
+predicative universe hierarchy, large elimination, a propositional equality
 type, a boolean base type, and dependent elimination forms.
 
 Our goal with this work is to demonstrate the application of the proof
@@ -336,7 +338,7 @@ on the input variable. Type annotations in abstraction forms are omitted, and
 we discuss how the inclusion of type annotations can affect
 our development in Section~\ref{sec:betaeta}, where we extend our
 consistency result to the existence of $\beta\eta$-normal forms.
-Intensional identity types $[[a ~ b : A]]$, or equality types, represent an
+Propositional equality types $[[a ~ b : A]]$, represent an
 equality between terms $[[a]]$ and $[[b]]$ of the same type $[[A]]$, whose
 canonical inhabitant is the reflexive proof $[[refl]]$. Equality proofs $[[p]]$
 can be eliminated by the J eliminator $[[J c p]]$, which casts the term $[[c]]$
@@ -606,7 +608,7 @@ depending on whether its input is $[[true]]$ or $[[false]]$.
   There, the definition stays recursive because it doesn't substitute for the variables
   in the function types. But that approach is not available in this setting, because not
   all quantified things are types. And we might need that information to interpret, say,
-  identity types in the right way.
+  equality types in the right way.
 }
 \scw{ We also need to explicitly point out that our logical relation is untyped.
   This has two benefits: it allows semantic typing to be meaningful independent from
@@ -2233,92 +2235,72 @@ The semantic model we build in \cref{sec:logreldep} satisfies
 % \yl{resolved}
 
 \subsection{Logical relations for dependent types}
-In the most general sense, a logical relation can be viewed as a
+In the most general sense, a logical relation is a
 practical technique that uses a type-indexed relation to 
 strengthen the induction hypothesis for the
-property of interest. The original idea of this technique can be
-traced back to
-\citet{tait1967:reducibility}. This proof maps
+property of interest. This technique originates from
+\citet{tait1967:reducibility}, who maps
 types to sets of terms satisfying certain properties related to reduction.
-The same idea is explained in \citet{girard1989proofs} and extended to
+The same idea is explained by \citet{girard1989proofs} and extended to
 prove strong normalization of System F.
-%
 Tait's method has also been successfully applied to dependently typed
-languages to prove strong normalization \cite{Martin-Lof-1973,luo1990extended,geuvers1994short, barendregt:lambda-calculi-with-types}.
+languages to prove strong normalization \citep{Martin-Lof-1973,luo1990extended,geuvers1994short, barendregt:lambda-calculi-with-types}.
 
 However, the pen-and-paper representation of logical relations proofs
 can be challenging to adapt to a theorem prover since many details
-are hidden behind concise notations.
+are hidden behind concise notation.
 For example, \citet{geuvers1994short} presents the interpretation for types as
 an inductively defined total function over the set of syntactically
-well-formed types. \scw{The issue is that Geuver's metalogic is (untyped) set
-theory, but Coq and Agda use type theory.}
+well-formed types.
 In untyped set theory, it makes sense to define the logical relation as a
-simply-typed function that takes a type and returns some set; however
-in constructive type theory, the metalogic of Coq and Agda, the
-interpretation function must be a dependently-typed function whose
-return type depends on the derivation of the well-typedness of its
-input. The well-typedness derivation and the proof of the
-classification theorem\scw{what is the classification theorem}\yl{It
-  says all well-formed terms A (either G |- A : .. or G |- .. : A)
-then A is either an object, a type, or a kind. The classification is
-used to guide erasure}
-are examined in the body
-of the interpretation function to decide whether an argument of an
-application should be erased during interpretation. As a result, this
-definition causes difficulties for modern proof assistants.
-Due to the
-impredicativity of the object language, \citet{geuvers1994short}'s
-proof cannot be encoded in Agda, which has a predicative
-metatheory. Due to the use of proof-relevant derivations, even in
-Coq, a proof assistant that supports impredicativity, one would need
-to constantly juggle between the impredicative but irrelevant sort
-\texttt{Prop} sort and the predicative but relevant sort
-\texttt{Type}.
+function that takes a type and returns a set; however,
+in constructive type theory, the metalogic of Coq and Agda, the return type of
+the interpretation function depends on the derivation of the well-typedness of
+its input. The body of the interpretation function uses the well-typedness
+derivation, along with a proof classifying whether the input is a kind, a type,
+or a term, to determine whether the argument of an application should be erased
+during interpretation.
 
-More recent work such as \citet{Abel12}
-and \citet{abel2008betaeta} make their definitions more explicit and
-precise and thus more directly encodable in proof assistants.
-% Our logical relation resembles their definition of a
-% semantic universe hierarchy.
-Unlike \lang, their systems support type-directed $\eta$ laws. These
-type-directed equational rules complicate the proof significantly
-since the confluence of full reduction is not available until the
-fundamental theorem is proven. Therefore,
-instead of a logical predicate, a relational model with
-syntactic type annotations is needed to remove the early reliance on
-confluence, despite the fact that the underlying type theory is
-intensional.
+As a result, Geuvers' interpretation causes difficulties for modern proof
+assistants. Due to the impredicativity of the object language, the proof
+cannot be encoded in Agda, whose metatheory is predicative. However, even
+though Coq supports impredicativity, the proof relevance of the well-typedness
+derivations would require juggling between the impredicative but irrelevant
+\texttt{Prop} sort and the predicative but relevant \texttt{Type} sort.
 
-\citet{coquand:canonicity,coquand:prop} use a \emph{proof-relevant} logical
+More recent work such by \citet{Abel12} and \citet{abel2008betaeta} makes the
+definitions more explicit and precise and thus more directly encodable in proof
+assistants. Unlike \lang, their systems support type-directed $\eta$ laws.
+These type-directed equational rules complicate the proof significantly
+since the confluence of full reduction is not available until after the
+fundamental theorem is proven. Therefore, instead of a logical predicate,
+they need a relational model with syntactic type annotations to remove the early
+reliance on confluence, in spite of the object type theory being intensional.
+
+\citet{coquand:canonicity,coquand:prop} uses a \emph{proof-relevant} logical
 relation to prove canonicity and normalization for intensional
-dependent type theories. % Intuitively, proof-relevant logical relations
-% can be viewed as the set theoretic augmented with information
-% about syntactic terms so the fundamental theorem can give us more
-Compared
-to the proof-irrelevant logical predicate we present, Coquand's proof
-has the benefit that it does not rely on the confluence of reduction,
+dependent type theories. In contrast to the proof-irrelevant logical predicate
+we present, Coquand's proof does not rely on the confluence of reduction,
 and can be easily extended to more $\eta$ laws without relying on a
 complex relational model. Instead of working with concrete syntax,
 Coquand works directly with an algebraic representation of dependent
-type theory called category with families (CwF)~\citep{hofmann:cwf},
+type theory using categories with families (CwF)~\citep{hofmann:cwf},
 though the idea of proof-relevant logical relations for dependent
 types can be expressed independently of category
 theory~\citep{barras2012semantical}.
 
-More abstractly, the proof technique by Coquand can be viewed as an
-instance of a categorical construction called Artin Gluing
-~\citep{kaposi:gluing}. Different metatheoretic
-properties, such as normalization, parametricity, and
-$\Pi$-injectivity can be obtained by gluing the initial CwF with the
+More abstractly, Coquand's proof technique is an instance of a categorical
+construction called Artin gluing~\citep{kaposi:gluing}. Different
+metatheoretic properties, such as normalization, parametricity, and
+$\Pi$-injectivity, can be obtained by gluing the initial CwF with the
 corresponding CwF model. \citet{sterling:tait} introduces the notion of
-\emph{Synthetic Tait Computability}, which allows further
+synthetic Tait computability, which allows further
 simplification of such proofs by working in the internal language
 formed by gluing.
 However, proof-relevant logical relations are more demanding on the
 expressive power of the metatheory. For example, the mechanization of
-NbE by \citet{altenkirch:normalisation} relies on Quotient Inductive
-Inductive Types (QIIT)~\citep{kaposi:qiit}.
+NbE by \citet{altenkirch:normalisation} relies on quotient
+inductive--inductive types (QIIT)~\citep{kaposi:qiit}.
 
 % To support type-directed $\eta$ laws, \citet{Abel12,abel2008betaeta}
 % use a partial equivalence relation to model their type system. The 
@@ -2333,44 +2315,36 @@ Inductive Types (QIIT)~\citep{kaposi:qiit}.
 
 \subsection{Mechanized logical relations for dependent types}
 
-%\newcommand\dheader[1]{\rotatebox{60}{{#1}}}
-\newcommand\header[1]{\rotatebox{0}{{#1}}}
-
-\begin{figure}[H]
-
-% \begin{minipage}{0.8\textwidth}
-  \begin{tabular}{| l |  c  | l | c | c | c | l | l | }
+\begin{figure}
+  \begin{tabular}{| l |  c  | l | c | c | c | l | l | r | }
     \hline
-%      & \header{Universes} & \header{Inductives} & \header{Conversion}
-%      & \header{Large Elim} & Main results \\
-      & \header{U} & \header{Ind} & \header{C} 
-      & \header{L E} & \header{A} &  Main results \\
-
+%     \newcommand\header[1]{#1}
+%     & \header{Universes} & \header{Inductives} & \header{Conversion}
+%     & \header{Large Elim} & Main results \\
+      & U & Ind & C & LE & A & Main results & LOC \\
     \hline
-    \lang{} (this work) & $\mathbb{N}$ & Id, Bool & U & $\checkmark$ & 1 
-    & Consistency and normalization \\
-    % \hline
-    $\lambda^\theta$ & 0 & Id, Nat & U & $\XSolidBrush$ & 1 & Consistency \\
-    Core Nuprl & $\mathbb{N}$ & W-Types & E & $\checkmark$ & 2 & Consistency \\
-    NBE-in-Coq & 1 & Nat & T & $\XSolidBrush$ & 2 & Correctness of NBE \\
-    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidability of conversion \\
-    MLTT-\`a-la-Coq & 1 & Id, Nat, $\Sigma$ & T & $\checkmark$ & 2 & Decidibility of type checking \\
+    \lang{} (this work) & $\mathbb{N}$ & Eq, Bool & U & \cmark & 1 
+    & Consistency, normalization & 1331 \\
+    $\lambda^\theta$ & 0 & Eq, Nat & U & \xmark & 1 & Consistency & \textasciitilde{}8k\\
+    Core Nuprl & $\mathbb{N}$ & W types & E & \cmark & 2 & Consistency & \textasciitilde{}330k \\
+    NBE-in-Coq & 1 & Nat & T & \xmark & 2 & Correctness of NbE & \textasciitilde{}20k \\
+    $\lambda^{\Pi U\mathbb{N}}$ & 1 & Nat, $\Sigma$ & T & \cmark & 2 & Decidability: conversion & \textasciitilde{}10k \\
+    MLTT-\`a-la-Coq & 1 & Eq, Nat, $\Sigma$ & T & \cmark & 2 & Decidibility: type checking & \textasciitilde{}30k \\
     \hline
   \end{tabular}
 
-  \begin{tabular}{ll}
-    \\
-  \underline{U}niverses: & Countable ($\mathbb{N}$), Zero (0), One (1) \\
-  \underline{Ind}uctives: & Identity types (Id), Natural numbers (Nat), $\Sigma$-types ($\Sigma$), W-types \\
-  \underline{C}onversion:& Untyped (U), Typed (T),  Extensional (E) \\
-  \underline{L}arge \underline{E}liminations:& Included ($\checkmark$), not included ($\XSolidBrush$) \\
-  \underline{A}rity of interpretation: & Sets of terms (1), Relations between terms (2) \\
+  \begin{tabular}{ll} \\
+  \underline{U}niverses: & Countable ($\mathbb{N}$), zero (0), one (1) \\
+  \underline{Ind}uctives: & Equality types (Eq), naturals (Nat), dependent pairs ($\Sigma$), W types \\
+  \underline{C}onversion: & Untyped (U), typed (T),  extensional (E) \\
+  \underline{L}arge \underline{E}limination: & Included (\cmark), not included (\xmark) \\
+  \underline{A}rity of interpretation: & Sets of terms (1), relations between terms (2) \\
   \\
   $\lambda^\theta$  & \citet{casinghino:combining-proofs-programs} (logical fragment only) \\
   Core Nuprl &\citet{anand2014towards} \\
   $\lambda^{\Pi U\mathbb{N}}$ &\citet{decagda} \\
   NBE-in-Coq& \citet{nbeincoq} \\
-  MLTT-\'a-la-Coq &\citet{martin-lof-a-la-coq} \\
+  MLTT-\`a-la-Coq &\citet{martin-lof-a-la-coq} \\
   \end{tabular}
 
   \caption{Feature matrix for dependently typed languages with
@@ -2379,27 +2353,23 @@ Inductive Types (QIIT)~\citep{kaposi:qiit}.
 \end{figure}
 \scw{Extra columns in Fig 10:  Predicate vs. Relational interpretation (we can explain this) / Typed vs. Untyped interpretation}
 
-\scw{Should we add a column for whether their logical relation is
-  unary or binary?}\yl{Technically a Kripke-style model has the
-  context as an argument to the logrel, too. By binary, we are really
-  talking about whether the interpreted set is binary or not. I think
-  it is tricky to explain what we actually mean. }
-\scw{I don't think it is that trick}
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
-that feature logical-relations arguments for dependently-typed languages.
-Each of these proofs is significantly larger than than our development; but they
-also prove more results about different object languages.% \scw{Can we mention the
-% line counts in the text, when they are known?}
+that feature logical relations for dependently-typed languages.
+Each of these proofs is significantly larger than our development, but they
+also prove more results about different object languages.
 The table provides a comparison between the various features of their
 object languages, but is not exhaustive. For example,
 \citet{casinghino:combining-proofs-programs} and
 \citet{anand2014towards} both have support for partial
 programs. However, we include features that we believe to be most
 impactful to the definition of the logical relation.
+For a basic comparison of development size, we include the approximate
+nonblank, noncomment lines of proof code for each project.
 
-\citet{casinghino:combining-proofs-programs} introduce $\lambda^\theta$, a dependently typed
-programming language that uses modality to distinguish between logical
-proofs and programs. % The programmatic fragment
+\citet{casinghino:combining-proofs-programs} introduce $\lambda^\theta$,
+a dependently typed programming language that uses modalities to distinguish
+logical proofs from programs.
+% The programmatic fragment
 % includes recursive data types and supports general recursion at the
 % cost of introducing divergence.
 % However, the $\lambda^\theta$
@@ -2407,13 +2377,12 @@ proofs and programs. % The programmatic fragment
 % type-level computation or polymorphism and therefore is not a fully dependently
 % typed language according to \citet{abel2013normalization}.
 The consistency proof of $\lambda^\theta$'s logical fragment has been
-mechanized in Coq through a step-indexed logical relation;
+mechanized in Coq using a step-indexed logical relation;
 step-indexing is required to model the programmatic fragment, which
 interacts with the logical fragment.
 The lack of polymorphism and type-level computation means their
 logical relation can be defined recursively for well-formed types using
 a size metric, which has been used in~\citet{liu2023dependently}.
-Their development is around 8,000 lines of nonblank, noncomment code.
 
 \citet{decagda} mechanize in Agda the decidability of type
 conversion rule for a dependently typed language with one predicative
@@ -2422,41 +2391,36 @@ $\eta$ law. They
 use a Kripke-style logical relation parameterized over a
 type-directed equivalence relation satisfying certain
 properties to facilitate the reuse of their definition. The
-logical relation is defined using the induction-recursion scheme,
+logical relation is defined using induction--recursion,
 which is available in Agda but not in Coq. Their development involves
 around 10,000 lines of Agda code.
-\citet{martin-lof-a-la-coq} transports the logical relation
-from \citet{decagda} in the predicative fragment of Coq and further
-extends the decidability of type conversion result
-from~\citet{decagda} to the decidability type checking of a
-bidirectional type system. Their development has around
-30,000 lines of Coq code.
+\citet{martin-lof-a-la-coq} adapts the logical relation
+by \citet{decagda} to the predicative fragment of Coq and further
+extends the decidability of type conversion result to the decidability of
+type checking a bidirectional type system.
 
 \citet{anand2014towards} mechanize the metatheory of
-Nuprl~\citep{constable1986implementing} in Coq. This metatheory is an
-extensional type theory with features such as dependent functions,
-inductive types, partial types, and a full universe hierarchy. They construct a PER
-model in Coq to show the logical consistency of their language. Their
-development has been further extended with features such as
-intersection types, union types, and quotient types. The extensive
-coverage of features results in a Coq development with around
+Nuprl~\citep{constable1986implementing} in Coq. The object theory is an
+extensional type theory with dependent functions, inductive types,
+partial types, and a full universe hierarchy. They construct a PER
+model in Coq to show the logical consistency of the language. Their
+development has been further extended with intersection types,
+union types, and quotient types, resulting in a Coq development of around
 330,000 lines of code.
-\citet{nbeincoq}
-mechanize the normalization-by-evaluation algorithm in Coq for a
+\citet{nbeincoq} mechanize a normalization-by-evaluation algorithm in Coq for a
 dependently typed language with one predicative universe, similar to
 \citet{decagda} and \citet{martin-lof-a-la-coq}. However, since their
-type system has no elimination form for natural numbers, the
-only base type from the object language, large elimination is not
-supported despite the one predicative universe. Their development has
-around 20,000 lines of Coq code.
-Both \citet{anand2014towards} and \citet{nbeincoq} leverage the
-impredicative \texttt{Prop} sort of Coq to define the interpretation
+type system has no elimination form for natural numbers, the only base type,
+large elimination is not supported.
+Both \citet{anand2014towards} and \citet{nbeincoq} leverage
+Coq's impredicative \texttt{Prop} sort to define the interpretation
 of dependent function types and thus are closely related to our
-mechanization. \citet{anand2014towards} further show it is possible
-to encode a finite universe hierarchy without the use of
-either impredicativity or induction-recursion. Their encoding of a countable
+mechanization. \citet{anand2014towards} further show it possible
+to encode a finite universe hierarchy using neither impredicativity
+nor induction--recursion. Their encoding of a countable
 universe hierarchy relies on impredicativity, similar to our
 development.
+\jc{Wait I'm confused, do they use impredicativity or not?}
 
 \subsection{Other mechanized metatheory of dependent types}
 
@@ -2719,7 +2683,7 @@ Do we even need nondeterministic parallel reduction?}
 \label{sec:conclusion}
 In this work, we present a short and mechanized proof by logical relations for
 a dependently typed language with a predicative universe hierarchy, large
-elimination, an intensional identity type, and dependent eliminators.
+elimination, a propositional equality type, and dependent eliminators.
 From the fundamental theorem for the logical relation, we prove consistency
 and canonicity, then show the extensibility of our approach by proving the
 existence of $\beta$($\eta$)-normal forms and adding natural numbers and
