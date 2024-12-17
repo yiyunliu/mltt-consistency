@@ -2302,6 +2302,21 @@ expressive power of the metatheory. For example, the mechanization of
 NbE by \citet{altenkirch:normalisation} relies on quotient
 inductive--inductive types (QIIT)~\citep{kaposi:qiit}.
 
+\jc{If the QIIT work counts as a logical relation,
+  maybe the following related (and mechanized!) work do too,
+  and should be included in the table:
+  \begin{itemize}
+    \item Altenkirch and Kaposi (2016) using QIITs, mentioned above (Agda);
+      mechanization might be part of Kaposi's thesis (2016)
+    \item prior work Chapman (2009), Type Theory should Eat Itself (Agda);
+      possibly also his thesis (2008)
+    \item Kipling by McBride (2010), mixing deep and shallow embedding
+      using host conversion (Agda) to avoid the whole QIIT business
+    \item Kaposi et al. (2019), Shallow Embedding of Type Theory (Agda),
+      although at this point I'm not sure if this counts as having a syntax
+  \end{itemize}
+}
+
 % To support type-directed $\eta$ laws, \citet{Abel12,abel2008betaeta}
 % use a partial equivalence relation to model their type system. The 
 % prove the injectivity of $\Pi$ types cannot be derived 
@@ -2352,19 +2367,6 @@ inductive--inductive types (QIIT)~\citep{kaposi:qiit}.
   \label{fig:featurematrix}
 \end{figure}
 \scw{Extra columns in Fig 10:  Predicate vs. Relational interpretation (we can explain this) / Typed vs. Untyped interpretation}
-
-\jc{Missing from the table:
-\begin{itemize}
-  \item Altenkirch and Kaposi (2016) using QIITs, mentioned above (Agda);
-    mechanization might be part of Kaposi's thesis (2016)
-  \item prior work Chapman (2009), Type Theory should Eat Itself (Agda);
-    possibly also his thesis (2008)
-  \item Kipling by McBride (2010), mixing deep and shallow embedding
-    using host conversion (Agda) to avoid the whole QIIT business
-  \item Kaposi et al. (2019), Shallow Embedding of Type Theory (Agda),
-    although at this point I'm not sure if this counts as having a syntax
-\end{itemize}
-}
 
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
 that feature logical relations for dependently-typed languages.
