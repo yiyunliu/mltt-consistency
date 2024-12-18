@@ -460,12 +460,6 @@ System, which employs untyped equality, and
 its variant that uses typed equality. This assures us that we do
 not lose generality working with a system with untyped
 conversion.
-\jc{I'm not too fond of this last sentence because we \emph{do} lose
-the ability to add typed $\eta$ equivalences.}
-\yl{removed the eta equivalence sentence because it might give the
-  wrong message that we extended Siles' work with eta:
- Furthermore, we discuss how this definition can be extended with
- $\eta$-equivalence of functions in Section~\ref{XXX} }
 We compare this
 definition with type-directed approaches to equality in
 Section~\ref{sec:discuss}.
@@ -503,7 +497,6 @@ variable in the result type.
 \Rref{T-Conv} uses the convertibility relation from earlier
 as our equality judgment for type conversion.
 
-\scw{Cassia did not follow our discussion of dependent pattern matching. We need to expand}
 The elimination form for booleans in \rref{T-If} demonstrates dependent pattern
 matching: the type of the expression \emph{depends} on the term being matched.
 This result type involves a \emph{motive} $[[A]]$ abstracted over a boolean.
@@ -1093,10 +1086,6 @@ because we need the actual instantiation of $I$ to prove the \rref{I-Set} case.
 \section{Semantic Typing and Consistency}
 \label{sec:logrelproof}
 
-\scw{Would it make sense to define the notation $a \in [\![A]\!]^i$ when
-there exists some $S$ such that $[[InterpR i A S]]$ and $[[a in S]]$ ?}
-\jc{I like this notation too, $[[a in InterpR i A]]$}
-
 In this section, we show that all closed, well-typed terms are contained
 in the interpretation of their types. In other words, $[[empty |- a : A]]$
 implies that there exists a set $[[S]]$ such that $[[InterpR i A S]]$ and
@@ -1540,12 +1529,6 @@ renaming never introduces new redexes.
   If $[[a < xi > => b0]]$, then there exists some $[[b]]$ such that
   $[[b < xi > = b0]]$ and $[[a => b]]$.
 \end{lemma}
-
-\scw{This lemma is only used to prove \texttt{wn\_antirenaming}, which is then
-used more generally. Maybe we should replace it with  that?}
-\yl{Anti-renaming is mentioned once in Section 6 when we talk about how confluence with $\eta$
-depends on anti-renaming for Par. I don't think that discussion in
-Section 6 is very important so I'm fine with replacing it}
 
 Together, these lemmas prove an inversion property for weakly normalizing forms:
 if an application of a term to a variable is weakly normalizing, then the term
