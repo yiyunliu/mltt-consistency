@@ -2301,21 +2301,22 @@ However, proof-relevant logical relations are more demanding on the
 expressive power of the metatheory. For example, the mechanization of
 NbE by \citet{altenkirch:normalisation} relies on quotient
 inductive--inductive types (QIIT)~\citep{kaposi:qiit}.
+\jc{I don't understand how the QIIT model relates to gluing,
+or what using QIIT has to do with proof relevance of the logical relation.}
 
-\jc{If the QIIT work counts as a logical relation,
-  maybe the following related (and mechanized!) work do too,
-  and should be included in the table:
-  \begin{itemize}
-    \item Altenkirch and Kaposi (2016) using QIITs, mentioned above (Agda);
-      mechanization might be part of Kaposi's thesis (2016)
-    \item prior work Chapman (2009), Type Theory should Eat Itself (Agda);
-      possibly also his thesis (2008)
-    \item Kipling by McBride (2010), mixing deep and shallow embedding
-      using host conversion (Agda) to avoid the whole QIIT business
-    \item Kaposi et al. (2019), Shallow Embedding of Type Theory (Agda),
-      although at this point I'm not sure if this counts as having a syntax
-  \end{itemize}
-}
+So far, the works mentioned interpret types as sets or relations on deep
+representations of terms. In contrast, shallow embeddings interpret types as
+sets of \emph{meta-level} terms in some type theory. The logical relation
+interprets the object language into the meta language, and its soundness holds
+by virtue of the interpretation function being well typed and definable.
+Examples include work by \citet{kipling}, who mixes deep and shallow
+representations, and work by \citet{shallow}, who directly implement the
+signature of a CwF as Agda terms. The key property of shallow embeddings is
+that object-level conversion is represented as meta-level equality, which has
+the benefit of delegating handling conversion to the type checker, but with the
+drawback that object conversion must coincide with meta equality. Conversion
+cannot be customized to convert more terms than dictated by their
+interpretations.
 
 % To support type-directed $\eta$ laws, \citet{Abel12,abel2008betaeta}
 % use a partial equivalence relation to model their type system. The 
@@ -2369,7 +2370,7 @@ inductive--inductive types (QIIT)~\citep{kaposi:qiit}.
 \scw{Extra columns in Fig 10:  Predicate vs. Relational interpretation (we can explain this) / Typed vs. Untyped interpretation}
 
 Figure~\ref{fig:featurematrix} presents several mechanized proofs
-that feature logical relations for dependently-typed languages.
+that feature logical relations for dependently typed languages.
 Each of these proofs is significantly larger than our development, but they
 also prove more results about different object languages.
 The table provides a comparison between the various features of their
@@ -2407,8 +2408,7 @@ use a Kripke-style logical relation parameterized over a
 type-directed equivalence relation satisfying certain
 properties to facilitate the reuse of their definition. The
 logical relation is defined using induction--recursion,
-which is available in Agda but not in Coq. Their development involves
-around 10,000 lines of Agda code.
+which is available in Agda but not in Coq.
 \citet{martin-lof-a-la-coq} adapts the logical relation
 by \citet{decagda} to the predicative fragment of Coq and further
 extends the decidability of type conversion result to the decidability of
@@ -2420,8 +2420,7 @@ extensional type theory with dependent functions, inductive types,
 partial types, and a full universe hierarchy. They construct a PER
 model in Coq to show the logical consistency of the language. Their
 development has been further extended with intersection types,
-union types, and quotient types, resulting in a Coq development of around
-330,000 lines of code.
+union types, and quotient types.
 \citet{nbeincoq} mechanize a normalization-by-evaluation algorithm in Coq for a
 dependently typed language with one predicative universe, similar to
 \citet{decagda} and \citet{martin-lof-a-la-coq}. However, since their
