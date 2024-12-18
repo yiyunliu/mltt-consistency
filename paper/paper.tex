@@ -2561,13 +2561,16 @@ lacks extensionality, which would require a relational model to
 justify consistency. Because the conversion rule for
 \lang{} is untyped, we do not
 need a Kripke-style relational model to prove $\Pi$-injectivity
-among other properties, unlike systems with typed conversion. Furthermore, we prove the existence of normal
+(among other properties), unlike systems with typed conversion.
+\jc{Why do we need Pi-injectivity? Why would a Kripke-style model be required
+to prove it for typed conversion? What is a Kripke-style model?}
+Furthermore, we prove the existence of normal
 forms, which induces a simple \emph{normalize-and-compare}
 procedure for type
-conversion~\cite{pierce2004advanced}. \citet{nbeincoq, decagda}, on
+conversion~\cite{pierce2004advanced}. \Citet{nbeincoq} and \citet{decagda}, on
 the other hand, need
 to show how their algorithmic conversion procedure is sound and complete
-with respect to their respective declarative equational theory.
+with respect to their respective declarative equational theories.
 \scw{I'm getting confused by this paragraph. Does this reorganization sense:
   Our language is simpler than Nuprl, because it doesn't have extensional
   equality. It is simpler than Agda, because it doesn't have type-directed
@@ -2588,11 +2591,11 @@ Second, the definition of our logical relation does
 contribute to a more concise proof.
 In \rref{I-Red, I-Bool}, we choose parallel reduction, a full
 reduction relation, to close over our semantic interpretation of types
-and terms. Parallel reduction is non-deterministic, but it satisfies
+and terms. Parallel reduction is nondeterministic, but it satisfies
 useful structural properties such as congruence
 (Lemma~\ref{lemma:parcong}) and the diamond property
 (Lemma~\ref{lemma:pardiamond}). We pay the price of using a
-non-deterministic reduction relation when we want to prove that our
+nondeterministic reduction relation when we want to prove that our
 logical relation is a partial function; because of \rref{I-Red}, we
 can have $[[A => B0]]$ and $[[A => B1]]$, where $[[B0]]$ and $[[B1]]$
 each have their separate interpretations that we have to prove to be
@@ -2607,8 +2610,11 @@ satisfy the substitution property (Lemma~\ref{lemma:parsubst}), an
 issue that has been observed by
 \citet{casinghino:combining-proofs-programs}. If we had chosen to work
 with a deterministic reduction relation, we would likely need
-results such as the factorization theorem~\citep{takahashi-parallel-reduction,factorization-essentially} in our development before we
-can prove the fundamental theorem, leading to a more complicated proof.
+results such as the factorization
+theorem~\citep{takahashi-parallel-reduction,factorization-essentially}
+in our development before we can prove the fundamental theorem,
+leading to a more complicated proof.
+
 % With
 % this alternative formulation, we would have to prove how the deterministic reduction relates to
 % a full non-deterministic reduction relation to prove the fundamental
@@ -2643,6 +2649,9 @@ we can just assume some more technical knowledge from the readers in
 this section.}
 However, our early dependence on confluence
 before the fundamental theorem is established can be alarming.
+\jc{The rest of this paragraph is about confluence and Pi-injectivity,
+not untyped conversion Kripke-style, so maybe the first sentence of the
+paragraph shouldn't start with talking about them?}
 In a system with type-directed reduction,
 confluence is not immediately available because it
 depends on $\Pi$-injectivity, which is usually only proven after the
@@ -2653,7 +2662,7 @@ depends on pi injectivity. Maybe it's worth spelling out the details}
 Fortunately, there are syntactic workarounds for the $\Pi$-injectivity
 problem that allow us to recover the confluence property independently
 from the logical relation. \citet{siles2012pure} generalize the
-notion of Type Parallel One Step Reduction from \citet{adams2006pure}
+notion of typed parallel one-step reduction by \citet{adams2006pure}
 to syntactically prove $\Pi$-injectivity for arbitrary Pure Type
 Systems. \citet{weirich:systemd} add $\Pi$-injectivity to their
 equational theory, thus allowing subject reduction to be proven
