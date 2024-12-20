@@ -1,6 +1,7 @@
 .*.aux
 .*.d
 *.a
+*.agdai
 *.cma
 *.cmi
 *.cmo
