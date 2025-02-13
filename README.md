@@ -46,6 +46,21 @@ The $\eta$-law for functions is supported (see the `eta` branch),
 though it's not yet merged to the main branch because we need some
 minor clean-ups.
 
+# Eta law for surjective pairing
+My other repository <https://github.com/yiyunliu/sp-eta-postpone>
+contains a development with type-directed surjective pairing. The
+development also proves strong normalization instead of weak
+normalization, and it turns out that SN proof isn't any harder than
+weak normalization proof as long as you stick to saturated sets to
+charaterize SN terms.
+
+I've finished the full SN proof, but the decidability of type
+conversion needs some more work. Still, feel free to take a look if
+you are interested because it uses a simple logical predicate rather
+than a full-blown relational model. The decidability of type
+conversion should be recoverable by Church-Rosser of beta eta
+contraction, which in fact holds for terms that belong to saturated sets.
+
 ## Install dependencies
 First, run `opam update` in the shell to update the package repository
 so your package manager knows where to fetch the dependencies.
