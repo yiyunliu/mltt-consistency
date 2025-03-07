@@ -51,15 +51,20 @@ My other repository <https://github.com/yiyunliu/sp-eta-postpone>
 contains a development with type-directed surjective pairing. The
 development also proves strong normalization instead of weak
 normalization, and it turns out that SN proof isn't any harder than
-weak normalization proof as long as you stick to saturated sets to
-charaterize SN terms.
+weak normalization proof as long as you stick to Altenkirch's
+inductive characterization of SN terms.
 
-I've finished the full SN proof, but the decidability of type
-conversion needs some more work. Still, feel free to take a look if
-you are interested because it uses a simple logical predicate rather
-than a full-blown relational model. The decidability of type
-conversion should be recoverable by Church-Rosser of beta eta
-contraction, which in fact holds for terms that belong to saturated sets.
+Injectivity of type constructors is baked into the declarative
+equational theory and its admissibility is not proven (I'm
+investigating a method of recovering the admissibility proof
+syntactically [here](https://github.com/yiyunliu/TPOSR)).
+
+The function
+[check_sub_r](https://github.com/yiyunliu/sp-eta-postpone/blob/437c97455e7d55255349d02b26071e831b1c2be3/theories/executable.v#L563)
+is a computable coq fixpoint and is proven to be both correct and
+terminating. You can extract and run the program if interested, and I
+might write a simple type checker frontend if I ever decide to play
+around with bidirectional typing.
 
 ## Install dependencies
 First, run `opam update` in the shell to update the package repository
