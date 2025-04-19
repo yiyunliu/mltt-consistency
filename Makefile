@@ -1,8 +1,8 @@
-SYNTAX_FILE=theories/Autosubst2/syntax.v
+SYNTAX_FILE=theories/Autosubst2/syntax.v theories/Autosubst2/core.v theories/Autosubst2/unscoped.v
 COQMAKEFILE=CoqMakefile
 
-theories: $(COQMAKEFILE)
-	$(MAKE) -f $^
+theories: $(COQMAKEFILE) FORCE
+	$(MAKE) -f $(COQMAKEFILE)
 
 $(COQMAKEFILE) : $(SYNTAX_FILE)
 	$(COQBIN)coq_makefile -f _CoqProject -o $(COQMAKEFILE)
@@ -14,10 +14,11 @@ uninstall: $(COQMAKEFILE)
 	$(MAKE) -f $(COQMAKEFILE) uninstall
 
 $(SYNTAX_FILE) : syntax.sig
-	as2-exe -i syntax.sig -p UCoq > $(SYNTAX_FILE)
-	perl -i -pe 's/^(Hint|Instance)/#[export]$1/' $(SYNTAX_FILE)
+	autosubst -f -v ge813 -s ucoq -o theories/Autosubst2/syntax.v syntax.sig
 
-.PHONY: clean
+.PHONY: clean FORCE
 clean:
 	test ! -f $(COQMAKEFILE) || ( $(MAKE) -f $(COQMAKEFILE) clean && rm $(COQMAKEFILE) )
 	rm -f $(SYNTAX_FILE)
+
+FORCE:

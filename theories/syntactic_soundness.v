@@ -200,7 +200,7 @@ Proof.
   elim : Γ a A / h; try qauto l:on depth:1 ctrs:Wt,lookup unfold:lookup_good_renaming.
   - hauto q:on ctrs:Wt,Wff use:good_renaming_up.
   - hauto lq:on ctrs:Wt use:good_renaming_up, Wt_Pi_Univ_inv db:wff.
-  - move => * /=. apply : T_App'; eauto; by asimpl.
+  - move => * /=. apply : T_App'; eauto. rewrite -/ren_tm. by asimpl.
   - qauto l:on ctrs:Wt use:Sub_renaming.
   - move => Γ a b c A i hA ihA ha iha hb ihb hc ihc Δ ξ hξ hΔ /=.
     apply  T_Ind' with (a := ren_tm ξ a) (A := ren_tm (upRen_tm_tm ξ) A) (i := i).
@@ -209,7 +209,7 @@ Proof.
       apply Wff_cons with (i := 0); qauto l:on ctrs:Wt.
     + have -> : A ⟨upRen_tm_tm ξ⟩[tZero..] = A[tZero..]⟨ξ⟩ by asimpl. auto.
     + move /(_ (A ⟨upRen_tm_tm ξ⟩ :: tNat :: Δ) (upRen_tm_tm (upRen_tm_tm ξ)))
-        : ihb. asimpl. apply.
+        : ihb. substify. asimpl. apply.
       * case => [A0|[A0|n]].
         inversion 1; subst. asimpl.
         apply here'. by asimpl.

@@ -120,7 +120,7 @@ Lemma InterpUnivN_nolt i :
   InterpUnivN i = InterpExt i (fun j A => exists PA, ⟦ A ⟧ j ↘ PA).
 Proof.
   simp InterpUnivN.
-  fext => A P.
+  extensionality A. extensionality P.
   apply propositional_extensionality.
   hauto l:on use:InterpExt_lt_redundant, InterpExt_lt_redundant2.
 Qed.
@@ -228,7 +228,7 @@ Proof.
   - move => a b A  ? ? ? B.
     elim /Par_inv=>// h ? ? ? a0 b0 A0 ? ? ? [] *. subst.
     apply InterpExt_Eq'; eauto with nfne.
-    fext => p.
+    extensionality p.
     f_equal.
     apply propositional_extensionality.
     hauto lq:on use:Par_Coherent, Coherent_transitive, Coherent_symmetric.
@@ -339,7 +339,7 @@ Proof.
   split; last by hauto lq:on rew:off ctrs:rtc.
   specialize ih with (1 := eq_refl).
   move : ih => [->] *.
-  fext => A. do 2 f_equal.
+  extensionality A. do 2 f_equal.
   apply propositional_extensionality.
   hauto lq:on use:Par_Coherent, Coherent_symmetric, Coherent_transitive.
 Qed.
@@ -368,7 +368,7 @@ Proof.
     move /InterpExt_Fun_inv : hP.
     intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.
     have ? : PA0 = PA by sfirstorder. subst.
-    fext => b a PB ha.
+    extensionality b. extensionality a. extensionality PB. extensionality ha.
     apply propositional_extensionality.
     hauto lq:on rew:off.
   - hauto lq:on rew:off inv:InterpExt ctrs:InterpExt use:InterpExt_Univ_inv.
@@ -378,7 +378,7 @@ Proof.
     intros (PA0 & PF0 & hPA0 & hPB0 & hPB0' & ?); subst.
     have ? : PA0 = PA by sfirstorder. subst.
     rewrite /SumSpace.
-    fext => t.
+    extensionality t.
     apply propositional_extensionality.
     hauto lq:on rew:off.
   - hauto l:on use:InterpExt_preservation.
@@ -424,7 +424,7 @@ Proof.
   move /InterpExt_Fun_inv : h. intros (PA & PF & hPA & hPF & hPF' & ?); subst.
   exists PA. repeat split => //.
   - sfirstorder.
-  - fext => b a PB ha.
+  - extensionality b. extensionality a. extensionality PB. extensionality ha.
     apply propositional_extensionality.
     split.
     + move  : hPF ha . move /[apply]. intros (PB0 & hPB0). move => *.
@@ -451,7 +451,7 @@ Proof.
   move /InterpExt_Sig_inv : h. intros (PA & PF & hPA & hPF & hPF' & ?); subst.
   exists PA. repeat split => //.
   - sfirstorder.
-  - fext => b.
+  - extensionality b.
     apply propositional_extensionality.
     split.
     + rewrite /SumSpace.
@@ -521,7 +521,7 @@ Proof.
     move => A B PA PF hPA ihPA hTot hPF ihPF.
     have <- : (ProdSpace PA (fun (a : tm) (PB : tm -> Prop) => ⟦ B[a..] ⟧ i ↘ PB)) = ProdSpace PA PF.
     rewrite /ProdSpace.
-    fext => b a PB ha.
+    extensionality b. extensionality a. extensionality PB. extensionality ha.
     apply propositional_extensionality.
     split.
     hauto l:on.
@@ -540,7 +540,7 @@ Proof.
     rewrite -InterpUnivN_nolt in hPF ihPF hPA.
     have <- : (SumSpace PA (fun (a : tm) (PB : tm -> Prop) => ⟦ B[a..] ⟧ i ↘ PB)) = SumSpace PA PF.
 
-    rewrite /SumSpace. fext => t.
+    rewrite /SumSpace. extensionality t.
     apply propositional_extensionality.
     split.
     case; last by tauto.

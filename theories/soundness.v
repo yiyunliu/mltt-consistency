@@ -281,9 +281,9 @@ Proof.
       move /(_ (subst_tm ρ p .: (subst_tm ρ b .: ρ))) : hC.
       case.
       * eapply ρ_ok_cons with (i := 0).
-        asimpl.
-        apply InterpUnivN_Eq; eauto.
-        right. auto.
+        apply InterpUnivN_Eq; eauto. rewrite-/subst_tm. asimpl.
+        by auto. rewrite -/subst_tm. by asimpl.
+        rewrite -/subst_tm. right. by auto.
         move : hb (hρ). move/[apply].
         move => [i0 [PA0 hb0]].
         hauto l:on use:ρ_ok_cons.
@@ -479,7 +479,7 @@ Proof.
   move => h.
   case => [|p].
   - asimpl. lia.
-  - move : (h p). asimpl. lia.
+  - move : (h p). asimpl. rewrite /funcomp. lia.
 Qed.
 
 Lemma scope_renaming n a (h : stm n a) :
@@ -489,7 +489,7 @@ Proof.
 Qed.
 
 Lemma scope_weaken m a : stm m a -> stm (S m) (ren_tm shift a).
-Proof. move /scope_renaming. apply. lia. Qed.
+Proof. move /scope_renaming. apply. rewrite/shift. lia. Qed.
 
 Lemma scope_morphing_up n m ρ :
   (forall i, i < n -> stm m (ρ i)) ->
@@ -498,7 +498,8 @@ Proof.
   move => h.
   case.
   asimpl. hauto lq:on ctrs:stm solve+:lia.
-  hauto lq:on use:scope_weaken simp+:asimpl solve+:lia.
+  move => j /PeanoNat.lt_S_n {}/h.
+  hauto lq:on use:scope_weaken.
 Qed.
 
 Lemma scope_morphing n a (h : stm n a) :
