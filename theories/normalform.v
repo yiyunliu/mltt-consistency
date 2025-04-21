@@ -1,5 +1,45 @@
 Require Import join imports.
 
+Fixpoint whne (a : tm) : bool :=
+  match a with
+  | var_tm _ => true
+  | tApp a _ => whne a
+  | tInd _ _ a => whne a
+  | tLet a _ => whne a
+  | tJ _ _ _ p => whne p
+  | _ => false
+  end.
+
+Definition whnf (a : tm) : bool :=
+  match a with
+  | tPi _ _ => true
+  | tSig _ _ => true
+  | tRefl => true
+  | tNat => true
+  | tUniv _ => true
+  | tPack _ _ => true
+  | tAbs _ => true
+  | tZero => true
+  | tSuc _ => true
+  | _ => whne a
+  end.
+
+Inductive wh_nat : tm -> Prop :=
+| wh_Neu a :
+  whne a ->
+  wh_nat a
+| wh_Zero  :
+  wh_nat tZero
+| wh_Suc a :
+  wh_nat a ->
+  wh_nat (tSuc a)
+| wh_Red a b :
+  HRed.R a b ->
+  wh_nat b ->
+  wh_nat a.
+
+Definition wh_ne a :  Prop := exists b, HReds.R a b /\ whne b.
+
 (* Identifying neutral (ne) and normal (nf) terms *)
 Fixpoint ne (a : tm) : bool :=
   match a with

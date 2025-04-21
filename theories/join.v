@@ -774,3 +774,8 @@ Module HRedProp.
     - sauto q:on.
   Qed.
 End HRedProp.
+
+
+Module HReds.
+  Definition R := rtc HRed.R.
+End HReds.
