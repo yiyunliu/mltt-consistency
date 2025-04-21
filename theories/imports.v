@@ -21,3 +21,5 @@ Global Disable Notation "'var'" : subst_scope.
 Global Disable Notation "↑".
 Global Open Scope subst_scope. 
 Global Open Scope list_scope.
+
+Require Export Coq.Relations.Relation_Operators (clos_refl(..)).

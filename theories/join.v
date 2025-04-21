@@ -724,16 +724,53 @@ Module HRed.
     R (tLet (tPack a b) c) c[b .: a ..]
 
   (*************** Congruence ********************)
-  | AppCong0 a0 a1 b :
+  | AppCong a0 a1 b :
     R a0 a1 ->
     R (tApp a0 b) (tApp a1 b)
-  | AppCong1 a b0 b1 :
-    R b0 b1 ->
-    R (tApp a b0) (tApp a b1)
-  | AppCong
 
+  | IndCong a b c0 c1 :
+    R c0 c1 ->
+    R (tInd a b c0) (tInd a b c1)
 
+  | JCong t a b p0 p1 :
+    R p0 p1 ->
+    R (tJ t a b p0) (tJ t a b p1)
 
-  | IndCong P a0 a1 b c :
+  | LetCong a0 a1 b :
     R a0 a1 ->
-    R (PInd P a0 b c) (PInd P a1 b c).
+    R (tLet a0 b) (tLet a1 b).
+
+  Lemma ToPar a b : R a b -> a ⇒ b.
+  Proof. induction 1; qauto l:on ctrs:Par use:Par_refl. Qed.
+
+End HRed.
+
+Module HRed01.
+  Definition R := clos_refl _ HRed.R.
+End HRed01.
+
+Module HRedProp.
+  Lemma commutativity a b c :
+    HRed.R a b -> Par a c -> exists d, Par b d /\ HRed01.R c d.
+  Proof.
+    move => h. move : c. elim : a b /h.
+    - hauto lq:on ctrs:clos_refl,HRed.R use:Par_cong inv:Par.
+    - hauto lq:on ctrs:clos_refl,HRed.R inv:Par.
+    - move => a b c u.
+      elim /Par_inv => //=_.
+      + move => a0 a1 b0 b1 c0 ? ha hb hc [*]. subst.
+        elim /Par_inv : hc => //=_.
+        move => a0 c1 h [*]. subst.
+        exists b1 [tInd a1 b1 c1 .: (c1 ..)].
+        hauto lq:on ctrs:clos_refl, HRed.R, Par use:Par_cong2.
+      + move => a0 a1 b0 b1 c0 c1 ha hb hc [*]. subst.
+        exists b1 [tInd a1 b1 c1 .: (c1 ..)]. split. hauto lq:on ctrs:Par use:Par_cong2.
+        apply r_refl.
+    - hauto lq:on ctrs:clos_refl,HRed.R inv:Par.
+    - hauto lq:on ctrs:clos_refl,HRed.R use:Par_cong2 inv:Par.
+    - sauto q:on.
+    - sauto q:on.
+    - sauto q:on.
+    - sauto q:on.
+  Qed.
+End HRedProp.
