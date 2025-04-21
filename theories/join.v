@@ -703,3 +703,37 @@ Qed.
 
 Lemma Coherent_Sub a b : a ⇔ b -> a <: b.
 Proof. sfirstorder use:Sub1_refl unfold:Coherent, Sub. Qed.
+
+Module HRed.
+  Inductive R : tm -> tm ->  Prop :=
+  (****************** Beta ***********************)
+  | AppAbs a b :
+    R (tApp (tAbs a) b)  (subst_tm (scons b var_tm) a)
+
+  | IndZero a b :
+    R (tInd a b tZero) a
+
+  | IndSuc a b c :
+    R (tInd a b (tSuc c)) (subst_tm (scons (tInd a b c) (scons c var_tm)) b)
+
+  | JRefl t a b :
+    (* ---------- *)
+    R (tJ t a b tRefl) t
+
+  | LetPack a b c :
+    R (tLet (tPack a b) c) c[b .: a ..]
+
+  (*************** Congruence ********************)
+  | AppCong0 a0 a1 b :
+    R a0 a1 ->
+    R (tApp a0 b) (tApp a1 b)
+  | AppCong1 a b0 b1 :
+    R b0 b1 ->
+    R (tApp a b0) (tApp a b1)
+  | AppCong
+
+
+
+  | IndCong P a0 a1 b c :
+    R a0 a1 ->
+    R (PInd P a0 b c) (PInd P a1 b c).
