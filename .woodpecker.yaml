@@ -6,5 +6,6 @@ steps:
   - name: build
     image: coqorg/coq:8.20.1-ocaml-4.14.2-flambda
     commands:
-      - opam update && opam install . --deps-only
+      - opam update
+      - opam install . --deps-only
       - make
