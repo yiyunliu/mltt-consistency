@@ -949,26 +949,3 @@ Lemma wt_preservation Γ a b A (r : a ⇝ b) (h : Γ ⊢ a ∈ A) : Γ ⊢ b ∈
 Proof.
   sfirstorder use:CBN_Par, subject_reduction.
 Qed.
-
-(* Evaluation will either step to a value or diverge *)
-CoInductive Eval a : Prop :=
-| E_Value : is_value a -> Eval a
-| E_Step b : a ⇝ b -> Eval b -> Eval a.
-
-(* We need evaluation to be coinductive to express divergence of e.g. (λx. x x) (λx. x x) *)
-CoFixpoint Omega (omega := tAbs (tApp (var_tm 0) (var_tm 0))) :
-  Eval (tApp omega omega).
-Proof.
-  eapply E_Step; last by (exact Omega).
-  apply N_AppAbs.
-Qed.
-
-(* Well typed terms don't get stuck, i.e. will always evaluate *)
-CoFixpoint wt_safety a A (h : nil ⊢ a ∈ A) : Eval a.
-Proof.
-  destruct (wt_progress _ _ h) as [va | [a' ra]].
-  - apply E_Value; auto.
-  - eapply E_Step; eauto.
-    have ha' : nil ⊢ a' ∈ A by eapply wt_preservation; eauto.
-    eapply wt_safety; eauto.
-Qed.
