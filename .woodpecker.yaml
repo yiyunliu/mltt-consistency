@@ -9,4 +9,6 @@ steps:
       - opam update
       - opam install -y coq-hammer-tactics coq-equations coq-stdpp coq-autosubst-ocaml
       - eval $(opam env)
-      - make -j2
+      - whoami
+      - ls -al
+      - sudo make -j2
