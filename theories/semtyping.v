@@ -256,30 +256,43 @@ Proof. hauto l:on rew:db:InterpUnivN use:InterpExt_Nat_inv. Qed.
 
 Lemma InterpExt_Eq_inv i I a b A P :
   ⟦ tEq a b A ⟧ i , I ↘ P ->
-  (P = fun A => A ⇒* tRefl /\ Coherent a b \/ wne A) /\ wn a /\ wn b /\ wn A.
+  (P = fun A => HReds.R A tRefl /\ Coherent a b \/ wh_ne A).
 Proof.
   move E : (tEq a b A) => T h.
   move : a b A E.
   elim : T P /h => //.
   hauto q:on inv:tm.
   hauto lq:on ctrs:rtc.
-  move => A A0 PA hred hA0 ih a b A1 ?. subst.
-  elim /Par_inv : hred=>//.
-  move => hred ? ? ? a2 b2 A2 ? ? ? [] *;subst.
-  split; last by hauto lq:on rew:off ctrs:rtc.
-  specialize ih with (1 := eq_refl).
-  move : ih => [->] *.
-  extensionality A. do 2 f_equal.
-  apply propositional_extensionality.
-  hauto lq:on use:Par_Coherent, Coherent_symmetric, Coherent_transitive.
+  hauto q:on inv:HRed.R.
 Qed.
 
 Lemma InterpUnivN_Eq_inv i a b A P :
   ⟦ tEq a b A ⟧ i ↘ P ->
-  P = (fun p => (p ⇒* tRefl /\ Coherent a b) \/ wne p) /\ wn a /\ wn b /\ wn A.
+  P = (fun p => (HReds.R p tRefl /\ Coherent a b) \/ wh_ne p).
 Proof.
   simp InterpUniv.
   hauto l:on use:InterpExt_Eq_inv.
+Qed.
+
+Lemma HRed_deterministic A B C :
+  HRed.R A B -> HRed.R A C -> B = C.
+Proof. move => h. move : C. elim : A B /h ; hauto lq:on inv:HRed.R. Qed.
+
+Lemma InterpExt_preservation i I A B PA :
+  ⟦ A ⟧ i , I ↘ PA ->
+  HRed.R A B ->
+  ⟦ B ⟧ i , I ↘ PA.
+Proof.
+  move => h. move : B. elim : A PA / h.
+  - sfirstorder use:whne_stuck.
+  - qauto inv:HRed.R.
+  - qauto inv:HRed.R.
+  - qauto inv:HRed.R.
+  - qauto inv:HRed.R.
+  - qauto inv:HRed.R.
+  - move => A A0 S hr hS ih B hB.
+    have ? : A0 = B by eauto using HRed_deterministic. subst.
+    done.
 Qed.
 
 (* ------------- relation is deterministic ---------------- *)
@@ -311,7 +324,7 @@ Proof.
     extensionality t.
     apply propositional_extensionality.
     hauto lq:on rew:off.
-  - hauto l:on use:InterpExt_preservation.
+  - sfirstorder use:InterpExt_preservation.
 Qed.
 
 Lemma InterpUnivN_deterministic i A PA PB :
@@ -414,9 +427,9 @@ Qed.
 
 Lemma InterpUniv_ind (P : nat -> tm -> (tm -> Prop) -> Prop) :
   (* Ne *)
-  (forall i A, ne A -> P i A wne) ->
+  (forall i A, whne A -> P i A wh_ne) ->
   (* Nat *)
-  (forall i, P i tNat (fun a : tm => exists v : tm, a ⇒* v /\ is_nat_val v)) ->
+  (forall i, P i tNat wh_nat) ->
   (* Pi *)
   (forall i A B PA,
       ⟦ A ⟧ i ↘ PA ->
@@ -429,8 +442,7 @@ Lemma InterpUniv_ind (P : nat -> tm -> (tm -> Prop) -> Prop) :
               P i (tUniv j) (fun A => exists PA, ⟦ A ⟧ j ↘ PA)) ->
   (* Eq *)
   (forall i a b A,
-      nf a ->
-      nf b -> nf A -> P i (tEq a b A) (fun p : tm => p ⇒* tRefl /\ a ⇔ b \/ wne p)) ->
+      P i (tEq a b A) (fun p : tm => HReds.R p tRefl /\ a ⇔ b \/ wh_ne p)) ->
   (* Sig *)
   (forall i A B PA,
       ⟦ A ⟧ i ↘ PA ->
@@ -440,7 +452,7 @@ Lemma InterpUniv_ind (P : nat -> tm -> (tm -> Prop) -> Prop) :
       P i (tSig A B) (SumSpace PA (fun a PB => ⟦ B[a..] ⟧ i ↘ PB))) ->
   (* Red *)
   (forall i A A0 PA,
-      A ⇒ A0 -> ⟦ A0 ⟧ i ↘ PA -> P i A0 PA -> P i A PA) ->
+      HRed.R A A0 -> ⟦ A0 ⟧ i ↘ PA -> P i A0 PA -> P i A PA) ->
   forall i A S, ⟦ A ⟧ i ↘ S -> P i A S.
 Proof.
   move => hNe hNat hFun hUniv hEq hSig hStep.
@@ -495,15 +507,9 @@ Qed.
 
 (* ---- Alternative intro rule for Eq ----------- *)
 Lemma InterpUnivN_Eq i a b A:
-  wn a -> wn b -> wn A ->
-  ⟦ tEq a b A ⟧ i ↘ (fun p => (p ⇒* tRefl /\ Coherent a b) \/ wne p).
+  ⟦ tEq a b A ⟧ i ↘ (fun p => (HReds.R p tRefl /\ Coherent a b) \/ wh_ne p).
 Proof.
-  move => [va [? ?]] [vb [? ?]] [vA [? ?]].
-  have ? : InterpUnivN i (tEq va vb vA) (fun p => (p ⇒* tRefl /\ Coherent va vb) \/ wne p)
-    by hauto lq:on ctrs:InterpExt rew:db:InterpUniv.
-  have ? : (tEq a b A) ⇒* (tEq va vb vA) by auto using S_Eq.
-  have : InterpUnivN i (tEq a b A) (fun p => (p ⇒* tRefl /\ Coherent va vb) \/ wne p) by eauto using InterpUnivN_back_preservation_star.
-  move /[dup] /InterpUnivN_Eq_inv. move => [?]. congruence.
+  sfirstorder rew:db:InterpUniv.
 Qed.
 
 Lemma InterpUnivN_Univ i j :
@@ -516,12 +522,9 @@ Proof.
   by simp InterpUniv.
 Qed.
 
-Lemma InterpUnivN_WNe i A  : wne A -> ⟦ A ⟧  i  ↘ wne.
+Lemma InterpUnivN_WNe i A  : whne A -> ⟦ A ⟧  i  ↘ wh_ne.
 Proof.
-  rewrite {1}/wne. move => [A0 [h]].
-  elim : A A0 / h.
-  - simp InterpUniv. apply InterpExt_Ne.
-  - simp InterpUniv. hauto lq:on ctrs:InterpExt.
+  sauto lq:on rew:db:InterpUniv.
 Qed.
 
 (* ----  Backward closure for the interpreted sets ----- *)
