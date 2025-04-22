@@ -1,4 +1,5 @@
 # Mechanized consistency proof for MLTT
+[![status-badge](https://gh-woodpecker.electriclam.com/api/badges/2/status.svg?branch=head-red)](https://gh-woodpecker.electriclam.com/repos/2/branches/head-red)
 This repository contains a very short weak normalization (for closed
 and open terms) proof of Martin-Löf
 type theory in Coq (~ 1500 LoC excluding code produced by Autosubst 2). You need
